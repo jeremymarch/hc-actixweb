@@ -46,8 +46,10 @@ async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
 #[derive(Deserialize)]
 pub struct AnswerQuery {
     pub qtype: String,
-    pub orig: String,
     pub answer: String,
+    pub time: String,
+    pub mf_pressed: bool,
+    pub timed_out: bool,
 }
 
 #[allow(clippy::eval_order_dependence)]
