@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hoplte Challenge</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+    <script type="text/javascript" src="jquery.min.js"></script>
+<!--    <script type="text/javascript" src="wordtree.js?v10"></script>-->
+    <script>
+
+    function setTheme() {
+        var mode = localStorage.getItem("mode");
+        if ((window.matchMedia( "(prefers-color-scheme: dark)" ).matches || mode == "dark") && mode != "light") {
+            document.querySelector("HTML").classList.add("dark");
+        }
+        else {
+            document.querySelector("HTML").classList.remove("dark");
+        }
+    }
+    setTheme();
+
+    // Check for wasm support.
+	if (!('WebAssembly' in window)) {
+		alert('you need a browser with wasm support enabled :(');
+	}
+	
+	function loadWebAssembly(filename, imports) {
+		return fetch(filename)
+		.then(response => response.arrayBuffer())
+		.then(buffer => WebAssembly.compile(buffer))
+		.then(module => {
+			return WebAssembly.instantiate(module);
+		});
+	}
+	
+	var wasmBuffer0;
+	var accentSyllableWASM;
+	var transliterateWASM;
+	
+	var wasmBufferLength = 256;
+	var memory;
+	loadWebAssembly('hoplitekb.wasm', { js: { mem: memory } })
+		.then(instance => {
+			var exports = instance.exports;
+			accentSyllableWASM = exports.accentSyllable2;
+			transliterateWASM = exports.transliterate;
+			memory = exports.memory;
+	
+			console.log("memory: " + memory.buffer.byteLength);
+	
+			//https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/2020/06/07/wasm-arrays.html
+			//offset is in bytes, length is in array elements
+			//https://stackoverflow.com/questions/15417310/why-typed-array-constructors-require-offset-to-be-multiple-of-underlying-type-si
+			var offset = 2; //don't set start at zero (null), use 2 for proper alignment
+			wasmBuffer0 = new Uint16Array(memory.buffer, offset, wasmBufferLength);
+			console.log("offset0: " + offset + ", " + wasmBuffer0.byteOffset + ", " + wasmBuffer0.length);
+		}
+	);
+	
+	function strToCodePoints(str)
+	{
+		var a = "";
+		for (var i = 0; i < str.length; i++) {
+			a += str.codePointAt(i).toString(16).padStart(4,"0").toUpperCase() + " ";
+		}
+		return a.trim();
+	}
+
+    var timerRef = null;
+    function start() {
+        timerRef = document.querySelector('.mainTime');
+	    const supported = (() => {
+		try {
+			if (typeof WebAssembly === "object"
+				&& typeof WebAssembly.instantiate === "function") {
+				const module = new WebAssembly.Module(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00));
+				if (module instanceof WebAssembly.Module)
+					return new WebAssembly.Instance(module) instanceof WebAssembly.Instance;
+			}
+		} catch (e) {
+		}
+		return false;
+	})();
+	console.log(supported ? "WebAssembly is supported" : "WebAssembly is not supported");
+	
+		$(".gkinput").keypress(handleKey);
+		$("#inp").focus();
+	}
+	
+	var forceLowercase = false;
+	
+	function accentSyllable(origChars, key) {
+		var len = origChars.length;
+		//add letter and any combining diacritics to the buffer as code points
+		for (var i = 0; i < len && i < wasmBufferLength; i++) {
+			wasmBuffer0[i] = origChars.codePointAt(i);
+			console.log("accent1: " + origChars.codePointAt(i));
+		}
+		console.log("accent1a: " + len + ", " + key);
+		len = accentSyllableWASM(wasmBuffer0.byteOffset, len, key, 1, parseInt(unicodeMode) );
+	
+		//transform the returned code points back to a string
+		var newLetter = "";
+		for (var i = 0; i < len && i < wasmBufferLength; i++) {
+			newLetter += String.fromCodePoint(wasmBuffer0[i]);
+			console.log("accent2: " + String.fromCodePoint(wasmBuffer0[i]));
+		}
+		/*
+		for (var i = 0; i < 10; i++) {
+			wasmBuffer0[i] = 0;
+		}*/
+		console.log("ptr2: " + wasmBuffer0.byteOffset + ", " + wasmBuffer0.length);
+		//let win1251decoder = new TextDecoder('utf-16le');
+		return newLetter;
+	}
+	
+	var unicodeMode = 0;
+	function handleKey(e) {
+	
+		var val = this.value;
+		e = e || event;
+		if (typeof(this.selectionStart) == "number" && typeof(this.selectionEnd) == "number") 
+		{
+			var start = this.selectionStart;
+			var end = this.selectionEnd;
+			var newLetter = "";
+			var replacing = 0;
+			var charCode = typeof(e.which) == "number" ? e.which : e.keyCode;
+			console.log("handlekey1: " + charCode);
+			var key = String.fromCharCode(charCode);
+	
+			if (charCode && charCode > 64 && charCode < 123) //transliterate letter
+			{
+				//newLetter = accentSyllable("", key.codePointAt(0));
+				newLetter = String.fromCharCode( transliterateWASM( key.codePointAt(0) ) );
+				console.log("new: " + newLetter);
+			}
+			else if (charCode && charCode > 47 && charCode < 58) //number: 0-9 are 48-57
+			{ 
+				//underdot,rough,smooth,acute,grave,circ,macron,breve,iotasub,diaeresis
+				var diacriticKeys = [11,5,6,1,3,2,4,10,7,9];
+				var hckey = diacriticKeys[ parseInt(key) ];
+	
+				var combining = [0x0300, 0x0301, 0x0304, 0x0306, 0x0308, 0x0313, 0x0314, 0x0323, 0x0342, 0x0345];
+				var offset = 1;
+				for (var i = start; i > -1; i--) {
+					if (combining.indexOf(val.codePointAt(i - 1)) > -1) {
+						offset++;
+					}
+					else {
+						break;
+					}
+				}
+	
+				unicodeMode = 0;//$("input:radio[name='unicodeMode']:checked").val();
+	
+				newLetter = accentSyllable(val.slice(start - offset, start), hckey);
+				replacing = start - (start - offset);
+			}
+	
+			if (newLetter.length > 0) {
+				//update the input/textarea
+				this.value = val.slice(0, start - replacing) + newLetter + val.slice(end);
+				// Move the caret
+				this.selectionStart = this.selectionEnd = (start - replacing) + newLetter.length;
+				return false;
+			}
+		}    
+		return true; //this allows most punctuation to pass through
+	}
+
+    var reqPending = false;
+    function submitclicked() {
+        let submitbutton = document.querySelector("#submitbutton");
+        if (submitbutton.innerText == "Enter") {
+            submitbutton.innerText = "Continue";
+            stopTimer();
+        }
+        else {
+            submitbutton.innerText = "Enter";
+            startTimer();
+            
+        }
+
+        reqPending = true;
+        console.log("clicked");
+        $.ajax({
+            url: "enter",
+            type: "POST",
+            data: {qtype:"submit",orig:"", answer:""},
+            dataType: "text",//JSON automatically deserializes json
+            success: function (data, textStatus, jqXHR){ 
+                var returnObj = JSON.parse(data);
+                // if (returnObj.success) {                    
+                //     console.log(data);
+                // }
+                // else {                    
+                //     console.log(data);
+                // }
+                console.log(data);
+                reqPending = false;
+            },
+            error: function(response) {
+                console.log("error: " + response);
+                reqPending = false;
+            }
+        });
+    }
+
+    var timer = null;
+    var countDownDate = null;
+    var timerRunning = false;
+    function startTimer() {
+        countDownDate = new Date().getTime() + (30*1000);
+        timer = setInterval(interval, 10);
+        timerRunning = true;
+    }
+    function stopTimer() {
+        clearInterval(timer);
+        timer = null;
+        timerRunning = false;
+    }
+    function interval() {
+        var now = new Date().getTime();
+        var distance = countDownDate - now;
+
+        //var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        //var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        var ms = Math.floor((distance % (1000)) / 10);
+
+        timerRef.innerHTML = ((minutes > 0) ? ((minutes < 10) ? ("0" + minutes + ":") : minutes + ":") : "") + ((seconds < 10) ? ("0" + seconds + ":") : seconds + ":") + ((ms < 10) ? ("0" + ms) : ms);
+
+        if (distance <= 0) {
+            clearInterval(timer);
+            timerRef.innerHTML = "00:00";
+        }
+    }
+    
+    </script>
+    <style>
+        @font-face {
+  		    font-family: 'WebNewAthenaUnicode';
+  		src: url('/newathu5_8.ttf') format('truetype');
+	}
+    BODY { font-family:helvetica neue,helvetica, arial, sans-serif; }
+    .gkinput, .gkinputnontyping {
+        font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
+    }
+    .gkinput, .gkinputcodes, .gkinputnontyping {
+    -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+    -moz-box-sizing: border-box;    /* Firefox, other Gecko */
+    box-sizing: border-box;         /* Opera/IE 8+ */
+    width: 100%;
+    padding: 0px 0.5em;
+    height: 40px;
+    font-size: 20pt;
+    border-radius: 6px;
+    border: 2px solid #666;
+    margin:6px 0px;
+    resize: none;
+}
+
+.gkinput:focus, .gkinputcodes:focus, .gkinputnontyping:focus{
+    outline:2px solid #6677dd;
+}
+
+.startingform, .newform {
+    width:600px;
+    display:block;
+    margin:0px auto;
+    height:110px;
+    font-size:24pt;
+    border:1px solid black;
+    text-align: center;
+    padding-top:20px;
+    border-radius:6px;
+    font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
+}
+.changedesc {
+    width:600px;
+    display:block;
+    margin:10px auto;
+    height:82px;
+    font-size:24pt;
+    text-align: center;
+    padding-top: 36px;
+}
+#submitbutton {
+    margin:10px auto;
+    width:100px;
+    display: block;
+}
+#mainstopwatch {
+    float:right;
+}
+.hbox {
+    width:600px;
+    margin:10px auto;
+    height:30px;
+}
+.mfbutton {
+    float:left;
+    width:50px;
+}
+    </style>
+    </head>
+    <body onload="start()">
+
+        <div class="hbox">
+            <button class="mfbutton" onclick="">MF</button>
+            <div id="mainstopwatch">
+                <div class="mainTime">
+                    00:00
+                </div>
+            </div>
+        </div>
+    <div id="startingform" class="startingform">φέρω</div>
+    <div id="changedesc" class="changedesc">first plural aorist active subjunctive</div>
+    <textarea class="gkinput newform" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="padding:10px;"></textarea>
+    <button id="submitbutton" onclick="submitclicked()">Start</button>   
+
+</body>
+</html>
