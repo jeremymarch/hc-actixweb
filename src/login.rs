@@ -41,7 +41,7 @@ pub async fn login_get() -> Result<HttpResponse, AWError> {
     Ok(HttpResponse::Ok()
         .content_type(ContentType::html())
         //.insert_header(("X-Hdr", "sample"))
-        .body(format!(r#"<!DOCTYPE html>
+        .body(r#"<!DOCTYPE html>
 <html lang="en">
     <head>
         <meta http-equiv="content-type" content="text/html; charset=utf-8">
@@ -69,7 +69,6 @@ pub async fn login_get() -> Result<HttpResponse, AWError> {
         </style>
     </head>
     <body>
-        <p>{}</p>
         <form action="/login" method="post">
             <table>
                 <tbody>
@@ -99,7 +98,7 @@ pub async fn login_get() -> Result<HttpResponse, AWError> {
         </form>
         <script>/*document.getElementById("username").focus();*/</script>
     </body>
-</html>"#, message)))
+</html>"#))
 }
 
 fn validate_login(credentials: Credentials) -> Option<u32> {

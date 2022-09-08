@@ -43,6 +43,22 @@ async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
     Ok(HttpResponse::Ok().finish()) //send 200 with empty body
 }
 
+#[derive(Deserialize)]
+pub struct AnswerQuery {
+    pub qtype: String,
+    pub orig: String,
+    pub answer: String,
+}
+
+#[allow(clippy::eval_order_dependence)]
+async fn enter(
+    (info, req): (web::Form<AnswerQuery>, HttpRequest)) -> Result<HttpResponse, AWError> {
+    let db = req.app_data::<SqlitePool>().unwrap();
+
+    let res = ("abc","def",);
+    Ok(HttpResponse::Ok().json(res))
+}
+
 #[actix_web::main]
 async fn main() -> io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=info");
@@ -92,6 +108,7 @@ fn config(cfg: &mut web::ServiceConfig) {
     cfg.route("/login", web::get().to(login::login_get))
         .route("/login", web::post().to(login::login_post))
         .service(web::resource("/healthzzz").route(web::get().to(health_check)))
+        .service(web::resource("/enter").route(web::post().to(enter)))
         .service(
             fs::Files::new("/", "./static")
                 .prefer_utf8(true)
