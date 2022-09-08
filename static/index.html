@@ -187,8 +187,8 @@
             //mark (in)correct, show correct answer
 
             document.querySelector("#answerform").disabled = true;
-            document.querySelector("#correctanswer").style.display = "block";
-            document.querySelector("#correctanswer").innerHTML = "abc";
+            document.querySelector("#correctanswer").style.visibility = "visible";
+            document.querySelector("#correctanswer").innerHTML = "correct answer";
         }
         else {
             console.log("Continue clicked");
@@ -206,7 +206,7 @@
             document.querySelector("#answerform").focus();
 
             document.querySelector("#correctanswer").innerHTML = "";
-            document.querySelector("#correctanswer").style.display = "none";
+            document.querySelector("#correctanswer").style.visibility = "hidden";
 
             //start timer
             startTimer();
@@ -242,7 +242,7 @@
     }
 
     function timeout() {
-        console.log("time ran out");
+        console.log("timed out");
         clearInterval(timer);
         timerRef.innerHTML = "<span style=\"color:red;font-weight:bold;\">00:00</span>";
         submitclicked();
@@ -251,8 +251,9 @@
     var timer = null;
     var countDownDate = null;
     var timerRunning = false;
+    var seconds = 30;
     function startTimer() {
-        countDownDate = new Date().getTime() + (30*1000);
+        countDownDate = new Date().getTime() + (seconds * 1000);
         timer = setInterval(interval, 10);
         timerRunning = true;
     }
@@ -271,11 +272,12 @@
         var seconds = Math.floor((distance % (1000 * 60)) / 1000);
         var ms = Math.floor((distance % (1000)) / 10);
 
-        timerRef.innerHTML = ((minutes > 0) ? ((minutes < 10) ? ("0" + minutes + ":") : minutes + ":") : "") + ((seconds < 10) ? ("0" + seconds + ":") : seconds + ":") + ((ms < 10) ? ("0" + ms) : ms);
-
         if (distance <= 0) {
             timeout();
+            return;
         }
+
+        timerRef.innerHTML = ((minutes > 0) ? ((minutes < 10) ? ("0" + minutes + ":") : minutes + ":") : "") + ((seconds < 10) ? ("0" + seconds + ":") : seconds + ":") + ((ms < 10) ? ("0" + ms) : ms);
     }
 
     $(document).ready(function () {
@@ -339,6 +341,7 @@
     margin:10px auto;
     font-size:24pt;
     text-align: center;
+    height:42px;
 }
 #submitbutton {
     margin:10px auto;
@@ -365,15 +368,14 @@
             <button class="mfbutton" onclick="mfclicked()">MF</button>
             <div id="mainstopwatch">
                 <div class="mainTime">
-                    00:00
+                    30:00
                 </div>
             </div>
         </div>
-    <div id="startingform" class="startingform">φέρω</div>
-    <div id="changedesc" class="changedesc">first plural aorist active subjunctive</div>
+    <div id="startingform" class="startingform"></div>
+    <div id="changedesc" class="changedesc">press start to begin</div>
     <textarea id="answerform" class="gkinput newform disablecopypaste" disabled autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="padding:10px;"></textarea>
-    <div id="correctanswer" class="correctanswer" style="display:none;"></div>
+    <div id="correctanswer" class="correctanswer" style="visibility: hidden;"></div>
     <button id="submitbutton" onclick="submitclicked()">Start</button>   
-
 </body>
 </html>
