@@ -29,12 +29,16 @@ use actix_web::{
 };
 use std::io;
 
+use uuid::Uuid;
+
 //use mime;
 
 use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::SqlitePool;
 use std::str::FromStr;
 use serde::{Deserialize, Serialize};
+
+use hoplite_verbs_rs::*;
 
 mod login;
 
@@ -44,12 +48,52 @@ async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
 }
 
 #[derive(Deserialize)]
-pub struct AnswerQuery {
-    pub qtype: String,
-    pub answer: String,
-    pub time: String,
-    pub mf_pressed: bool,
-    pub timed_out: bool,
+struct AnswerQuery {
+    qtype: String,
+    answer: String,
+    time: String,
+    mf_pressed: bool,
+    timed_out: bool,
+}
+
+#[derive(Serialize)]
+struct ResponseQuery {
+    qtype: String,
+    starting_form: String,
+    change_desc: String,
+    has_mf: bool,
+    is_correct:bool,
+    //answer: String,
+}
+
+struct GameDesc {
+    id: Uuid,
+    name: String,
+    time_down: bool,
+    unit: Option<u8>,
+    custom_time: Option<u32>, //seconds
+    custom_verbs: Vec<HcGreekVerb>,
+    custom_persons: Vec<HcPerson>,
+    custom_numbers: Vec<HcPerson>,
+    custom_tenses: Vec<HcPerson>,
+    custom_voices: Vec<HcPerson>,
+    custom_moods: Vec<HcPerson>,
+    timestamp_created: u32,
+    user_id: u32,
+    opponent_id: Option<u32>,
+}
+
+struct MoveDesc {
+    id: Uuid,
+    game_id: u32,
+    verb_form: HcGreekVerbForm,
+    is_correct: bool,
+    time: String,
+    timed_out: bool,
+    mf_pressed: bool,
+    answer: String,
+    timestamp_created: u32,
+    user_id: u32,
 }
 
 #[allow(clippy::eval_order_dependence)]
@@ -57,7 +101,16 @@ async fn enter(
     (info, req): (web::Form<AnswerQuery>, HttpRequest)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
 
-    let res = ("abc","def",);
+    let res = ResponseQuery {
+        qtype: "test".to_string(),
+        starting_form: "starting_form".to_string(),
+        change_desc: "change_desc".to_string(),
+        has_mf: false,
+        is_correct: false,
+        //answer: String,
+    };
+
+    //let res = ("abc","def",);
     Ok(HttpResponse::Ok().json(res))
 }
 

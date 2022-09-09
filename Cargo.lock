@@ -870,11 +870,13 @@ dependencies = [
  "argon2",
  "env_logger",
  "futures",
+ "hoplite_verbs_rs",
  "secrecy",
  "serde",
  "serde_json",
  "sqlx",
  "thiserror",
+ "uuid",
 ]
 
 [[package]]
@@ -917,6 +919,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c49c37c09c17a53d937dfbb742eb3a961d65a994e6bcdcf37e7399d0cc8ab5e"
 dependencies = [
  "digest",
+]
+
+[[package]]
+name = "hoplite_verbs_rs"
+version = "0.2.0"
+dependencies = [
+ "itertools",
+ "rand",
+ "rustunicodetests",
+ "unicode-normalization",
+ "unicode-segmentation",
 ]
 
 [[package]]
@@ -1440,6 +1453,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "rustunicodetests"
+version = "0.1.0"
+dependencies = [
+ "unicode-normalization",
+]
+
+[[package]]
 name = "ryu"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1928,6 +1948,12 @@ dependencies = [
  "idna",
  "percent-encoding",
 ]
+
+[[package]]
+name = "uuid"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd6469f4314d5f1ffec476e05f17cc9a78bc7a27a6a857842170bdf8d6f98d2f"
 
 [[package]]
 name = "vcpkg"

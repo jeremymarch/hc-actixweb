@@ -23,9 +23,99 @@
             document.querySelector("HTML").classList.remove("dark");
         }
     }
-    setTheme();
+    setTheme();    
+    </script>
+    <style>
+        @font-face {
+  		    font-family: 'WebNewAthenaUnicode';
+  		src: url('/newathu5_8.ttf') format('truetype');
+	}
+    BODY { font-family:helvetica neue,helvetica, arial, sans-serif; }
+    .gkinput, .gkinputnontyping {
+        font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
+    }
+    .gkinput, .gkinputcodes, .gkinputnontyping {
+    -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+    -moz-box-sizing: border-box;    /* Firefox, other Gecko */
+    box-sizing: border-box;         /* Opera/IE 8+ */
+    width: 100%;
+    padding: 0px 0.5em;
+    height: 40px;
+    font-size: 20pt;
+    border-radius: 6px;
+    border: 2px solid #666;
+    margin:6px 0px;
+    resize: none;
+}
 
-    // Check for wasm support.
+.gkinput:focus, .gkinputcodes:focus, .gkinputnontyping:focus{
+    outline:2px solid #6677dd;
+}
+
+.startingform, .newform {
+    width:600px;
+    display:block;
+    margin:0px auto;
+    height:110px;
+    font-size:24pt;
+    border:1px solid black;
+    text-align: center;
+    padding-top:20px;
+    border-radius:6px;
+    font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
+}
+.changedesc {
+    width:600px;
+    display:block;
+    margin:10px auto;
+    height:82px;
+    font-size:24pt;
+    text-align: center;
+    padding-top: 36px;
+}
+.correctanswer {
+    width:600px;
+    display:block;
+    margin:10px auto;
+    font-size:24pt;
+    text-align: center;
+    height:42px;
+}
+#submitbutton {
+    margin:10px auto;
+    width:100px;
+    display: block;
+}
+#mainstopwatch {
+    float:right;
+}
+.hbox {
+    width:600px;
+    margin:10px auto;
+    height:30px;
+}
+.mfbutton {
+    float:left;
+    width:50px;
+}
+    </style>
+    </head>
+    <body onload="start()">
+        <div class="hbox">
+            <button class="mfbutton" onclick="mfclicked()">MF</button>
+            <div id="mainstopwatch">
+                <div id="mainTime">
+                    30:00
+                </div>
+            </div>
+        </div>
+    <div id="startingform" class="startingform"></div>
+    <div id="changedesc" class="changedesc">press start to begin</div>
+    <textarea id="answerform" class="gkinput newform disablecopypaste" disabled autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="padding:10px;"></textarea>
+    <div id="correctanswer" class="correctanswer" style="visibility: hidden;"></div>
+    <button id="submitbutton" onclick="submitclicked()">Start</button>   
+    <script>
+            // Check for wasm support.
 	if (!('WebAssembly' in window)) {
 		alert('you need a browser with wasm support enabled :(');
 	}
@@ -76,25 +166,25 @@
     function start() {
         timerRef = document.querySelector('#mainTime');
 	    const supported = (() => {
-		try {
-			if (typeof WebAssembly === "object"
-				&& typeof WebAssembly.instantiate === "function") {
-				const module = new WebAssembly.Module(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00));
-				if (module instanceof WebAssembly.Module)
-					return new WebAssembly.Instance(module) instanceof WebAssembly.Instance;
-			}
-		} catch (e) {
-		}
-		return false;
-	})();
-	console.log(supported ? "WebAssembly is supported" : "WebAssembly is not supported");
+            try {
+                if (typeof WebAssembly === "object"
+                    && typeof WebAssembly.instantiate === "function") {
+                    const module = new WebAssembly.Module(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00));
+                    if (module instanceof WebAssembly.Module)
+                        return new WebAssembly.Instance(module) instanceof WebAssembly.Instance;
+                }
+            } catch (e) { }
+            return false;
+        })();
+	    console.log(supported ? "WebAssembly is supported" : "WebAssembly is not supported");
 	
 		$(".gkinput").keypress(handleKey);
-		$("#inp").focus();
+		//$("#inp").focus();
+
+        submit_data("", "", false, false); //get new
 	}
 	
 	var forceLowercase = false;
-	
 	function accentSyllable(origChars, key) {
 		var len = origChars.length;
 		//add letter and any combining diacritics to the buffer as code points
@@ -175,6 +265,31 @@
 		return true; //this allows most punctuation to pass through
 	}
 
+    var starting_form = null;
+    var change_desc = null;
+    function submit_data(answer, time, mfPressed, timedOut) {
+        $.ajax({
+            url: "enter",
+            type: "POST",
+            data: {qtype:"submit", answer:answer, time:time, mf_pressed:mfPressed, timed_out:timedOut},
+            dataType: "json",//JSON automatically deserializes json
+            success: function (data, textStatus, jqXHR) {
+                //console.log("data: " + data[0] + "ha " + data[1]);
+                //var returnObj = JSON.parse(data);
+
+                console.log(data);
+                starting_form = data.starting_form;
+                change_desc = data.change_desc;
+
+                reqPending = false;
+            },
+            error: function(response) {
+                console.log("error: " + response);
+                reqPending = false;
+            }
+        });
+    }
+
     var reqPending = false;
     function submitclicked() {
         let submitbutton = document.querySelector("#submitbutton");
@@ -194,28 +309,7 @@
 
             reqPending = true;
 
-            $.ajax({
-                url: "enter",
-                type: "POST",
-                data: {qtype:"submit", answer:answer, time:time, mf_pressed:mfPressed, timed_out:timedOut},
-                dataType: "json",//JSON automatically deserializes json
-                success: function (data, textStatus, jqXHR){ 
-                    console.log("data: " + data[0] + "ha " + data[1]);
-                    //var returnObj = JSON.parse(data);
-                    // if (returnObj.success) {                    
-                    //     console.log(data);
-                    // }
-                    // else {                    
-                    //     console.log(data);
-                    // }
-                    console.log(data);
-                    reqPending = false;
-                },
-                error: function(response) {
-                    console.log("error: " + response);
-                    reqPending = false;
-                }
-            });
+            submit_data(answer, time, mfPressed, timedOut);
         }
         else {
             console.log("Continue clicked");
@@ -224,9 +318,9 @@
             timedOut = false;
             submitbutton.innerText = "Enter";
             //display startform
-            document.querySelector("#startingform").innerText = "φέρω";
+            document.querySelector("#startingform").innerText = starting_form;
             //display change desc
-            document.querySelector("#changedesc").innerHTML = "First <b>Plural</b> Aorist <b>Optative</b> Active";
+            document.querySelector("#changedesc").innerHTML = change_desc;
             
             //clear and enable text field
             document.querySelector("#answerform").value = "";
@@ -293,97 +387,6 @@
        e.preventDefault();
     });
   });
-    
     </script>
-    <style>
-        @font-face {
-  		    font-family: 'WebNewAthenaUnicode';
-  		src: url('/newathu5_8.ttf') format('truetype');
-	}
-    BODY { font-family:helvetica neue,helvetica, arial, sans-serif; }
-    .gkinput, .gkinputnontyping {
-        font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
-    }
-    .gkinput, .gkinputcodes, .gkinputnontyping {
-    -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
-    -moz-box-sizing: border-box;    /* Firefox, other Gecko */
-    box-sizing: border-box;         /* Opera/IE 8+ */
-    width: 100%;
-    padding: 0px 0.5em;
-    height: 40px;
-    font-size: 20pt;
-    border-radius: 6px;
-    border: 2px solid #666;
-    margin:6px 0px;
-    resize: none;
-}
-
-.gkinput:focus, .gkinputcodes:focus, .gkinputnontyping:focus{
-    outline:2px solid #6677dd;
-}
-
-.startingform, .newform {
-    width:600px;
-    display:block;
-    margin:0px auto;
-    height:110px;
-    font-size:24pt;
-    border:1px solid black;
-    text-align: center;
-    padding-top:20px;
-    border-radius:6px;
-    font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
-}
-.changedesc {
-    width:600px;
-    display:block;
-    margin:10px auto;
-    height:82px;
-    font-size:24pt;
-    text-align: center;
-    padding-top: 36px;
-}
-.correctanswer {
-    width:600px;
-    display:block;
-    margin:10px auto;
-    font-size:24pt;
-    text-align: center;
-    height:42px;
-}
-#submitbutton {
-    margin:10px auto;
-    width:100px;
-    display: block;
-}
-#mainstopwatch {
-    float:right;
-}
-.hbox {
-    width:600px;
-    margin:10px auto;
-    height:30px;
-}
-.mfbutton {
-    float:left;
-    width:50px;
-}
-    </style>
-    </head>
-    <body onload="start()">
-
-        <div class="hbox">
-            <button class="mfbutton" onclick="mfclicked()">MF</button>
-            <div id="mainstopwatch">
-                <div id="mainTime">
-                    30:00
-                </div>
-            </div>
-        </div>
-    <div id="startingform" class="startingform"></div>
-    <div id="changedesc" class="changedesc">press start to begin</div>
-    <textarea id="answerform" class="gkinput newform disablecopypaste" disabled autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="padding:10px;"></textarea>
-    <div id="correctanswer" class="correctanswer" style="visibility: hidden;"></div>
-    <button id="submitbutton" onclick="submitclicked()">Start</button>   
 </body>
 </html>
