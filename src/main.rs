@@ -39,8 +39,8 @@ use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 
 use hoplite_verbs_rs::*;
-
 mod login;
+mod db;
 
 async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
     //remember that basic authentication blocks this
@@ -66,8 +66,14 @@ struct ResponseQuery {
     //answer: String,
 }
 
-struct GameDesc {
-    id: Uuid,
+#[derive(Deserialize,Serialize)]
+struct CreateSessionQuery {
+    qtype:String,
+    unit: u32,
+}
+
+struct SessionDesc {
+    session_id: Uuid,
     name: String,
     time_down: bool,
     unit: Option<u8>,
@@ -84,8 +90,8 @@ struct GameDesc {
 }
 
 struct MoveDesc {
-    id: Uuid,
-    game_id: u32,
+    move_id: Uuid,
+    session_id: u32,
     verb_form: HcGreekVerbForm,
     is_correct: bool,
     time: String,
@@ -94,6 +100,33 @@ struct MoveDesc {
     answer: String,
     timestamp_created: u32,
     user_id: u32,
+}
+
+#[allow(clippy::eval_order_dependence)]
+async fn create_session(
+    (session, info, req): (Session, web::Form<CreateSessionQuery>, HttpRequest)) -> Result<HttpResponse, AWError> {
+    let db = req.app_data::<SqlitePool>().unwrap();
+
+    if let Some(user_id) = login::get_user_id(session) {
+
+        let _ = db::insert_session(&db, user_id, info.unit).await;
+
+    }
+    else {
+        println!("not logged in");
+    }
+
+    let res = ResponseQuery {
+        qtype: "test".to_string(),
+        starting_form: "starting_form".to_string(),
+        change_desc: "change_desc".to_string(),
+        has_mf: false,
+        is_correct: false,
+        //answer: String,
+    };
+
+    //let res = ("abc","def",);
+    Ok(HttpResponse::Ok().json(res))
 }
 
 #[allow(clippy::eval_order_dependence)]
@@ -138,6 +171,11 @@ async fn main() -> io::Result<()> {
         .await
         .expect("Could not connect to db.");
 
+    let res = db::create_db(&db_pool).await;
+    if res.is_err() {
+        println!("error: {:?}", res);
+    }
+
     let secret_key = Key::generate(); // TODO: Should be from .env file
     
     HttpServer::new(move || {
@@ -164,6 +202,7 @@ fn config(cfg: &mut web::ServiceConfig) {
         .route("/login", web::post().to(login::login_post))
         .service(web::resource("/healthzzz").route(web::get().to(health_check)))
         .service(web::resource("/enter").route(web::post().to(enter)))
+        .service(web::resource("/new").route(web::post().to(create_session)))
         .service(
             fs::Files::new("/", "./static")
                 .prefer_utf8(true)

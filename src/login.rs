@@ -32,8 +32,8 @@ pub struct Credentials {
     pub password: Secret<String>,
 }
 
-pub fn get_user_id(session: Session) -> Option<u32> {
-    session.get::<u32>("user_id").unwrap_or(None)
+pub fn get_user_id(session: Session) -> Option<Uuid> {
+    session.get::<Uuid>("user_id").unwrap_or(None)
 }
 
 #[allow(clippy::eval_order_dependence)]

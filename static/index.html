@@ -98,9 +98,22 @@
     float:left;
     width:50px;
 }
+
+#settings {
+    border:2px solid black;
+    width:300px;
+}
+#creategamebutton {
+    display: block;
+}
     </style>
     </head>
     <body onload="start()">
+        <div id="settings">
+            <button id="creategamebutton" onclick="createGame()">Create Game</button>
+            Top Unit<br/>
+            Opponent
+        </div>
         <div class="hbox">
             <button class="mfbutton" onclick="mfclicked()">MF</button>
             <div id="mainstopwatch">
@@ -192,14 +205,14 @@
 			wasmBuffer0[i] = origChars.codePointAt(i);
 			console.log("accent1: " + origChars.codePointAt(i));
 		}
-		console.log("accent1a: " + len + ", " + key);
+		//console.log("accent1a: " + len + ", " + key);
 		len = accentSyllableWASM(wasmBuffer0.byteOffset, len, key, 1, parseInt(unicodeMode) );
 	
 		//transform the returned code points back to a string
 		var newLetter = "";
 		for (var i = 0; i < len && i < wasmBufferLength; i++) {
 			newLetter += String.fromCodePoint(wasmBuffer0[i]);
-			console.log("accent2: " + String.fromCodePoint(wasmBuffer0[i]));
+			//console.log("accent2: " + String.fromCodePoint(wasmBuffer0[i]));
 		}
 		/*
 		for (var i = 0; i < 10; i++) {
@@ -215,8 +228,7 @@
 	
 		var val = this.value;
 		e = e || event;
-		if (typeof(this.selectionStart) == "number" && typeof(this.selectionEnd) == "number") 
-		{
+		if (typeof(this.selectionStart) == "number" && typeof(this.selectionEnd) == "number") {
 			var start = this.selectionStart;
 			var end = this.selectionEnd;
 			var newLetter = "";
@@ -286,6 +298,24 @@
             error: function(response) {
                 console.log("error: " + response);
                 reqPending = false;
+            }
+        });
+    }
+
+    function createGame() {
+        $.ajax({
+            url: "new",
+            type: "POST",
+            data: {qtype:"new", unit:8},
+            dataType: "json",//JSON automatically deserializes json
+            success: function (data, textStatus, jqXHR) {
+                //console.log("data: " + data[0] + "ha " + data[1]);
+                //var returnObj = JSON.parse(data);
+
+                console.log(data);
+            },
+            error: function(response) {
+                console.log("error: " + response);
             }
         });
     }

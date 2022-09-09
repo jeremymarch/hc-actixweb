@@ -20,7 +20,7 @@ thiserror = "1.0.34"
 secrecy = { version = "0.8", features = ["serde"] }
 argon2 = { version = "0.4.1", features = ["std"] }
 
-uuid = "1.1.2"
+uuid = { version = "1.1.2", features = ["v4", "serde"] }
 
 hoplite_verbs_rs = { path = "../hoplite_verbs_rs" }
 #hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.2.0" }
