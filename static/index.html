@@ -102,6 +102,7 @@
 #settings {
     border:2px solid black;
     width:300px;
+    float:left;
 }
 #creategamebutton {
     display: block;
@@ -155,14 +156,14 @@
 			transliterateWASM = exports.transliterate;
 			memory = exports.memory;
 	
-			console.log("memory: " + memory.buffer.byteLength);
+			//console.log("memory: " + memory.buffer.byteLength);
 	
 			//https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/2020/06/07/wasm-arrays.html
 			//offset is in bytes, length is in array elements
 			//https://stackoverflow.com/questions/15417310/why-typed-array-constructors-require-offset-to-be-multiple-of-underlying-type-si
 			var offset = 2; //don't set start at zero (null), use 2 for proper alignment
 			wasmBuffer0 = new Uint16Array(memory.buffer, offset, wasmBufferLength);
-			console.log("offset0: " + offset + ", " + wasmBuffer0.byteOffset + ", " + wasmBuffer0.length);
+			//console.log("offset0: " + offset + ", " + wasmBuffer0.byteOffset + ", " + wasmBuffer0.length);
 		}
 	);
 	
@@ -189,7 +190,7 @@
             } catch (e) { }
             return false;
         })();
-	    console.log(supported ? "WebAssembly is supported" : "WebAssembly is not supported");
+	    //console.log(supported ? "WebAssembly is supported" : "WebAssembly is not supported");
 	
 		$(".gkinput").keypress(handleKey);
 		//$("#inp").focus();
@@ -413,7 +414,7 @@
     }
 
     $(document).ready(function () {
-    $('.disablecopypaste').bind('copy paste', function (e) {
+    $('.disablecopypaste').bind('paste', function (e) {
        e.preventDefault();
     });
   });

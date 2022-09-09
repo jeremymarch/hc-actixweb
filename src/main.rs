@@ -106,22 +106,26 @@ struct MoveDesc {
 async fn create_session(
     (session, info, req): (Session, web::Form<CreateSessionQuery>, HttpRequest)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
-
+    let mut mesg = String::from("");
     if let Some(user_id) = login::get_user_id(session) {
         println!("************************LOGGED IN ");
-        let e = db::insert_session(&db, user_id, info.unit).await;
-        if e.is_err() {
-            println!("error: {:?}", e);
+        
+        match db::insert_session(&db, user_id, info.unit).await {
+            Ok(e) => {
+                mesg = "inserted!".to_string();
+            },
+            Err(e) => {
+                mesg = format!("error inserting: {:?}", e);
+            }
         }
-
     }
     else {
-        println!("not logged in");
+        mesg = "error inserting: not logged in".to_string();
     }
 
     let res = ResponseQuery {
         qtype: "test".to_string(),
-        starting_form: "starting_form".to_string(),
+        starting_form: mesg,
         change_desc: "change_desc".to_string(),
         has_mf: false,
         is_correct: false,

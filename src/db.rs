@@ -46,6 +46,33 @@ pub async fn insert_session(
     Ok(1)
 }
 
+pub async fn get_sessions(
+    pool: &SqlitePool,
+    user_id: u32,
+) -> Result<Vec<(String,)>, sqlx::Error> {
+    //strftime('%Y-%m-%d %H:%M:%S', DATETIME(updated, 'unixepoch')) as timestamp, 
+    //    ORDER BY updated DESC \
+    let query = format!("SELECT session_id \
+    FROM sessions a \
+    INNER JOIN users b ON a.challenger_user_id = b.user_id \
+    INNER JOIN users c ON a.challenged_user_id = c.user_id \
+    WHERE b.user_id = ? OR c.user_id = ?
+    LIMIT 20000;"
+    );
+    let res: Vec<(String,)> = sqlx::query(&query)
+        .bind(user_id)
+        .bind(user_id)
+        .map(|rec: SqliteRow| {
+            (
+                rec.get("session_id"),
+            )
+        })
+        .fetch_all(pool)
+        .await?;
+
+    Ok(res)
+}
+
 pub async fn create_db(pool: &SqlitePool) -> Result<u32, sqlx::Error> {
     let mut tx = pool.begin().await?;
 
