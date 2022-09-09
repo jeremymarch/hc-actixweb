@@ -33,11 +33,11 @@ pub async fn insert_session(
 
     let uuid = Uuid::new_v4().to_string();
 
-    let query = "INSERT INTO sessions VALUES (?,?,?);";
+    let query = "INSERT INTO sessions VALUES (?,?,NULL);";
     let res = sqlx::query(query)
         .bind(uuid)
         .bind(user_id.to_string())
-        .bind("")
+        //.bind(None)
         .execute(&mut tx)
         .await?;
 

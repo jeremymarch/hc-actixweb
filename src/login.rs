@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 use super::*;
+use uuid::uuid;
 
 use secrecy::ExposeSecret;
 use secrecy::Secret;
@@ -30,10 +31,6 @@ pub struct FormData {
 pub struct Credentials {
     pub username: String,
     pub password: Secret<String>,
-}
-
-pub fn get_user_id(session: Session) -> Option<Uuid> {
-    session.get::<Uuid>("user_id").unwrap_or(None)
 }
 
 #[allow(clippy::eval_order_dependence)]
@@ -101,27 +98,15 @@ pub async fn login_get() -> Result<HttpResponse, AWError> {
 </html>"#))
 }
 
-fn validate_login(credentials: Credentials) -> Option<u32> {
-    if credentials.username.to_lowercase() == "jm"
-        && credentials.password.expose_secret() == "clam1234"
+fn validate_login(credentials: Credentials) -> Option<uuid::Uuid> {
+    if credentials.username.to_lowercase() == "user1"
+        && credentials.password.expose_secret() == "1234"
     {
-        Some(3)
-    } else if credentials.username.to_lowercase() == "ykk"
-        && credentials.password.expose_secret() == "greekdb555"
+        Some(uuid!("013c0bfd-0b5f-4151-8077-e6ddd8edc7ff"))
+    } else if credentials.username.to_lowercase() == "user2"
+        && credentials.password.expose_secret() == "1234"
     {
-        Some(4)
-    } else if credentials.username.to_lowercase() == "hh"
-        && credentials.password.expose_secret() == "greekdb555"
-    {
-        Some(5)
-    } else if credentials.username.to_lowercase() == "cd"
-        && credentials.password.expose_secret() == "greekdb555"
-    {
-        Some(6)
-    } else if credentials.username.to_lowercase() == "rr"
-        && credentials.password.expose_secret() == "greekdb555"
-    {
-        Some(7)
+        Some(uuid!("1205a753-cb27-48ee-a17f-165a72ea0a04"))
     } else {
         None
     }
@@ -139,8 +124,10 @@ pub async fn login_post(
     };
 
     if let Some(user_id) = validate_login(credentials) {
+        println!("validated login: {}", user_id.to_string());
         session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
         if session.insert("user_id", user_id).is_ok() {
+            println!("user_id inserted: {}", user_id.to_string());
             return Ok(HttpResponse::SeeOther()
                 .insert_header((LOCATION, "/"))
                 .finish());
@@ -151,6 +138,18 @@ pub async fn login_post(
     Ok(HttpResponse::SeeOther()
         .insert_header((LOCATION, "/login"))
         .finish())
+}
+
+pub fn get_user_id(session: Session) -> Option<uuid::Uuid> {
+    println!("check login");
+    if let Ok(s) = session.get::<uuid::Uuid>("user_id") {
+        println!("logged3333333 in: {:?}", s?.to_string());
+        s
+    }
+    else {
+        println!("not logged in3");
+        None
+    }
 }
 
 /*

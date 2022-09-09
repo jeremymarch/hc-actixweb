@@ -108,8 +108,11 @@ async fn create_session(
     let db = req.app_data::<SqlitePool>().unwrap();
 
     if let Some(user_id) = login::get_user_id(session) {
-
-        let _ = db::insert_session(&db, user_id, info.unit).await;
+        println!("************************LOGGED IN ");
+        let e = db::insert_session(&db, user_id, info.unit).await;
+        if e.is_err() {
+            println!("error: {:?}", e);
+        }
 
     }
     else {
@@ -176,20 +179,17 @@ async fn main() -> io::Result<()> {
         println!("error: {:?}", res);
     }
 
-    let secret_key = Key::generate(); // TODO: Should be from .env file
+    //let secret_key = Key::generate(); // TODO: Should be from .env file, else have to login again on each restart
+    let key: &Vec<u8> = &(0..64).collect(); //todo
+    let secret_key = Key::from(key);
     
     HttpServer::new(move || {
 
         App::new()
-            //.app_data(web::JsonConfig::default().error_handler(|err, _req| actix_web::error::InternalError::from_response(
-            //    err, HttpResponse::Conflict().finish()).into()))
-            //.wrap(json_cfg)
             .app_data(db_pool.clone())
             .wrap(middleware::Logger::default())
-            //.wrap(auth_basic) //this blocks healthcheck
-            .wrap(SessionMiddleware::new(CookieSessionStore::default(), secret_key.clone()))
-            .wrap(middleware::Compress::default())
-            //.wrap(error_handlers)
+            .wrap(SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone()).cookie_secure(false).build()) //cookie_secure must be false if testing without https
+            //.wrap(middleware::Compress::default())
             .configure(config)
     })
     .bind("0.0.0.0:8088")?
