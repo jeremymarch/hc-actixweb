@@ -111,6 +111,9 @@
     height:20px;
     border-bottom:1px solid black;
 }
+.myturn {
+    background-color: red;
+}
     </style>
     </head>
     <body onload="start()">
@@ -344,7 +347,7 @@
                 console.log(data);
                 let rows = "";
                 for (var i = 0; i < data.length; i++) {
-                    rows += "<p><a href='" + data[i].session_id + "'>" + data[i].timestamp + "</a></p>";
+                    rows += "<p" + ((data[i].myturn) ? " class='myturn'" : "") + "><a href='" + data[i].session_id + "'>" + data[i].timestamp + ((data[i].opponent_name) ? " vs. " + data[i].opponent_name : "") + "</a></p>";
                 }
                 document.querySelector("#list").innerHTML = rows;
             },

@@ -23,6 +23,7 @@ use sqlx::{FromRow, Row, SqlitePool};
 use sqlx::types::Uuid;
 use crate::SessionsListQuery;
 use crate::UserResult;
+use crate::MoveResult;
 
 //use unicode_normalization::UnicodeNormalization;
 
@@ -83,18 +84,28 @@ pub async fn get_sessions(
     LIMIT 20000;"
 );
     //println!("query: {} {:?}", query, user_id);
-    let res: Vec<SessionsListQuery> = sqlx::query(&query)
+    let mut res: Vec<SessionsListQuery> = sqlx::query(&query)
         .bind(user_id)
         .bind(user_id)
         .map(|rec: SqliteRow| {
-            SessionsListQuery { session_id: rec.get("session_id"), opponent:rec.get("opponent_user_id"), opponent_name: rec.get("username"),timestamp:rec.get("timestamp") }
+            SessionsListQuery { session_id: rec.get("session_id"), opponent:rec.get("opponent_user_id"), opponent_name: rec.get("username"),timestamp:rec.get("timestamp"), myturn:false }
         })
         .fetch_all(pool)
         .await?;
 
-    // for r in &res {
+    let query = "SELECT * FROM moves WHERE session_id = ? ORDER BY timestamp DESC LIMIT 1;";
+    for r in &mut res {
+        let subres:Result<MoveResult, sqlx::Error> = sqlx::query_as(query)
+        .bind(r.session_id)
+        .fetch_one(pool)
+        .await;
 
-    // }    
+        match subres {
+            Ok(s) => { if s.ask_user_id == user_id { r.myturn = false } else { r.myturn = true } },
+            Err(s) => r.myturn = false,
+        }
+
+    }    
 
     Ok(res)
 }

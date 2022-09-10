@@ -89,6 +89,25 @@ struct SessionsListQuery {
     opponent: Option<sqlx::types::Uuid>,
     opponent_name: Option<String>,
     timestamp: String,
+    myturn: bool,
+}
+
+#[derive(Deserialize,Serialize, FromRow)]
+struct MoveResult {
+    move_id: sqlx::types::Uuid,
+    session_id: sqlx::types::Uuid,
+    ask_user_id: sqlx::types::Uuid,
+    answer_user_id: Option<sqlx::types::Uuid>,
+    verb_id: Option<u32>,
+    person: Option<u8>,
+    number: Option<u8>,
+    tense: Option<u8>,
+    mood: Option<u8>,
+    voice: Option<u8>,
+    time: Option<String>,
+    timed_out: Option<bool>,
+    mf_pressed: Option<bool>,
+    timestamp: i64,
 }
 
 #[derive(Deserialize,Serialize, FromRow)]
@@ -191,6 +210,11 @@ async fn create_session(
             Ok(o) => Some(o.user_id),
             Err(_) => None,
         };
+
+        //failed to find opponent or opponent is self
+        if (info.opponent.len() > 0 && opponent_user_id.is_none()) || (opponent_user_id.is_some() && opponent_user_id.unwrap() == user_id) {
+            return Ok(HttpResponse::Ok().finish()); //todo oops
+        }
 
         let unit = if let Ok(v) = info.unit.parse::<u32>() { Some(v) } else { None };
         
