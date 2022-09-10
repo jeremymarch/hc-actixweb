@@ -85,7 +85,7 @@ struct SessionListRequest {
 
 #[derive(Deserialize,Serialize, FromRow)]
 struct SessionsListQuery {
-    session_id: String,
+    session_id: sqlx::types::Uuid,
     opponent: Option<sqlx::types::Uuid>,
     opponent_name: Option<String>,
     timestamp: String,
@@ -187,11 +187,9 @@ async fn create_session(
         let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
         let user_agent = get_user_agent(&req).unwrap_or("");
 
-        println!("11111111 {}", info.opponent);
-
         let opponent_user = db::get_user_id(&db, &info.opponent).await.map_err(map_sqlx_error)?;
-        println!("22222222 {}", opponent_user.user_id);
-        let unit = info.unit.parse::<u32>().unwrap();
+
+        let unit = if let Ok(v) = info.unit.parse::<u32>() { Some(v) } else { None };
         
         match db::insert_session(&db, user_id, unit, opponent_user.user_id, timestamp).await {
             Ok(e) => {
@@ -201,7 +199,6 @@ async fn create_session(
                 mesg = format!("error inserting: {:?}", e);
             }
         }
-        println!("333333333");
     }
     else {
         mesg = "error inserting: not logged in".to_string();

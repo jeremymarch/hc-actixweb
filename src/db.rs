@@ -44,7 +44,7 @@ pub async fn get_user_id(
 pub async fn insert_session(
     pool: &SqlitePool,
     user_id: Uuid,
-    unit: u32,
+    unit: Option<u32>,
     opponent_id: Uuid,
     timestamp:i64,
 ) -> Result<u32, sqlx::Error> {
@@ -83,7 +83,7 @@ pub async fn get_sessions(
     ORDER BY timestamp DESC \
     LIMIT 20000;"
 );
-    println!("query: {} {:?}", query, user_id);
+    //println!("query: {} {:?}", query, user_id);
     let res: Vec<SessionsListQuery> = sqlx::query(&query)
         .bind(user_id)
         .bind(user_id)
