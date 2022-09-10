@@ -20,27 +20,44 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row, SqlitePool};
-use uuid::Uuid;
+use sqlx::types::Uuid;
 use crate::SessionsListQuery;
+use crate::UserResult;
 
 //use unicode_normalization::UnicodeNormalization;
+
+pub async fn get_user_id(
+    pool: &SqlitePool,
+    username:&str,
+) -> Result<UserResult, sqlx::Error> {
+
+    let query = "SELECT user_id,user_name,password,email,timestamp FROM users WHERE user_name = ? LIMIT 1;";
+    let res:UserResult = sqlx::query_as(query)
+        .bind(username)
+        //.map(|row: SqliteRow| sqlx::types::Uuid::from(row.get("user_id")))
+        .fetch_one(pool)
+        .await?;
+
+    Ok(res)
+}
 
 pub async fn insert_session(
     pool: &SqlitePool,
     user_id: Uuid,
     unit: u32,
+    opponent_id: Uuid,
     timestamp:i64,
 ) -> Result<u32, sqlx::Error> {
     let mut tx = pool.begin().await?;
 
-    let uuid = Uuid::new_v4().to_string();
+    let uuid = sqlx::types::Uuid::new_v4();
 
-    let query = "INSERT INTO sessions VALUES (?,?,NULL,?);";
+    let query = "INSERT INTO sessions VALUES (?,?,?,?);";
     let res = sqlx::query(query)
         .bind(uuid)
-        .bind(user_id.to_string())
+        .bind(user_id)
+        .bind(opponent_id)
         .bind(timestamp)
-        //.bind(None)
         .execute(&mut tx)
         .await?;
 
@@ -51,7 +68,7 @@ pub async fn insert_session(
 
 pub async fn get_sessions(
     pool: &SqlitePool,
-    user_id: Uuid,
+    user_id: sqlx::types::Uuid,
 ) -> Result<Vec<SessionsListQuery>, sqlx::Error> {
     //strftime('%Y-%m-%d %H:%M:%S', DATETIME(timestamp, 'unixepoch')) as timestamp, 
     //    ORDER BY updated DESC \
@@ -68,8 +85,8 @@ pub async fn get_sessions(
 );
     println!("query: {} {:?}", query, user_id);
     let res: Vec<SessionsListQuery> = sqlx::query(&query)
-        .bind(user_id.to_string())
-        .bind(user_id.to_string())
+        .bind(user_id)
+        .bind(user_id)
         .map(|rec: SqliteRow| {
             SessionsListQuery { session_id: rec.get("session_id"), opponent:rec.get("opponent_user_id"), opponent_name: rec.get("username"),timestamp:rec.get("timestamp") }
         })
@@ -135,7 +152,7 @@ FOREIGN KEY (session_id) REFERENCES sessions(session_id)
         .await?;
 
     let query = "INSERT INTO users VALUES (?,?,?,?,?);";
-    let uuid = Uuid::new_v4().to_string();
+    let uuid = Uuid::from_u128(0x8CD36EFFDF5744FF953B29A473D12347);//sqlx::types::Uuid::new_v4();
     let res = sqlx::query(query)
         .bind(uuid)
         .bind("user1")
@@ -145,7 +162,7 @@ FOREIGN KEY (session_id) REFERENCES sessions(session_id)
         .execute(&mut tx)
         .await?;
 
-    let uuid = Uuid::new_v4().to_string();
+    let uuid = Uuid::from_u128(0xD75B0169E7C343838298136E3D63375C);//sqlx::types::Uuid::new_v4();
     let res = sqlx::query(query)
         .bind(uuid)
         .bind("user2")

@@ -73,7 +73,8 @@ struct ResponseQuery {
 #[derive(Deserialize,Serialize)]
 struct CreateSessionQuery {
     qtype:String,
-    unit: u32,
+    unit: String,
+    opponent:String,
 }
 
 #[derive(Deserialize,Serialize)]
@@ -88,6 +89,15 @@ struct SessionsListQuery {
     opponent: Option<sqlx::types::Uuid>,
     opponent_name: Option<String>,
     timestamp: String,
+}
+
+#[derive(Deserialize,Serialize, FromRow)]
+struct UserResult {
+    user_id: sqlx::types::Uuid,
+    user_name: String,
+    password: String,
+    email: String,
+    timestamp: i64,
 }
 
 struct SessionDesc {
@@ -176,8 +186,14 @@ async fn create_session(
         let timestamp = get_timestamp();
         let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
         let user_agent = get_user_agent(&req).unwrap_or("");
+
+        println!("11111111 {}", info.opponent);
+
+        let opponent_user = db::get_user_id(&db, &info.opponent).await.map_err(map_sqlx_error)?;
+        println!("22222222 {}", opponent_user.user_id);
+        let unit = info.unit.parse::<u32>().unwrap();
         
-        match db::insert_session(&db, user_id, info.unit, timestamp).await {
+        match db::insert_session(&db, user_id, unit, opponent_user.user_id, timestamp).await {
             Ok(e) => {
                 mesg = "inserted!".to_string();
             },
@@ -185,6 +201,7 @@ async fn create_session(
                 mesg = format!("error inserting: {:?}", e);
             }
         }
+        println!("333333333");
     }
     else {
         mesg = "error inserting: not logged in".to_string();
