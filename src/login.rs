@@ -102,11 +102,11 @@ fn validate_login(credentials: Credentials) -> Option<uuid::Uuid> {
     if credentials.username.to_lowercase() == "user1"
         && credentials.password.expose_secret() == "1234"
     {
-        Some(uuid!("013c0bfd-0b5f-4151-8077-e6ddd8edc7ff"))
+        Some(uuid!("1f653ebd-ac78-4308-a167-ecb056ec0c38"))
     } else if credentials.username.to_lowercase() == "user2"
         && credentials.password.expose_secret() == "1234"
     {
-        Some(uuid!("1205a753-cb27-48ee-a17f-165a72ea0a04"))
+        Some(uuid!("19495d1b-c8cd-4e85-a6c2-56d72b17721a"))
     } else {
         None
     }

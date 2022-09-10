@@ -29,12 +29,16 @@ use actix_web::{
 };
 use std::io;
 
-use uuid::Uuid;
+//use uuid::Uuid;
+
+use chrono::prelude::*;
 
 //use mime;
 
 use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::SqlitePool;
+use sqlx::FromRow;
+use sqlx::types::Uuid;
 use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 
@@ -72,6 +76,20 @@ struct CreateSessionQuery {
     unit: u32,
 }
 
+#[derive(Deserialize,Serialize)]
+struct SessionListRequest {
+    practice:bool,
+    game:bool,
+}
+
+#[derive(Deserialize,Serialize, FromRow)]
+struct SessionsListQuery {
+    session_id: String,
+    opponent: Option<sqlx::types::Uuid>,
+    opponent_name: Option<String>,
+    timestamp: String,
+}
+
 struct SessionDesc {
     session_id: Uuid,
     name: String,
@@ -102,6 +120,51 @@ struct MoveDesc {
     user_id: u32,
 }
 
+fn get_user_agent(req: &HttpRequest) -> Option<&str> {
+    req.headers().get("user-agent")?.to_str().ok()
+}
+
+fn get_ip(req: &HttpRequest) -> Option<String> {
+    req.peer_addr().map(|addr| addr.ip().to_string())
+}
+
+fn get_timestamp() -> i64 {
+    let now = Utc::now();
+    now.timestamp()
+}
+
+#[allow(clippy::eval_order_dependence)]
+async fn get_sessions(
+    (session, info, req): (Session, web::Form<SessionListRequest>, HttpRequest)) -> Result<HttpResponse, AWError> {
+    let db = req.app_data::<SqlitePool>().unwrap();
+    let mut mesg = String::from("");
+    if let Some(user_id) = login::get_user_id(session) {
+        println!("************************LOGGED IN2 ");
+
+        let timestamp = get_timestamp();
+        let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
+        let user_agent = get_user_agent(&req).unwrap_or("");
+        
+        let res = db::get_sessions(&db, user_id).await.map_err(map_sqlx_error)?;
+        Ok(HttpResponse::Ok().json(res))
+
+    }
+    else {
+        mesg = "error inserting: not logged in".to_string();
+        let res = ResponseQuery {
+            qtype: "test".to_string(),
+            starting_form: mesg,
+            change_desc: "change_desc".to_string(),
+            has_mf: false,
+            is_correct: false,
+            //answer: String,
+        };
+    
+        //let res = ("abc","def",);
+        Ok(HttpResponse::Ok().json(res))
+    }
+}
+
 #[allow(clippy::eval_order_dependence)]
 async fn create_session(
     (session, info, req): (Session, web::Form<CreateSessionQuery>, HttpRequest)) -> Result<HttpResponse, AWError> {
@@ -109,8 +172,12 @@ async fn create_session(
     let mut mesg = String::from("");
     if let Some(user_id) = login::get_user_id(session) {
         println!("************************LOGGED IN ");
+
+        let timestamp = get_timestamp();
+        let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
+        let user_agent = get_user_agent(&req).unwrap_or("");
         
-        match db::insert_session(&db, user_id, info.unit).await {
+        match db::insert_session(&db, user_id, info.unit, timestamp).await {
             Ok(e) => {
                 mesg = "inserted!".to_string();
             },
@@ -152,6 +219,128 @@ async fn enter(
 
     //let res = ("abc","def",);
     Ok(HttpResponse::Ok().json(res))
+}
+
+#[derive(Error, Debug)]
+pub struct PhilologusError {
+    code: StatusCode,
+    name: String,
+    error: String,
+}
+
+impl std::fmt::Display for PhilologusError {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(
+            fmt,
+            "PhilologusError: {} {}: {}.",
+            self.code.as_u16(),
+            self.name,
+            self.error
+        )
+    }
+}
+
+impl ResponseError for PhilologusError {
+    fn error_response(&self) -> HttpResponse {
+        let error_response = ErrorResponse {
+            code: self.code.as_u16(),
+            message: self.error.to_string(),
+            error: self.name.to_string(),
+        };
+        HttpResponse::build(self.code).json(error_response)
+    }
+}
+
+fn map_sqlx_error(e: sqlx::Error) -> PhilologusError {
+    match e {
+        sqlx::Error::Configuration(e) => PhilologusError {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            name: "sqlx error".to_string(),
+            error: format!("sqlx Configuration: {}", e),
+        },
+        sqlx::Error::Database(e) => PhilologusError {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            name: "sqlx error".to_string(),
+            error: format!("sqlx Database: {}", e),
+        },
+        sqlx::Error::Io(e) => PhilologusError {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            name: "sqlx error".to_string(),
+            error: format!("sqlx Io: {}", e),
+        },
+        sqlx::Error::Tls(e) => PhilologusError {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            name: "sqlx error".to_string(),
+            error: format!("sqlx Tls: {}", e),
+        },
+        sqlx::Error::Protocol(e) => PhilologusError {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            name: "sqlx error".to_string(),
+            error: format!("sqlx Protocol: {}", e),
+        },
+        sqlx::Error::RowNotFound => PhilologusError {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            name: "sqlx error".to_string(),
+            error: "sqlx RowNotFound".to_string(),
+        },
+        sqlx::Error::TypeNotFound { .. } => PhilologusError {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            name: "sqlx error".to_string(),
+            error: "sqlx TypeNotFound".to_string(),
+        },
+        sqlx::Error::ColumnIndexOutOfBounds { .. } => PhilologusError {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            name: "sqlx error".to_string(),
+            error: "sqlx ColumnIndexOutOfBounds".to_string(),
+        },
+        sqlx::Error::ColumnNotFound(e) => PhilologusError {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            name: "sqlx error".to_string(),
+            error: format!("sqlx ColumnNotFound: {}", e),
+        },
+        sqlx::Error::ColumnDecode { .. } => PhilologusError {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            name: "sqlx error".to_string(),
+            error: "sqlx ColumnDecode".to_string(),
+        },
+        sqlx::Error::Decode(e) => PhilologusError {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            name: "sqlx error".to_string(),
+            error: format!("sqlx Decode: {}", e),
+        },
+        sqlx::Error::PoolTimedOut => PhilologusError {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            name: "sqlx error".to_string(),
+            error: "sqlx PoolTimeOut".to_string(),
+        },
+        sqlx::Error::PoolClosed => PhilologusError {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            name: "sqlx error".to_string(),
+            error: "sqlx PoolClosed".to_string(),
+        },
+        sqlx::Error::WorkerCrashed => PhilologusError {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            name: "sqlx error".to_string(),
+            error: "sqlx WorkerCrashed".to_string(),
+        },
+        sqlx::Error::Migrate(e) => PhilologusError {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            name: "sqlx error".to_string(),
+            error: format!("sqlx Migrate: {}", e),
+        },
+        _ => PhilologusError {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            name: "sqlx error".to_string(),
+            error: "sqlx Unknown error".to_string(),
+        },
+    }
+}
+
+#[derive(Serialize)]
+struct ErrorResponse {
+    code: u16,
+    error: String,
+    message: String,
 }
 
 #[actix_web::main]
@@ -207,6 +396,7 @@ fn config(cfg: &mut web::ServiceConfig) {
         .service(web::resource("/healthzzz").route(web::get().to(health_check)))
         .service(web::resource("/enter").route(web::post().to(enter)))
         .service(web::resource("/new").route(web::post().to(create_session)))
+        .service(web::resource("/list").route(web::post().to(get_sessions)))
         .service(
             fs::Files::new("/", "./static")
                 .prefer_utf8(true)
