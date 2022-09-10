@@ -187,11 +187,14 @@ async fn create_session(
         let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
         let user_agent = get_user_agent(&req).unwrap_or("");
 
-        let opponent_user = db::get_user_id(&db, &info.opponent).await.map_err(map_sqlx_error)?;
+        let opponent_user_id = match db::get_user_id(&db, &info.opponent).await.map_err(map_sqlx_error) {
+            Ok(o) => Some(o.user_id),
+            Err(_) => None,
+        };
 
         let unit = if let Ok(v) = info.unit.parse::<u32>() { Some(v) } else { None };
         
-        match db::insert_session(&db, user_id, unit, opponent_user.user_id, timestamp).await {
+        match db::insert_session(&db, user_id, unit, opponent_user_id, timestamp).await {
             Ok(e) => {
                 mesg = "inserted!".to_string();
             },

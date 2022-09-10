@@ -34,7 +34,6 @@ pub async fn get_user_id(
     let query = "SELECT user_id,user_name,password,email,timestamp FROM users WHERE user_name = ? LIMIT 1;";
     let res:UserResult = sqlx::query_as(query)
         .bind(username)
-        //.map(|row: SqliteRow| sqlx::types::Uuid::from(row.get("user_id")))
         .fetch_one(pool)
         .await?;
 
@@ -45,7 +44,7 @@ pub async fn insert_session(
     pool: &SqlitePool,
     user_id: Uuid,
     unit: Option<u32>,
-    opponent_id: Uuid,
+    opponent_id: Option<Uuid>,
     timestamp:i64,
 ) -> Result<u32, sqlx::Error> {
     let mut tx = pool.begin().await?;
