@@ -110,6 +110,11 @@ struct MoveResult {
     timestamp: i64,
 }
 
+#[derive(Deserialize,Serialize)]
+struct GetMoveQuery {
+    session_id:sqlx::types::Uuid,
+}
+
 #[derive(Deserialize,Serialize, FromRow)]
 struct UserResult {
     user_id: sqlx::types::Uuid,
@@ -238,6 +243,61 @@ async fn create_session(
         has_mf: false,
         is_correct: false,
         //answer: String,
+    };
+
+    //let res = ("abc","def",);
+    Ok(HttpResponse::Ok().json(res))
+}
+
+#[derive(Deserialize,Serialize)]
+struct AskMoveResponse {
+    move_type:String, //ask 
+    starting_form: Option<String>,
+    prev_answer: Option<String>,
+    is_correct: Option<bool>,
+    correct_answer:Option<String>,
+    person: Option<u8>,
+    number: Option<u8>,
+    tense: Option<u8>,
+    voice: Option<u8>,
+    mood: Option<u8>,
+    time: Option<String>,//time for prev answer
+    //limit posibilities based on session settings
+}
+
+#[derive(Deserialize,Serialize)]
+struct AnswerMoveResponse {
+    move_type:String, //answer
+    starting_form: String,
+    person: u8,
+    number: u8,
+    tense: u8,
+    voice: u8,
+    mood: u8,
+    time: u32, //seconds
+    //has_multiple_forms:bool?,
+}
+
+#[allow(clippy::eval_order_dependence)]
+async fn get_move(
+    (info, req): (web::Form<GetMoveQuery>, HttpRequest)) -> Result<HttpResponse, AWError> {
+    let db = req.app_data::<SqlitePool>().unwrap();
+
+    //"ask", prev form to start from or null, prev answer and is_correct, correct answer
+
+    let res = AskMoveResponse {
+        move_type:String::from("firstask"), //ask 
+        starting_form: None,
+        prev_answer: None,
+        is_correct: None,
+        correct_answer:None,
+        person: None,
+        number: None,
+        tense: None,
+        voice: None,
+        mood: None,
+        time: None,//time for prev answer
+        //limit posibilities based on session settings
     };
 
     //let res = ("abc","def",);
@@ -438,6 +498,7 @@ fn config(cfg: &mut web::ServiceConfig) {
         .service(web::resource("/enter").route(web::post().to(enter)))
         .service(web::resource("/new").route(web::post().to(create_session)))
         .service(web::resource("/list").route(web::post().to(get_sessions)))
+        .service(web::resource("/getmove").route(web::post().to(get_move)))
         .service(
             fs::Files::new("/", "./static")
                 .prefer_utf8(true)
