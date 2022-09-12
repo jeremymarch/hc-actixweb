@@ -86,10 +86,12 @@ struct SessionListRequest {
 #[derive(Deserialize,Serialize, FromRow)]
 struct SessionsListQuery {
     session_id: sqlx::types::Uuid,
+    challenged: Option<sqlx::types::Uuid>, //the one who didn't start the game, or null for practice
     opponent: Option<sqlx::types::Uuid>,
     opponent_name: Option<String>,
     timestamp: String,
     myturn: bool,
+    move_type:u8,
 }
 
 #[derive(Deserialize,Serialize, FromRow)]
@@ -278,6 +280,24 @@ struct AnswerMoveResponse {
     //has_multiple_forms:bool?,
 }
 
+#[derive(Deserialize,Serialize)]
+struct AskQuery {
+    session_id: Uuid,
+    person: u8,
+    number: u8,
+    tense: u8,
+    voice: u8,
+    mood: u8,
+    verb: u32,
+}
+
+#[derive(Deserialize,Serialize)]
+struct AskResponse {
+    qtype:String,
+    success:bool,
+    mesg:String,
+}
+
 #[allow(clippy::eval_order_dependence)]
 async fn get_move(
     (info, req): (web::Form<GetMoveQuery>, HttpRequest)) -> Result<HttpResponse, AWError> {
@@ -320,6 +340,36 @@ async fn enter(
 
     //let res = ("abc","def",);
     Ok(HttpResponse::Ok().json(res))
+}
+
+#[allow(clippy::eval_order_dependence)]
+async fn ask(
+    (info, req, session): (web::Form<AskQuery>, HttpRequest, Session)) -> Result<HttpResponse, AWError> {
+    let db = req.app_data::<SqlitePool>().unwrap();
+
+    let timestamp = get_timestamp();
+    let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
+    let user_agent = get_user_agent(&req).unwrap_or("");
+
+    if let Some(user_id) = login::get_user_id(session) {
+        
+        let res = db::insert_ask_move(&db, user_id, info.session_id, info.person, info.number, info.tense, info.mood, info.voice, info.verb, timestamp).await.map_err(map_sqlx_error)?;
+
+        let res = AskResponse {
+            qtype: "askresponse".to_string(),
+            success: true,
+            mesg:"".to_string(),
+        };
+        Ok(HttpResponse::Ok().json(res))
+    }
+    else {
+        let res = AskResponse {
+            qtype: "askresponse".to_string(),
+            success: false,
+            mesg:"not logged in".to_string(),
+        };
+        Ok(HttpResponse::Ok().json(res))
+    }
 }
 
 #[derive(Error, Debug)]
@@ -499,6 +549,7 @@ fn config(cfg: &mut web::ServiceConfig) {
         .service(web::resource("/new").route(web::post().to(create_session)))
         .service(web::resource("/list").route(web::post().to(get_sessions)))
         .service(web::resource("/getmove").route(web::post().to(get_move)))
+        .service(web::resource("/ask").route(web::post().to(ask)))
         .service(
             fs::Files::new("/", "./static")
                 .prefer_utf8(true)

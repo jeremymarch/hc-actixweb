@@ -72,11 +72,11 @@ pub async fn get_sessions(
 ) -> Result<Vec<SessionsListQuery>, sqlx::Error> {
     //strftime('%Y-%m-%d %H:%M:%S', DATETIME(timestamp, 'unixepoch')) as timestamp, 
     //    ORDER BY updated DESC \
-    let query = format!("SELECT session_id AS session_id, challenged_user_id AS opponent_user_id, b.user_name AS username, \
+    let query = format!("SELECT session_id AS session_id, challenged_user_id AS challenged, challenged_user_id AS opponent_user_id, b.user_name AS username, \
     strftime('%Y-%m-%d %H:%M:%S', DATETIME(a.timestamp, 'unixepoch')) as timestamp \
     FROM sessions a LEFT JOIN users b ON a.challenged_user_id = b.user_id \
     where challenger_user_id = ? \
-    UNION SELECT session_id AS session_id, challenged_user_id AS opponent_user_id, b.user_name AS username, \
+    UNION SELECT session_id AS session_id, challenged_user_id AS challenged, challenged_user_id AS opponent_user_id, b.user_name AS username, \
     strftime('%Y-%m-%d %H:%M:%S', DATETIME(a.timestamp, 'unixepoch')) as timestamp \
     FROM sessions a LEFT JOIN users b ON a.challenger_user_id = b.user_id \
     where challenged_user_id  = ? \
@@ -88,7 +88,7 @@ pub async fn get_sessions(
         .bind(user_id)
         .bind(user_id)
         .map(|rec: SqliteRow| {
-            SessionsListQuery { session_id: rec.get("session_id"), opponent:rec.get("opponent_user_id"), opponent_name: rec.get("username"),timestamp:rec.get("timestamp"), myturn:false }
+            SessionsListQuery { session_id: rec.get("session_id"), challenged:rec.get("challenged"), opponent:rec.get("opponent_user_id"), opponent_name: rec.get("username"),timestamp:rec.get("timestamp"), myturn:false, move_type:0 }
         })
         .fetch_all(pool)
         .await?;
@@ -101,13 +101,108 @@ pub async fn get_sessions(
         .await;
 
         match subres {
-            Ok(s) => { if s.ask_user_id == user_id { r.myturn = false } else { r.myturn = true } },
-            Err(s) => r.myturn = false,
+            Ok(s) => { 
+                if s.ask_user_id == user_id { 
+                    if s.answer_user_id.is_some() { //answered, my turn to ask
+                        r.myturn = true;
+                        r.move_type = 4;
+                    }
+                    else {
+                        r.myturn = false; //unanswered, their turn to answer
+                        r.move_type = 6;
+                    }
+                } else { 
+                    if s.answer_user_id.is_some() { //answered, their turn to ask
+                        r.myturn = false;
+                        r.move_type = 5;
+                    }
+                    else {
+                        r.myturn = true; //unanswered, my turn to answer
+                        r.move_type = 3;
+                    } 
+                } 
+            },
+            Err(s) => {
+                if r.challenged.is_some() { //this is wrong
+                    if r.challenged.unwrap() == user_id {
+                        r.myturn = true;
+                        r.move_type = 1;
+                    } 
+                    else {
+                        r.myturn=false;
+                        r.move_type=2; 
+                    }
+                }
+                else {
+                    r.myturn = true;
+                    r.move_type = 0;
+                }
+            },
         }
 
-    }    
-
+        //0 practice, always my turn
+        //1 no moves have not been asked, I am challenger (I need to ask, it's my turn)
+        //2 no moves have been asked
+        //3 q has not been answered by me
+        //4 q has not been asked by me
+        //5 q has not been asked by you
+        //6 q has not been answered by you
+        //7 game has ended (no ones turn)
+    }   
+        
     Ok(res)
+}
+
+pub async fn insert_ask_move(
+    pool: &SqlitePool,
+    user_id: Uuid,
+    session_id: Uuid,
+    person: u8,
+    number: u8,
+    tense: u8,
+    mood: u8,
+    voice: u8,
+    verb: u32,
+    timestamp:i64,
+) -> Result<u32, sqlx::Error> {
+    let mut tx = pool.begin().await?;
+
+    let uuid = sqlx::types::Uuid::new_v4();
+
+    let query = "INSERT INTO moves VALUES (?,?,?,NULL,?,?,?,?,?,?,NULL,NULL,NULL,?);";
+    let res = sqlx::query(query)
+        .bind(uuid)
+        .bind(session_id)
+        .bind(user_id)
+        .bind(verb)
+        .bind(person)
+        .bind(number)
+        .bind(tense)
+        .bind(mood)
+        .bind(voice)
+        .bind(timestamp)
+        //answer timestamp
+        .execute(&mut tx)
+        .await?;
+
+        // move_id BLOB PRIMARY KEY NOT NULL, 
+        // session_id BLOB, 
+        // ask_user_id BLOB, 
+        // answer_user_id BLOB, 
+        // verb_id INT, 
+        // person INT, 
+        // number INT, 
+        // tense INT, 
+        // mood INT, 
+        // voice INT, 
+        // time TEXT, 
+        // timed_out INT, 
+        // mf_pressed INT, 
+        // timestamp INT NOT NULL DEFAULT 0, 
+
+    tx.commit().await?;
+
+    Ok(1)
 }
 
 pub async fn create_db(pool: &SqlitePool) -> Result<u32, sqlx::Error> {
