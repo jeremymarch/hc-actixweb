@@ -126,6 +126,14 @@ struct UserResult {
     timestamp: i64,
 }
 
+#[derive(Deserialize,Serialize, FromRow)]
+struct SessionResult {
+session_id: Uuid, 
+challenger_user_id: Uuid,
+challenged_user_id: Option<Uuid>,
+timestamp: i64,
+}
+
 struct SessionDesc {
     session_id: Uuid,
     name: String,
@@ -300,13 +308,34 @@ struct AskResponse {
 
 #[allow(clippy::eval_order_dependence)]
 async fn get_move(
-    (info, req): (web::Form<GetMoveQuery>, HttpRequest)) -> Result<HttpResponse, AWError> {
+    (info, req, session): (web::Form<GetMoveQuery>, HttpRequest, Session)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
 
     //"ask", prev form to start from or null, prev answer and is_correct, correct answer
 
+    if let Some(user_id) = login::get_user_id(session) {
+        
+        let res = db::get_session_state(&db, user_id, info.session_id).await.map_err(map_sqlx_error)?;
+
+        let res = AskMoveResponse {
+            move_type:format!("{}", res.1), //ask
+            starting_form: None,
+            prev_answer: None,
+            is_correct: None,
+            correct_answer:None,
+            person: None,
+            number: None,
+            tense: None,
+            voice: None,
+            mood: None,
+            time: None,//time for prev answer
+            //limit posibilities based on session settings
+        };
+        return Ok(HttpResponse::Ok().json(res));
+    }
+
     let res = AskMoveResponse {
-        move_type:String::from("firstask"), //ask 
+        move_type:format!("error"), //ask 
         starting_form: None,
         prev_answer: None,
         is_correct: None,

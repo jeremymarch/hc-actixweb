@@ -389,11 +389,13 @@
             success: function (data, textStatus, jqXHR) {
                 //console.log("data: " + data[0] + "ha " + data[1]);
                 //var returnObj = JSON.parse(data);
-                if (data.move_type == "firstask") {
-                    uiModeAskForm();
-                    //show verb and form selectors
-                    //hide textarea, orig form will display verb selector, hide timer
-                }
+                setUI(data.move_type);
+
+                // if (data.move_type == "1") {
+                //     uiModeAskForm();
+                //     //show verb and form selectors
+                //     //hide textarea, orig form will display verb selector, hide timer
+                // }
 
                 console.log("getmovedata: " + data);
                 //document.querySelector("#list").innerHTML = rows;
@@ -459,6 +461,109 @@
         return [p,n,t,m,v];
     }
 
+//0 practice, always my turn
+//1 no moves have not been asked, I am challenger (I need to ask, it's my turn)
+//2 no moves have been asked
+//3 q has not been answered by me
+//4 q has not been asked by me
+//5 q has not been asked by you
+//6 q has not been answered by you
+//7 game has ended (no ones turn)
+    function setUI(mode) {
+        switch(mode) {
+            case "0": 
+                uiModePractice(); //practice
+                break;
+            case "1": 
+                uiModeAskForm(); //I need to ask first move
+                break;
+            case "2": 
+                uiModeWaitingForAsk(); //no moves: waiting for other player to ask first move
+                break;
+            case "3": 
+                uiModeAnwerForm(); //I need to answer
+                break;
+            case "4": 
+                uiModeAskForm(); //I need to ask
+                break;
+            case "5": 
+                uiModeWaitingForAsk(); //waiting for you to ask
+                break;
+            case "6": 
+                uiModeWaitingForAnswer(); //waiting for you to answer
+                break;
+            case "7": 
+                uiModeGameIsOver(); //game has ended
+                break;
+            default:
+                break;
+        }
+    }
+
+    function uiModeGameIsOver() {
+        let submitbutton = document.querySelector("#submitbutton");
+        submitbutton.disabled = true;
+        document.querySelector("#changedesc").innerHTML = "Game is over.";
+        document.querySelector("#answerform").value = "";
+        document.querySelector("#answerform").disabled = true;
+        document.querySelector("#correctanswer").innerHTML = "";
+        document.querySelector("#correctanswer").style.visibility = "hidden";
+        document.querySelector("#startingform").innerText = "";
+    }
+
+    function uiModePractice() {
+        let submitbutton = document.querySelector("#submitbutton");
+        submitbutton.disabled = true;
+        document.querySelector("#changedesc").innerHTML = "Practice Mode";
+        document.querySelector("#answerform").value = "";
+        document.querySelector("#answerform").disabled = true;
+        document.querySelector("#correctanswer").innerHTML = "";
+        document.querySelector("#correctanswer").style.visibility = "hidden";
+        document.querySelector("#startingform").innerText = "";
+
+        document.querySelector("#askparamsdiv").style.display = "none";
+    }
+
+    function uiModeAnwerForm() {
+        let submitbutton = document.querySelector("#submitbutton");
+        submitbutton.disabled = false;
+        submitbutton.innerText = "Go";
+        document.querySelector("#changedesc").innerHTML = "Click Go to answer!";
+        document.querySelector("#answerform").value = "";
+        document.querySelector("#answerform").disabled = true;
+        document.querySelector("#correctanswer").innerHTML = "";
+        document.querySelector("#correctanswer").style.visibility = "hidden";
+        document.querySelector("#startingform").innerText = "";
+
+        document.querySelector("#askparamsdiv").style.display = "none";
+    }
+
+    function uiModeWaitingForAnswer() {
+        let submitbutton = document.querySelector("#submitbutton");
+        submitbutton.disabled = true;
+        document.querySelector("#changedesc").innerHTML = "Waiting for (user) to answer.";
+        document.querySelector("#answerform").value = "";
+        document.querySelector("#answerform").disabled = true;
+        document.querySelector("#correctanswer").innerHTML = "";
+        document.querySelector("#correctanswer").style.visibility = "hidden";
+        document.querySelector("#startingform").innerText = "";
+
+        document.querySelector("#askparamsdiv").style.display = "none";
+    }
+
+    function uiModeWaitingForAsk() {
+        let submitbutton = document.querySelector("#submitbutton");
+        submitbutton.disabled = true;
+        document.querySelector("#changedesc").innerHTML = "Waiting for (user) to ask.";
+        document.querySelector("#answerform").value = "";
+        document.querySelector("#answerform").disabled = true;
+        document.querySelector("#correctanswer").innerHTML = "";
+        document.querySelector("#correctanswer").style.visibility = "hidden";
+        document.querySelector("#startingform").innerText = "";
+
+        document.querySelector("#askparamsdiv").style.display = "none";
+    }
+
     function uiModeAskResponse() {
         
         console.log("ask successfully submitted");
@@ -469,6 +574,7 @@
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.innerText = "Ask";
         submitbutton.disabled = false;
+        document.querySelector("#changedesc").innerHTML = "Change up to (2) params.";
     }
     function uiModeClickedEnter() {
         let submitbutton = document.querySelector("#submitbutton");
