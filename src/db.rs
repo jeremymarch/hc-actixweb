@@ -102,7 +102,11 @@ pub async fn get_sessions(
 
         match subres {
             Ok(s) => { 
-                if s.ask_user_id == user_id { 
+                if r.challenged.is_none() { 
+                    r.myturn = true;
+                    r.move_type = 0; //practice, my turn always
+                }
+                else if s.ask_user_id == user_id { 
                     if s.answer_user_id.is_some() { //answered, my turn to ask
                         r.myturn = true;
                         r.move_type = 4;
@@ -123,19 +127,19 @@ pub async fn get_sessions(
                 } 
             },
             Err(s) => {
-                if r.challenged.is_some() { //this is wrong
+                if r.challenged.is_some() { 
                     if r.challenged.unwrap() == user_id {
                         r.myturn = true;
-                        r.move_type = 1;
+                        r.move_type = 1; //no moves yet, their turn to ask
                     } 
                     else {
                         r.myturn=false;
-                        r.move_type=2; 
+                        r.move_type=2; //no moves yet, my turn to ask
                     }
                 }
                 else {
                     r.myturn = true;
-                    r.move_type = 0;
+                    r.move_type = 0; //practice, my turn always (no moves yet)
                 }
             },
         }
