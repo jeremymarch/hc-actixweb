@@ -471,28 +471,28 @@
 //7 game has ended (no ones turn)
     function setUI(mode) {
         switch(mode) {
-            case "0": 
+            case 0: 
                 uiModePractice(); //practice
                 break;
-            case "1": 
+            case 1: 
                 uiModeAskForm(); //I need to ask first move
                 break;
-            case "2": 
+            case 2: 
                 uiModeWaitingForAsk(); //no moves: waiting for other player to ask first move
                 break;
-            case "3": 
+            case 3: 
                 uiModeAnwerForm(); //I need to answer
                 break;
-            case "4": 
+            case 4: 
                 uiModeAskForm(); //I need to ask
                 break;
-            case "5": 
+            case 5: 
                 uiModeWaitingForAsk(); //waiting for you to ask
                 break;
-            case "6": 
+            case 6: 
                 uiModeWaitingForAnswer(); //waiting for you to answer
                 break;
-            case "7": 
+            case 7: 
                 uiModeGameIsOver(); //game has ended
                 break;
             default:

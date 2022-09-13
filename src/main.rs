@@ -94,7 +94,7 @@ struct SessionsListQuery {
     move_type:u8,
 }
 
-#[derive(Deserialize,Serialize, FromRow)]
+#[derive(Deserialize, Serialize, FromRow)]
 struct MoveResult {
     move_id: sqlx::types::Uuid,
     session_id: sqlx::types::Uuid,
@@ -106,10 +106,14 @@ struct MoveResult {
     tense: Option<u8>,
     mood: Option<u8>,
     voice: Option<u8>,
+    answer: Option<String>,
+    correct_answer: Option<String>,
+    is_correct: Option<u8>,
     time: Option<String>,
     timed_out: Option<bool>,
     mf_pressed: Option<bool>,
-    timestamp: i64,
+    asktimestamp: i64,
+    answeredtimestamp: Option<i64>,
 }
 
 #[derive(Deserialize,Serialize)]
@@ -162,6 +166,77 @@ struct MoveDesc {
     answer: String,
     timestamp_created: u32,
     user_id: u32,
+}
+
+
+#[derive(Deserialize,Serialize)]
+struct AskMoveResponse {
+    move_type:String, //ask 
+    starting_form: Option<String>,
+    prev_answer: Option<String>,
+    is_correct: Option<bool>,
+    correct_answer:Option<String>,
+    person: Option<u8>,
+    number: Option<u8>,
+    tense: Option<u8>,
+    voice: Option<u8>,
+    mood: Option<u8>,
+    time: Option<String>,//time for prev answer
+    //limit posibilities based on session settings
+}
+
+#[derive(Deserialize,Serialize)]
+struct AnswerMoveResponse {
+    move_type:String, //answer
+    starting_form: String,
+    person: u8,
+    number: u8,
+    tense: u8,
+    voice: u8,
+    mood: u8,
+    time: u32, //seconds
+    //has_multiple_forms:bool?,
+}
+
+#[derive(Deserialize,Serialize)]
+struct AskQuery {
+    session_id: Uuid,
+    person: u8,
+    number: u8,
+    tense: u8,
+    voice: u8,
+    mood: u8,
+    verb: u32,
+}
+
+#[derive(Deserialize,Serialize)]
+struct AskResponse {
+    qtype:String,
+    success:bool,
+    mesg:String,
+}
+
+#[derive(Deserialize, Serialize)]
+struct SessionState {
+    session_id: Uuid,
+    move_type: u8,
+    myturn: bool,
+    starting_form:Option<String>,
+    answer:Option<String>,
+    is_correct: Option<bool>,
+    correct_answer:Option<String>,
+    verb: Option<u32>,
+    person: Option<u8>,
+    number: Option<u8>,
+    tense: Option<u8>,
+    voice: Option<u8>,
+    mood: Option<u8>,
+    person_prev: Option<u8>,
+    number_prev: Option<u8>,
+    tense_prev: Option<u8>,
+    voice_prev: Option<u8>,
+    mood_prev: Option<u8>,
+    time: Option<String>,//time for prev answer
 }
 
 fn get_user_agent(req: &HttpRequest) -> Option<&str> {
@@ -259,53 +334,6 @@ async fn create_session(
     Ok(HttpResponse::Ok().json(res))
 }
 
-#[derive(Deserialize,Serialize)]
-struct AskMoveResponse {
-    move_type:String, //ask 
-    starting_form: Option<String>,
-    prev_answer: Option<String>,
-    is_correct: Option<bool>,
-    correct_answer:Option<String>,
-    person: Option<u8>,
-    number: Option<u8>,
-    tense: Option<u8>,
-    voice: Option<u8>,
-    mood: Option<u8>,
-    time: Option<String>,//time for prev answer
-    //limit posibilities based on session settings
-}
-
-#[derive(Deserialize,Serialize)]
-struct AnswerMoveResponse {
-    move_type:String, //answer
-    starting_form: String,
-    person: u8,
-    number: u8,
-    tense: u8,
-    voice: u8,
-    mood: u8,
-    time: u32, //seconds
-    //has_multiple_forms:bool?,
-}
-
-#[derive(Deserialize,Serialize)]
-struct AskQuery {
-    session_id: Uuid,
-    person: u8,
-    number: u8,
-    tense: u8,
-    voice: u8,
-    mood: u8,
-    verb: u32,
-}
-
-#[derive(Deserialize,Serialize)]
-struct AskResponse {
-    qtype:String,
-    success:bool,
-    mesg:String,
-}
-
 #[allow(clippy::eval_order_dependence)]
 async fn get_move(
     (info, req, session): (web::Form<GetMoveQuery>, HttpRequest, Session)) -> Result<HttpResponse, AWError> {
@@ -316,21 +344,21 @@ async fn get_move(
     if let Some(user_id) = login::get_user_id(session) {
         
         let res = db::get_session_state(&db, user_id, info.session_id).await.map_err(map_sqlx_error)?;
-
-        let res = AskMoveResponse {
-            move_type:format!("{}", res.1), //ask
-            starting_form: None,
-            prev_answer: None,
-            is_correct: None,
-            correct_answer:None,
-            person: None,
-            number: None,
-            tense: None,
-            voice: None,
-            mood: None,
-            time: None,//time for prev answer
-            //limit posibilities based on session settings
-        };
+        // //
+        // let res = AskMoveResponse {
+        //     move_type:format!("{}", res.move_type), //ask
+        //     starting_form: None,
+        //     prev_answer: None,
+        //     is_correct: None,
+        //     correct_answer:None,
+        //     person: None,
+        //     number: None,
+        //     tense: None,
+        //     voice: None,
+        //     mood: None,
+        //     time: None,//time for prev answer
+        //     //limit posibilities based on session settings
+        // };
         return Ok(HttpResponse::Ok().json(res));
     }
 
