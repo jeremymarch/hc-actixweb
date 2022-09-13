@@ -146,7 +146,9 @@
             
         </div>
     <div id="startingform" class="startingform"></div>
-    <div id="changedesc" class="changedesc">press start to begin</div>
+    
+    <div id="statusmesg" class="changedesc">press start to begin</div>
+    <div id="changedesc" class="changedesc"></div>
     <div id="askparamsdiv">
         <div id="askparamsdivinner">
         <select id="personparam">
@@ -389,7 +391,7 @@
             success: function (data, textStatus, jqXHR) {
                 //console.log("data: " + data[0] + "ha " + data[1]);
                 //var returnObj = JSON.parse(data);
-                setUI(data.move_type);
+                setUI(data);
 
                 // if (data.move_type == "1") {
                 //     uiModeAskForm();
@@ -469,8 +471,8 @@
 //5 q has not been asked by you
 //6 q has not been answered by you
 //7 game has ended (no ones turn)
-    function setUI(mode) {
-        switch(mode) {
+    function setUI(data) {
+        switch(data.move_type) {
             case 0: 
                 uiModePractice(); //practice
                 break;
@@ -481,7 +483,7 @@
                 uiModeWaitingForAsk(); //no moves: waiting for other player to ask first move
                 break;
             case 3: 
-                uiModeAnwerForm(); //I need to answer
+                uiModeAnwerForm(data.starting_form, desc(data.person, data.number, data.tense, data.voice, data.mood)); //I need to answer
                 break;
             case 4: 
                 uiModeAskForm(); //I need to ask
@@ -500,10 +502,19 @@
         }
     }
 
+    var persons = ["first", "second", "third"];
+    var numbers = ["singular", "plural"];
+    var tenses = ["present", "imperfect", "future", "aorist", "perfect", "pluperfect"];
+    var voices  = ["active", "middle", "passive"];
+    var moods = ["indicative", "subjunctive", "optative", "imperative"];
+    function desc(person, number, tense, voice, mood) {
+        return persons[person] + " " + numbers[number] + " " + tenses[tense] + " " + moods[mood] + " " + voices[voice];
+    }
+
     function uiModeGameIsOver() {
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.disabled = true;
-        document.querySelector("#changedesc").innerHTML = "Game is over.";
+        document.querySelector("#statusmesg").innerHTML = "Game is over.";
         document.querySelector("#answerform").value = "";
         document.querySelector("#answerform").disabled = true;
         document.querySelector("#correctanswer").innerHTML = "";
@@ -514,7 +525,7 @@
     function uiModePractice() {
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.disabled = true;
-        document.querySelector("#changedesc").innerHTML = "Practice Mode";
+        document.querySelector("#statusmesg").innerHTML = "Practice Mode";
         document.querySelector("#answerform").value = "";
         document.querySelector("#answerform").disabled = true;
         document.querySelector("#correctanswer").innerHTML = "";
@@ -524,16 +535,17 @@
         document.querySelector("#askparamsdiv").style.display = "none";
     }
 
-    function uiModeAnwerForm() {
+    function uiModeAnwerForm(starting_form, change_desc) {
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.disabled = false;
         submitbutton.innerText = "Go";
-        document.querySelector("#changedesc").innerHTML = "Click Go to answer!";
+        document.querySelector("#statusmesg").innerHTML = "Click Go to answer!"
+        document.querySelector("#changedesc").innerHTML = change_desc;
         document.querySelector("#answerform").value = "";
         document.querySelector("#answerform").disabled = true;
         document.querySelector("#correctanswer").innerHTML = "";
         document.querySelector("#correctanswer").style.visibility = "hidden";
-        document.querySelector("#startingform").innerText = "";
+        document.querySelector("#startingform").innerText = starting_form;
 
         document.querySelector("#askparamsdiv").style.display = "none";
     }
@@ -541,7 +553,7 @@
     function uiModeWaitingForAnswer() {
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.disabled = true;
-        document.querySelector("#changedesc").innerHTML = "Waiting for (user) to answer.";
+        document.querySelector("#statusmesg").innerHTML = "Waiting for (user) to answer.";
         document.querySelector("#answerform").value = "";
         document.querySelector("#answerform").disabled = true;
         document.querySelector("#correctanswer").innerHTML = "";
@@ -554,7 +566,7 @@
     function uiModeWaitingForAsk() {
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.disabled = true;
-        document.querySelector("#changedesc").innerHTML = "Waiting for (user) to ask.";
+        document.querySelector("#statusmesg").innerHTML = "Waiting for (user) to ask.";
         document.querySelector("#answerform").value = "";
         document.querySelector("#answerform").disabled = true;
         document.querySelector("#correctanswer").innerHTML = "";
@@ -574,7 +586,7 @@
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.innerText = "Ask";
         submitbutton.disabled = false;
-        document.querySelector("#changedesc").innerHTML = "Change up to (2) params.";
+        document.querySelector("#statusmesg").innerHTML = "Change up to (2) params.";
     }
     function uiModeClickedEnter() {
         let submitbutton = document.querySelector("#submitbutton");

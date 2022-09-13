@@ -138,35 +138,35 @@ challenged_user_id: Option<Uuid>,
 timestamp: i64,
 }
 
-struct SessionDesc {
-    session_id: Uuid,
-    name: String,
-    time_down: bool,
-    unit: Option<u8>,
-    custom_time: Option<u32>, //seconds
-    custom_verbs: Vec<HcGreekVerb>,
-    custom_persons: Vec<HcPerson>,
-    custom_numbers: Vec<HcPerson>,
-    custom_tenses: Vec<HcPerson>,
-    custom_voices: Vec<HcPerson>,
-    custom_moods: Vec<HcPerson>,
-    timestamp_created: u32,
-    user_id: u32,
-    opponent_id: Option<u32>,
-}
+// struct SessionDesc {
+//     session_id: Uuid,
+//     name: String,
+//     time_down: bool,
+//     unit: Option<u8>,
+//     custom_time: Option<u32>, //seconds
+//     custom_verbs: Vec<HcGreekVerb>,
+//     custom_persons: Vec<HcPerson>,
+//     custom_numbers: Vec<HcPerson>,
+//     custom_tenses: Vec<HcPerson>,
+//     custom_voices: Vec<HcPerson>,
+//     custom_moods: Vec<HcPerson>,
+//     timestamp_created: u32,
+//     user_id: u32,
+//     opponent_id: Option<u32>,
+// }
 
-struct MoveDesc {
-    move_id: Uuid,
-    session_id: u32,
-    verb_form: HcGreekVerbForm,
-    is_correct: bool,
-    time: String,
-    timed_out: bool,
-    mf_pressed: bool,
-    answer: String,
-    timestamp_created: u32,
-    user_id: u32,
-}
+// struct MoveDesc {
+//     move_id: Uuid,
+//     session_id: u32,
+//     verb_form: HcGreekVerbForm,
+//     is_correct: bool,
+//     time: String,
+//     timed_out: bool,
+//     mf_pressed: bool,
+//     answer: String,
+//     timestamp_created: u32,
+//     user_id: u32,
+// }
 
 
 #[derive(Deserialize,Serialize)]
@@ -581,8 +581,15 @@ async fn main() -> io::Result<()> {
     }
 
     //let secret_key = Key::generate(); // TODO: Should be from .env file, else have to login again on each restart
+    //let secret_key = Key::from(key);
+
+    //https://docs.rs/cookie/0.16.0/src/cookie/secure/key.rs.html#35
     let key: &Vec<u8> = &(0..64).collect(); //todo
     let secret_key = Key::from(key);
+
+    // let string_key_64_bytes = "090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C";
+    // let key = hex::decode(string_key_64_bytes).expect("Decoding key failed");
+    // let secret_key = Key::from(&key);
     
     HttpServer::new(move || {
 

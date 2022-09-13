@@ -901,6 +901,7 @@ dependencies = [
  "chrono",
  "env_logger",
  "futures",
+ "hex",
  "hoplite_verbs_rs",
  "secrecy",
  "serde",
