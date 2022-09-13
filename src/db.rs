@@ -149,6 +149,14 @@ pub async fn get_last_two_moves<'a, 'b>(
     Ok(res)
 }
 
+//0 practice, always my turn
+//1 no moves have not been asked, I am challenger (I need to ask, it's my turn): nothing
+//2 no moves have been asked: nothing
+//3 q has not been answered by me: starting_form from -1, desc from -1, desc from 0
+//4 q has not been asked by me: starting_form from -1, desc from -1, desc from 0, is_correct, correct answer, given answer, time, mf, timedout
+//5 q has not been asked by you: starting_form from -1, desc from -1, desc from 0, is_correct, correct answer, given answer, time, mf, timedout
+//6 q has not been answered by you: starting_form from -1, desc from -1, desc from 0,
+//7 game has ended (no ones turn): starting_form from -1, desc from -1, desc from 0, is_correct, correct answer, given answer, time, mf, timedout
 fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>) -> (bool, u8) {
     let myturn:bool;
     let move_type:u8;
@@ -248,14 +256,6 @@ pub async fn get_session_state(
     Ok(r)
 }
 
-//0 practice, always my turn
-//1 no moves have not been asked, I am challenger (I need to ask, it's my turn): nothing
-//2 no moves have been asked: nothing
-//3 q has not been answered by me: starting_form from -1, desc from -1, desc from 0
-//4 q has not been asked by me: starting_form from -1, desc from -1, desc from 0, is_correct, correct answer, given answer, time, mf, timedout
-//5 q has not been asked by you: starting_form from -1, desc from -1, desc from 0, is_correct, correct answer, given answer, time, mf, timedout
-//6 q has not been answered by you: starting_form from -1, desc from -1, desc from 0,
-//7 game has ended (no ones turn): starting_form from -1, desc from -1, desc from 0, is_correct, correct answer, given answer, time, mf, timedout
 pub async fn get_move_type<'a, 'b>(
     tx: &'a mut sqlx::Transaction<'b, sqlx::Sqlite>, session_id:Uuid, user_id: Uuid, challenged_id:Option<Uuid>) -> (bool, u8) {
     let query = "SELECT * FROM moves WHERE session_id = ? ORDER BY asktimestamp DESC LIMIT 1;";
@@ -264,53 +264,14 @@ pub async fn get_move_type<'a, 'b>(
     .fetch_one(&mut *tx)
     .await;
 
-    let myturn:bool;
-    let move_type:u8;
-
     match subres {
-        Ok(s) => { 
-            if challenged_id.is_none() { 
-                myturn = true;
-                move_type = 0; //practice, my turn always
-            }
-            else if s.ask_user_id == user_id { 
-                if s.answer_user_id.is_some() { //answered, my turn to ask
-                    myturn = true;
-                    move_type = 4;
-                }
-                else {
-                    myturn = false; //unanswered, their turn to answer
-                    move_type = 6;
-                }
-            } else { 
-                if s.answer_user_id.is_some() { //answered, their turn to ask
-                    myturn = false;
-                    move_type = 5;
-                }
-                else {
-                    myturn = true; //unanswered, my turn to answer
-                    move_type = 3;
-                } 
-            } 
+        Ok(s) => {
+            move_get_type(Some(&s), user_id, challenged_id)
         },
-        Err(s) => {
-            if challenged_id.is_some() { 
-                if challenged_id.unwrap() == user_id {
-                    myturn = false;
-                    move_type = 2; //no moves yet, their turn to ask
-                } 
-                else {
-                    myturn = true;
-                    move_type = 1; //no moves yet, my turn to ask
-                }
-            }
-            else {
-                myturn = true;
-                move_type = 0; //practice, my turn always (no moves yet)
-            }
-        },
+        Err(_) => {
+            move_get_type(None, user_id, challenged_id)
+        }
     }
-    (myturn, move_type)
 }
 
 pub async fn insert_ask_move(
