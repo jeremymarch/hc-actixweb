@@ -491,11 +491,11 @@
             case 3: 
                 uiModeAnwerForm(data.starting_form, desc(data.person, data.number, data.tense, data.voice, data.mood)); //I need to answer
                 break;
-            case 4: 
-                uiModeAskForm(); //I need to ask
+            case 4:     
+                uiModeWaitingForAsk(); //waiting for you to ask
                 break;
             case 5: 
-                uiModeWaitingForAsk(); //waiting for you to ask
+                uiModeAskForm(); //I need to ask
                 break;
             case 6: 
                 uiModeWaitingForAnswer(); //waiting for you to answer

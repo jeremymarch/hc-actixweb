@@ -165,8 +165,8 @@ fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>
                 move_type = 0; //practice, my turn always
             }
             else if s.ask_user_id == user_id { 
-                if s.answer_user_id.is_some() { //answered, my turn to ask
-                    myturn = true;
+                if s.answer_user_id.is_some() { //xxxanswered, my turn to ask | I asked, they answered, their turn to ask (waiting for them to ask)
+                    myturn = false;
                     move_type = 4;
                 }
                 else {
@@ -174,8 +174,8 @@ fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>
                     move_type = 6;
                 }
             } else { 
-                if s.answer_user_id.is_some() { //answered, their turn to ask
-                    myturn = false;
+                if s.answer_user_id.is_some() { //xxxanswered, their turn to ask | they asked, I answered, my turn to ask
+                    myturn = true;
                     move_type = 5;
                 }
                 else {
