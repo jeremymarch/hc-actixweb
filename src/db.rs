@@ -106,7 +106,14 @@ pub async fn get_sessions(
     Ok(res)
 }
 
-pub async fn get_last_move<'a, 'b>(
+pub async fn get_last_move(pool: &SqlitePool, session_id: sqlx::types::Uuid) -> Result<MoveResult, sqlx::Error> {
+    let mut tx = pool.begin().await?;
+    let res = get_last_move_tx(&mut tx, session_id).await?;
+    tx.commit().await?;
+    Ok(res)
+}
+
+pub async fn get_last_move_tx<'a, 'b>(
     tx: &'a mut sqlx::Transaction<'b, sqlx::Sqlite>,
     session_id: sqlx::types::Uuid,
 ) -> Result<MoveResult, sqlx::Error> {
@@ -337,7 +344,7 @@ pub async fn update_answer_move(
 ) -> Result<u32, sqlx::Error> {
     let mut tx = pool.begin().await?;
 
-    let m = get_last_move(&mut tx, session_id).await?;
+    let m = get_last_move_tx(&mut tx, session_id).await?;
 
     let query = "UPDATE moves SET answer_user_id=?, answer=?, correct_answer=?, is_correct=?, time=?, mf_pressed=?, timed_out=?, answeredtimestamp=? WHERE move_id=?;";
     let res = sqlx::query(query)

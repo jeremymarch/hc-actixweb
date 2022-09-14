@@ -354,7 +354,7 @@
                 console.log(data);
                 starting_form = data.starting_form;
                 change_desc = data.change_desc;
-                uiModeAnswerResponseReceived(false, "correct answer");
+                uiModeAnswerResponseReceived(data.is_correct, data.correct_answer);
 
                 reqPending = false;
             },
@@ -646,7 +646,7 @@
         submitbutton.disabled = false;
         //mark (in)correct, show correct answer
         document.querySelector("#correctanswer").style.visibility = "visible";
-        document.querySelector("#correctanswer").innerHTML = correct_answer;
+        document.querySelector("#correctanswer").innerHTML = ((is_correct) ? "Correct: " : "Incorrect: ") + correct_answer;
     }
 
     var reqPending = false;

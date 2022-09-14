@@ -83,6 +83,14 @@ pub struct ResponseQuery {
     //answer: String,
 }
 
+#[derive(Serialize)]
+pub struct AnswerResponseQuery {
+    qtype: String,
+    is_correct:bool,
+    correct_answer:String,
+    success:bool,
+}
+
 #[derive(Deserialize,Serialize)]
 pub struct CreateSessionQuery {
     qtype:String,
@@ -405,11 +413,12 @@ async fn enter(
     if let Some(user_id) = login::get_user_id(session) {
 
         //pull prev move from db to get verb and params
+        let m = db::get_last_move(&db, info.session_id).await.map_err(map_sqlx_error)?;
 
         //test answer to get correct_answer and is_correct
         let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
         let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR).unwrap());
-        let prev_form = HcGreekVerbForm {verb:verbs[0].clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
+        let prev_form = HcGreekVerbForm {verb:verbs[0].clone(), person:HcPerson::from_u8(m.person.unwrap()), number:HcNumber::from_u8(m.number.unwrap()), tense:HcTense::from_u8(m.tense.unwrap()), voice:HcVoice::from_u8(m.voice.unwrap()), mood:HcMood::from_u8(m.mood.unwrap()), gender:None, case:None};
 
         let correct_answer = prev_form.get_form(false).unwrap().last().unwrap().form.to_string();
         let is_correct = hgk_compare_multiple_forms(&correct_answer.replace('/', ","), &info.answer);
@@ -426,19 +435,22 @@ async fn enter(
             info.timed_out,
             timestamp).await.map_err(map_sqlx_error)?;
 
-        let res = ResponseQuery {
-            qtype: "test".to_string(),
-            starting_form: "starting_form".to_string(),
-            change_desc: "change_desc".to_string(),
-            has_mf: false,
-            is_correct: false,
-            //answer: String,
+        let res = AnswerResponseQuery {
+            qtype: "answerresponse".to_string(),
+            is_correct: is_correct,
+            correct_answer: correct_answer,
+            success: true,
         };
 
         return Ok(HttpResponse::Ok().json(res));
     }
 
-    let res = ("abc","def",);
+    let res = AnswerResponseQuery {
+        qtype: "answerresponse".to_string(),
+        is_correct: false,
+        correct_answer: String::from(""),
+        success: false,
+    };
     Ok(HttpResponse::Ok().json(res))
 }
 
