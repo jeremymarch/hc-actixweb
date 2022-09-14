@@ -24,6 +24,8 @@ hex = "0.4.3"
 
 uuid = { version = "1.1.2", features = ["v4", "serde"] }
 
+rustunicodetests = { path = "../rustunicodetests" }
+#rustunicodetests = { git = "https://github.com/jeremymarch/rustunicodetests", version = "0.1.0" }
 hoplite_verbs_rs = { path = "../hoplite_verbs_rs" }
 #hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.2.0" }
 

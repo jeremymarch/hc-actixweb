@@ -903,6 +903,7 @@ dependencies = [
  "futures",
  "hex",
  "hoplite_verbs_rs",
+ "rustunicodetests",
  "secrecy",
  "serde",
  "serde_json",

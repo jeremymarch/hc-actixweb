@@ -106,11 +106,10 @@ pub async fn get_sessions(
     Ok(res)
 }
 
-pub async fn get_last_move(
-    pool: &SqlitePool,
+pub async fn get_last_move<'a, 'b>(
+    tx: &'a mut sqlx::Transaction<'b, sqlx::Sqlite>,
     session_id: sqlx::types::Uuid,
 ) -> Result<MoveResult, sqlx::Error> {
-    let mut tx = pool.begin().await?;
 
     let query = format!("SELECT * \
     FROM moves \
@@ -121,10 +120,8 @@ pub async fn get_last_move(
     //println!("query: {} {:?}", query, user_id);
     let res: MoveResult = sqlx::query_as(&query)
         .bind(session_id)
-        .fetch_one(&mut tx)
+        .fetch_one(&mut *tx)
         .await?;
-
-    tx.commit().await?;
         
     Ok(res)
 }
@@ -320,6 +317,41 @@ pub async fn insert_ask_move(
         // timed_out INT, 
         // mf_pressed INT, 
         // timestamp INT NOT NULL DEFAULT 0, 
+
+    tx.commit().await?;
+
+    Ok(1)
+}
+
+pub async fn update_answer_move(
+    pool: &SqlitePool,
+    session_id: Uuid,
+    user_id: Uuid,
+    answer: &str,
+    correct_answer:&str,
+    is_correct:bool,
+    time: &str,
+    mf_pressed:bool,
+    timed_out:bool,
+    timestamp:i64,
+) -> Result<u32, sqlx::Error> {
+    let mut tx = pool.begin().await?;
+
+    let m = get_last_move(&mut tx, session_id).await?;
+
+    let query = "UPDATE moves SET answer_user_id=?, answer=?, correct_answer=?, is_correct=?, time=?, mf_pressed=?, timed_out=?, answeredtimestamp=? WHERE move_id=?;";
+    let res = sqlx::query(query)
+        .bind(user_id)
+        .bind(answer)
+        .bind(correct_answer)
+        .bind(is_correct)
+        .bind(time)
+        .bind(mf_pressed)
+        .bind(timed_out)
+        .bind(timestamp)
+        .bind(m.move_id)
+        .execute(&mut tx)
+        .await?;
 
     tx.commit().await?;
 

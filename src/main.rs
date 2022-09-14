@@ -27,6 +27,18 @@ use actix_web::http::header::LOCATION;
 use actix_web::{
     middleware, web, App, Error as AWError, HttpRequest, HttpResponse, HttpServer, Result,
 };
+use actix_web::cookie::time::Duration;
+use actix_session::config::PersistentSession;
+const SECS_IN_10_YEARS: i64 = 60 * 60 * 24 * 7 * 4 * 12 * 10;
+
+use std::fs::File;
+use std::io::BufReader;
+use std::io::BufRead;
+
+use rustunicodetests::hgk_compare_multiple_forms;
+use crate::db::update_answer_move;
+use std::sync::Arc;
+
 use std::io;
 
 //use uuid::Uuid;
@@ -52,16 +64,17 @@ async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
 }
 
 #[derive(Deserialize)]
-struct AnswerQuery {
+pub struct AnswerQuery {
     qtype: String,
     answer: String,
     time: String,
     mf_pressed: bool,
     timed_out: bool,
+    session_id:Uuid,
 }
 
 #[derive(Serialize)]
-struct ResponseQuery {
+pub struct ResponseQuery {
     qtype: String,
     starting_form: String,
     change_desc: String,
@@ -71,20 +84,20 @@ struct ResponseQuery {
 }
 
 #[derive(Deserialize,Serialize)]
-struct CreateSessionQuery {
+pub struct CreateSessionQuery {
     qtype:String,
     unit: String,
     opponent:String,
 }
 
 #[derive(Deserialize,Serialize)]
-struct SessionListRequest {
+pub struct SessionListRequest {
     practice:bool,
     game:bool,
 }
 
 #[derive(Deserialize,Serialize, FromRow)]
-struct SessionsListQuery {
+pub struct SessionsListQuery {
     session_id: sqlx::types::Uuid,
     challenged: Option<sqlx::types::Uuid>, //the one who didn't start the game, or null for practice
     opponent: Option<sqlx::types::Uuid>,
@@ -95,7 +108,7 @@ struct SessionsListQuery {
 }
 
 #[derive(Deserialize, Serialize, FromRow)]
-struct MoveResult {
+pub struct MoveResult {
     move_id: sqlx::types::Uuid,
     session_id: sqlx::types::Uuid,
     ask_user_id: sqlx::types::Uuid,
@@ -117,12 +130,12 @@ struct MoveResult {
 }
 
 #[derive(Deserialize,Serialize)]
-struct GetMoveQuery {
+pub struct GetMoveQuery {
     session_id:sqlx::types::Uuid,
 }
 
 #[derive(Deserialize,Serialize, FromRow)]
-struct UserResult {
+pub struct UserResult {
     user_id: sqlx::types::Uuid,
     user_name: String,
     password: String,
@@ -131,11 +144,11 @@ struct UserResult {
 }
 
 #[derive(Deserialize,Serialize, FromRow)]
-struct SessionResult {
-session_id: Uuid, 
-challenger_user_id: Uuid,
-challenged_user_id: Option<Uuid>,
-timestamp: i64,
+pub struct SessionResult {
+    session_id: Uuid, 
+    challenger_user_id: Uuid,
+    challenged_user_id: Option<Uuid>,
+    timestamp: i64,
 }
 
 // struct SessionDesc {
@@ -170,7 +183,7 @@ timestamp: i64,
 
 
 #[derive(Deserialize,Serialize)]
-struct AskMoveResponse {
+pub struct AskMoveResponse {
     move_type:String, //ask 
     starting_form: Option<String>,
     prev_answer: Option<String>,
@@ -186,7 +199,7 @@ struct AskMoveResponse {
 }
 
 #[derive(Deserialize,Serialize)]
-struct AnswerMoveResponse {
+pub struct AnswerMoveResponse {
     move_type:String, //answer
     starting_form: String,
     person: u8,
@@ -199,7 +212,7 @@ struct AnswerMoveResponse {
 }
 
 #[derive(Deserialize,Serialize)]
-struct AskQuery {
+pub struct AskQuery {
     session_id: Uuid,
     person: u8,
     number: u8,
@@ -210,14 +223,14 @@ struct AskQuery {
 }
 
 #[derive(Deserialize,Serialize)]
-struct AskResponse {
+pub struct AskResponse {
     qtype:String,
     success:bool,
     mesg:String,
 }
 
 #[derive(Deserialize, Serialize)]
-struct SessionState {
+pub struct SessionState {
     session_id: Uuid,
     move_type: u8,
     myturn: bool,
@@ -258,7 +271,6 @@ async fn get_sessions(
     let db = req.app_data::<SqlitePool>().unwrap();
     let mut mesg = String::from("");
     if let Some(user_id) = login::get_user_id(session) {
-        println!("************************LOGGED IN2 ");
 
         let timestamp = get_timestamp();
         let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
@@ -290,7 +302,6 @@ async fn create_session(
     let db = req.app_data::<SqlitePool>().unwrap();
     let mut mesg = String::from("");
     if let Some(user_id) = login::get_user_id(session) {
-        println!("************************LOGGED IN ");
 
         let timestamp = get_timestamp();
         let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
@@ -383,19 +394,51 @@ async fn get_move(
 
 #[allow(clippy::eval_order_dependence)]
 async fn enter(
-    (info, req): (web::Form<AnswerQuery>, HttpRequest)) -> Result<HttpResponse, AWError> {
+    (info, req, session): (web::Form<AnswerQuery>, HttpRequest, Session)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
+    let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
-    let res = ResponseQuery {
-        qtype: "test".to_string(),
-        starting_form: "starting_form".to_string(),
-        change_desc: "change_desc".to_string(),
-        has_mf: false,
-        is_correct: false,
-        //answer: String,
-    };
+    let timestamp = get_timestamp();
+    let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
+    let user_agent = get_user_agent(&req).unwrap_or("");
 
-    //let res = ("abc","def",);
+    if let Some(user_id) = login::get_user_id(session) {
+
+        //pull prev move from db to get verb and params
+
+        //test answer to get correct_answer and is_correct
+        let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+        let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR).unwrap());
+        let prev_form = HcGreekVerbForm {verb:verbs[0].clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Perfect, voice:HcVoice::Active, mood:HcMood::Indicative, gender:None, case:None};
+
+        let correct_answer = prev_form.get_form(false).unwrap().last().unwrap().form.to_string();
+        let is_correct = hgk_compare_multiple_forms(&correct_answer.replace('/', ","), &info.answer);
+
+        let res = update_answer_move(
+            db,
+            info.session_id,
+            user_id,
+            &info.answer,
+            &correct_answer,
+            is_correct,
+            &info.time,
+            info.mf_pressed,
+            info.timed_out,
+            timestamp).await.map_err(map_sqlx_error)?;
+
+        let res = ResponseQuery {
+            qtype: "test".to_string(),
+            starting_form: "starting_form".to_string(),
+            change_desc: "change_desc".to_string(),
+            has_mf: false,
+            is_correct: false,
+            //answer: String,
+        };
+
+        return Ok(HttpResponse::Ok().json(res));
+    }
+
+    let res = ("abc","def",);
     Ok(HttpResponse::Ok().json(res))
 }
 
@@ -551,6 +594,21 @@ struct ErrorResponse {
     message: String,
 }
 
+fn load_verbs(path:&str) -> Vec<Arc<HcGreekVerb>> {
+    let mut verbs = vec![];
+    if let Ok(pp_file) = File::open(path) {
+        let pp_reader = BufReader::new(pp_file);
+        for (idx, pp_line) in pp_reader.lines().enumerate() {
+            if let Ok(line) = pp_line {
+                if !line.starts_with('#') { //skip commented lines
+                    verbs.push(Arc::new(HcGreekVerb::from_string_with_properties(idx as u32, &line).unwrap()));
+                }
+            }
+        }
+    }
+    verbs
+}
+
 #[actix_web::main]
 async fn main() -> io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=info");
@@ -588,7 +646,6 @@ async fn main() -> io::Result<()> {
     //https://docs.rs/cookie/0.16.0/src/cookie/secure/key.rs.html#35
     let key: &Vec<u8> = &(0..64).collect();
     let secret_key = Key::from(key);
-    println!("key: {}{}", hex::encode( secret_key.signing() ), hex::encode( secret_key.encryption() ));
 
     //3. to load from string
     // let string_key_64_bytes = "c67ba35ad969a3f4255085c359f120bae733c5a5756187aaffab31c7c84628b6a9a02ce6a1e923a945609a884f913f83ea50675b184514b5d15c3e1a606a3fd2";
@@ -604,11 +661,18 @@ async fn main() -> io::Result<()> {
     HttpServer::new(move || {
 
         App::new()
+            .app_data(load_verbs("../hoplite_verbs_rs/testdata/pp.txt"))
             .app_data(db_pool.clone())
             .wrap(middleware::Compress::default()) // enable automatic response compression - usually register this first
             .wrap(SessionMiddleware::builder(
                 CookieSessionStore::default(), secret_key.clone())
                     .cookie_secure(false) //cookie_secure must be false if testing without https
+                    .cookie_same_site(actix_web::cookie::SameSite::Strict)
+                    .cookie_content_security(actix_session::config::CookieContentSecurity::Private)
+                    .session_lifecycle(
+                        PersistentSession::default().session_ttl(Duration::seconds(SECS_IN_10_YEARS))
+                    )
+                    .cookie_name(String::from("hcid"))
                     .build())
             .wrap(middleware::Logger::default()) // enable logger - always register Actix Web Logger middleware last
             .configure(config)
