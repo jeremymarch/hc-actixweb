@@ -580,24 +580,37 @@ async fn main() -> io::Result<()> {
         println!("error: {:?}", res);
     }
 
-    //let secret_key = Key::generate(); // TODO: Should be from .env file, else have to login again on each restart
-    //let secret_key = Key::from(key);
+    //1. to make a new key:
+    // let secret_key = Key::generate(); // only for testing: should use same key from .env file/variable, else have to login again on each restart
+    // println!("key: {}{}", hex::encode( secret_key.signing() ), hex::encode( secret_key.encryption() ));
 
+    //2. a simple example testing key
     //https://docs.rs/cookie/0.16.0/src/cookie/secure/key.rs.html#35
-    let key: &Vec<u8> = &(0..64).collect(); //todo
+    let key: &Vec<u8> = &(0..64).collect();
     let secret_key = Key::from(key);
+    println!("key: {}{}", hex::encode( secret_key.signing() ), hex::encode( secret_key.encryption() ));
 
-    // let string_key_64_bytes = "090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C090A0B0C";
+    //3. to load from string
+    // let string_key_64_bytes = "c67ba35ad969a3f4255085c359f120bae733c5a5756187aaffab31c7c84628b6a9a02ce6a1e923a945609a884f913f83ea50675b184514b5d15c3e1a606a3fd2";
     // let key = hex::decode(string_key_64_bytes).expect("Decoding key failed");
     // let secret_key = Key::from(&key);
+
+    //4. or load from env
+    //e.g. export HCKEY=56d520157194bdab7aec18755508bf6d063be7a203ddb61ebaa203eb1335c2ab3c13ecba7fc548f4563ac1d6af0b94e6720377228230f210ac51707389bf3285
+    //let string_key_64_bytes = std::env::var("HCKEY").unwrap_or_else(|_| { panic!("Key env not set.") });
+    //let key = hex::decode(string_key_64_bytes).expect("Decoding key failed");
+    //let secret_key = Key::from(&key);
     
     HttpServer::new(move || {
 
         App::new()
             .app_data(db_pool.clone())
-            .wrap(middleware::Logger::default())
-            .wrap(SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone()).cookie_secure(false).build()) //cookie_secure must be false if testing without https
-            //.wrap(middleware::Compress::default())
+            .wrap(middleware::Compress::default()) // enable automatic response compression - usually register this first
+            .wrap(SessionMiddleware::builder(
+                CookieSessionStore::default(), secret_key.clone())
+                    .cookie_secure(false) //cookie_secure must be false if testing without https
+                    .build())
+            .wrap(middleware::Logger::default()) // enable logger - always register Actix Web Logger middleware last
             .configure(config)
     })
     .bind("0.0.0.0:8088")?
