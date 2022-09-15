@@ -124,10 +124,8 @@ pub async fn login_post(
     };
 
     if let Some(user_id) = validate_login(credentials) {
-        println!("validated login: {}", user_id.to_string());
         session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
         if session.insert("user_id", user_id).is_ok() {
-            println!("user_id inserted: {}", user_id.to_string());
             return Ok(HttpResponse::SeeOther()
                 .insert_header((LOCATION, "/"))
                 .finish());
@@ -141,13 +139,10 @@ pub async fn login_post(
 }
 
 pub fn get_user_id(session: Session) -> Option<uuid::Uuid> {
-    println!("check login");
     if let Ok(s) = session.get::<uuid::Uuid>("user_id") {
-        println!("logged3333333 in: {:?}", s?.to_string());
         s
     }
     else {
-        println!("not logged in3");
         None
     }
 }

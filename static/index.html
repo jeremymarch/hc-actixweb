@@ -497,19 +497,19 @@
                 uiModePractice(); //practice
                 break;
             case 1: 
-                uiModeAskForm(); //I need to ask first move
+                uiModeAskForm("", null, null, null, null, null, null, 5); //I need to ask first move
                 break;
             case 2: 
                 uiModeWaitingForAsk(); //no moves: waiting for other player to ask first move
                 break;
             case 3: 
-                uiModeAnwerForm(data.starting_form, desc(data.person, data.number, data.tense, data.voice, data.mood)); //I need to answer
+                uiModeAnwerForm(data.starting_form, desc(data.person, data.number, data.tense, data.mood, data.voice)); //I need to answer
                 break;
             case 4:     
                 uiModeWaitingForAsk(); //waiting for you to ask
                 break;
             case 5: 
-                uiModeAskForm(data.starting_form, data.person, data.number, data.tense, data.voice, data.mood, data.verb); //I need to ask
+                uiModeAskForm(data.starting_form, data.person, data.number, data.tense, data.voice, data.mood, data.verb, 2); //I need to ask
                 break;
             case 6: 
                 uiModeWaitingForAnswer(); //waiting for you to answer
@@ -527,7 +527,7 @@
     var tenses = ["present", "imperfect", "future", "aorist", "perfect", "pluperfect"];
     var voices  = ["active", "middle", "passive"];
     var moods = ["indicative", "subjunctive", "optative", "imperative"];
-    function desc(person, number, tense, voice, mood) {
+    function desc(person, number, tense, mood, voice) {
         return persons[person] + " " + numbers[number] + " " + tenses[tense] + " " + moods[mood] + " " + voices[voice];
     }
 
@@ -640,15 +640,23 @@
     function uiModeAskResponse() {
         
         console.log("ask successfully submitted");
+        let submitbutton = document.querySelector("#submitbutton");
+        submitbutton.innerText = "Sent!";
+        submitbutton.disabled = true;
     }
-    function uiModeAskForm(vstarting_form, person, number, tense, voice, mood, verb_id) {
+    function uiModeAskForm(vstarting_form, person, number, tense, voice, mood, verb_id, max_params_to_change) {
         set_params_dropdowns(person, number, tense, voice, mood, verb_id);
         document.querySelector("#askparamsdiv").style.display = "block";
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.innerText = "Ask";
         submitbutton.disabled = false;
         document.querySelector("#startingform").innerText = vstarting_form;
-        document.querySelector("#statusmesg").innerHTML = "Change up to (2) params.";
+        if (max_params_to_change == 5) {
+            document.querySelector("#statusmesg").innerHTML = "Choose a verb and set all params.";
+        }
+        else {
+            document.querySelector("#statusmesg").innerHTML = "Change up to (" + max_params_to_change + ") params.";
+        }
     }
     function uiModeClickedEnter() {
         let submitbutton = document.querySelector("#submitbutton");
