@@ -254,6 +254,9 @@ pub async fn get_session_state(
         voice_prev: if m.len() == 2 { m[1].voice } else { None },
         mood_prev: if m.len() == 2 { m[1].mood } else { None },
         time: if m.len() > 0 { m[0].time.clone() } else { None },
+        response_to:"".to_string(),
+        success:true,
+        mesg:None,
     };
         
     tx.commit().await?;

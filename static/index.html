@@ -69,7 +69,7 @@
     display:block;
     margin:10px auto;
     height:42px;
-    font-size:24pt;
+    font-size:16pt;
     text-align: center;
     padding-top: 16px;
 }
@@ -261,7 +261,7 @@
 		$(".gkinput").keypress(handleKey);
 		//$("#inp").focus();
 
-        submit_data("", "", false, false); //get new
+        //submit_data("", "", false, false); //get new
 	}
 	
 	var forceLowercase = false;
@@ -450,8 +450,8 @@
             success: function (data, textStatus, jqXHR) {
                 //console.log("data: " + data[0] + "ha " + data[1]);
                 //var returnObj = JSON.parse(data);
-                if (data.qtype == "askresponse" && data.success) {
-                    uiModeAskResponse();
+                if (data.response_to == "ask" && data.success) {
+                    uiModeAskResponse(data);
                 }
 
                 console.log(data);
@@ -503,7 +503,7 @@
                 uiModeWaitingForAsk(); //no moves: waiting for other player to ask first move
                 break;
             case 3: 
-                uiModeAnwerForm(data.starting_form, desc(data.person, data.number, data.tense, data.mood, data.voice)); //I need to answer
+                uiModeAnwerForm(data.starting_form, desc(data.person, data.number, data.tense, data.mood, data.voice, null, null, null, null, null)); //I need to answer
                 break;
             case 4:     
                 uiModeWaitingForAsk(); //waiting for you to ask
@@ -527,8 +527,38 @@
     var tenses = ["present", "imperfect", "future", "aorist", "perfect", "pluperfect"];
     var voices  = ["active", "middle", "passive"];
     var moods = ["indicative", "subjunctive", "optative", "imperative"];
-    function desc(person, number, tense, mood, voice) {
-        return persons[person] + " " + numbers[number] + " " + tenses[tense] + " " + moods[mood] + " " + voices[voice];
+    function desc(person, number, tense, mood, voice, prevp, prevn, prevt, prevm, prevv) {
+        if (person !== prevp && prevp !== null) {
+            person = "<b>" + persons[person] + "</b>";
+        }
+        else {
+            person = persons[person];
+        }
+        if (number !== prevn && prevn !== null) {
+            number = "<b>" + numbers[number] + "</b>";
+        }
+        else {
+            number = numbers[number];
+        }
+        if (tense !== prevt && prevt !== null) {
+            tense = "<b>" + tenses[tense] + "</b>";
+        }
+        else {
+            tense = tenses[tense];
+        }
+        if (mood !== prevm && prevm !== null) {
+            mood = "<b>" + moods[mood] + "</b>";
+        }
+        else {
+            mood = moods[mood];
+        }
+        if (voice !== prevv && prevv !== null) {
+            voice = "<b>" + voices[voice] + "</b>";
+        }
+        else {
+            voice = voices[voice];
+        }
+        return person + " " + number + " " + tense + " " + mood + " " + voice;
     }
 
     function uiModeGameIsOver() {
@@ -637,12 +667,16 @@
         document.querySelector("#askparamsdiv").style.display = "none";
     }
 
-    function uiModeAskResponse() {
+    function uiModeAskResponse(data) {
         
         console.log("ask successfully submitted");
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.innerText = "Sent!";
+        document.querySelector("#statusmesg").innerHTML = "Sent!";
         submitbutton.disabled = true;
+        document.querySelector("#askparamsdiv").style.display = "none";
+
+        document.querySelector("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
     }
     function uiModeAskForm(vstarting_form, person, number, tense, voice, mood, verb_id, max_params_to_change) {
         set_params_dropdowns(person, number, tense, voice, mood, verb_id);

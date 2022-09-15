@@ -189,23 +189,6 @@ pub struct SessionResult {
 //     user_id: u32,
 // }
 
-
-#[derive(Deserialize,Serialize)]
-pub struct AskMoveResponse {
-    move_type:String, //ask 
-    starting_form: Option<String>,
-    prev_answer: Option<String>,
-    is_correct: Option<bool>,
-    correct_answer:Option<String>,
-    person: Option<u8>,
-    number: Option<u8>,
-    tense: Option<u8>,
-    voice: Option<u8>,
-    mood: Option<u8>,
-    time: Option<String>,//time for prev answer
-    //limit posibilities based on session settings
-}
-
 #[derive(Deserialize,Serialize)]
 pub struct AnswerMoveResponse {
     move_type:String, //answer
@@ -230,13 +213,6 @@ pub struct AskQuery {
     verb: u32,
 }
 
-#[derive(Deserialize,Serialize)]
-pub struct AskResponse {
-    qtype:String,
-    success:bool,
-    mesg:String,
-}
-
 #[derive(Deserialize, Serialize)]
 pub struct SessionState {
     session_id: Uuid,
@@ -258,6 +234,9 @@ pub struct SessionState {
     voice_prev: Option<u8>,
     mood_prev: Option<u8>,
     time: Option<String>,//time for prev answer
+    response_to:String,
+    success:bool,
+    mesg:Option<String>,
 }
 
 fn get_user_agent(req: &HttpRequest) -> Option<&str> {
@@ -362,42 +341,42 @@ async fn get_move(
 
     if let Some(user_id) = login::get_user_id(session) {
         
-        let res = db::get_session_state(&db, user_id, info.session_id).await.map_err(map_sqlx_error)?;
-        // //
-        // let res = AskMoveResponse {
-        //     move_type:format!("{}", res.move_type), //ask
-        //     starting_form: None,
-        //     prev_answer: None,
-        //     is_correct: None,
-        //     correct_answer:None,
-        //     person: None,
-        //     number: None,
-        //     tense: None,
-        //     voice: None,
-        //     mood: None,
-        //     time: None,//time for prev answer
-        //     //limit posibilities based on session settings
-        // };
+        let mut res = db::get_session_state(&db, user_id, info.session_id).await.map_err(map_sqlx_error)?;
+
+        res.response_to = "getmoves".to_string();
+        res.success = true;
+        res.mesg = None;
+
         return Ok(HttpResponse::Ok().json(res));
     }
-
-    let res = AskMoveResponse {
-        move_type:format!("error"), //ask 
-        starting_form: None,
-        prev_answer: None,
-        is_correct: None,
-        correct_answer:None,
-        person: None,
-        number: None,
-        tense: None,
-        voice: None,
-        mood: None,
-        time: None,//time for prev answer
-        //limit posibilities based on session settings
-    };
-
-    //let res = ("abc","def",);
+    else {
+        let res = SessionState {
+            session_id: info.session_id,
+            move_type: 0,
+            myturn: false,
+            starting_form:None,
+            answer:None,
+            is_correct: None,
+            correct_answer:None,
+            verb: None,
+            person: None,
+            number: None,
+            tense: None,
+            voice: None,
+            mood: None,
+            person_prev: None,
+            number_prev: None,
+            tense_prev: None,
+            voice_prev: None,
+            mood_prev: None,
+            time: None,//time for prev answer
+            response_to:"ask".to_string(),
+            success:false,
+            mesg:Some("not logged in".to_string()),
+        };
+        //let res = ("abc","def",);
     Ok(HttpResponse::Ok().json(res))
+    }
 }
 
 #[allow(clippy::eval_order_dependence)]
@@ -465,20 +444,40 @@ async fn ask(
 
     if let Some(user_id) = login::get_user_id(session) {
         
-        let res = db::insert_ask_move(&db, user_id, info.session_id, info.person, info.number, info.tense, info.mood, info.voice, info.verb, timestamp).await.map_err(map_sqlx_error)?;
+        let _ = db::insert_ask_move(&db, user_id, info.session_id, info.person, info.number, info.tense, info.mood, info.voice, info.verb, timestamp).await.map_err(map_sqlx_error)?;
 
-        let res = AskResponse {
-            qtype: "askresponse".to_string(),
-            success: true,
-            mesg:"".to_string(),
-        };
+        let mut res = db::get_session_state(&db, user_id, info.session_id).await.map_err(map_sqlx_error)?;
+
+        res.response_to = "ask".to_string();
+        res.success = true;
+        res.mesg = None;
+
         Ok(HttpResponse::Ok().json(res))
     }
     else {
-        let res = AskResponse {
-            qtype: "askresponse".to_string(),
-            success: false,
-            mesg:"not logged in".to_string(),
+        let res = SessionState {
+            session_id: info.session_id,
+            move_type: 0,
+            myturn: false,
+            starting_form:None,
+            answer:None,
+            is_correct: None,
+            correct_answer:None,
+            verb: None,
+            person: None,
+            number: None,
+            tense: None,
+            voice: None,
+            mood: None,
+            person_prev: None,
+            number_prev: None,
+            tense_prev: None,
+            voice_prev: None,
+            mood_prev: None,
+            time: None,//time for prev answer
+            response_to:"ask".to_string(),
+            success:false,
+            mesg:Some("not logged in".to_string()),
         };
         Ok(HttpResponse::Ok().json(res))
     }
