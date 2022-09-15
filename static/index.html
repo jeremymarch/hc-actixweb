@@ -56,7 +56,7 @@
     width:600px;
     display:block;
     margin:0px auto;
-    height:110px;
+    height:40px;
     font-size:24pt;
     border:1px solid black;
     text-align: center;
@@ -68,10 +68,10 @@
     width:600px;
     display:block;
     margin:10px auto;
-    height:82px;
+    height:42px;
     font-size:24pt;
     text-align: center;
-    padding-top: 36px;
+    padding-top: 16px;
 }
 .correctanswer {
     width:600px;
@@ -98,9 +98,12 @@
     width:600px;
     margin:0px auto;
 }
+#askparamsdivinner SELECT { display:block;}
 #askparamsdivinner {
     width:100%;
     margin:0px auto;
+    justify-content: center;
+    display:flex;
 }
 .mfbutton {
     float:left;
@@ -110,7 +113,9 @@
 #settings {
     border:2px solid black;
     width:300px;
-    float:left;
+    position: absolute;
+    top: 28px;
+    left: 8px;
 }
 #creategamebutton {
     display: block;
@@ -457,6 +462,15 @@
         });
     }
 
+    function set_params_dropdowns(person, number, tense, voice, mood, verb_id) {
+        document.querySelector("#personparam").value = person;
+        document.querySelector("#numberparam").value = number;
+        document.querySelector("#tenseparam").value = tense;
+        document.querySelector("#moodparam").value = mood;
+        document.querySelector("#voiceparam").value = voice;
+        document.querySelector("#verbchooser").value = verb_id;
+    }
+
     function get_param_values() {
         let p = document.querySelector("#personparam").value;
         let n = document.querySelector("#numberparam").value;
@@ -495,7 +509,7 @@
                 uiModeWaitingForAsk(); //waiting for you to ask
                 break;
             case 5: 
-                uiModeAskForm(); //I need to ask
+                uiModeAskForm(data.starting_form, data.person, data.number, data.tense, data.voice, data.mood, data.verb); //I need to ask
                 break;
             case 6: 
                 uiModeWaitingForAnswer(); //waiting for you to answer
@@ -558,19 +572,42 @@
         document.querySelector("#askparamsdiv").style.display = "none";
     }
 
-    function uiModeAnwerGoForm() {
+    function uiModeAnwerGoForm(loc_starting_form, loc_change_desc) {
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.disabled = false;
         submitbutton.innerText = "Enter";
         document.querySelector("#statusmesg").innerHTML = "Click enter to submit!"
-        document.querySelector("#changedesc").innerHTML = change_desc;
+        document.querySelector("#changedesc").innerHTML = loc_change_desc;
         document.querySelector("#answerform").value = "";
-        document.querySelector("#answerform").disabled = true;
+        document.querySelector("#answerform").disabled = false;
+        document.querySelector("#answerform").focus();
         document.querySelector("#correctanswer").innerHTML = "";
         document.querySelector("#correctanswer").style.visibility = "hidden";
-        document.querySelector("#startingform").innerText = starting_form;
+        document.querySelector("#startingform").innerText = loc_starting_form;
 
         document.querySelector("#askparamsdiv").style.display = "none";
+        startTimer();
+    }
+
+    function uiModeClickedContinue(loc_starting_form, loc_change_desc) {
+        let submitbutton = document.querySelector("#submitbutton");
+        mfPressed = false;
+        timedOut = false;
+        submitbutton.innerText = "Enter";
+        //display startform
+        document.querySelector("#startingform").innerText = loc_starting_form;
+        //display change desc
+        document.querySelector("#changedesc").innerHTML = loc_change_desc;
+        
+        //clear and enable text field
+        document.querySelector("#answerform").value = "";
+        document.querySelector("#answerform").disabled = false;
+        document.querySelector("#answerform").focus();
+
+        document.querySelector("#correctanswer").innerHTML = "";
+        document.querySelector("#correctanswer").style.visibility = "hidden";
+
+        //start timer
         startTimer();
     }
 
@@ -604,12 +641,13 @@
         
         console.log("ask successfully submitted");
     }
-    function uiModeAskForm() {
-        
+    function uiModeAskForm(vstarting_form, person, number, tense, voice, mood, verb_id) {
+        set_params_dropdowns(person, number, tense, voice, mood, verb_id);
         document.querySelector("#askparamsdiv").style.display = "block";
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.innerText = "Ask";
         submitbutton.disabled = false;
+        document.querySelector("#startingform").innerText = vstarting_form;
         document.querySelector("#statusmesg").innerHTML = "Change up to (2) params.";
     }
     function uiModeClickedEnter() {
@@ -619,27 +657,7 @@
         stopTimer();
         document.querySelector("#answerform").disabled = true;
     }
-    function uiModeClickedContinue(loc_starting_form, loc_change_desc) {
-        let submitbutton = document.querySelector("#submitbutton");
-        mfPressed = false;
-        timedOut = false;
-        submitbutton.innerText = "Enter";
-        //display startform
-        document.querySelector("#startingform").innerText = loc_starting_form;
-        //display change desc
-        document.querySelector("#changedesc").innerHTML = loc_change_desc;
-        
-        //clear and enable text field
-        document.querySelector("#answerform").value = "";
-        document.querySelector("#answerform").disabled = false;
-        document.querySelector("#answerform").focus();
 
-        document.querySelector("#correctanswer").innerHTML = "";
-        document.querySelector("#correctanswer").style.visibility = "hidden";
-
-        //start timer
-        startTimer();
-    }
     function uiModeAnswerResponseReceived(is_correct, correct_answer) {
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.innerText = "Continue";
@@ -674,7 +692,8 @@
         else if (submitbutton.innerText == "Go") {
             console.log(submitbutton.innerText + " clicked");
             //get starting form, change desc, (and maybe whether this form has multiple forms?)
-            uiModeClickedContinue(starting_form, change_desc);
+            //uiModeClickedContinue(starting_form, change_desc);
+            uiModeAnwerGoForm(starting_form, change_desc);
         }
     }
 

@@ -287,7 +287,7 @@ pub async fn insert_ask_move(
     tense: u8,
     mood: u8,
     voice: u8,
-    verb: u32,
+    verb_id: u32,
     timestamp:i64,
 ) -> Result<u32, sqlx::Error> {
     let mut tx = pool.begin().await?;
@@ -299,7 +299,7 @@ pub async fn insert_ask_move(
         .bind(uuid)
         .bind(session_id)
         .bind(user_id)
-        .bind(verb)
+        .bind(verb_id)
         .bind(person)
         .bind(number)
         .bind(tense)
@@ -420,7 +420,12 @@ FOREIGN KEY (session_id) REFERENCES sessions(session_id)
         .execute(&mut tx)
         .await?;
 
-    let query = "INSERT INTO users VALUES (?,?,?,?,?);";
+    let query = "CREATE INDEX IF NOT EXISTS move_session_id_idx ON moves (session_id);";
+    let res = sqlx::query(query)
+        .execute(&mut tx)
+        .await?;
+
+    let query = "REPLACE INTO users VALUES (?,?,?,?,?);";
     let uuid = Uuid::from_u128(0x8CD36EFFDF5744FF953B29A473D12347);//sqlx::types::Uuid::new_v4();
     let res = sqlx::query(query)
         .bind(uuid)
