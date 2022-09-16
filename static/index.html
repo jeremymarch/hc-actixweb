@@ -503,7 +503,7 @@
                 uiModeWaitingForAsk(); //no moves: waiting for other player to ask first move
                 break;
             case 3: 
-                uiModeAnwerForm(data.starting_form, desc(data.person, data.number, data.tense, data.mood, data.voice, null, null, null, null, null)); //I need to answer
+                uiModeAnwerForm(data); //I need to answer
                 break;
             case 4:     
                 uiModeWaitingForAsk(); //waiting for you to ask
@@ -512,7 +512,7 @@
                 uiModeAskForm(data.starting_form, data.person, data.number, data.tense, data.voice, data.mood, data.verb, 2); //I need to ask
                 break;
             case 6: 
-                uiModeWaitingForAnswer(); //waiting for you to answer
+                uiModeWaitingForAnswer(data); //waiting for you to answer
                 break;
             case 7: 
                 uiModeGameIsOver(); //game has ended
@@ -585,21 +585,22 @@
         document.querySelector("#askparamsdiv").style.display = "none";
     }
 
-    function uiModeAnwerForm(vstarting_form, vchange_desc) {
+    function uiModeAnwerForm(data) {
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.disabled = false;
         submitbutton.innerText = "Go";
-        starting_form = vstarting_form;
-        change_desc = vchange_desc;
+        starting_form = data.starting_form;
+        change_desc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
         document.querySelector("#statusmesg").innerHTML = "Click Go to answer!"
-        document.querySelector("#changedesc").innerHTML = "";
+        document.querySelector("#changedesc").innerHTML = (data.person_prev) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, null, null, null, null, null) : "";
         document.querySelector("#answerform").value = "";
         document.querySelector("#answerform").disabled = true;
         document.querySelector("#correctanswer").innerHTML = "";
         document.querySelector("#correctanswer").style.visibility = "hidden";
-        document.querySelector("#startingform").innerText = "";
+        document.querySelector("#startingform").innerText = (data.starting_form) ? data.starting_form : "";
 
         document.querySelector("#askparamsdiv").style.display = "none";
+        document.querySelector("#submitbutton").style.display = "block";
     }
 
     function uiModeAnwerGoForm(loc_starting_form, loc_change_desc) {
@@ -617,6 +618,7 @@
 
         document.querySelector("#askparamsdiv").style.display = "none";
         startTimer();
+        document.querySelector("#submitbutton").style.display = "block";
     }
 
     function uiModeClickedContinue(loc_starting_form, loc_change_desc) {
@@ -641,7 +643,7 @@
         startTimer();
     }
 
-    function uiModeWaitingForAnswer() {
+    function uiModeWaitingForAnswer(data) {
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.disabled = true;
         document.querySelector("#statusmesg").innerHTML = "Waiting for (user) to answer.";
@@ -649,9 +651,12 @@
         document.querySelector("#answerform").disabled = true;
         document.querySelector("#correctanswer").innerHTML = "";
         document.querySelector("#correctanswer").style.visibility = "hidden";
-        document.querySelector("#startingform").innerText = "";
+        document.querySelector("#startingform").innerText = data.starting_form;
 
         document.querySelector("#askparamsdiv").style.display = "none";
+
+        document.querySelector("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+        document.querySelector("#submitbutton").style.display = "none";
     }
 
     function uiModeWaitingForAsk() {
@@ -665,6 +670,7 @@
         document.querySelector("#startingform").innerText = "";
 
         document.querySelector("#askparamsdiv").style.display = "none";
+        document.querySelector("#submitbutton").style.display = "none";
     }
 
     function uiModeAskResponse(data) {
@@ -683,6 +689,7 @@
         document.querySelector("#askparamsdiv").style.display = "block";
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.innerText = "Ask";
+        submitbutton.style.display = "block";
         submitbutton.disabled = false;
         document.querySelector("#startingform").innerText = vstarting_form;
         if (max_params_to_change == 5) {
