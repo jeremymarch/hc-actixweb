@@ -83,14 +83,6 @@ pub struct ResponseQuery {
     //answer: String,
 }
 
-#[derive(Serialize)]
-pub struct AnswerResponseQuery {
-    qtype: String,
-    is_correct:bool,
-    correct_answer:String,
-    success:bool,
-}
-
 #[derive(Deserialize,Serialize)]
 pub struct CreateSessionQuery {
     qtype:String,
@@ -115,28 +107,6 @@ pub struct SessionsListQuery {
     move_type:u8,
 }
 
-#[derive(Deserialize, Serialize, FromRow)]
-pub struct MoveResult {
-    move_id: sqlx::types::Uuid,
-    session_id: sqlx::types::Uuid,
-    ask_user_id: sqlx::types::Uuid,
-    answer_user_id: Option<sqlx::types::Uuid>,
-    verb_id: Option<u32>,
-    person: Option<u8>,
-    number: Option<u8>,
-    tense: Option<u8>,
-    mood: Option<u8>,
-    voice: Option<u8>,
-    answer: Option<String>,
-    correct_answer: Option<String>,
-    is_correct: Option<u8>,
-    time: Option<String>,
-    timed_out: Option<bool>,
-    mf_pressed: Option<bool>,
-    asktimestamp: i64,
-    answeredtimestamp: Option<i64>,
-}
-
 #[derive(Deserialize,Serialize)]
 pub struct GetMoveQuery {
     session_id:sqlx::types::Uuid,
@@ -159,47 +129,26 @@ pub struct SessionResult {
     timestamp: i64,
 }
 
-// struct SessionDesc {
-//     session_id: Uuid,
-//     name: String,
-//     time_down: bool,
-//     unit: Option<u8>,
-//     custom_time: Option<u32>, //seconds
-//     custom_verbs: Vec<HcGreekVerb>,
-//     custom_persons: Vec<HcPerson>,
-//     custom_numbers: Vec<HcPerson>,
-//     custom_tenses: Vec<HcPerson>,
-//     custom_voices: Vec<HcPerson>,
-//     custom_moods: Vec<HcPerson>,
-//     timestamp_created: u32,
-//     user_id: u32,
-//     opponent_id: Option<u32>,
-// }
-
-// struct MoveDesc {
-//     move_id: Uuid,
-//     session_id: u32,
-//     verb_form: HcGreekVerbForm,
-//     is_correct: bool,
-//     time: String,
-//     timed_out: bool,
-//     mf_pressed: bool,
-//     answer: String,
-//     timestamp_created: u32,
-//     user_id: u32,
-// }
-
-#[derive(Deserialize,Serialize)]
-pub struct AnswerMoveResponse {
-    move_type:String, //answer
-    starting_form: String,
-    person: u8,
-    number: u8,
-    tense: u8,
-    voice: u8,
-    mood: u8,
-    time: u32, //seconds
-    //has_multiple_forms:bool?,
+#[derive(Deserialize, Serialize, FromRow)]
+pub struct MoveResult {
+    move_id: sqlx::types::Uuid,
+    session_id: sqlx::types::Uuid,
+    ask_user_id: sqlx::types::Uuid,
+    answer_user_id: Option<sqlx::types::Uuid>,
+    verb_id: Option<u32>,
+    person: Option<u8>,
+    number: Option<u8>,
+    tense: Option<u8>,
+    mood: Option<u8>,
+    voice: Option<u8>,
+    answer: Option<String>,
+    correct_answer: Option<String>,
+    is_correct: Option<u8>,
+    time: Option<String>,
+    timed_out: Option<bool>,
+    mf_pressed: Option<bool>,
+    asktimestamp: i64,
+    answeredtimestamp: Option<i64>,
 }
 
 #[derive(Deserialize,Serialize)]
@@ -414,13 +363,6 @@ async fn enter(
             info.timed_out,
             timestamp).await.map_err(map_sqlx_error)?;
 
-        // let res = AnswerResponseQuery {
-        //     qtype: "answerresponse".to_string(),
-        //     is_correct: is_correct,
-        //     correct_answer: correct_answer,
-        //     success: true,
-        // };
-
         let mut res = db::get_session_state(&db, user_id, info.session_id).await.map_err(map_sqlx_error)?;
         res.response_to = "answerresponse".to_string();
         res.success = true;
@@ -428,12 +370,29 @@ async fn enter(
 
         return Ok(HttpResponse::Ok().json(res));
     }
-
-    let res = AnswerResponseQuery {
-        qtype: "answerresponse".to_string(),
-        is_correct: false,
-        correct_answer: String::from(""),
-        success: false,
+    let res = SessionState {
+        session_id: info.session_id,
+        move_type: 0,
+        myturn: false,
+        starting_form:None,
+        answer:None,
+        is_correct: None,
+        correct_answer:None,
+        verb: None,
+        person: None,
+        number: None,
+        tense: None,
+        voice: None,
+        mood: None,
+        person_prev: None,
+        number_prev: None,
+        tense_prev: None,
+        voice_prev: None,
+        mood_prev: None,
+        time: None,//time for prev answer
+        response_to:"ask".to_string(),
+        success:false,
+        mesg:Some("not logged in".to_string()),
     };
     Ok(HttpResponse::Ok().json(res))
 }
