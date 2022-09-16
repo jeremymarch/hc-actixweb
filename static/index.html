@@ -34,6 +34,11 @@
     .gkinput, .gkinputnontyping {
         font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
     }
+
+    .sym {
+        font-family: "AppleColorEmoji","Apple Color Emoji","Segoe UI Emoji",'Noto Color Emoji',"NotoColorEmoji","Segoe UI Symbol","EmojiSymbols",Symbola,"Android Emoji","AndroidEmoji","Arial Unicode MS","Zapf Dingbats","AppleSDGothicNeo-Regular","lucida grande",tahoma,verdana,arial,sans-serif
+        text-rendering: optimizeLegibility;
+    }
     .gkinput, .gkinputcodes, .gkinputnontyping {
     -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
     -moz-box-sizing: border-box;    /* Firefox, other Gecko */
@@ -42,18 +47,16 @@
     padding: 0px 0.5em;
     height: 40px;
     font-size: 20pt;
-    border-radius: 6px;
-    border: 2px solid #666;
     margin:6px 0px;
     resize: none;
 }
 
-.gkinput:focus, .gkinputcodes:focus, .gkinputnontyping:focus{
+/*.gkinput:focus, .gkinputcodes:focus, .gkinputnontyping:focus{
     outline:2px solid #6677dd;
-}
+}*/
 
 .startingform, .newform {
-    width:600px;
+    width:100%;
     display:block;
     margin:0px auto;
     height:40px;
@@ -65,7 +68,7 @@
     font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
 }
 .changedesc {
-    width:600px;
+    width:100%;
     display:block;
     margin:10px auto;
     height:42px;
@@ -73,8 +76,14 @@
     text-align: center;
     padding-top: 16px;
 }
+#statusmesg {
+    display:block;
+    margin:10px auto;
+    font-size:14pt;
+    text-align: center;
+}
 .correctanswer {
-    width:600px;
+    width:100%;
     display:block;
     margin:10px auto;
     font-size:24pt;
@@ -90,12 +99,12 @@
     float:right;
 }
 .hbox {
-    width:600px;
+    width:100%;
     margin:10px auto;
     height:30px;
 }
 #askparamsdiv {
-    width:600px;
+    width:100%;
     margin:0px auto;
 }
 #askparamsdivinner SELECT { display:block;}
@@ -130,6 +139,18 @@
 #askparamsdiv {
     display: none;
 }
+.hcform {
+    display:none;
+    border:2px solid gray;
+    width:600px;
+    margin:14px auto;
+    padding: 14px;
+    border-radius: 8px;
+}
+.icon {
+    height: 26px;
+width: 26px;
+}
     </style>
     </head>
     <body onload="start()">
@@ -141,6 +162,8 @@
             <button onclick="refresh()">refresh</button>
             <div id="list"></div>
         </div>
+        <div class="hcform">
+        <div id="statusmesg">press start to begin</div>
         <div class="hbox">
             <button class="mfbutton" onclick="mfclicked()" title="Multiple Forms Button">MF</button>
             <div id="mainstopwatch">
@@ -152,7 +175,6 @@
         </div>
     <div id="startingform" class="startingform"></div>
     
-    <div id="statusmesg" class="changedesc">press start to begin</div>
     <div id="changedesc" class="changedesc"></div>
     <div id="askparamsdiv">
         <div id="askparamsdivinner">
@@ -192,9 +214,13 @@
     </div>
     </div>
     <textarea id="answerform" class="gkinput newform disablecopypaste" disabled autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="padding:10px;"></textarea>
-    <div id="correctanswer" class="correctanswer" style="visibility: hidden;"></div>
+    <div id="correctanswer" class="gkinput correctanswer" style="visibility: hidden;"></div>
     <button id="submitbutton" onclick="submitclicked()">Start</button>   
+</div>
+
     <script>
+        var correctIcon = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" enable-background="new 0 0 64 64"><path d="M32,2C15.431,2,2,15.432,2,32c0,16.568,13.432,30,30,30c16.568,0,30-13.432,30-30C62,15.432,48.568,2,32,2z M25.025,50  l-0.02-0.02L24.988,50L11,35.6l7.029-7.164l6.977,7.184l21-21.619L53,21.199L25.025,50z" fill="#43a047"/></svg>`;
+        var incorrectIcon = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" enable-background="new 0 0 64 64"><path d="m32 2c-16.568 0-30 13.432-30 30s13.432 30 30 30 30-13.432 30-30-13.432-30-30-30m5.513 44.508l-5.514-9.894-5.825 9.894h-7.048l9.331-14.783-8.878-14.232h7.244l5.175 9.449 5.317-9.449h7.008l-8.878 13.996 9.429 15.02h-7.361z" fill="#e53935"/></svg>`;
             // Check for wasm support.
 	if (!('WebAssembly' in window)) {
 		alert('you need a browser with wasm support enabled :(');
@@ -262,6 +288,7 @@
 		//$("#inp").focus();
 
         //submit_data("", "", false, false); //get new
+        refresh();
 	}
 	
 	var forceLowercase = false;
@@ -431,7 +458,7 @@
                 console.log(data);
                 let rows = "";
                 for (var i = 0; i < data.length; i++) {
-                    rows += "<p" + ((data[i].myturn) ? " class='myturn'" : "") + "><a href='#' onclick='getmove(\"" + data[i].session_id + "\")'>" + data[i].timestamp + ((data[i].opponent_name) ? " vs. " + data[i].opponent_name : "") + "(" + data[i].move_type + ")</a></p>";
+                    rows += "<p" + ((data[i].myturn) ? " class='myturn'" : "") + "><a href='#' onclick='getmove(\"" + data[i].session_id + "\")'>" + ((data[i].move_type < 1) ? "Practise" : "Game") + ((data[i].opponent_name) ? " vs. " + data[i].opponent_name : "") + "(" + data[i].move_type + ")</a></p>";
                 }
                 document.querySelector("#list").innerHTML = rows;
             },
@@ -492,6 +519,7 @@
 //6 q has not been answered by you
 //7 game has ended (no ones turn)
     function setUI(data) {
+        document.querySelector(".hcform").style.display = "block";
         switch(data.move_type) {
             case 0: 
                 uiModePractice(); //practice
@@ -704,13 +732,15 @@
         }
         else {
             submitbutton.innerText = "Continue";
+            
+            document.querySelector("#mainTime").innerText = data.time;
             document.querySelector("#askparamsdiv").style.display = "none";
             document.querySelector("#statusmesg").innerHTML = "Click Continue to ask the next form."
             document.querySelector("#startingform").innerText = data.starting_form;
             document.querySelector("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
             document.querySelector("#answerform").value = data.answer;
             document.querySelector("#correctanswer").style.visibility = "visible";
-            document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? "Correct: " : "Incorrect: ") + data.correct_answer;
+            document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + data.correct_answer;
         }
         submitbutton.style.display = "block";
         submitbutton.disabled = false;
@@ -731,13 +761,13 @@
         document.querySelector("#answerform").value = "";
         document.querySelector("#correctanswer").style.visibility = "hidden";
         document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? "Correct: " : "Incorrect: ") + data.correct_answer;
-        document.querySelector("#statusmesg").innerHTML = "Click Ask to ask the next form."
-        // if (max_params_to_change == 5) {
-        //     document.querySelector("#statusmesg").innerHTML = "Choose a verb and set all params.";
-        // }
-        // else {
-        //     document.querySelector("#statusmesg").innerHTML = "Change up to (" + max_params_to_change + ") params.";
-        // }
+        //document.querySelector("#statusmesg").innerHTML = "Click Ask to ask the next form."
+        if (max_params_to_change == 5) {
+            document.querySelector("#statusmesg").innerHTML = "Choose a verb and set all params.";
+        }
+        else {
+            document.querySelector("#statusmesg").innerHTML = "Change up to (" + max_params_to_change + ") params.";
+        }
     }
     function uiModeClickedEnter() {
         let submitbutton = document.querySelector("#submitbutton");
