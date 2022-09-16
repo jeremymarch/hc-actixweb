@@ -238,7 +238,7 @@ pub async fn get_session_state(
         session_id: session_id,
         move_type: move_type,
         myturn: myturn,
-        starting_form: if m.len() == 2 && m[0].verb_id == m[1].verb_id { m[1].answer.clone() } else { Some("first pp of m[1].verb".to_string()) },
+        starting_form: if m.len() == 2 && m[0].verb_id == m[1].verb_id { m[1].correct_answer.clone() } else { Some("first pp of m[1].verb".to_string()) },
         answer: if m.len() > 0 { m[0].answer.clone() } else { None },
         is_correct: if m.len() > 0 && m[0].is_correct.is_some() { Some(m[0].is_correct.unwrap() != 0) } else { None },
         correct_answer: if m.len() > 0 { m[0].correct_answer.clone() } else { None },

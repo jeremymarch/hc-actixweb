@@ -414,12 +414,17 @@ async fn enter(
             info.timed_out,
             timestamp).await.map_err(map_sqlx_error)?;
 
-        let res = AnswerResponseQuery {
-            qtype: "answerresponse".to_string(),
-            is_correct: is_correct,
-            correct_answer: correct_answer,
-            success: true,
-        };
+        // let res = AnswerResponseQuery {
+        //     qtype: "answerresponse".to_string(),
+        //     is_correct: is_correct,
+        //     correct_answer: correct_answer,
+        //     success: true,
+        // };
+
+        let mut res = db::get_session_state(&db, user_id, info.session_id).await.map_err(map_sqlx_error)?;
+        res.response_to = "answerresponse".to_string();
+        res.success = true;
+        res.mesg = None;
 
         return Ok(HttpResponse::Ok().json(res));
     }

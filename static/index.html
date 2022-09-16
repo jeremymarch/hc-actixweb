@@ -359,7 +359,7 @@
                 console.log(data);
                 starting_form = data.starting_form;
                 change_desc = data.change_desc;
-                uiModeAnswerResponseReceived(data.is_correct, data.correct_answer);
+                uiModeAnswerResponseReceived(data);
 
                 reqPending = false;
             },
@@ -509,7 +509,7 @@
                 uiModeWaitingForAsk(); //waiting for you to ask
                 break;
             case 5: 
-                uiModeAskForm(data.starting_form, data.person, data.number, data.tense, data.voice, data.mood, data.verb, 2); //I need to ask
+                uiModeAskForm(data, 2); //I need to ask
                 break;
             case 6: 
                 uiModeWaitingForAnswer(data); //waiting for you to answer
@@ -684,20 +684,50 @@
 
         document.querySelector("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
     }
-    function uiModeAskForm(vstarting_form, person, number, tense, voice, mood, verb_id, max_params_to_change) {
-        set_params_dropdowns(person, number, tense, voice, mood, verb_id);
+    var global_session_state = null;
+    function uiModeAskForm(data, max_params_to_change) {
+        global_session_state = data;
+        set_params_dropdowns(data.person, data.number, data.tense, data.voice, data.mood, data.verb_id);
+        document.querySelector("#askparamsdiv").style.display = "none";
+        let submitbutton = document.querySelector("#submitbutton");
+        submitbutton.innerText = "Continue";
+        submitbutton.style.display = "block";
+        submitbutton.disabled = false;
+        document.querySelector("#startingform").innerText = data.starting_form;
+        document.querySelector("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+        document.querySelector("#answerform").value = data.answer;
+        document.querySelector("#correctanswer").style.visibility = "visible";
+        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? "Correct: " : "Incorrect: ") + data.correct_answer;
+        document.querySelector("#statusmesg").innerHTML = "Click Continue to ask the next form."
+        // if (max_params_to_change == 5) {
+        //     document.querySelector("#statusmesg").innerHTML = "Choose a verb and set all params.";
+        // }
+        // else {
+        //     document.querySelector("#statusmesg").innerHTML = "Change up to (" + max_params_to_change + ") params.";
+        // }
+    }
+    function uiModeAskForm2() {
+        let data = global_session_state;
+        global_session_state = null;
+        set_params_dropdowns(data.person, data.number, data.tense, data.voice, data.mood, data.verb_id);
         document.querySelector("#askparamsdiv").style.display = "block";
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.innerText = "Ask";
         submitbutton.style.display = "block";
         submitbutton.disabled = false;
-        document.querySelector("#startingform").innerText = vstarting_form;
-        if (max_params_to_change == 5) {
-            document.querySelector("#statusmesg").innerHTML = "Choose a verb and set all params.";
-        }
-        else {
-            document.querySelector("#statusmesg").innerHTML = "Change up to (" + max_params_to_change + ") params.";
-        }
+        document.querySelector("#startingform").innerText = data.correct_answer;
+        document.querySelector("#changedesc").innerHTML = "";//desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+        //document.querySelector("#changedesc").style.display = "none";
+        document.querySelector("#answerform").value = "";
+        document.querySelector("#correctanswer").style.visibility = "hidden";
+        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? "Correct: " : "Incorrect: ") + data.correct_answer;
+        document.querySelector("#statusmesg").innerHTML = "Click Ask to ask the next form."
+        // if (max_params_to_change == 5) {
+        //     document.querySelector("#statusmesg").innerHTML = "Choose a verb and set all params.";
+        // }
+        // else {
+        //     document.querySelector("#statusmesg").innerHTML = "Change up to (" + max_params_to_change + ") params.";
+        // }
     }
     function uiModeClickedEnter() {
         let submitbutton = document.querySelector("#submitbutton");
@@ -707,13 +737,14 @@
         document.querySelector("#answerform").disabled = true;
     }
 
-    function uiModeAnswerResponseReceived(is_correct, correct_answer) {
+    function uiModeAnswerResponseReceived(data) {
+        global_session_state = data;
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.innerText = "Continue";
         submitbutton.disabled = false;
         //mark (in)correct, show correct answer
         document.querySelector("#correctanswer").style.visibility = "visible";
-        document.querySelector("#correctanswer").innerHTML = ((is_correct) ? "Correct: " : "Incorrect: ") + correct_answer;
+        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? "Correct: " : "Incorrect: ") + data.correct_answer;
     }
 
     var reqPending = false;
@@ -732,7 +763,8 @@
         else if (submitbutton.innerText == "Continue" || submitbutton.innerText == "Start") {
             console.log(submitbutton.innerText + " clicked");
             //get starting form, change desc, (and maybe whether this form has multiple forms?)
-            uiModeClickedContinue(starting_form, change_desc);
+            //uiModeClickedContinue(starting_form, change_desc);
+            uiModeAskForm2();
         }
         else if (submitbutton.innerText == "Ask") {
             let vals = get_param_values();
