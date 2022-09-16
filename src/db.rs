@@ -238,7 +238,7 @@ pub async fn get_session_state(
         session_id: session_id,
         move_type: move_type,
         myturn: myturn,
-        starting_form: if m.len() == 2 && m[0].verb_id == m[1].verb_id { m[1].correct_answer.clone() } else { Some("first pp of m[1].verb".to_string()) },
+        starting_form: if m.len() == 2 && m[0].verb_id == m[1].verb_id { m[1].correct_answer.clone() } else { None },
         answer: if m.len() > 0 { m[0].answer.clone() } else { None },
         is_correct: if m.len() > 0 && m[0].is_correct.is_some() { Some(m[0].is_correct.unwrap() != 0) } else { None },
         correct_answer: if m.len() > 0 { m[0].correct_answer.clone() } else { None },
@@ -350,7 +350,7 @@ pub async fn update_answer_move(
     let m = get_last_move_tx(&mut tx, session_id).await?;
 
     let query = "UPDATE moves SET answer_user_id=?, answer=?, correct_answer=?, is_correct=?, time=?, mf_pressed=?, timed_out=?, answeredtimestamp=? WHERE move_id=?;";
-    let res = sqlx::query(query)
+    let _res = sqlx::query(query)
         .bind(user_id)
         .bind(answer)
         .bind(correct_answer)
@@ -380,7 +380,7 @@ timestamp INT NOT NULL DEFAULT 0,
 UNIQUE(user_name)
 );"#;
 
-    let res = sqlx::query(query)
+    let _res = sqlx::query(query)
         .execute(&mut tx)
         .await?;
 
@@ -392,7 +392,7 @@ timestamp INT NOT NULL DEFAULT 0,
 FOREIGN KEY (challenger_user_id) REFERENCES users(user_id), 
 FOREIGN KEY (challenged_user_id) REFERENCES users(user_id)
 );"#;
-    let res = sqlx::query(query)
+    let _res = sqlx::query(query)
         .execute(&mut tx)
         .await?;
 
@@ -419,18 +419,18 @@ FOREIGN KEY (ask_user_id) REFERENCES users(user_id),
 FOREIGN KEY (answer_user_id) REFERENCES users(user_id), 
 FOREIGN KEY (session_id) REFERENCES sessions(session_id) 
 );"#;
-    let res = sqlx::query(query)
+    let _res = sqlx::query(query)
         .execute(&mut tx)
         .await?;
 
     let query = "CREATE INDEX IF NOT EXISTS move_session_id_idx ON moves (session_id);";
-    let res = sqlx::query(query)
+    let _res = sqlx::query(query)
         .execute(&mut tx)
         .await?;
 
     let query = "REPLACE INTO users VALUES (?,?,?,?,?);";
     let uuid = Uuid::from_u128(0x8CD36EFFDF5744FF953B29A473D12347);//sqlx::types::Uuid::new_v4();
-    let res = sqlx::query(query)
+    let _res = sqlx::query(query)
         .bind(uuid)
         .bind("user1")
         .bind("1234")
@@ -440,7 +440,7 @@ FOREIGN KEY (session_id) REFERENCES sessions(session_id)
         .await?;
 
     let uuid = Uuid::from_u128(0xD75B0169E7C343838298136E3D63375C);//sqlx::types::Uuid::new_v4();
-    let res = sqlx::query(query)
+    let _res = sqlx::query(query)
         .bind(uuid)
         .bind("user2")
         .bind("1234")

@@ -285,12 +285,16 @@ async fn create_session(
 async fn get_move(
     (info, req, session): (web::Form<GetMoveQuery>, HttpRequest, Session)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
+    let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     //"ask", prev form to start from or null, prev answer and is_correct, correct answer
 
     if let Some(user_id) = login::get_user_id(session) {
         
         let mut res = db::get_session_state(&db, user_id, info.session_id).await.map_err(map_sqlx_error)?;
+        if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
+            res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
+        }
 
         res.response_to = "getmoves".to_string();
         res.success = true;
@@ -344,8 +348,8 @@ async fn enter(
         let m = db::get_last_move(&db, info.session_id).await.map_err(map_sqlx_error)?;
 
         //test answer to get correct_answer and is_correct
-        let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
-        let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR).unwrap());
+        //let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+        //let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR).unwrap());
         let prev_form = HcGreekVerbForm {verb:verbs[0].clone(), person:HcPerson::from_u8(m.person.unwrap()), number:HcNumber::from_u8(m.number.unwrap()), tense:HcTense::from_u8(m.tense.unwrap()), voice:HcVoice::from_u8(m.voice.unwrap()), mood:HcMood::from_u8(m.mood.unwrap()), gender:None, case:None};
 
         let correct_answer = prev_form.get_form(false).unwrap().last().unwrap().form.to_string();
@@ -364,6 +368,9 @@ async fn enter(
             timestamp).await.map_err(map_sqlx_error)?;
 
         let mut res = db::get_session_state(&db, user_id, info.session_id).await.map_err(map_sqlx_error)?;
+        if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
+            res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
+        }
         res.response_to = "answerresponse".to_string();
         res.success = true;
         res.mesg = None;
@@ -401,6 +408,7 @@ async fn enter(
 async fn ask(
     (info, req, session): (web::Form<AskQuery>, HttpRequest, Session)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
+    let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     let timestamp = get_timestamp();
     let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
@@ -412,6 +420,9 @@ async fn ask(
 
         let mut res = db::get_session_state(&db, user_id, info.session_id).await.map_err(map_sqlx_error)?;
 
+        if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
+            res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
+        }
         res.response_to = "ask".to_string();
         res.success = true;
         res.mesg = None;
