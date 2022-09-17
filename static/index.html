@@ -78,8 +78,8 @@
 }
 #statusmesg {
     display:block;
-    margin:10px auto;
-    font-size:14pt;
+    margin:0px auto;
+    font-size:12pt;
     text-align: center;
 }
 .correctanswer {
@@ -168,7 +168,6 @@ width: 26px;
             <div id="list"></div>
         </div>
         <div class="hcform">
-        <div id="statusmesg">press start to begin</div>
         <div class="hbox">
             <button id="mfbutton" class="mfbutton" onclick="mfclicked()" title="Multiple Forms Button">MF</button>
             <div id="mainstopwatch">
@@ -222,7 +221,8 @@ width: 26px;
     </div>
     <textarea id="answerform" class="gkinput newform disablecopypaste" disabled autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="padding:10px;"></textarea>
     <div id="correctanswer" class="gkinput correctanswer" style="visibility: hidden;"></div>
-    <button id="submitbutton" onclick="submitclicked()">Start</button>   
+    <button id="submitbutton" onclick="submitclicked()">Start</button>
+    <div id="statusmesg">press start to begin</div>
 </div>
 
     <script>
