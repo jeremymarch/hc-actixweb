@@ -175,11 +175,11 @@ fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>
             else if s.ask_user_id == user_id { 
                 if s.answer_user_id.is_some() { //xxxanswered, my turn to ask | I asked, they answered, their turn to ask (waiting for them to ask)
                     myturn = false;
-                    move_type = MoveType::AskYourTurn;
+                    move_type = MoveType::AskTheirTurn;
                 }
                 else {
                     myturn = false; //unanswered, their turn to answer
-                    move_type = MoveType::AnswerYourTurn;
+                    move_type = MoveType::AnswerTheirTurn;
                 }
             } else { 
                 if s.answer_user_id.is_some() { //xxxanswered, their turn to ask | they asked, I answered, my turn to ask
@@ -196,7 +196,7 @@ fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>
             if challenged_id.is_some() { 
                 if challenged_id.unwrap() == user_id {
                     myturn = false;
-                    move_type = MoveType::FirstMoveYourTurn; //no moves yet, their turn to ask
+                    move_type = MoveType::FirstMoveTheirTurn; //no moves yet, their turn to ask
                 } 
                 else {
                     myturn = true;

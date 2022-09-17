@@ -65,16 +65,16 @@ async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum MoveType {
-    Practice = 0,
-    FirstMoveMyTurn = 1,
-    FirstMoveYourTurn = 2,
+    Practice,
+    FirstMoveMyTurn,
+    FirstMoveTheirTurn,
 
-    AnswerMyTurn = 3,
-    AskYourTurn = 4,
-    AskMyTurn = 5,
-    AnswerYourTurn = 6,
+    AnswerMyTurn,
+    AskTheirTurn,
+    AskMyTurn,
+    AnswerTheirTurn,
 
-    GameOver = 7,
+    GameOver,
 }
 
 #[derive(Deserialize)]
@@ -141,6 +141,8 @@ pub struct SessionResult {
     challenger_user_id: Uuid,
     challenged_user_id: Option<Uuid>,
     timestamp: i64,
+    // challenger_score:Option<u32>,
+    // challenged_score:Option<u32>,
 }
 
 #[derive(Deserialize, Serialize, FromRow)]
@@ -364,7 +366,8 @@ async fn enter(
         //test answer to get correct_answer and is_correct
         //let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
         //let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR).unwrap());
-        let prev_form = HcGreekVerbForm {verb:verbs[0].clone(), person:HcPerson::from_u8(m.person.unwrap()), number:HcNumber::from_u8(m.number.unwrap()), tense:HcTense::from_u8(m.tense.unwrap()), voice:HcVoice::from_u8(m.voice.unwrap()), mood:HcMood::from_u8(m.mood.unwrap()), gender:None, case:None};
+        let idx = if m.verb_id.is_some() && (m.verb_id.unwrap() as usize) < verbs.len() { m.verb_id.unwrap() as usize } else { 0 };
+        let prev_form = HcGreekVerbForm {verb:verbs[idx].clone(), person:HcPerson::from_u8(m.person.unwrap()), number:HcNumber::from_u8(m.number.unwrap()), tense:HcTense::from_u8(m.tense.unwrap()), voice:HcVoice::from_u8(m.voice.unwrap()), mood:HcMood::from_u8(m.mood.unwrap()), gender:None, case:None};
 
         let correct_answer = prev_form.get_form(false).unwrap().last().unwrap().form.to_string();
         let is_correct = hgk_compare_multiple_forms(&correct_answer.replace('/', ","), &info.answer);

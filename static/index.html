@@ -159,7 +159,7 @@ width: 26px;
     </style>
     </head>
     <body onload="start()">
-        <div id="menubar"><div style="padding:0px 20px"><a href="login">login</a></div><div style="font-weight:bold;">HOPLITE CHALLENGE</div></div>
+        <div id="menubar"><div style="padding:0px 20px"><a id="loginout" href="login">login</a></div><div style="font-weight:bold;">HOPLITE CHALLENGE</div></div>
         <div id="settings">
             <button id="creategamebutton" onclick="createGame()">Create Game</button>
             Top Unit: <input id="unitinput" type="text"/><br/>
@@ -465,7 +465,9 @@ width: 26px;
                 console.log(data);
                 let rows = "";
                 for (var i = 0; i < data.length; i++) {
-                    rows += "<p" + ((data[i].myturn) ? " class='myturn'" : "") + "><a href='#' onclick='getmove(\"" + data[i].session_id + "\")'>" + ((data[i].move_type == "Practice") ? "Practise" : "Game") + ((data[i].opponent_name) ? " vs. " + data[i].opponent_name : "") + " (" + data[i].move_type + ")</a></p>";
+                    if (data[i].move_type != "FirstMoveTheirTurn") {
+                        rows += "<p" + ((data[i].myturn) ? " class='myturn'" : "") + "><a href='#' onclick='getmove(\"" + data[i].session_id + "\")'>" + ((data[i].move_type == "Practice") ? "Practise" : "Game") + ((data[i].opponent_name) ? " vs. " + data[i].opponent_name : "") + " (" + data[i].move_type + ")</a></p>";
+                    }
                 }
                 document.querySelector("#list").innerHTML = rows;
             },
@@ -534,19 +536,19 @@ width: 26px;
             case "FirstMoveMyTurn": 
                 uiModeAskForm(data, 5); //I need to ask first move
                 break;
-            case "FirstMoveYourTurn": 
+            case "FirstMoveTheirTurn": 
                 uiModeWaitingForAsk(data); //no moves: waiting for other player to ask first move
                 break;
             case "AnswerMyTurn": 
                 uiModeAnwerForm(data); //I need to answer
                 break;
-            case "AskYourTurn":     
+            case "AskTheirTurn":     
                 uiModeWaitingForAsk(data); //waiting for you to ask
                 break;
             case "AskMyTurn": 
                 uiModeAskForm(data, 2); //I need to ask
                 break;
-            case "AnswerYourTurn": 
+            case "AnswerTheirTurn": 
                 uiModeWaitingForAnswer(data); //waiting for you to answer
                 break;
             case "GameOver": 
@@ -715,7 +717,7 @@ width: 26px;
         document.querySelector("#submitbutton").style.display = "none";
         document.querySelector("#mfbutton").disabled = true;
 
-        if (data.move_type == "FirstMoveYourTurn") {
+        if (data.move_type == "FirstMoveTheirTurn") {
             document.querySelector("#changedesc").innerHTML = "";
             document.querySelector("#correctanswer").innerHTML = "";
         }
@@ -753,6 +755,7 @@ width: 26px;
         let submitbutton = document.querySelector("#submitbutton");
         if (data.move_type == "Practice") {
             submitbutton.innerText = "Ask";
+            document.querySelector("#verbchooser").style.display = "none";
             document.querySelector("#askparamsdiv").style.display = "block";
             document.querySelector("#statusmesg").innerHTML = "Click ask to ask this form."
             document.querySelector("#startingform").innerText = "";
@@ -763,7 +766,7 @@ width: 26px;
         }
         else {
             submitbutton.innerText = "Continue";
-            
+            document.querySelector("#verbchooser").style.display = "none";
             document.querySelector("#mainTime").innerText = data.time;
             document.querySelector("#askparamsdiv").style.display = "none";
             document.querySelector("#statusmesg").innerHTML = "Click Continue to ask the next form."
@@ -828,6 +831,7 @@ width: 26px;
         //mark (in)correct, show correct answer
         document.querySelector("#correctanswer").style.visibility = "visible";
         document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + data.correct_answer;
+        document.querySelector("#statusmesg").innerHTML = "Click Continue to ask the next form."
     }
 
     var reqPending = false;
