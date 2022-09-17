@@ -89,13 +89,10 @@ pub struct AnswerQuery {
 }
 
 #[derive(Serialize)]
-pub struct ResponseQuery {
-    qtype: String,
-    starting_form: String,
-    change_desc: String,
-    has_mf: bool,
-    is_correct:bool,
-    //answer: String,
+pub struct StatusResponse {
+    response_to: String,
+    mesg: String,
+    success: bool,
 }
 
 #[derive(Deserialize,Serialize)]
@@ -235,16 +232,12 @@ async fn get_sessions(
     }
     else {
         mesg = "error inserting: not logged in".to_string();
-        let res = ResponseQuery {
-            qtype: "test".to_string(),
-            starting_form: mesg,
-            change_desc: "change_desc".to_string(),
-            has_mf: false,
-            is_correct: false,
-            //answer: String,
+        let res = StatusResponse {
+            response_to: "getsessions".to_string(),
+            mesg: mesg,
+            success: false,
         };
     
-        //let res = ("abc","def",);
         Ok(HttpResponse::Ok().json(res))
     }
 }
@@ -260,54 +253,35 @@ async fn create_session(
         let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
         let user_agent = get_user_agent(&req).unwrap_or("");
 
-        match libhc::hc_insert_session(&db, user_id, &info, timestamp).await.map_err(map_sqlx_error) {
+        let mut success = false;
+        mesg = match libhc::hc_insert_session(&db, user_id, &info, timestamp).await.map_err(map_sqlx_error) {
             Ok(true) => {
-                mesg = "inserted!".to_string();
+                success = true;
+                "inserted!".to_string()   
             },
             Ok(false) => {
-                return Ok(HttpResponse::Ok().finish()); //todo oops
+                "opponent not found!".to_string()
             },
             Err(e) => {
-                mesg = format!("error inserting: {:?}", e);
+                format!("error inserting: {:?}", e)
             }
-        }
-
-        // let opponent_user_id = match db::get_user_id(&db, &info.opponent).await.map_err(map_sqlx_error) {
-        //     Ok(o) => Some(o.user_id),
-        //     Err(_) => None,
-        // };
-
-        // //failed to find opponent or opponent is self
-        // if (info.opponent.len() > 0 && opponent_user_id.is_none()) || (opponent_user_id.is_some() && opponent_user_id.unwrap() == user_id) {
-        //     return Ok(HttpResponse::Ok().finish()); //todo oops
-        // }
-
-        // let unit = if let Ok(v) = info.unit.parse::<u32>() { Some(v) } else { None };
-        
-        // match db::insert_session(&db, user_id, unit, opponent_user_id, timestamp).await {
-        //     Ok(e) => {
-        //         mesg = "inserted!".to_string();
-        //     },
-        //     Err(e) => {
-        //         mesg = format!("error inserting: {:?}", e);
-        //     }
-        // }
+        };
+        let res = StatusResponse {
+            response_to: "newsession".to_string(),
+            mesg: mesg,
+            success: success,
+        };
+        Ok(HttpResponse::Ok().json(res))
     }
     else {
         mesg = "error inserting: not logged in".to_string();
+        let res = StatusResponse {
+            response_to: "newsession".to_string(),
+            mesg: mesg,
+            success: false,
+        };
+        Ok(HttpResponse::Ok().json(res))
     }
-
-    let res = ResponseQuery {
-        qtype: "test".to_string(),
-        starting_form: mesg,
-        change_desc: "change_desc".to_string(),
-        has_mf: false,
-        is_correct: false,
-        //answer: String,
-    };
-
-    //let res = ("abc","def",);
-    Ok(HttpResponse::Ok().json(res))
 }
 
 #[allow(clippy::eval_order_dependence)]
