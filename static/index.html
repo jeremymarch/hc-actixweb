@@ -132,6 +132,8 @@
 #menubar {
     height:20px;
     border-bottom:1px solid black;
+    display:flex;
+    justify-content: flex-end;
 }
 .myturn {
     background-color: red;
@@ -151,10 +153,13 @@
     height: 26px;
 width: 26px;
 }
+#verbchooser {
+    display: none;
+}
     </style>
     </head>
     <body onload="start()">
-        <div id="menubar"><div style="float:right;font-weight:bold;">HOPLITE CHALLENGE</div></div>
+        <div id="menubar"><div style="padding:0px 20px"><a href="login">login</a></div><div style="font-weight:bold;">HOPLITE CHALLENGE</div></div>
         <div id="settings">
             <button id="creategamebutton" onclick="createGame()">Create Game</button>
             Top Unit: <input id="unitinput" type="text"/><br/>
@@ -165,7 +170,7 @@ width: 26px;
         <div class="hcform">
         <div id="statusmesg">press start to begin</div>
         <div class="hbox">
-            <button class="mfbutton" onclick="mfclicked()" title="Multiple Forms Button">MF</button>
+            <button id="mfbutton" class="mfbutton" onclick="mfclicked()" title="Multiple Forms Button">MF</button>
             <div id="mainstopwatch">
                 <div id="mainTime">
                     30:00
@@ -173,16 +178,18 @@ width: 26px;
             </div>
             
         </div>
-    <div id="startingform" class="startingform"></div>
+    <div id="startingformouter" class="startingform">
+        <div id="startingform" class=""></div>
+        <select id="verbchooser">
+            <option value="0">παιδεύω</option>
+            <option value="1">πέμπω</option>
+            <option value="2">λύω</option>
+        </select>
+    </div>
     
     <div id="changedesc" class="changedesc"></div>
     <div id="askparamsdiv">
         <div id="askparamsdivinner">
-            <select id="verbchooser">
-                <option value="0">παιδεύω</option>
-                <option value="1">πέμπω</option>
-                <option value="2">λύω</option>
-            </select>
         <select id="personparam">
             <option value="0">First</option>
             <option value="1">Second</option>
@@ -458,7 +465,7 @@ width: 26px;
                 console.log(data);
                 let rows = "";
                 for (var i = 0; i < data.length; i++) {
-                    rows += "<p" + ((data[i].myturn) ? " class='myturn'" : "") + "><a href='#' onclick='getmove(\"" + data[i].session_id + "\")'>" + ((data[i].move_type < 1) ? "Practise" : "Game") + ((data[i].opponent_name) ? " vs. " + data[i].opponent_name : "") + "(" + data[i].move_type + ")</a></p>";
+                    rows += "<p" + ((data[i].myturn) ? " class='myturn'" : "") + "><a href='#' onclick='getmove(\"" + data[i].session_id + "\")'>" + ((data[i].move_type == "Practice") ? "Practise" : "Game") + ((data[i].opponent_name) ? " vs. " + data[i].opponent_name : "") + " (" + data[i].move_type + ")</a></p>";
                 }
                 document.querySelector("#list").innerHTML = rows;
             },
@@ -521,28 +528,28 @@ width: 26px;
     function setUI(data) {
         document.querySelector(".hcform").style.display = "block";
         switch(data.move_type) {
-            case 0: 
+            case "Practice": 
                 uiModePractice(); //practice
                 break;
-            case 1: 
+            case "FirstMoveMyTurn": 
                 uiModeAskForm(data, 5); //I need to ask first move
                 break;
-            case 2: 
-                uiModeWaitingForAsk(); //no moves: waiting for other player to ask first move
+            case "FirstMoveYourTurn": 
+                uiModeWaitingForAsk(data); //no moves: waiting for other player to ask first move
                 break;
-            case 3: 
+            case "AnswerMyTurn": 
                 uiModeAnwerForm(data); //I need to answer
                 break;
-            case 4:     
-                uiModeWaitingForAsk(); //waiting for you to ask
+            case "AskYourTurn":     
+                uiModeWaitingForAsk(data); //waiting for you to ask
                 break;
-            case 5: 
+            case "AskMyTurn": 
                 uiModeAskForm(data, 2); //I need to ask
                 break;
-            case 6: 
+            case "AnswerYourTurn": 
                 uiModeWaitingForAnswer(data); //waiting for you to answer
                 break;
-            case 7: 
+            case "GameOver": 
                 uiModeGameIsOver(); //game has ended
                 break;
             default:
@@ -598,6 +605,7 @@ width: 26px;
         document.querySelector("#correctanswer").innerHTML = "";
         document.querySelector("#correctanswer").style.visibility = "hidden";
         document.querySelector("#startingform").innerText = "";
+        document.querySelector("#mfbutton").disabled = true;
     }
 
     function uiModePractice() {
@@ -623,6 +631,7 @@ width: 26px;
         document.querySelector("#changedesc").innerHTML = (data.person_prev) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, null, null, null, null, null) : "";
         document.querySelector("#answerform").value = "";
         document.querySelector("#answerform").disabled = true;
+        document.querySelector("#mfbutton").disabled = true;
         document.querySelector("#correctanswer").innerHTML = "";
         document.querySelector("#correctanswer").style.visibility = "hidden";
         document.querySelector("#startingform").innerText = (data.starting_form) ? data.starting_form : "";
@@ -639,6 +648,7 @@ width: 26px;
         document.querySelector("#changedesc").innerHTML = loc_change_desc;
         document.querySelector("#answerform").value = "";
         document.querySelector("#answerform").disabled = false;
+        document.querySelector("#mfbutton").disabled = false;
         document.querySelector("#answerform").focus();
         document.querySelector("#correctanswer").innerHTML = "";
         document.querySelector("#correctanswer").style.visibility = "hidden";
@@ -666,6 +676,7 @@ width: 26px;
 
         document.querySelector("#correctanswer").innerHTML = "";
         document.querySelector("#correctanswer").style.visibility = "hidden";
+        document.querySelector("#mfbutton").disabled = true;
 
         //start timer
         startTimer();
@@ -685,25 +696,39 @@ width: 26px;
 
         document.querySelector("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
         document.querySelector("#submitbutton").style.display = "none";
+        document.querySelector("#mfbutton").disabled = true;
+        document.querySelector("#mainTime").innerText = "30:00";
     }
 
-    function uiModeWaitingForAsk() {
+    function uiModeWaitingForAsk(data) {
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.disabled = true;
         document.querySelector("#statusmesg").innerHTML = "Waiting for (user) to ask.";
-        document.querySelector("#answerform").value = "";
+        document.querySelector("#answerform").value = data.answer;
         document.querySelector("#answerform").disabled = true;
-        document.querySelector("#correctanswer").innerHTML = "";
-        document.querySelector("#correctanswer").style.visibility = "hidden";
-        document.querySelector("#startingform").innerText = "";
-
+        
+        document.querySelector("#correctanswer").style.visibility = "visible";
+        document.querySelector("#startingform").innerText = data.starting_form;
+        
+        document.querySelector("#mainTime").innerText = data.time;
         document.querySelector("#askparamsdiv").style.display = "none";
         document.querySelector("#submitbutton").style.display = "none";
+        document.querySelector("#mfbutton").disabled = true;
+
+        if (data.move_type == "FirstMoveYourTurn") {
+            document.querySelector("#changedesc").innerHTML = "";
+            document.querySelector("#correctanswer").innerHTML = "";
+        }
+        else {
+            document.querySelector("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+            document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + data.correct_answer;
+        }
     }
 
     function uiModeAskResponse(data) {
         
         console.log("ask successfully submitted");
+        document.querySelector("#mfbutton").disabled = true;
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.innerText = "Sent!";
         document.querySelector("#statusmesg").innerHTML = "Sent!";
@@ -717,10 +742,16 @@ width: 26px;
     var global_session_state = null;
     function uiModeAskForm(data, max_params_to_change) {
         global_session_state = data;
-        set_params_dropdowns(data.person, data.number, data.tense, data.voice, data.mood, data.verb_id);
-        
+        set_params_dropdowns(data.person, data.number, data.tense, data.voice, data.mood, data.verb);
+
+        if (data.move_type == "FirstMoveMyTurn") {
+            uiModeAskForm2();
+            return;
+        }
+
+        document.querySelector("#mfbutton").disabled = true;
         let submitbutton = document.querySelector("#submitbutton");
-        if (data.move_type == 1) {
+        if (data.move_type == "Practice") {
             submitbutton.innerText = "Ask";
             document.querySelector("#askparamsdiv").style.display = "block";
             document.querySelector("#statusmesg").innerHTML = "Click ask to ask this form."
@@ -749,25 +780,36 @@ width: 26px;
     function uiModeAskForm2() {
         let data = global_session_state;
         global_session_state = null;
-        set_params_dropdowns(data.person, data.number, data.tense, data.voice, data.mood, data.verb_id);
+        set_params_dropdowns(data.person, data.number, data.tense, data.voice, data.mood, data.verb);
         document.querySelector("#askparamsdiv").style.display = "block";
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.innerText = "Ask";
         submitbutton.style.display = "block";
         submitbutton.disabled = false;
-        document.querySelector("#startingform").innerText = data.correct_answer;
+        document.querySelector("#mfbutton").disabled = true;
+        if (data.move_type == "FirstMoveMyTurn") {
+            document.querySelector("#startingform").innerText = "";
+            document.querySelector("#verbchooser").style.display = "inline-block";
+            document.querySelector("#statusmesg").innerHTML = "Choose a verb and set all parameters";
+        }
+        else {
+            document.querySelector("#startingform").innerText = data.correct_answer;
+            document.querySelector("#verbchooser").style.display = "none";
+            document.querySelector("#statusmesg").innerHTML = "Change up to (2) parameters";
+        }
         document.querySelector("#changedesc").innerHTML = "";//desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
         //document.querySelector("#changedesc").style.display = "none";
         document.querySelector("#answerform").value = "";
         document.querySelector("#correctanswer").style.visibility = "hidden";
-        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? "Correct: " : "Incorrect: ") + data.correct_answer;
+        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + data.correct_answer;
         //document.querySelector("#statusmesg").innerHTML = "Click Ask to ask the next form."
-        if (max_params_to_change == 5) {
-            document.querySelector("#statusmesg").innerHTML = "Choose a verb and set all params.";
-        }
-        else {
-            document.querySelector("#statusmesg").innerHTML = "Change up to (" + max_params_to_change + ") params.";
-        }
+        // if (max_params_to_change == 5) {
+        //     document.querySelector("#statusmesg").innerHTML = "Choose a verb and set all params.";
+        // }
+        // else {
+        //     document.querySelector("#statusmesg").innerHTML = "Change up to (" + max_params_to_change + ") params.";
+        // }
+
     }
     function uiModeClickedEnter() {
         let submitbutton = document.querySelector("#submitbutton");
@@ -782,9 +824,10 @@ width: 26px;
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.innerText = "Continue";
         submitbutton.disabled = false;
+        document.querySelector("#mfbutton").disabled = true;
         //mark (in)correct, show correct answer
         document.querySelector("#correctanswer").style.visibility = "visible";
-        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? "Correct: " : "Incorrect: ") + data.correct_answer;
+        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + data.correct_answer;
     }
 
     var reqPending = false;

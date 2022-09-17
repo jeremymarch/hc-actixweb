@@ -26,6 +26,7 @@ use crate::UserResult;
 use crate::MoveResult;
 use crate::SessionResult;
 use crate::SessionState;
+use crate::MoveType;
 
 //use unicode_normalization::UnicodeNormalization;
 
@@ -92,7 +93,7 @@ pub async fn get_sessions(
         .bind(user_id)
         .bind(user_id)
         .map(|rec: SqliteRow| {
-            SessionsListQuery { session_id: rec.get("session_id"), challenged:rec.get("challenged"), opponent:rec.get("opponent_user_id"), opponent_name: rec.get("username"),timestamp:rec.get("timestamp"), myturn:false, move_type:0 }
+            SessionsListQuery { session_id: rec.get("session_id"), challenged:rec.get("challenged"), opponent:rec.get("opponent_user_id"), opponent_name: rec.get("username"),timestamp:rec.get("timestamp"), myturn:false, move_type:MoveType::Practice }
         })
         .fetch_all(&mut tx)
         .await?;
@@ -161,33 +162,33 @@ pub async fn get_last_two_moves<'a, 'b>(
 //5 q has not been asked by you: starting_form from -1, desc from -1, desc from 0, is_correct, correct answer, given answer, time, mf, timedout
 //6 q has not been answered by you: starting_form from -1, desc from -1, desc from 0,
 //7 game has ended (no ones turn): starting_form from -1, desc from -1, desc from 0, is_correct, correct answer, given answer, time, mf, timedout
-fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>) -> (bool, u8) {
+fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>) -> (bool, MoveType) {
     let myturn:bool;
-    let move_type:u8;
+    let move_type:MoveType;
 
     match s {
         Some(s) => { 
             if challenged_id.is_none() { 
                 myturn = true;
-                move_type = 0; //practice, my turn always
+                move_type = MoveType::Practice; //practice, my turn always
             }
             else if s.ask_user_id == user_id { 
                 if s.answer_user_id.is_some() { //xxxanswered, my turn to ask | I asked, they answered, their turn to ask (waiting for them to ask)
                     myturn = false;
-                    move_type = 4;
+                    move_type = MoveType::AskYourTurn;
                 }
                 else {
                     myturn = false; //unanswered, their turn to answer
-                    move_type = 6;
+                    move_type = MoveType::AnswerYourTurn;
                 }
             } else { 
                 if s.answer_user_id.is_some() { //xxxanswered, their turn to ask | they asked, I answered, my turn to ask
                     myturn = true;
-                    move_type = 5;
+                    move_type = MoveType::AskMyTurn;
                 }
                 else {
                     myturn = true; //unanswered, my turn to answer
-                    move_type = 3;
+                    move_type = MoveType::AnswerMyTurn;
                 } 
             } 
         },
@@ -195,16 +196,16 @@ fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>
             if challenged_id.is_some() { 
                 if challenged_id.unwrap() == user_id {
                     myturn = false;
-                    move_type = 2; //no moves yet, their turn to ask
+                    move_type = MoveType::FirstMoveYourTurn; //no moves yet, their turn to ask
                 } 
                 else {
                     myturn = true;
-                    move_type = 1; //no moves yet, my turn to ask
+                    move_type = MoveType::FirstMoveMyTurn; //no moves yet, my turn to ask
                 }
             }
             else {
                 myturn = true;
-                move_type = 0; //practice, my turn always (no moves yet)
+                move_type = MoveType::Practice; //practice, my turn always (no moves yet)
             }
         },
     }
@@ -264,7 +265,7 @@ pub async fn get_session_state(
 }
 
 pub async fn get_move_type<'a, 'b>(
-    tx: &'a mut sqlx::Transaction<'b, sqlx::Sqlite>, session_id:Uuid, user_id: Uuid, challenged_id:Option<Uuid>) -> (bool, u8) {
+    tx: &'a mut sqlx::Transaction<'b, sqlx::Sqlite>, session_id:Uuid, user_id: Uuid, challenged_id:Option<Uuid>) -> (bool, MoveType) {
     let query = "SELECT * FROM moves WHERE session_id = ? ORDER BY asktimestamp DESC LIMIT 1;";
     let subres:Result<MoveResult, sqlx::Error> = sqlx::query_as(query)
     .bind(session_id)

@@ -63,6 +63,20 @@ async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
     Ok(HttpResponse::Ok().finish()) //send 200 with empty body
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum MoveType {
+    Practice = 0,
+    FirstMoveMyTurn = 1,
+    FirstMoveYourTurn = 2,
+
+    AnswerMyTurn = 3,
+    AskYourTurn = 4,
+    AskMyTurn = 5,
+    AnswerYourTurn = 6,
+
+    GameOver = 7,
+}
+
 #[derive(Deserialize)]
 pub struct AnswerQuery {
     qtype: String,
@@ -104,7 +118,7 @@ pub struct SessionsListQuery {
     opponent_name: Option<String>,
     timestamp: String,
     myturn: bool,
-    move_type:u8,
+    move_type:MoveType,
 }
 
 #[derive(Deserialize,Serialize)]
@@ -165,7 +179,7 @@ pub struct AskQuery {
 #[derive(Deserialize, Serialize)]
 pub struct SessionState {
     session_id: Uuid,
-    move_type: u8,
+    move_type: MoveType,
     myturn: bool,
     starting_form:Option<String>,
     answer:Option<String>,
@@ -305,7 +319,7 @@ async fn get_move(
     else {
         let res = SessionState {
             session_id: info.session_id,
-            move_type: 0,
+            move_type: MoveType::Practice,
             myturn: false,
             starting_form:None,
             answer:None,
@@ -379,7 +393,7 @@ async fn enter(
     }
     let res = SessionState {
         session_id: info.session_id,
-        move_type: 0,
+        move_type: MoveType::Practice,
         myturn: false,
         starting_form:None,
         answer:None,
@@ -432,7 +446,7 @@ async fn ask(
     else {
         let res = SessionState {
             session_id: info.session_id,
-            move_type: 0,
+            move_type: MoveType::Practice,
             myturn: false,
             starting_form:None,
             answer:None,
