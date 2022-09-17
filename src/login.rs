@@ -18,7 +18,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 use super::*;
-use uuid::uuid;
 
 use secrecy::ExposeSecret;
 use secrecy::Secret;
@@ -116,14 +115,14 @@ fn validate_login(credentials: Credentials) -> Option<uuid::Uuid> {
 pub async fn login_post(
     (session, form, req): (Session, web::Form<FormData>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
-    let _db = req.app_data::<SqlitePool>().unwrap();
+    let db = req.app_data::<SqlitePool>().unwrap();
 
     let credentials = Credentials {
         username: form.0.username,
         password: form.0.password,
     };
 
-    if let Some(user_id) = validate_login(credentials) {
+    if let Ok(user_id) = db::validate_login_db(&db, &credentials.username, &credentials.password.expose_secret()).await.map_err(map_sqlx_error) {
         session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
         if session.insert("user_id", user_id).is_ok() {
             return Ok(HttpResponse::SeeOther()

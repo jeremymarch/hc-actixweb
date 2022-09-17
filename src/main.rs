@@ -219,7 +219,6 @@ fn get_timestamp() -> i64 {
 async fn get_sessions(
     (session, info, req): (Session, web::Form<SessionListRequest>, HttpRequest)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
-    let mut mesg = String::from("");
 
     if let Some(user_id) = login::get_user_id(session) {
 
@@ -231,13 +230,11 @@ async fn get_sessions(
         Ok(HttpResponse::Ok().json(res))
     }
     else {
-        mesg = "error inserting: not logged in".to_string();
         let res = StatusResponse {
             response_to: "getsessions".to_string(),
-            mesg: mesg,
+            mesg: "error inserting: not logged in".to_string(),
             success: false,
         };
-    
         Ok(HttpResponse::Ok().json(res))
     }
 }
@@ -246,24 +243,22 @@ async fn get_sessions(
 async fn create_session(
     (session, info, req): (Session, web::Form<CreateSessionQuery>, HttpRequest)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
-    let mut mesg = String::from("");
+    
     if let Some(user_id) = login::get_user_id(session) {
 
         let timestamp = get_timestamp();
         let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
         let user_agent = get_user_agent(&req).unwrap_or("");
 
-        let mut success = false;
-        mesg = match libhc::hc_insert_session(&db, user_id, &info, timestamp).await.map_err(map_sqlx_error) {
+        let (mesg, success) = match libhc::hc_insert_session(&db, user_id, &info, timestamp).await.map_err(map_sqlx_error) {
             Ok(true) => {
-                success = true;
-                "inserted!".to_string()   
+                ("inserted!".to_string(), true) 
             },
             Ok(false) => {
-                "opponent not found!".to_string()
+                ("opponent not found!".to_string(), false)
             },
             Err(e) => {
-                format!("error inserting: {:?}", e)
+                (format!("error inserting: {:?}", e), false)
             }
         };
         let res = StatusResponse {
@@ -274,10 +269,9 @@ async fn create_session(
         Ok(HttpResponse::Ok().json(res))
     }
     else {
-        mesg = "error inserting: not logged in".to_string();
         let res = StatusResponse {
             response_to: "newsession".to_string(),
-            mesg: mesg,
+            mesg: "error inserting: not logged in".to_string(),
             success: false,
         };
         Ok(HttpResponse::Ok().json(res))

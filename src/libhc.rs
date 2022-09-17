@@ -25,10 +25,10 @@ pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timesta
     let idx = if m.verb_id.is_some() && (m.verb_id.unwrap() as usize) < verbs.len() { m.verb_id.unwrap() as usize } else { 0 };
     let prev_form = HcGreekVerbForm {verb:verbs[idx].clone(), person:HcPerson::from_u8(m.person.unwrap()), number:HcNumber::from_u8(m.number.unwrap()), tense:HcTense::from_u8(m.tense.unwrap()), voice:HcVoice::from_u8(m.voice.unwrap()), mood:HcMood::from_u8(m.mood.unwrap()), gender:None, case:None};
 
-    let correct_answer = prev_form.get_form(false).unwrap().last().unwrap().form.to_string();
+    let correct_answer = prev_form.get_form(false).unwrap().last().unwrap().form.replace(" /", ",");
     let is_correct = hgk_compare_multiple_forms(&correct_answer.replace('/', ","), &info.answer);
 
-    let res = update_answer_move(
+    let _res = update_answer_move(
         db,
         info.session_id,
         user_id,
@@ -82,7 +82,7 @@ pub async fn hc_insert_session(db: &SqlitePool, user_id:Uuid, info:&CreateSessio
     let unit = if let Ok(v) = info.unit.parse::<u32>() { Some(v) } else { None };
 
     match db::insert_session(&db, user_id, unit, opponent_user_id, timestamp).await {
-        Ok(e) => {
+        Ok(_e) => {
             Ok(true)
         },
         Err(e) => {

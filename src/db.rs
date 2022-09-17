@@ -30,6 +30,22 @@ use crate::MoveType;
 
 //use unicode_normalization::UnicodeNormalization;
 
+pub async fn validate_login_db(
+    pool: &SqlitePool,
+    username:&str,
+    password:&str,
+) -> Result<Uuid, sqlx::Error> {
+
+    let query = "SELECT user_id,user_name,password,email,timestamp FROM users WHERE user_name = ? AND password = ? LIMIT 1;";
+    let res:UserResult = sqlx::query_as(query)
+        .bind(username)
+        .bind(password)
+        .fetch_one(pool)
+        .await?;
+
+    Ok(res.user_id)
+}
+
 pub async fn get_user_id(
     pool: &SqlitePool,
     username:&str,
@@ -56,7 +72,7 @@ pub async fn insert_session(
     let uuid = sqlx::types::Uuid::new_v4();
 
     let query = "INSERT INTO sessions VALUES (?,?,?,?);";
-    let res = sqlx::query(query)
+    let _res = sqlx::query(query)
         .bind(uuid)
         .bind(user_id)
         .bind(opponent_id)
@@ -299,7 +315,7 @@ pub async fn insert_ask_move(
     let uuid = sqlx::types::Uuid::new_v4();
 
     let query = "INSERT INTO moves VALUES (?,?,?,NULL,?,?,?,?,?,?,NULL,NULL,NULL,NULL,NULL,NULL,?, NULL);";
-    let res = sqlx::query(query)
+    let _res = sqlx::query(query)
         .bind(uuid)
         .bind(session_id)
         .bind(user_id)
