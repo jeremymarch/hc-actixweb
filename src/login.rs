@@ -97,19 +97,20 @@ pub async fn login_get() -> Result<HttpResponse, AWError> {
 </html>"#))
 }
 
-fn validate_login(credentials: Credentials) -> Option<uuid::Uuid> {
-    if credentials.username.to_lowercase() == "user1"
-        && credentials.password.expose_secret() == "1234"
-    {
-        Some(Uuid::from_u128(0x8CD36EFFDF5744FF953B29A473D12347))
-    } else if credentials.username.to_lowercase() == "user2"
-        && credentials.password.expose_secret() == "1234"
-    {
-        Some(Uuid::from_u128(0xD75B0169E7C343838298136E3D63375C))
-    } else {
-        None
-    }
-}
+//for testing without db
+// fn validate_login(credentials: Credentials) -> Option<uuid::Uuid> {
+//     if credentials.username.to_lowercase() == "user1"
+//         && credentials.password.expose_secret() == "1234"
+//     {
+//         Some(Uuid::from_u128(0x8CD36EFFDF5744FF953B29A473D12347))
+//     } else if credentials.username.to_lowercase() == "user2"
+//         && credentials.password.expose_secret() == "1234"
+//     {
+//         Some(Uuid::from_u128(0xD75B0169E7C343838298136E3D63375C))
+//     } else {
+//         None
+//     }
+// }
 
 #[allow(clippy::eval_order_dependence)]
 pub async fn login_post(

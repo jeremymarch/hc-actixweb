@@ -200,7 +200,13 @@ fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>
             } else { 
                 if s.answer_user_id.is_some() { //xxxanswered, their turn to ask | they asked, I answered, my turn to ask
                     myturn = true;
-                    move_type = MoveType::AskMyTurn;
+                    
+                    if s.is_correct.unwrap() == 0 {
+                        move_type = MoveType::FirstMoveMyTurn; //user must ask a new verb because answered incorrectly
+                    }
+                    else {
+                        move_type = MoveType::AskMyTurn;
+                    }
                 }
                 else {
                     myturn = true; //unanswered, my turn to answer
@@ -249,7 +255,9 @@ pub async fn get_session_state(
     let m = get_last_two_moves(&mut tx, session_id).await?;
     let first = if m.len() > 0 { Some(&m[0]) } else { None };
     let (myturn, move_type) = move_get_type(first, user_id, res.challenged_user_id);
-    //let res = get_move_type(&mut tx, session_id, user_id, res.challenged_user_id).await;
+
+    let asking_new_verb:bool = move_type == MoveType::FirstMoveMyTurn; //don't old show desc when *asking* a new verb
+    let answering_new_verb = m.len() > 1 && m[0].verb_id != m[1].verb_id; //don't show old desc when *answering* a new verb
 
     let r = SessionState {
         session_id: session_id,
@@ -265,11 +273,11 @@ pub async fn get_session_state(
         tense: if m.len() > 0 { m[0].tense } else { None },
         voice: if m.len() > 0 { m[0].voice } else { None },
         mood: if m.len() > 0 { m[0].mood } else { None },
-        person_prev: if m.len() == 2 { m[1].person } else { None },
-        number_prev: if m.len() == 2 { m[1].number } else { None },
-        tense_prev: if m.len() == 2 { m[1].tense } else { None },
-        voice_prev: if m.len() == 2 { m[1].voice } else { None },
-        mood_prev: if m.len() == 2 { m[1].mood } else { None },
+        person_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb { m[1].person } else { None },
+        number_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb { m[1].number } else { None },
+        tense_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb { m[1].tense } else { None },
+        voice_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb { m[1].voice } else { None },
+        mood_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb { m[1].mood } else { None },
         time: if m.len() > 0 { m[0].time.clone() } else { None },
         response_to:"".to_string(),
         success:true,

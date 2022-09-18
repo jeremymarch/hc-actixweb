@@ -608,6 +608,7 @@ width: 26px;
         document.querySelector("#correctanswer").style.visibility = "hidden";
         document.querySelector("#startingform").innerText = "";
         document.querySelector("#mfbutton").disabled = true;
+        document.querySelector("#verbchooser").style.display = "none";
     }
 
     function uiModePractice() {
@@ -619,7 +620,7 @@ width: 26px;
         document.querySelector("#correctanswer").innerHTML = "";
         document.querySelector("#correctanswer").style.visibility = "hidden";
         document.querySelector("#startingform").innerText = "";
-
+        document.querySelector("#verbchooser").style.display = "none";
         document.querySelector("#askparamsdiv").style.display = "none";
     }
 
@@ -630,7 +631,7 @@ width: 26px;
         starting_form = data.starting_form;
         change_desc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
         document.querySelector("#statusmesg").innerHTML = "Click Go to answer!"
-        document.querySelector("#changedesc").innerHTML = (data.person_prev) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, null, null, null, null, null) : "";
+        document.querySelector("#changedesc").innerHTML = (data.person_prev !== null) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, null, null, null, null, null) : "";
         document.querySelector("#answerform").value = "";
         document.querySelector("#answerform").disabled = true;
         document.querySelector("#mfbutton").disabled = true;
@@ -660,6 +661,7 @@ width: 26px;
         document.querySelector("#askparamsdiv").style.display = "none";
         startTimer();
         document.querySelector("#submitbutton").style.display = "block";
+        document.querySelector("#verbchooser").style.display = "none";
     }
 
     function uiModeClickedContinue(loc_starting_form, loc_change_desc) {
@@ -680,6 +682,7 @@ width: 26px;
         document.querySelector("#correctanswer").innerHTML = "";
         document.querySelector("#correctanswer").style.visibility = "hidden";
         document.querySelector("#mfbutton").disabled = true;
+        document.querySelector("#verbchooser").style.display = "none";
 
         //start timer
         startTimer();
@@ -701,6 +704,7 @@ width: 26px;
         document.querySelector("#submitbutton").style.display = "none";
         document.querySelector("#mfbutton").disabled = true;
         document.querySelector("#mainTime").innerText = "30:00";
+        document.querySelector("#verbchooser").style.display = "none";
     }
 
     function uiModeWaitingForAsk(data) {
@@ -726,6 +730,7 @@ width: 26px;
             document.querySelector("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
             document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + data.correct_answer;
         }
+        document.querySelector("#verbchooser").style.display = "none";
     }
 
     function uiModeAskResponse(data) {
@@ -737,6 +742,7 @@ width: 26px;
         document.querySelector("#statusmesg").innerHTML = "Sent!";
         submitbutton.disabled = true;
         document.querySelector("#askparamsdiv").style.display = "none";
+        document.querySelector("#verbchooser").style.display = "none";
         if (data.starting_form) {
             document.querySelector("#startingform").innerText = data.starting_form;
         }
