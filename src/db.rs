@@ -71,7 +71,7 @@ pub async fn insert_session(
 
     let uuid = sqlx::types::Uuid::new_v4();
 
-    let query = "INSERT INTO sessions VALUES (?,?,?,?);";
+    let query = "INSERT INTO sessions VALUES (?,?,?,0,0,?);";
     let _res = sqlx::query(query)
         .bind(uuid)
         .bind(user_id)
@@ -182,6 +182,8 @@ fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>
     let myturn:bool;
     let move_type:MoveType;
 
+    let change_verb_on_incorrect = true;
+
     match s {
         Some(s) => { 
             if challenged_id.is_none() { 
@@ -201,7 +203,7 @@ fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>
                 if s.answer_user_id.is_some() { //xxxanswered, their turn to ask | they asked, I answered, my turn to ask
                     myturn = true;
                     
-                    if s.is_correct.unwrap() == 0 {
+                    if change_verb_on_incorrect && s.is_correct.is_some() && s.is_correct.unwrap() == 0 {
                         move_type = MoveType::FirstMoveMyTurn; //user must ask a new verb because answered incorrectly
                     }
                     else {
@@ -413,6 +415,8 @@ UNIQUE(user_name)
 session_id BLOB PRIMARY KEY NOT NULL, 
 challenger_user_id BLOB, 
 challenged_user_id BLOB, 
+challenger_score INT,
+challenged_score INT,
 timestamp INT NOT NULL DEFAULT 0,
 FOREIGN KEY (challenger_user_id) REFERENCES users(user_id), 
 FOREIGN KEY (challenged_user_id) REFERENCES users(user_id)
