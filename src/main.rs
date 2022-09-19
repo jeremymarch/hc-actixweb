@@ -217,16 +217,16 @@ fn get_timestamp() -> i64 {
 
 #[allow(clippy::eval_order_dependence)]
 async fn get_sessions(
-    (session, info, req): (Session, web::Form<SessionListRequest>, HttpRequest)) -> Result<HttpResponse, AWError> {
+    (session, req): (Session, HttpRequest)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
 
     if let Some(user_id) = login::get_user_id(session) {
 
-        let timestamp = get_timestamp();
-        let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
-        let user_agent = get_user_agent(&req).unwrap_or("");
+        //let timestamp = get_timestamp();
+        //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
+        //let user_agent = get_user_agent(&req).unwrap_or("");
         
-        let res = libhc::hc_get_sessions(&db, user_id).await.map_err(map_sqlx_error)?;
+        let res = libhc::hc_get_sessions(db, user_id).await.map_err(map_sqlx_error)?;
         Ok(HttpResponse::Ok().json(res))
     }
     else {
@@ -247,10 +247,10 @@ async fn create_session(
     if let Some(user_id) = login::get_user_id(session) {
 
         let timestamp = get_timestamp();
-        let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
-        let user_agent = get_user_agent(&req).unwrap_or("");
+        //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
+        //let user_agent = get_user_agent(&req).unwrap_or("");
 
-        let (mesg, success) = match libhc::hc_insert_session(&db, user_id, &info, timestamp).await {
+        let (mesg, success) = match libhc::hc_insert_session(db, user_id, &info, timestamp).await {
             Ok(_session_uuid) => {
                 ("inserted!".to_string(), true) 
             },
@@ -288,9 +288,9 @@ async fn get_move(
 
     if let Some(user_id) = login::get_user_id(session) {
         
-        let res = libhc::hc_get_move(&db, user_id, &info, verbs).await.map_err(map_sqlx_error)?;
+        let res = libhc::hc_get_move(db, user_id, &info, verbs).await.map_err(map_sqlx_error)?;
 
-        return Ok(HttpResponse::Ok().json(res));
+        Ok(HttpResponse::Ok().json(res))
     }
     else {
         let res = SessionState {
@@ -318,7 +318,7 @@ async fn get_move(
             mesg:Some("not logged in".to_string()),
         };
         //let res = ("abc","def",);
-    Ok(HttpResponse::Ok().json(res))
+        Ok(HttpResponse::Ok().json(res))
     }
 }
 
@@ -329,12 +329,12 @@ async fn enter(
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     let timestamp = get_timestamp();
-    let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
-    let user_agent = get_user_agent(&req).unwrap_or("");
+    //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
+    //let user_agent = get_user_agent(&req).unwrap_or("");
 
     if let Some(user_id) = login::get_user_id(session) {
 
-        let res = libhc::hc_answer(&db, user_id, &info, timestamp, verbs).await.map_err(map_sqlx_error)?;
+        let res = libhc::hc_answer(db, user_id, &info, timestamp, verbs).await.map_err(map_sqlx_error)?;
 
         return Ok(HttpResponse::Ok().json(res));
     }
@@ -372,12 +372,12 @@ async fn ask(
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     let timestamp = get_timestamp();
-    let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
-    let user_agent = get_user_agent(&req).unwrap_or("");
+    //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
+    //let user_agent = get_user_agent(&req).unwrap_or("");
 
     if let Some(user_id) = login::get_user_id(session) {
         
-        let res = libhc::hc_ask(&db, user_id, &info, timestamp, verbs).await.map_err(map_sqlx_error)?;
+        let res = libhc::hc_ask(db, user_id, &info, timestamp, verbs).await.map_err(map_sqlx_error)?;
 
         Ok(HttpResponse::Ok().json(res))
     }
@@ -558,7 +558,7 @@ async fn main() -> io::Result<()> {
     // });
     let db_path = "testing.sqlite?mode=rwc";
 
-    let options = SqliteConnectOptions::from_str(&db_path)
+    let options = SqliteConnectOptions::from_str(db_path)
         .expect("Could not connect to db.")
         .foreign_keys(true)
         .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)

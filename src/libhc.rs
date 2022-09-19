@@ -1,9 +1,9 @@
 use super::*;
 
 pub async fn hc_ask(db: &SqlitePool, user_id:Uuid, info:&AskQuery, timestamp:i64, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> {
-    let _ = db::insert_ask_move(&db, user_id, info.session_id, info.person, info.number, info.tense, info.mood, info.voice, info.verb, timestamp).await?;
+    let _ = db::insert_ask_move(db, user_id, info.session_id, info.person, info.number, info.tense, info.mood, info.voice, info.verb, timestamp).await?;
 
-    let mut res = db::get_session_state(&db, user_id, info.session_id).await?;
+    let mut res = db::get_session_state(db, user_id, info.session_id).await?;
 
     if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
         res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
@@ -17,7 +17,7 @@ pub async fn hc_ask(db: &SqlitePool, user_id:Uuid, info:&AskQuery, timestamp:i64
 
 pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timestamp:i64, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> { 
     //pull prev move from db to get verb and params
-    let m = db::get_last_move(&db, info.session_id).await?;
+    let m = db::get_last_move(db, info.session_id).await?;
 
     //test answer to get correct_answer and is_correct
     //let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
@@ -40,7 +40,7 @@ pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timesta
         info.timed_out,
         timestamp).await?;
 
-    let mut res = db::get_session_state(&db, user_id, info.session_id).await?;
+    let mut res = db::get_session_state(db, user_id, info.session_id).await?;
     if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
         res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
     }
@@ -52,7 +52,7 @@ pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timesta
 }
 
 pub async fn hc_get_move(db: &SqlitePool, user_id:Uuid, info:&GetMoveQuery, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> { 
-let mut res = db::get_session_state(&db, user_id, info.session_id).await?;
+let mut res = db::get_session_state(db, user_id, info.session_id).await?;
     if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
         res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
     }
@@ -65,13 +65,13 @@ let mut res = db::get_session_state(&db, user_id, info.session_id).await?;
 }
 
 pub async fn hc_get_sessions(db: &SqlitePool, user_id:Uuid) -> Result<Vec<SessionsListQuery>, sqlx::Error> { 
-    db::get_sessions(&db, user_id).await
+    db::get_sessions(db, user_id).await
 }
 
 pub async fn hc_insert_session(db: &SqlitePool, user_id:Uuid, info:&CreateSessionQuery, timestamp:i64) -> Result<Uuid, sqlx::Error> { 
     let mut opponent_user_id:Option<Uuid> = None;
-    if info.opponent.len() > 0 {
-        let o = db::get_user_id(&db, &info.opponent).await?; //we want to return an error if len of info.opponent > 0 and not found, else it is practice game
+    if !info.opponent.is_empty() {
+        let o = db::get_user_id(db, &info.opponent).await?; //we want to return an error if len of info.opponent > 0 and not found, else it is practice game
         opponent_user_id = Some(o.user_id);
     }
     else {
@@ -85,7 +85,7 @@ pub async fn hc_insert_session(db: &SqlitePool, user_id:Uuid, info:&CreateSessio
 
     let unit = if let Ok(v) = info.unit.parse::<u32>() { Some(v) } else { None };
 
-    match db::insert_session(&db, user_id, unit, opponent_user_id, timestamp).await {
+    match db::insert_session(db, user_id, unit, opponent_user_id, timestamp).await {
         Ok(session_uuid) => {
             Ok(session_uuid)
         },

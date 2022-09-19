@@ -17,9 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqliteRow;
-use sqlx::{FromRow, Row, SqlitePool};
+use sqlx::{Row, SqlitePool};
 use sqlx::types::Uuid;
 use crate::SessionsListQuery;
 use crate::UserResult;
@@ -93,7 +92,7 @@ pub async fn get_sessions(
 
     //strftime('%Y-%m-%d %H:%M:%S', DATETIME(timestamp, 'unixepoch')) as timestamp, 
     //    ORDER BY updated DESC \
-    let query = format!("SELECT session_id AS session_id, challenged_user_id AS challenged, challenged_user_id AS opponent_user_id, b.user_name AS username, \
+    let query = "SELECT session_id AS session_id, challenged_user_id AS challenged, challenged_user_id AS opponent_user_id, b.user_name AS username, \
     strftime('%Y-%m-%d %H:%M:%S', DATETIME(a.timestamp, 'unixepoch')) as timestamp \
     FROM sessions a LEFT JOIN users b ON a.challenged_user_id = b.user_id \
     where challenger_user_id = ? \
@@ -102,10 +101,10 @@ pub async fn get_sessions(
     FROM sessions a LEFT JOIN users b ON a.challenger_user_id = b.user_id \
     where challenged_user_id  = ? \
     ORDER BY timestamp DESC \
-    LIMIT 20000;"
-);
+    LIMIT 20000;";
+
     //println!("query: {} {:?}", query, user_id);
-    let mut res: Vec<SessionsListQuery> = sqlx::query(&query)
+    let mut res: Vec<SessionsListQuery> = sqlx::query(query)
         .bind(user_id)
         .bind(user_id)
         .map(|rec: SqliteRow| {
@@ -135,14 +134,14 @@ pub async fn get_last_move_tx<'a, 'b>(
     session_id: sqlx::types::Uuid,
 ) -> Result<MoveResult, sqlx::Error> {
 
-    let query = format!("SELECT * \
+    let query = "SELECT * \
     FROM moves \
     where session_id = ? \
     ORDER BY asktimestamp DESC \
-    LIMIT 1;"
-);
+    LIMIT 1;";
+
     //println!("query: {} {:?}", query, user_id);
-    let res: MoveResult = sqlx::query_as(&query)
+    let res: MoveResult = sqlx::query_as(query)
         .bind(session_id)
         .fetch_one(&mut *tx)
         .await?;
@@ -155,14 +154,14 @@ pub async fn get_last_two_moves<'a, 'b>(
     session_id: sqlx::types::Uuid,
 ) -> Result<Vec<MoveResult>, sqlx::Error> {
     
-    let query = format!("SELECT * \
+    let query = "SELECT * \
         FROM moves \
         where session_id = ? \
         ORDER BY asktimestamp DESC \
-        LIMIT 2;"
-    );
+        LIMIT 2;";
+    
     //println!("query: {} {:?}", query, user_id);
-    let res: Vec<MoveResult> = sqlx::query_as(&query)
+    let res: Vec<MoveResult> = sqlx::query_as(query)
         .bind(session_id)
         .fetch_all(&mut *tx)
         .await?;
@@ -243,19 +242,19 @@ pub async fn get_session_state(
 ) -> Result<SessionState, sqlx::Error> {
     let mut tx = pool.begin().await?;
 
-    let query = format!("SELECT * \
+    let query = "SELECT * \
     FROM sessions \
     where session_id = ? \
-    LIMIT 1;"
-);
+    LIMIT 1;";
+
     //println!("query: {} {:?}", query, user_id);
-    let res: SessionResult = sqlx::query_as(&query)
+    let res: SessionResult = sqlx::query_as(query)
         .bind(session_id)
         .fetch_one(&mut tx)
         .await?;
 
     let m = get_last_two_moves(&mut tx, session_id).await?;
-    let first = if m.len() > 0 { Some(&m[0]) } else { None };
+    let first = if !m.is_empty() { Some(&m[0]) } else { None };
     let (myturn, move_type) = move_get_type(first, user_id, res.challenged_user_id);
 
     let asking_new_verb:bool = move_type == MoveType::FirstMoveMyTurn; //don't old show desc when *asking* a new verb
@@ -266,21 +265,21 @@ pub async fn get_session_state(
         move_type: move_type,
         myturn: myturn,
         starting_form: if m.len() == 2 && m[0].verb_id == m[1].verb_id { m[1].correct_answer.clone() } else { None },
-        answer: if m.len() > 0 { m[0].answer.clone() } else { None },
-        is_correct: if m.len() > 0 && m[0].is_correct.is_some() { Some(m[0].is_correct.unwrap() != 0) } else { None },
-        correct_answer: if m.len() > 0 { m[0].correct_answer.clone() } else { None },
-        verb: if m.len() > 0 { m[0].verb_id } else { None },
-        person: if m.len() > 0 { m[0].person } else { None },
-        number: if m.len() > 0 { m[0].number } else { None },
-        tense: if m.len() > 0 { m[0].tense } else { None },
-        voice: if m.len() > 0 { m[0].voice } else { None },
-        mood: if m.len() > 0 { m[0].mood } else { None },
+        answer: if !m.is_empty() { m[0].answer.clone() } else { None },
+        is_correct: if !m.is_empty() && m[0].is_correct.is_some() { Some(m[0].is_correct.unwrap() != 0) } else { None },
+        correct_answer: if !m.is_empty() { m[0].correct_answer.clone() } else { None },
+        verb: if !m.is_empty() { m[0].verb_id } else { None },
+        person: if !m.is_empty() { m[0].person } else { None },
+        number: if !m.is_empty() { m[0].number } else { None },
+        tense: if !m.is_empty() { m[0].tense } else { None },
+        voice: if !m.is_empty() { m[0].voice } else { None },
+        mood: if !m.is_empty() { m[0].mood } else { None },
         person_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb { m[1].person } else { None },
         number_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb { m[1].number } else { None },
         tense_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb { m[1].tense } else { None },
         voice_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb { m[1].voice } else { None },
         mood_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb { m[1].mood } else { None },
-        time: if m.len() > 0 { m[0].time.clone() } else { None },
+        time: if !m.is_empty() { m[0].time.clone() } else { None },
         response_to:"".to_string(),
         success:true,
         mesg:None,
