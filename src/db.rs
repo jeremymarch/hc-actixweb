@@ -66,7 +66,7 @@ pub async fn insert_session(
     unit: Option<u32>,
     opponent_id: Option<Uuid>,
     timestamp:i64,
-) -> Result<u32, sqlx::Error> {
+) -> Result<Uuid, sqlx::Error> {
     let mut tx = pool.begin().await?;
 
     let uuid = sqlx::types::Uuid::new_v4();
@@ -82,7 +82,7 @@ pub async fn insert_session(
 
     tx.commit().await?;
 
-    Ok(1)
+    Ok(uuid)
 }
 
 pub async fn get_sessions(

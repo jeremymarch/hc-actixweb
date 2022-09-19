@@ -68,22 +68,26 @@ pub async fn hc_get_sessions(db: &SqlitePool, user_id:Uuid) -> Result<Vec<Sessio
     db::get_sessions(&db, user_id).await
 }
 
-pub async fn hc_insert_session(db: &SqlitePool, user_id:Uuid, info:&CreateSessionQuery, timestamp:i64) -> Result<bool, sqlx::Error> { 
-    let opponent_user_id = match db::get_user_id(&db, &info.opponent).await {
-        Ok(o) => Some(o.user_id),
-        Err(_) => None,
-    };
+pub async fn hc_insert_session(db: &SqlitePool, user_id:Uuid, info:&CreateSessionQuery, timestamp:i64) -> Result<Uuid, sqlx::Error> { 
+    let mut opponent_user_id:Option<Uuid> = None;
+    if info.opponent.len() > 0 {
+        let o = db::get_user_id(&db, &info.opponent).await?; //we want to return an error if len of info.opponent > 0 and not found, else it is practice game
+        opponent_user_id = Some(o.user_id);
+    }
+    else {
+        opponent_user_id = None;
+    }
 
     //failed to find opponent or opponent is self
-    if (info.opponent.len() > 0 && opponent_user_id.is_none()) || (opponent_user_id.is_some() && opponent_user_id.unwrap() == user_id) {
-        return Ok(false); //todo oops
+    if opponent_user_id.is_some() && opponent_user_id.unwrap() == user_id {
+        return Err(sqlx::Error::RowNotFound); //todo oops
     }
 
     let unit = if let Ok(v) = info.unit.parse::<u32>() { Some(v) } else { None };
 
     match db::insert_session(&db, user_id, unit, opponent_user_id, timestamp).await {
-        Ok(_e) => {
-            Ok(true)
+        Ok(session_uuid) => {
+            Ok(session_uuid)
         },
         Err(e) => {
             Err(e)

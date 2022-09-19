@@ -250,11 +250,11 @@ async fn create_session(
         let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
         let user_agent = get_user_agent(&req).unwrap_or("");
 
-        let (mesg, success) = match libhc::hc_insert_session(&db, user_id, &info, timestamp).await.map_err(map_sqlx_error) {
-            Ok(true) => {
+        let (mesg, success) = match libhc::hc_insert_session(&db, user_id, &info, timestamp).await {
+            Ok(_session_uuid) => {
                 ("inserted!".to_string(), true) 
             },
-            Ok(false) => {
+            Err(sqlx::Error::RowNotFound) => {
                 ("opponent not found!".to_string(), false)
             },
             Err(e) => {
@@ -634,4 +634,75 @@ fn config(cfg: &mut web::ServiceConfig) {
                 .prefer_utf8(true)
                 .index_file("index.html"),
         );
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::{test, web, App};
+    use crate::libhc::*;
+
+    #[test]
+    async fn test_index_post() {
+
+        let verbs = load_verbs("../hoplite_verbs_rs/testdata/pp.txt");
+        
+        let db_path = "sqlite::memory:";
+        let options = SqliteConnectOptions::from_str(&db_path)
+            .expect("Could not connect to db.")
+            .foreign_keys(true)
+            .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
+            .read_only(false)
+            .collation("PolytonicGreek", |l, r| {
+                l.to_lowercase().cmp(&r.to_lowercase())
+            });
+    
+        let db = SqlitePool::connect_with(options)
+            .await
+            .expect("Could not connect to db.");
+    
+        let res = db::create_db(&db).await;
+        if res.is_err() {
+            println!("error: {:?}", res);
+        }
+
+        let timestamp = get_timestamp();
+        let csq = CreateSessionQuery {
+            qtype:"abc".to_string(),
+            unit: "1".to_string(),
+            opponent: "user2".to_string(),
+        };
+        let uuid1 = Uuid::from_u128(0x8CD36EFFDF5744FF953B29A473D12347);
+        let uuid2 = Uuid::from_u128(0xD75B0169E7C343838298136E3D63375C);
+
+        let session_uuid = hc_insert_session(&db, uuid1, &csq, timestamp).await;
+        assert!(res.is_ok());
+
+        let aq = AskQuery {
+            session_id: *session_uuid.as_ref().unwrap(),
+            person: 0,
+            number: 0,
+            tense: 0,
+            voice: 0,
+            mood: 0,
+            verb: 0,
+        };
+
+        let ask = hc_ask(&db, uuid1, &aq, timestamp, &verbs).await;
+        assert!(ask.is_ok());
+
+        let answerq = AnswerQuery {
+            qtype: "abc".to_string(),
+            answer: "παιδεύω".to_string(),
+            time: "25:01".to_string(),
+            mf_pressed: false,
+            timed_out: false,
+            session_id:*session_uuid.as_ref().unwrap(),
+        };
+
+        let answer = hc_answer(&db, uuid2, &answerq, timestamp, &verbs).await;
+        assert!(answer.is_ok());
+        assert_eq!(answer.unwrap().is_correct.unwrap(), true);
+    }
 }
