@@ -1,6 +1,30 @@
 use super::*;
 
 pub async fn hc_ask(db: &SqlitePool, user_id:Uuid, info:&AskQuery, timestamp:i64, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> {
+    //todo check that user_id is either challenger_user_id or challenged_user_id
+    //todo check that user_id == challenger_user_id if this is first move
+
+    let s = db::get_session(db, info.session_id).await?;
+    if user_id != s.challenger_user_id && Some(user_id) != s.challenged_user_id {
+        return Err(sqlx::Error::RowNotFound);
+    }
+    
+    //prevent out-of-sequence asks
+    match db::get_last_move(db, info.session_id).await {
+        Ok(m) => {
+            if m.ask_user_id == user_id {
+                return Err(sqlx::Error::RowNotFound);//same user cannot ask twice in a row
+            }
+            else if m.answer_user_id != Some(user_id) {
+                return Err(sqlx::Error::RowNotFound);//ask user must be same as previous answer user
+            }
+            else if m.is_correct.is_none() {
+                return Err(sqlx::Error::RowNotFound);//previous answer must be marked correct or incorrect
+            }
+         },
+        Err(_) => () //this is first move, nothing to check
+    }
+    
     let _ = db::insert_ask_move(db, user_id, info.session_id, info.person, info.number, info.tense, info.mood, info.voice, info.verb, timestamp).await?;
 
     let mut res = db::get_session_state(db, user_id, info.session_id).await?;
@@ -16,8 +40,27 @@ pub async fn hc_ask(db: &SqlitePool, user_id:Uuid, info:&AskQuery, timestamp:i64
 }
 
 pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timestamp:i64, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> { 
-    //pull prev move from db to get verb and params
-    let m = db::get_last_move(db, info.session_id).await?;
+    //todo check that user_id is either challenger_user_id or challenged_user_id
+    let s = db::get_session(db, info.session_id).await?;
+    if user_id != s.challenger_user_id && Some(user_id) != s.challenged_user_id {
+        return Err(sqlx::Error::RowNotFound);
+    }
+
+    //pull prev move from db to get verb and params and to prevent out-of-sequence answers
+    let m = match db::get_last_move(db, info.session_id).await {
+        Ok(m) => {
+            if m.ask_user_id == user_id {
+                return Err(sqlx::Error::RowNotFound);//same user cannot answer question they asked
+            }
+            else if m.is_correct.is_some() {
+                return Err(sqlx::Error::RowNotFound);//previous question must not already be answered
+            }
+            else {
+                m
+            }
+         },
+        Err(_) => { return Err(sqlx::Error::RowNotFound); } //this is first move, nothing to answer
+    };
 
     //test answer to get correct_answer and is_correct
     //let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
@@ -52,7 +95,9 @@ pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timesta
 }
 
 pub async fn hc_get_move(db: &SqlitePool, user_id:Uuid, info:&GetMoveQuery, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> { 
-let mut res = db::get_session_state(db, user_id, info.session_id).await?;
+    let mut res = db::get_session_state(db, user_id, info.session_id).await?;
+    
+    //set starting_form to 1st pp of verb if verb is set, but starting form is None (i.e. we just changed verbs)
     if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
         res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
     }
@@ -94,3 +139,8 @@ pub async fn hc_insert_session(db: &SqlitePool, user_id:Uuid, info:&CreateSessio
         }
     }
 }
+
+// pub async fn hc_get_available_verbs(db: &SqlitePool, user_id:Uuid, session_id:Uuid, top_unit:u32, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<Vec<HCVerbOption>, sqlx::Error> { 
+
+
+// }

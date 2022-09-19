@@ -235,6 +235,24 @@ fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>
     (myturn, move_type)
 }
 
+pub async fn get_session(
+    pool: &SqlitePool,
+    session_id: sqlx::types::Uuid,
+) -> Result<SessionResult, sqlx::Error> {
+
+    let query = "SELECT * \
+    FROM sessions \
+    where session_id = ? \
+    LIMIT 1;";
+
+    let res: SessionResult = sqlx::query_as(query)
+        .bind(session_id)
+        .fetch_one(pool)
+        .await?;
+
+    Ok(res)
+}
+
 pub async fn get_session_state(
     pool: &SqlitePool,
     user_id: sqlx::types::Uuid,
@@ -471,6 +489,17 @@ FOREIGN KEY (session_id) REFERENCES sessions(session_id)
     let _res = sqlx::query(query)
         .bind(uuid)
         .bind("user2")
+        .bind("1234")
+        .bind("user2@email.com")
+        .bind(0)
+        .execute(&mut tx)
+        .await?;
+
+    //to test invalid user
+    let uuid = Uuid::from_u128(0x00000000000000000000000000000001);//sqlx::types::Uuid::new_v4();
+    let _res = sqlx::query(query)
+        .bind(uuid)
+        .bind("user3")
         .bind("1234")
         .bind("user2@email.com")
         .bind(0)

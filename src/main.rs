@@ -176,7 +176,7 @@ pub struct AskQuery {
     verb: u32,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, Eq)]
 pub struct SessionState {
     session_id: Uuid,
     move_type: MoveType,
@@ -675,6 +675,7 @@ mod tests {
         };
         let uuid1 = Uuid::from_u128(0x8CD36EFFDF5744FF953B29A473D12347);
         let uuid2 = Uuid::from_u128(0xD75B0169E7C343838298136E3D63375C);
+        let invalid_uuid = Uuid::from_u128(0x00000000000000000000000000000001);
 
         let session_uuid = hc_insert_session(&db, uuid1, &csq, timestamp).await;
         assert!(res.is_ok());
@@ -689,8 +690,81 @@ mod tests {
             verb: 0,
         };
 
+        //ask from invalid user should be blocked
+        let ask = hc_ask(&db, invalid_uuid, &aq, timestamp, &verbs).await;
+        assert!(ask.is_ok() == false);
+
+        //a valid ask
         let ask = hc_ask(&db, uuid1, &aq, timestamp, &verbs).await;
         assert!(ask.is_ok());
+
+        //check that we are preventing out-of-sequence asks
+        let ask = hc_ask(&db, uuid1, &aq, timestamp, &verbs).await;
+        assert!(ask.is_ok() == false);
+
+        let m = GetMoveQuery {
+            session_id:*session_uuid.as_ref().unwrap(),
+        };
+
+        let ss = hc_get_move(&db, uuid1, &m, &verbs).await;
+
+        let ss_res = SessionState { 
+            session_id: *session_uuid.as_ref().unwrap(), 
+            move_type: MoveType::AnswerTheirTurn, 
+            myturn: false, 
+            starting_form: Some("παιδεύω".to_string()), 
+            answer: None, 
+            is_correct: None, 
+            correct_answer: None, 
+            verb: Some(0), 
+            person: Some(0), 
+            number: Some(0), 
+            tense: Some(0), 
+            voice: Some(0), 
+            mood: Some(0), 
+            person_prev: None, 
+            number_prev: None, 
+            tense_prev: None, 
+            voice_prev: None, 
+            mood_prev: None, 
+            time: None, 
+            response_to: "getmoves".to_string(), 
+            success: true, 
+            mesg: None 
+        };
+
+        //println!("{:?}", ss.as_ref().unwrap());
+        assert!(ss.unwrap() == ss_res);
+
+        let ss2 = hc_get_move(&db, uuid2, &m, &verbs).await;
+
+        let ss_res2 = SessionState { 
+            session_id: *session_uuid.as_ref().unwrap(), 
+            move_type: MoveType::AnswerMyTurn, 
+            myturn: true, 
+            starting_form: Some("παιδεύω".to_string()), 
+            answer: None, 
+            is_correct: None, 
+            correct_answer: None, 
+            verb: Some(0), 
+            person: Some(0), 
+            number: Some(0), 
+            tense: Some(0), 
+            voice: Some(0), 
+            mood: Some(0), 
+            person_prev: None, 
+            number_prev: None, 
+            tense_prev: None, 
+            voice_prev: None, 
+            mood_prev: None, 
+            time: None, 
+            response_to: "getmoves".to_string(), 
+            success: true, 
+            mesg: None 
+        };
+
+        //println!("{:?}", ss2.as_ref().unwrap());
+        assert!(ss2.unwrap() == ss_res2);
 
         let answerq = AnswerQuery {
             qtype: "abc".to_string(),
@@ -701,8 +775,76 @@ mod tests {
             session_id:*session_uuid.as_ref().unwrap(),
         };
 
+        //answer from invalid user should be blocked
+        let answer = hc_answer(&db, invalid_uuid, &answerq, timestamp, &verbs).await;
+        assert!(answer.is_ok() == false);
+
+        //a valid answer
         let answer = hc_answer(&db, uuid2, &answerq, timestamp, &verbs).await;
         assert!(answer.is_ok());
         assert_eq!(answer.unwrap().is_correct.unwrap(), true);
+
+        //check that we are preventing out-of-sequence answers
+        let answer = hc_answer(&db, uuid2, &answerq, timestamp, &verbs).await;
+        assert!(answer.is_ok() == false);
+
+        let ss = hc_get_move(&db, uuid1, &m, &verbs).await;
+
+        let ss_res = SessionState { 
+            session_id: *session_uuid.as_ref().unwrap(), 
+            move_type: MoveType::AskTheirTurn, 
+            myturn: false, 
+            starting_form: Some("παιδεύω".to_string()), 
+            answer: Some("παιδεύω".to_string()), 
+            is_correct: Some(true), 
+            correct_answer: Some("παιδεύω".to_string()), 
+            verb: Some(0), 
+            person: Some(0), 
+            number: Some(0), 
+            tense: Some(0), 
+            voice: Some(0), 
+            mood: Some(0), 
+            person_prev: None, 
+            number_prev: None, 
+            tense_prev: None, 
+            voice_prev: None, 
+            mood_prev: None, 
+            time: Some("25:01".to_string()), 
+            response_to: "getmoves".to_string(), 
+            success: true, 
+            mesg: None 
+        };
+        //println!("{:?}", ss.as_ref().unwrap());
+        assert!(ss.unwrap() == ss_res);
+
+        let ss2 = hc_get_move(&db, uuid2, &m, &verbs).await;
+
+        let ss_res2 = SessionState { 
+            session_id: *session_uuid.as_ref().unwrap(), 
+            move_type: MoveType::AskMyTurn, 
+            myturn: true, 
+            starting_form: Some("παιδεύω".to_string()), 
+            answer: Some("παιδεύω".to_string()), 
+            is_correct: Some(true), 
+            correct_answer: Some("παιδεύω".to_string()), 
+            verb: Some(0), 
+            person: Some(0), 
+            number: Some(0), 
+            tense: Some(0), 
+            voice: Some(0), 
+            mood: Some(0), 
+            person_prev: None, 
+            number_prev: None, 
+            tense_prev: None, 
+            voice_prev: None, 
+            mood_prev: None, 
+            time: Some("25:01".to_string()), 
+            response_to: "getmoves".to_string(), 
+            success: true, 
+            mesg: None 
+        };
+
+        //println!("{:?}", ss2.as_ref().unwrap());
+        assert!(ss2.unwrap() == ss_res2);
     }
 }
