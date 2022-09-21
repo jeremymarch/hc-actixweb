@@ -116,7 +116,7 @@ pub async fn hc_get_sessions(db: &SqlitePool, user_id:Uuid) -> Result<Vec<Sessio
 }
 
 pub async fn hc_insert_session(db: &SqlitePool, user_id:Uuid, info:&CreateSessionQuery, timestamp:i64) -> Result<Uuid, sqlx::Error> { 
-    let mut opponent_user_id:Option<Uuid> = None;
+    let opponent_user_id:Option<Uuid>;
     if !info.opponent.is_empty() {
         let o = db::get_user_id(db, &info.opponent).await?; //we want to return an error if len of info.opponent > 0 and not found, else it is practice game
         opponent_user_id = Some(o.user_id);

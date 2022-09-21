@@ -216,8 +216,8 @@ fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>
             } 
         },
         None => {
-            if challenged_id.is_some() { 
-                if challenged_id.unwrap() == user_id {
+            if let Some(cid) = challenged_id {
+                if cid == user_id {
                     myturn = false;
                     move_type = MoveType::FirstMoveTheirTurn; //no moves yet, their turn to ask
                 } 

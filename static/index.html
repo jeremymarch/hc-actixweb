@@ -335,7 +335,7 @@ width: 26px;
 		for (var i = 0; i < 10; i++) {
 			wasmBuffer0[i] = 0;
 		}*/
-		console.log("ptr2: " + wasmBuffer0.byteOffset + ", " + wasmBuffer0.length);
+		//console.log("ptr2: " + wasmBuffer0.byteOffset + ", " + wasmBuffer0.length);
 		//let win1251decoder = new TextDecoder('utf-16le');
 		return newLetter;
 	}
@@ -457,15 +457,7 @@ width: 26px;
                 //console.log("data: " + data[0] + "ha " + data[1]);
                 //var returnObj = JSON.parse(data);
                 setUI(data);
-
-                // if (data.move_type == "1") {
-                //     uiModeAskForm();
-                //     //show verb and form selectors
-                //     //hide textarea, orig form will display verb selector, hide timer
-                // }
-
-                console.log("getmovedata: " + data);
-                //document.querySelector("#list").innerHTML = rows;
+                console.log(data);
             },
             error: function(response) {
                 console.log("error: " + response);

@@ -32,7 +32,6 @@ pub struct Credentials {
     pub password: Secret<String>,
 }
 
-#[allow(clippy::eval_order_dependence)]
 pub async fn login_get() -> Result<HttpResponse, AWError> {
     Ok(HttpResponse::Ok()
         .content_type(ContentType::html())
@@ -159,7 +158,6 @@ pub async fn login_get() -> Result<HttpResponse, AWError> {
 //     }
 // }
 
-#[allow(clippy::eval_order_dependence)]
 pub async fn login_post(
     (session, form, req): (Session, web::Form<FormData>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {

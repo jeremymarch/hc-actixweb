@@ -222,7 +222,6 @@ fn get_timestamp() -> i64 {
     now.timestamp()
 }
 
-#[allow(clippy::eval_order_dependence)]
 async fn get_sessions(
     (session, req): (Session, HttpRequest)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
@@ -246,7 +245,6 @@ async fn get_sessions(
     }
 }
 
-#[allow(clippy::eval_order_dependence)]
 async fn create_session(
     (session, info, req): (Session, web::Form<CreateSessionQuery>, HttpRequest)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
@@ -285,7 +283,6 @@ async fn create_session(
     }
 }
 
-#[allow(clippy::eval_order_dependence)]
 async fn get_move(
     (info, req, session): (web::Form<GetMoveQuery>, HttpRequest, Session)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
@@ -329,7 +326,6 @@ async fn get_move(
     }
 }
 
-#[allow(clippy::eval_order_dependence)]
 async fn enter(
     (info, req, session): (web::Form<AnswerQuery>, HttpRequest, Session)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
@@ -372,7 +368,6 @@ async fn enter(
     Ok(HttpResponse::Ok().json(res))
 }
 
-#[allow(clippy::eval_order_dependence)]
 async fn ask(
     (info, req, session): (web::Form<AskQuery>, HttpRequest, Session)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
