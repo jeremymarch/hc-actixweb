@@ -79,6 +79,13 @@ pub enum MoveType {
 }
 
 #[derive(Deserialize)]
+pub struct CreateUserQuery {
+    username: String,
+    password: String,
+    email: String,
+}
+
+#[derive(Deserialize)]
 pub struct AnswerQuery {
     qtype: String,
     answer: String,
@@ -642,6 +649,7 @@ mod tests {
     use super::*;
     use actix_web::{test, web, App};
     use crate::libhc::*;
+    use crate::db::create_user;
 
     #[test]
     async fn test_index_post() {
@@ -667,15 +675,20 @@ mod tests {
             println!("error: {:?}", res);
         }
 
-        let timestamp = get_timestamp();
+        let mut timestamp = get_timestamp();
+
+        // let uuid1 = Uuid::from_u128(0x8CD36EFFDF5744FF953B29A473D12347);
+        // let uuid2 = Uuid::from_u128(0xD75B0169E7C343838298136E3D63375C);
+        // let invalid_uuid = Uuid::from_u128(0x00000000000000000000000000000001);
+        let uuid1 = create_user(&db, "testuser1", "abc", "user1@blah.com", timestamp).await.unwrap();
+        let uuid2 = create_user(&db, "testuser2", "abc", "user2@blah.com", timestamp).await.unwrap();
+        let invalid_uuid = create_user(&db, "testuser3", "abc", "user3@blah.com", timestamp).await.unwrap();
+
         let csq = CreateSessionQuery {
             qtype:"abc".to_string(),
             unit: "1".to_string(),
-            opponent: "user2".to_string(),
+            opponent: "testuser2".to_string(),
         };
-        let uuid1 = Uuid::from_u128(0x8CD36EFFDF5744FF953B29A473D12347);
-        let uuid2 = Uuid::from_u128(0xD75B0169E7C343838298136E3D63375C);
-        let invalid_uuid = Uuid::from_u128(0x00000000000000000000000000000001);
 
         let session_uuid = hc_insert_session(&db, uuid1, &csq, timestamp).await;
         assert!(res.is_ok());
@@ -845,6 +858,80 @@ mod tests {
         };
 
         //println!("{:?}", ss2.as_ref().unwrap());
+        assert!(ss2.unwrap() == ss_res2);
+
+
+        let aq2 = AskQuery {
+            session_id: *session_uuid.as_ref().unwrap(),
+            person: 1,
+            number: 1,
+            tense: 0,
+            voice: 0,
+            mood: 0,
+            verb: 0,
+        };
+
+        timestamp += 1;
+        //a valid ask
+        let ask = hc_ask(&db, uuid2, &aq2, timestamp, &verbs).await;
+        assert!(ask.is_ok());
+
+        let ss = hc_get_move(&db, uuid1, &m, &verbs).await;
+        assert!(ss.is_ok());
+        let ss_res = SessionState { 
+            session_id: *session_uuid.as_ref().unwrap(), 
+            move_type: MoveType::AnswerMyTurn, 
+            myturn: true, 
+            starting_form: Some("παιδεύω".to_string()), 
+            answer: None, 
+            is_correct: None, 
+            correct_answer: None, 
+            verb: Some(0), 
+            person: Some(1), 
+            number: Some(1), 
+            tense: Some(0), 
+            voice: Some(0), 
+            mood: Some(0), 
+            person_prev: Some(0), 
+            number_prev: Some(0), 
+            tense_prev: Some(0), 
+            voice_prev: Some(0), 
+            mood_prev: Some(0), 
+            time: None, 
+            response_to: "getmoves".to_string(),
+            success: true, 
+            mesg: None 
+        };
+        //println!("1: {:?}", ss.as_ref().unwrap());
+        //println!("2: {:?}", ss_res);
+        assert!(ss.unwrap() == ss_res);
+
+        let ss2 = hc_get_move(&db, uuid2, &m, &verbs).await;
+
+        let ss_res2 = SessionState { 
+            session_id: *session_uuid.as_ref().unwrap(), 
+            move_type: MoveType::AnswerTheirTurn, 
+            myturn: false, 
+            starting_form: Some("παιδεύω".to_string()), 
+            answer: None, 
+            is_correct: None, 
+            correct_answer: None, 
+            verb: Some(0), 
+            person: Some(1), 
+            number: Some(1), 
+            tense: Some(0), 
+            voice: Some(0), 
+            mood: Some(0), 
+            person_prev: Some(0), 
+            number_prev: Some(0), 
+            tense_prev: Some(0), 
+            voice_prev: Some(0), 
+            mood_prev: Some(0),  
+            time: None, 
+            response_to: "getmoves".to_string(), 
+            success: true, 
+            mesg: None 
+        };
         assert!(ss2.unwrap() == ss_res2);
     }
 }

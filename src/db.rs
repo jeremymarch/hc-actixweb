@@ -412,6 +412,21 @@ pub async fn update_answer_move(
     Ok(1)
 }
 
+pub async fn create_user(pool: &SqlitePool, username:&str, password:&str, email:&str, timestamp:i64) -> Result<Uuid, sqlx::Error> {
+    let uuid = sqlx::types::Uuid::new_v4();
+    let query = "INSERT INTO users VALUES (?,?,?,?,?);";
+    let _res = sqlx::query(query)
+        .bind(uuid)
+        .bind(username)
+        .bind(password)
+        .bind(email)
+        .bind(timestamp)
+        .execute(pool)
+        .await?;
+
+    Ok(uuid)
+}
+
 pub async fn create_db(pool: &SqlitePool) -> Result<u32, sqlx::Error> {
     let mut tx = pool.begin().await?;
 

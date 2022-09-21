@@ -37,7 +37,7 @@ pub async fn login_get() -> Result<HttpResponse, AWError> {
     Ok(HttpResponse::Ok()
         .content_type(ContentType::html())
         //.insert_header(("X-Hdr", "sample"))
-        .body(r#"<!DOCTYPE html>
+        .body(r##"<!DOCTYPE html>
 <html lang="en">
     <head>
         <meta http-equiv="content-type" content="text/html; charset=utf-8">
@@ -89,12 +89,59 @@ pub async fn login_get() -> Result<HttpResponse, AWError> {
                             <button type="submit">Login</button>
                         </td>
                     </tr>
+                    <tr>
+                        <td colspan="2" align="center">
+                            <a href="#" onclick="">Create User</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </form>
+        <form action="/newuser" method="post">
+            <table>
+                <tbody>
+                    <tr>
+                        <td>               
+                            <label for="username">Username</label>
+                        </td>
+                        <td>
+                            <input type="text" id="username" name="username">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label for="password">Password</label>
+                        </td>
+                        <td>
+                            <input type="password" id="password" name="password">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label for="password2">Retype Password</label>
+                        </td>
+                        <td>
+                            <input type="password" id="password2" name="password2">
+                        </td>
+                    </tr><tr>
+                    <td>
+                        <label for="email">Email</label>
+                    </td>
+                    <td>
+                        <input type="text" id="email" name="email">
+                    </td>
+                </tr>
+                    <tr>
+                        <td colspan="2" align="center">
+                            <button type="submit">Create User</button>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </form>
         <script>/*document.getElementById("username").focus();*/</script>
     </body>
-</html>"#))
+</html>"##))
 }
 
 //for testing without db
