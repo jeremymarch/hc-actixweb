@@ -136,7 +136,17 @@
     justify-content: flex-end;
 }
 .myturn {
-    background-color: red;
+    /* background-color: red; */
+}
+.selectedGame {
+    background-color: lightgray;
+}
+.myturnIcon {
+    fill: red;
+    width: 15px;
+    top: 6px;
+    position: absolute;
+    right:10px;
 }
 #askparamsdiv {
     display: none;
@@ -155,6 +165,11 @@ width: 26px;
 }
 #verbchooser {
     display: none;
+}
+.gamerow {
+    position: relative;
+    padding: 4px 6px;
+    argin: 8px;
 }
     </style>
     </head>
@@ -226,6 +241,7 @@ width: 26px;
 </div>
 
     <script>
+        var myturnIcon = `<svg class="myturnIcon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="50" /></svg>`;
         var correctIcon = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" enable-background="new 0 0 64 64"><path d="M32,2C15.431,2,2,15.432,2,32c0,16.568,13.432,30,30,30c16.568,0,30-13.432,30-30C62,15.432,48.568,2,32,2z M25.025,50  l-0.02-0.02L24.988,50L11,35.6l7.029-7.164l6.977,7.184l21-21.619L53,21.199L25.025,50z" fill="#43a047"/></svg>`;
         var incorrectIcon = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" enable-background="new 0 0 64 64"><path d="m32 2c-16.568 0-30 13.432-30 30s13.432 30 30 30 30-13.432 30-30-13.432-30-30-30m5.513 44.508l-5.514-9.894-5.825 9.894h-7.048l9.331-14.783-8.878-14.232h7.244l5.175 9.449 5.317-9.449h7.008l-8.878 13.996 9.429 15.02h-7.361z" fill="#e53935"/></svg>`;
             // Check for wasm support.
@@ -425,7 +441,12 @@ width: 26px;
     }
     
     var session_id = null;
-    function getmove(sessionid) {
+    function getmove(therow, sessionid) {
+        document.querySelectorAll(".selectedGame").forEach((row) => {
+            row.classList.remove("selectedGame");
+        });
+        
+        therow.parentNode.classList.add("selectedGame");
         session_id = sessionid;
         $.ajax({
             url: "getmove",
@@ -466,7 +487,7 @@ width: 26px;
                 let rows = "";
                 for (var i = 0; i < data.length; i++) {
                     if (data[i].move_type != "FirstMoveTheirTurn") {
-                        rows += "<p" + ((data[i].myturn) ? " class='myturn'" : "") + "><a href='#' onclick='getmove(\"" + data[i].session_id + "\")'>" + ((data[i].move_type == "Practice") ? "Practise" : "Game") + ((data[i].opponent_name) ? " vs. " + data[i].opponent_name : "") + " (" + data[i].move_type + ")</a></p>";
+                        rows += "<p class='gamerow" + ((data[i].myturn) ? " myturn" : "") + "'><a href='#' onclick='getmove(this,\"" + data[i].session_id + "\")'>" + ((data[i].move_type == "Practice") ? "Practise" : "Game") + ((data[i].opponent_name) ? " vs. " + data[i].opponent_name : "") + " (" + data[i].move_type + ")</a> " + ((data[i].myturn) ? myturnIcon : "") + "</p>";
                     }
                 }
                 document.querySelector("#list").innerHTML = rows;
@@ -790,23 +811,26 @@ width: 26px;
     function uiModeAskForm2() {
         let data = global_session_state;
         global_session_state = null;
-        set_params_dropdowns(data.person, data.number, data.tense, data.voice, data.mood, data.verb);
-        document.querySelector("#askparamsdiv").style.display = "block";
+        
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.innerText = "Ask";
         submitbutton.style.display = "block";
         submitbutton.disabled = false;
         document.querySelector("#mfbutton").disabled = true;
         if (data.move_type == "FirstMoveMyTurn") {
+            set_params_dropdowns(null, null, null, null, null, null);
+        
             document.querySelector("#startingform").innerText = "";
             document.querySelector("#verbchooser").style.display = "inline-block";
             document.querySelector("#statusmesg").innerHTML = "Choose a verb and set all parameters";
         }
         else {
+            set_params_dropdowns(data.person, data.number, data.tense, data.voice, data.mood, data.verb);
             document.querySelector("#startingform").innerText = data.correct_answer;
             document.querySelector("#verbchooser").style.display = "none";
             document.querySelector("#statusmesg").innerHTML = "Change up to (2) parameters";
         }
+        document.querySelector("#askparamsdiv").style.display = "block";
         document.querySelector("#changedesc").innerHTML = "";//desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
         //document.querySelector("#changedesc").style.display = "none";
         document.querySelector("#answerform").value = "";
