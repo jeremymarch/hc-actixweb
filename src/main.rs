@@ -933,5 +933,80 @@ mod tests {
             mesg: None 
         };
         assert!(ss2.unwrap() == ss_res2);
+
+        //an incorrect answer
+        timestamp += 1;
+        let answerq = AnswerQuery {
+            qtype: "abc".to_string(),
+            answer: "παιδ".to_string(),
+            time: "25:01".to_string(),
+            mf_pressed: false,
+            timed_out: false,
+            session_id:*session_uuid.as_ref().unwrap(),
+        };
+
+        //a valid answer
+        let answer = hc_answer(&db, uuid1, &answerq, timestamp, &verbs).await;
+        assert!(answer.is_ok());
+        assert_eq!(answer.unwrap().is_correct.unwrap(), false);
+
+        let ss = hc_get_move(&db, uuid1, &m, &verbs).await;
+
+        let ss_res = SessionState { 
+            session_id: *session_uuid.as_ref().unwrap(), 
+            move_type: MoveType::FirstMoveMyTurn, 
+            myturn: true, 
+            starting_form: Some("παιδεύω".to_string()), 
+            answer: Some("παιδ".to_string()), 
+            is_correct: Some(false), 
+            correct_answer: Some("παιδεύετε".to_string()), 
+            verb: Some(0), 
+            person: Some(1), 
+            number: Some(1), 
+            tense: Some(0), 
+            voice: Some(0), 
+            mood: Some(0), 
+            person_prev: None, 
+            number_prev: None, 
+            tense_prev: None, 
+            voice_prev: None, 
+            mood_prev: None, 
+            time: Some("25:01".to_string()), 
+            response_to: "getmoves".to_string(), 
+            success: true, 
+            mesg: None 
+        };
+        //println!("{:?}", ss.as_ref().unwrap());
+        assert!(ss.unwrap() == ss_res);
+
+        let ss2 = hc_get_move(&db, uuid2, &m, &verbs).await;
+
+        let ss_res2 = SessionState { 
+            session_id: *session_uuid.as_ref().unwrap(), 
+            move_type: MoveType::AskTheirTurn, 
+            myturn: false, 
+            starting_form: Some("παιδεύω".to_string()), 
+            answer: Some("παιδ".to_string()), 
+            is_correct: Some(false), 
+            correct_answer: Some("παιδεύετε".to_string()), 
+            verb: Some(0), 
+            person: Some(1), 
+            number: Some(1), 
+            tense: Some(0), 
+            voice: Some(0), 
+            mood: Some(0), 
+            person_prev: Some(0), 
+            number_prev: Some(0), 
+            tense_prev: Some(0), 
+            voice_prev: Some(0), 
+            mood_prev: Some(0), 
+            time: Some("25:01".to_string()), 
+            response_to: "getmoves".to_string(), 
+            success: true, 
+            mesg: None 
+        };
+
+        //println!("{:?}", ss2.as_ref().unwrap());
+        assert!(ss2.unwrap() == ss_res2);
     }
 }
