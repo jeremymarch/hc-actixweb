@@ -77,10 +77,12 @@
     padding-top: 16px;
 }
 #statusmesg {
-    display:block;
-    margin:0px auto;
-    font-size:12pt;
+    display: block;
+    margin: 0px auto;
+    font-size: 12pt;
     text-align: center;
+    border-top: 1px solid black;
+    padding-top: 4px;
 }
 .correctanswer {
     width:100%;
@@ -152,12 +154,13 @@
     display: none;
 }
 .hcform {
-    display:none;
-    border:2px solid gray;
-    width:600px;
-    margin:14px auto;
-    padding: 14px;
+    display: none;
+    border: 2px solid gray;
+    width: 600px;
+    margin: 14px auto;
+    padding: 14px 14px;
     border-radius: 8px;
+    padding-bottom: 4px;
 }
 .icon {
     height: 26px;
@@ -827,7 +830,7 @@ width: 26px;
         //document.querySelector("#changedesc").style.display = "none";
         document.querySelector("#answerform").value = "";
         document.querySelector("#correctanswer").style.visibility = "hidden";
-        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + data.correct_answer;
+        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + data.correct_answer;
         //document.querySelector("#statusmesg").innerHTML = "Click Ask to ask the next form."
         // if (max_params_to_change == 5) {
         //     document.querySelector("#statusmesg").innerHTML = "Choose a verb and set all params.";
@@ -853,7 +856,7 @@ width: 26px;
         document.querySelector("#mfbutton").disabled = true;
         //mark (in)correct, show correct answer
         document.querySelector("#correctanswer").style.visibility = "visible";
-        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + data.correct_answer;
+        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + data.correct_answer;
         document.querySelector("#statusmesg").innerHTML = "Click Continue to ask the next form."
     }
 
