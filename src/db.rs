@@ -62,7 +62,7 @@ pub async fn get_user_id(
 pub async fn insert_session(
     pool: &SqlitePool,
     user_id: Uuid,
-    unit: Option<u32>,
+    highest_unit: Option<u32>,
     opponent_id: Option<Uuid>,
     timestamp:i64,
 ) -> Result<Uuid, sqlx::Error> {
@@ -70,11 +70,12 @@ pub async fn insert_session(
 
     let uuid = sqlx::types::Uuid::new_v4();
 
-    let query = "INSERT INTO sessions VALUES (?,?,?,0,0,?);";
+    let query = r#"INSERT INTO sessions VALUES (?,?,?,?,"",0,0,?);"#;
     let _res = sqlx::query(query)
         .bind(uuid)
         .bind(user_id)
         .bind(opponent_id)
+        .bind(highest_unit)
         .bind(timestamp)
         .execute(&mut tx)
         .await?;
@@ -301,6 +302,7 @@ pub async fn get_session_state(
         response_to:"".to_string(),
         success:true,
         mesg:None,
+        verbs: None,
     };
         
     tx.commit().await?;
@@ -336,7 +338,7 @@ pub async fn insert_ask_move(
     voice: u8,
     verb_id: u32,
     timestamp:i64,
-) -> Result<u32, sqlx::Error> {
+) -> Result<Uuid, sqlx::Error> {
     let mut tx = pool.begin().await?;
 
     let uuid = sqlx::types::Uuid::new_v4();
@@ -374,7 +376,7 @@ pub async fn insert_ask_move(
 
     tx.commit().await?;
 
-    Ok(1)
+    Ok(uuid)
 }
 
 pub async fn update_answer_move(
@@ -447,6 +449,8 @@ UNIQUE(user_name)
 session_id BLOB PRIMARY KEY NOT NULL, 
 challenger_user_id BLOB, 
 challenged_user_id BLOB, 
+highest_unit INT,
+custom_verbs TEXT, 
 challenger_score INT,
 challenged_score INT,
 timestamp INT NOT NULL DEFAULT 0,

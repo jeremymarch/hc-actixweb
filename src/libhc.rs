@@ -37,6 +37,7 @@ pub async fn hc_ask(db: &SqlitePool, user_id:Uuid, info:&AskQuery, timestamp:i64
     res.response_to = "ask".to_string();
     res.success = true;
     res.mesg = None;
+    res.verbs = None;
 
     Ok(res)
 }
@@ -92,6 +93,7 @@ pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timesta
     res.response_to = "answerresponse".to_string();
     res.success = true;
     res.mesg = None;
+    res.verbs = if res.move_type == MoveType::FirstMoveMyTurn && !is_correct { Some(hc_get_available_verbs(&db, user_id, info.session_id, 20, &verbs).unwrap()) } else { None };
 
     Ok(res)
 }
@@ -107,6 +109,7 @@ pub async fn hc_get_move(db: &SqlitePool, user_id:Uuid, info:&GetMoveQuery, verb
     res.response_to = "getmoves".to_string();
     res.success = true;
     res.mesg = None;
+    res.verbs = if res.move_type == MoveType::FirstMoveMyTurn { Some(hc_get_available_verbs(&db, user_id, info.session_id, 20, &verbs).unwrap()) } else {None};
 
     Ok(res)
 }
@@ -142,7 +145,14 @@ pub async fn hc_insert_session(db: &SqlitePool, user_id:Uuid, info:&CreateSessio
     }
 }
 
-// pub async fn hc_get_available_verbs(db: &SqlitePool, user_id:Uuid, session_id:Uuid, top_unit:u32, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<Vec<HCVerbOption>, sqlx::Error> { 
-
-
-// }
+pub fn hc_get_available_verbs(db: &SqlitePool, user_id:Uuid, session_id:Uuid, top_unit:u32, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<Vec<HCVerbOption>, sqlx::Error> { 
+    let mut res_verbs:Vec<HCVerbOption> = vec![];
+    for v in verbs {
+        let newv = HCVerbOption {
+            id: v.id,
+            verb: if v.pps[0] == "—" { format!("—, {}", v.pps[1]) } else { v.pps[0].clone() },
+        };
+        res_verbs.push(newv);
+    }
+    Ok(res_verbs)
+}

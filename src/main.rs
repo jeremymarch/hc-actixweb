@@ -78,6 +78,12 @@ pub enum MoveType {
     GameOver,
 }
 
+#[derive(Deserialize,Serialize,PartialEq,Debug)]
+pub struct HCVerbOption {
+    id:u32,
+    verb:String,
+}
+
 #[derive(Deserialize)]
 pub struct CreateUserQuery {
     username: String,
@@ -203,10 +209,11 @@ pub struct SessionState {
     tense_prev: Option<u8>,
     voice_prev: Option<u8>,
     mood_prev: Option<u8>,
-    time: Option<String>,//time for prev answer
+    time: Option<String>, //time for prev answer
     response_to:String,
     success:bool,
     mesg:Option<String>,
+    verbs:Option<Vec<HCVerbOption>>,
 }
 
 fn get_user_agent(req: &HttpRequest) -> Option<&str> {
@@ -320,6 +327,7 @@ async fn get_move(
             response_to:"ask".to_string(),
             success:false,
             mesg:Some("not logged in".to_string()),
+            verbs: None,
         };
         //let res = ("abc","def",);
         Ok(HttpResponse::Ok().json(res))
@@ -364,6 +372,7 @@ async fn enter(
         response_to:"ask".to_string(),
         success:false,
         mesg:Some("not logged in".to_string()),
+        verbs: None,
     };
     Ok(HttpResponse::Ok().json(res))
 }
@@ -407,6 +416,7 @@ async fn ask(
             response_to:"ask".to_string(),
             success:false,
             mesg:Some("not logged in".to_string()),
+            verbs: None,
         };
         Ok(HttpResponse::Ok().json(res))
     }
@@ -738,7 +748,8 @@ mod tests {
             time: None, 
             response_to: "getmoves".to_string(), 
             success: true, 
-            mesg: None 
+            mesg: None,
+            verbs: None,
         };
 
         //println!("{:?}", ss.as_ref().unwrap());
@@ -768,7 +779,8 @@ mod tests {
             time: None, 
             response_to: "getmoves".to_string(), 
             success: true, 
-            mesg: None 
+            mesg: None,
+            verbs: None,
         };
 
         //println!("{:?}", ss2.as_ref().unwrap());
@@ -820,7 +832,8 @@ mod tests {
             time: Some("25:01".to_string()), 
             response_to: "getmoves".to_string(), 
             success: true, 
-            mesg: None 
+            mesg: None,
+            verbs: None,
         };
         //println!("{:?}", ss.as_ref().unwrap());
         assert!(ss.unwrap() == ss_res);
@@ -849,7 +862,8 @@ mod tests {
             time: Some("25:01".to_string()), 
             response_to: "getmoves".to_string(), 
             success: true, 
-            mesg: None 
+            mesg: None,
+            verbs: None,
         };
 
         //println!("{:?}", ss2.as_ref().unwrap());
@@ -895,7 +909,8 @@ mod tests {
             time: None, 
             response_to: "getmoves".to_string(),
             success: true, 
-            mesg: None 
+            mesg: None,
+            verbs: None,
         };
         //println!("1: {:?}", ss.as_ref().unwrap());
         //println!("2: {:?}", ss_res);
@@ -925,7 +940,8 @@ mod tests {
             time: None, 
             response_to: "getmoves".to_string(), 
             success: true, 
-            mesg: None 
+            mesg: None,
+            verbs: None,
         };
         assert!(ss2.unwrap() == ss_res2);
 
@@ -969,9 +985,10 @@ mod tests {
             time: Some("25:01".to_string()), 
             response_to: "getmoves".to_string(), 
             success: true, 
-            mesg: None 
+            mesg: None, 
+            verbs: Some(vec![HCVerbOption { id: 0, verb: "παιδεύω".to_string() }, HCVerbOption { id: 1, verb: "πέμπω".to_string() }, HCVerbOption { id: 2, verb: "κελεύω".to_string() }, HCVerbOption { id: 3, verb: "λῡ\u{301}ω".to_string() }, HCVerbOption { id: 4, verb: "γράφω".to_string() }, HCVerbOption { id: 5, verb: "θῡ\u{301}ω".to_string() }, HCVerbOption { id: 6, verb: "παύω".to_string() }, HCVerbOption { id: 7, verb: "φυλάττω".to_string() }, HCVerbOption { id: 8, verb: "διδάσκω".to_string() }, HCVerbOption { id: 9, verb: "ἐθέλω".to_string() }, HCVerbOption { id: 10, verb: "θάπτω".to_string() }, HCVerbOption { id: 11, verb: "τάττω".to_string() }, HCVerbOption { id: 12, verb: "ἄρχω".to_string() }, HCVerbOption { id: 13, verb: "βλάπτω".to_string() }, HCVerbOption { id: 14, verb: "πείθω".to_string() }, HCVerbOption { id: 15, verb: "πρᾱ\u{301}ττω".to_string() }, HCVerbOption { id: 16, verb: "δουλεύω".to_string() }, HCVerbOption { id: 17, verb: "κωλῡ\u{301}ω".to_string() }, HCVerbOption { id: 18, verb: "πολῑτεύω".to_string() }, HCVerbOption { id: 19, verb: "χορεύω".to_string() }, HCVerbOption { id: 20, verb: "κλέπτω".to_string() }, HCVerbOption { id: 21, verb: "λείπω".to_string() }, HCVerbOption { id: 22, verb: "σῴζω".to_string() }, HCVerbOption { id: 23, verb: "ἄγω".to_string() }, HCVerbOption { id: 24, verb: "ἥκω".to_string() }, HCVerbOption { id: 25, verb: "ἀδικέω".to_string() }, HCVerbOption { id: 26, verb: "νῑκάω".to_string() }, HCVerbOption { id: 27, verb: "ποιέω".to_string() }, HCVerbOption { id: 28, verb: "τῑμάω".to_string() }, HCVerbOption { id: 29, verb: "ἀγγέλλω".to_string() }, HCVerbOption { id: 30, verb: "ἀξιόω".to_string() }, HCVerbOption { id: 31, verb: "δηλόω".to_string() }, HCVerbOption { id: 32, verb: "καλέω".to_string() }, HCVerbOption { id: 33, verb: "μένω".to_string() }, HCVerbOption { id: 34, verb: "τελευτάω".to_string() }, HCVerbOption { id: 35, verb: "ἀκούω".to_string() }, HCVerbOption { id: 36, verb: "ἀποδέχομαι".to_string() }, HCVerbOption { id: 37, verb: "βάλλω".to_string() }, HCVerbOption { id: 38, verb: "βούλομαι".to_string() }, HCVerbOption { id: 39, verb: "δέχομαι".to_string() }, HCVerbOption { id: 40, verb: "λαμβάνω".to_string() }, HCVerbOption { id: 41, verb: "πάσχω".to_string() }, HCVerbOption { id: 42, verb: "ἀνατίθημι".to_string() }, HCVerbOption { id: 43, verb: "ἀποδίδωμι".to_string() }, HCVerbOption { id: 44, verb: "ἀφίστημι".to_string() }, HCVerbOption { id: 45, verb: "δίδωμι".to_string() }, HCVerbOption { id: 46, verb: "ἵστημι".to_string() }, HCVerbOption { id: 47, verb: "καθίστημι".to_string() }, HCVerbOption { id: 48, verb: "καταλῡ\u{301}ω".to_string() }, HCVerbOption { id: 49, verb: "τίθημι".to_string() }, HCVerbOption { id: 50, verb: "φιλέω".to_string() }, HCVerbOption { id: 51, verb: "φοβέομαι".to_string() }, HCVerbOption { id: 52, verb: "γίγνομαι".to_string() }, HCVerbOption { id: 53, verb: "ἔρχομαι".to_string() }, HCVerbOption { id: 54, verb: "μανθάνω".to_string() }, HCVerbOption { id: 55, verb: "μάχομαι".to_string() }, HCVerbOption { id: 56, verb: "μεταδίδωμι".to_string() }, HCVerbOption { id: 57, verb: "μετανίσταμαι".to_string() }, HCVerbOption { id: 58, verb: "μηχανάομαι".to_string() }, HCVerbOption { id: 59, verb: "φεύγω".to_string() }, HCVerbOption { id: 60, verb: "δείκνῡμι".to_string() }, HCVerbOption { id: 61, verb: "ἐπανίσταμαι".to_string() }, HCVerbOption { id: 62, verb: "ἐπιδείκνυμαι".to_string() }, HCVerbOption { id: 63, verb: "ἐρωτάω".to_string() }, HCVerbOption { id: 64, verb: "λανθάνω".to_string() }, HCVerbOption { id: 65, verb: "παραγίγνομαι".to_string() }, HCVerbOption { id: 66, verb: "παραδίδωμι".to_string() }, HCVerbOption { id: 67, verb: "παραμένω".to_string() }, HCVerbOption { id: 68, verb: "τυγχάνω".to_string() }, HCVerbOption { id: 69, verb: "ὑπακούω".to_string() }, HCVerbOption { id: 70, verb: "ὑπομένω".to_string() }, HCVerbOption { id: 71, verb: "φθάνω".to_string() }, HCVerbOption { id: 72, verb: "χαίρω".to_string() }, HCVerbOption { id: 73, verb: "αἱρέω".to_string() }, HCVerbOption { id: 74, verb: "αἰσθάνομαι".to_string() }, HCVerbOption { id: 75, verb: "διαφέρω".to_string() }, HCVerbOption { id: 76, verb: "εἰμί".to_string() }, HCVerbOption { id: 77, verb: "ἔστι(ν)".to_string() }, HCVerbOption { id: 78, verb: "ἔξεστι(ν)".to_string() }, HCVerbOption { id: 79, verb: "ἕπομαι".to_string() }, HCVerbOption { id: 80, verb: "ὁράω".to_string() }, HCVerbOption { id: 81, verb: "συμφέρω".to_string() }, HCVerbOption { id: 82, verb: "φέρω".to_string() }, HCVerbOption { id: 83, verb: "ἀναβαίνω".to_string() }, HCVerbOption { id: 84, verb: "βαίνω".to_string() }, HCVerbOption { id: 85, verb: "γιγνώσκω".to_string() }, HCVerbOption { id: 86, verb: "ἐκπῑ\u{301}πτω".to_string() }, HCVerbOption { id: 87, verb: "λέγω".to_string() }, HCVerbOption { id: 88, verb: "νομίζω".to_string() }, HCVerbOption { id: 89, verb: "πῑ\u{301}πτω".to_string() }, HCVerbOption { id: 90, verb: "προδίδωμι".to_string() }, HCVerbOption { id: 91, verb: "φημί".to_string() }, HCVerbOption { id: 92, verb: "ἁμαρτάνω".to_string() }, HCVerbOption { id: 93, verb: "δοκέω".to_string() }, HCVerbOption { id: 94, verb: "δύναμαι".to_string() }, HCVerbOption { id: 95, verb: "εἶμι".to_string() }, HCVerbOption { id: 96, verb: "ἐλαύνω".to_string() }, HCVerbOption { id: 97, verb: "ἐπίσταμαι".to_string() }, HCVerbOption { id: 98, verb: "ἔχω".to_string() }, HCVerbOption { id: 99, verb: "ἀποθνῄσκω".to_string() }, HCVerbOption { id: 100, verb: "ἀποκτείνω".to_string() }, HCVerbOption { id: 101, verb: "ἀφῑ\u{301}ημι".to_string() }, HCVerbOption { id: 102, verb: "βουλεύω".to_string() }, HCVerbOption { id: 103, verb: "ἐπιβουλεύω".to_string() }, HCVerbOption { id: 104, verb: "ζητέω".to_string() }, HCVerbOption { id: 105, verb: "ῑ\u{314}\u{301}ημι".to_string() }, HCVerbOption { id: 106, verb: "μέλλω".to_string() }, HCVerbOption { id: 107, verb: "πιστεύω".to_string() }, HCVerbOption { id: 108, verb: "συμβουλεύω".to_string() }, HCVerbOption { id: 109, verb: "συνῑ\u{301}ημι".to_string() }, HCVerbOption { id: 110, verb: "αἰσχῡ\u{301}νομαι".to_string() }, HCVerbOption { id: 111, verb: "ἀποκρῑ\u{301}νομαι".to_string() }, HCVerbOption { id: 112, verb: "ἀπόλλῡμι".to_string() }, HCVerbOption { id: 113, verb: "—, ἀνερήσομαι".to_string() }, HCVerbOption { id: 114, verb: "—, ἐρήσομαι".to_string() }, HCVerbOption { id: 115, verb: "εὑρίσκω".to_string() }, HCVerbOption { id: 116, verb: "ἡγέομαι".to_string() }, HCVerbOption { id: 117, verb: "κρῑ\u{301}νω".to_string() }, HCVerbOption { id: 118, verb: "οἶδα".to_string() }, HCVerbOption { id: 119, verb: "σύνοιδα".to_string() }, HCVerbOption { id: 120, verb: "ἀφικνέομαι".to_string() }, HCVerbOption { id: 121, verb: "δεῖ".to_string() }, HCVerbOption { id: 122, verb: "κεῖμαι".to_string() }, HCVerbOption { id: 123, verb: "πυνθάνομαι".to_string() }, HCVerbOption { id: 124, verb: "τρέπω".to_string() }, HCVerbOption { id: 125, verb: "φαίνω".to_string() }, HCVerbOption { id: 126, verb: "χρή".to_string() }]),
         };
-        //println!("{:?}", ss.as_ref().unwrap());
+        println!("{:?}", ss.as_ref().unwrap());
         assert!(ss.unwrap() == ss_res);
 
         let ss2 = hc_get_move(&db, uuid2, &m, &verbs).await;
@@ -998,7 +1015,8 @@ mod tests {
             time: Some("25:01".to_string()), 
             response_to: "getmoves".to_string(), 
             success: true, 
-            mesg: None 
+            mesg: None,
+            verbs: None,
         };
 
         //println!("{:?}", ss2.as_ref().unwrap());
