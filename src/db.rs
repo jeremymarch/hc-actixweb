@@ -254,6 +254,26 @@ pub async fn get_session(
     Ok(res)
 }
 
+pub async fn get_used_verbs(
+    pool: &SqlitePool,
+    session_id: sqlx::types::Uuid,
+) -> Result<Vec<u32>, sqlx::Error> {
+
+    let query = "SELECT verb_id \
+    FROM moves \
+    where verb_id IS NOT NULL AND session_id = ?;";
+
+    let res: Vec<u32> = sqlx::query(query)
+        .bind(session_id)
+        .map(|rec: SqliteRow| {
+            rec.get("verb_id")
+        })
+        .fetch_all(pool)
+        .await?;
+
+    Ok(res)
+}
+
 pub async fn get_session_state(
     pool: &SqlitePool,
     user_id: sqlx::types::Uuid,

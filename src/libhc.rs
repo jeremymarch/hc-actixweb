@@ -1,4 +1,5 @@
 use super::*;
+use rustunicodetests::hgk_compare_sqlite;
 
 pub async fn hc_ask(db: &SqlitePool, user_id:Uuid, info:&AskQuery, timestamp:i64, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> {
     //todo check that user_id is either challenger_user_id or challenged_user_id
@@ -93,12 +94,13 @@ pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timesta
     res.response_to = "answerresponse".to_string();
     res.success = true;
     res.mesg = None;
-    res.verbs = if res.move_type == MoveType::FirstMoveMyTurn && !is_correct { Some(hc_get_available_verbs(&db, user_id, info.session_id, 20, &verbs).unwrap()) } else { None };
+    res.verbs = if res.move_type == MoveType::FirstMoveMyTurn && !is_correct { Some(hc_get_available_verbs(&db, user_id, info.session_id, s.highest_unit, &verbs).await.unwrap()) } else { None };
 
     Ok(res)
 }
 
 pub async fn hc_get_move(db: &SqlitePool, user_id:Uuid, info:&GetMoveQuery, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> { 
+    let s = db::get_session(db, info.session_id).await?;
     let mut res = db::get_session_state(db, user_id, info.session_id).await?;
 
     //set starting_form to 1st pp of verb if verb is set, but starting form is None (i.e. we just changed verbs)
@@ -109,7 +111,7 @@ pub async fn hc_get_move(db: &SqlitePool, user_id:Uuid, info:&GetMoveQuery, verb
     res.response_to = "getmoves".to_string();
     res.success = true;
     res.mesg = None;
-    res.verbs = if res.move_type == MoveType::FirstMoveMyTurn { Some(hc_get_available_verbs(&db, user_id, info.session_id, 20, &verbs).unwrap()) } else {None};
+    res.verbs = if res.move_type == MoveType::FirstMoveMyTurn { Some(hc_get_available_verbs(&db, user_id, info.session_id, s.highest_unit, &verbs).await.unwrap()) } else {None};
 
     Ok(res)
 }
@@ -145,14 +147,21 @@ pub async fn hc_insert_session(db: &SqlitePool, user_id:Uuid, info:&CreateSessio
     }
 }
 
-pub fn hc_get_available_verbs(db: &SqlitePool, user_id:Uuid, session_id:Uuid, top_unit:u32, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<Vec<HCVerbOption>, sqlx::Error> { 
+pub async fn hc_get_available_verbs(db: &SqlitePool, _user_id:Uuid, session_id:Uuid, top_unit:Option<u32>, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<Vec<HCVerbOption>, sqlx::Error> { 
     let mut res_verbs:Vec<HCVerbOption> = vec![];
+
+    let used_verbs = db::get_used_verbs(db, session_id).await?;
+
     for v in verbs {
-        let newv = HCVerbOption {
-            id: v.id,
-            verb: if v.pps[0] == "—" { format!("—, {}", v.pps[1]) } else { v.pps[0].clone() },
-        };
-        res_verbs.push(newv);
+        if top_unit.is_none() || v.hq_unit <= top_unit.unwrap() && !used_verbs.contains(&v.id)  { //&& verb_id_not_used()
+            let newv = HCVerbOption {
+                id: v.id,
+                verb: if v.pps[0] == "—" { format!("—, {}", v.pps[1]) } else { v.pps[0].clone() },
+            };
+            res_verbs.push(newv);
+        }
     }
+
+    res_verbs.sort_by(|a,b| hgk_compare_sqlite(&a.verb,&b.verb));
     Ok(res_verbs)
 }
