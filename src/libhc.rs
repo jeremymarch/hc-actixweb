@@ -135,9 +135,10 @@ pub async fn hc_insert_session(db: &SqlitePool, user_id:Uuid, info:&CreateSessio
         return Err(sqlx::Error::RowNotFound); //todo oops
     }
 
-    let unit = if let Ok(v) = info.unit.parse::<u32>() { Some(v) } else { None };
+    let highest_unit = if let Ok(v) = info.unit.parse::<u32>() { Some(v) } else { None };
+    let max_changes = 2;
 
-    match db::insert_session(db, user_id, unit, opponent_user_id, timestamp).await {
+    match db::insert_session(db, user_id, highest_unit, opponent_user_id, max_changes, timestamp).await {
         Ok(session_uuid) => {
             Ok(session_uuid)
         },

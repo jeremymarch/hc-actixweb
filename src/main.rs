@@ -115,12 +115,6 @@ pub struct CreateSessionQuery {
     opponent:String,
 }
 
-#[derive(Deserialize,Serialize)]
-pub struct SessionListRequest {
-    practice:bool,
-    game:bool,
-}
-
 #[derive(Deserialize,Serialize, FromRow)]
 pub struct SessionsListQuery {
     session_id: sqlx::types::Uuid,
@@ -153,6 +147,7 @@ pub struct SessionResult {
     challenged_user_id: Option<Uuid>,
     highest_unit: Option<u32>,
     custom_verbs: Option<String>, 
+    max_changes: u8,
     challenger_score: Option<u32>,
     challenged_score: Option<u32>,
     timestamp: i64,
