@@ -37,7 +37,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::BufRead;
 
-use rustunicodetests::hgk_compare_multiple_forms;
+use polytonic_greek::hgk_compare_multiple_forms;
 use crate::db::update_answer_move;
 use std::sync::Arc;
 
