@@ -22,6 +22,8 @@ use actix_session::Session;
 use thiserror::Error;
 use actix_files as fs;
 use actix_session::{SessionMiddleware, storage::CookieSessionStore};
+use actix_web_flash_messages::FlashMessagesFramework;
+use actix_web_flash_messages::storage::CookieMessageStore;
 use actix_web::http::header::ContentType;
 use actix_web::http::header::LOCATION;
 use actix_web::{
@@ -652,6 +654,10 @@ async fn main() -> io::Result<()> {
     //let string_key_64_bytes = std::env::var("HCKEY").unwrap_or_else(|_| { panic!("Key env not set.") });
     //let key = hex::decode(string_key_64_bytes).expect("Decoding key failed");
     //let secret_key = Key::from(&key);
+
+    //for flash messages on login page
+    let message_store = CookieMessageStore::builder( secret_key.clone() /*Key::from(hmac_secret.expose_secret().as_bytes())*/ ).build();
+    let message_framework = FlashMessagesFramework::builder(message_store).build();
     
     HttpServer::new(move || {
 
@@ -669,6 +675,7 @@ async fn main() -> io::Result<()> {
                     )
                     .cookie_name(String::from("hcid"))
                     .build())
+            .wrap(message_framework.clone())
             .wrap(middleware::Logger::default()) // enable logger - always register Actix Web Logger middleware last
             .configure(config)
     })

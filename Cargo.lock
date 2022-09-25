@@ -222,6 +222,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "actix-web-flash-messages"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05c89d051c33e7044e8a6e811ed06dda6ce65dfb51a1e379146f723116ca362a"
+dependencies = [
+ "actix-web",
+ "anyhow",
+ "percent-encoding",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "time 0.3.14",
+ "tokio",
+]
+
+[[package]]
 name = "adler"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -897,6 +913,7 @@ dependencies = [
  "actix-files",
  "actix-session",
  "actix-web",
+ "actix-web-flash-messages",
  "argon2",
  "chrono",
  "env_logger",

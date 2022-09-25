@@ -21,6 +21,10 @@ use super::*;
 
 use secrecy::ExposeSecret;
 use secrecy::Secret;
+use actix_web_flash_messages::{IncomingFlashMessages, Level};
+use actix_web_flash_messages::FlashMessage;
+use std::fmt::Write;
+
 #[derive(serde::Deserialize)]
 pub struct FormData {
     username: String,
@@ -32,41 +36,48 @@ pub struct Credentials {
     pub password: Secret<String>,
 }
 
-pub async fn login_get() -> Result<HttpResponse, AWError> {
+pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResponse, AWError> {
+
+    let mut error_html = String::from("");
+    for m in flash_messages.iter().filter(|m| m.level() == Level::Error) {
+        writeln!(error_html, "<p><i>{}</i></p>", m.content()).unwrap(); 
+    }
+
     Ok(HttpResponse::Ok()
         .content_type(ContentType::html())
         //.insert_header(("X-Hdr", "sample"))
-        .body(r##"<!DOCTYPE html>
+        .body(format!(r##"<!DOCTYPE html>
 <html lang="en">
     <head>
         <meta http-equiv="content-type" content="text/html; charset=utf-8">
         <title>Login</title>
         <script>
-            function setTheme() {
+            function setTheme() {{
                 var mode = localStorage.getItem("mode");
-                if ((window.matchMedia( "(prefers-color-scheme: dark)" ).matches || mode == "dark") && mode != "light") {
+                if ((window.matchMedia( "(prefers-color-scheme: dark)" ).matches || mode == "dark") && mode != "light") {{
                     document.querySelector("HTML").classList.add("dark");
-                }
-                else {
+                }}
+                else {{
                     document.querySelector("HTML").classList.remove("dark");
-                }
-            }
+                }}
+            }}
             setTheme();
         </script>
         <style>
-            BODY { font-family:helvetica;arial;display: flex;align-items: center;justify-content: center;height: 87vh; }
-            TABLE { border:2px solid black;padding: 24px;border-radius: 10px; }
-            BUTTON { padding: 3px 16px; }
-            .dark BODY { background-color:black;color:white; }
-            .dark INPUT { background-color:black;color:white;border: 2px solid white;border-radius: 6px; }
-            .dark TABLE { border:2px solid white; }
-            .dark BUTTON { background-color:black;color:white;border:1px solid white; }
+            BODY {{ font-family:helvetica;arial;display: flex;align-items: center;justify-content: center;height: 87vh; }}
+            TABLE {{ border:2px solid black;padding: 24px;border-radius: 10px; }}
+            BUTTON {{ padding: 3px 16px; }}
+            .dark BODY {{ background-color:black;color:white; }}
+            .dark INPUT {{ background-color:black;color:white;border: 2px solid white;border-radius: 6px; }}
+            .dark TABLE {{ border:2px solid white; }}
+            .dark BUTTON {{ background-color:black;color:white;border:1px solid white; }}
         </style>
     </head>
     <body>
         <form action="/login" method="post">
             <table>
                 <tbody>
+                    <tr><td colspan="2" align="center">{}</td></tr>
                     <tr>
                         <td>               
                             <label for="username">Username</label>
@@ -140,7 +151,7 @@ pub async fn login_get() -> Result<HttpResponse, AWError> {
         </form>
         <script>/*document.getElementById("username").focus();*/</script>
     </body>
-</html>"##))
+</html>"##, error_html)))
 }
 
 //for testing without db
@@ -178,6 +189,7 @@ pub async fn login_post(
     }
 
     session.purge();
+    FlashMessage::error("Login incorrect".to_string()).send();
     Ok(HttpResponse::SeeOther()
         .insert_header((LOCATION, "/login"))
         .finish())
