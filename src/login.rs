@@ -26,9 +26,17 @@ use actix_web_flash_messages::FlashMessage;
 use std::fmt::Write;
 
 #[derive(serde::Deserialize)]
-pub struct FormData {
+pub struct LoginFormData {
     username: String,
     password: Secret<String>,
+}
+
+#[derive(serde::Deserialize)]
+pub struct CreateUserFormData {
+    username: String,
+    password: String,
+    confirm_password: String,
+    email: String,
 }
 
 pub struct Credentials {
@@ -64,7 +72,7 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
             setTheme();
         </script>
         <style>
-            BODY {{ font-family:helvetica;arial;display: flex;align-items: center;justify-content: center;height: 87vh; }}
+            BODY {{ font-family:helvetica;arial;display: flex;align-items: center;justify-content: center;height: 87vh; flex-direction: column; }}
             TABLE {{ border:2px solid black;padding: 24px;border-radius: 10px; }}
             BUTTON {{ padding: 3px 16px; }}
             .dark BODY {{ background-color:black;color:white; }}
@@ -101,15 +109,100 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
                     </tr>
                     <tr>
                         <td colspan="2" align="center">
-                            <a href="#" onclick="">Create User</a>
+                            <a href="newuser">Create User</a>
                         </td>
                     </tr>
                 </tbody>
             </table>
         </form>
+        <script>/*document.getElementById("username").focus();*/</script>
+    </body>
+</html>"##, error_html)))
+}
+
+//for testing without db
+// fn validate_login(credentials: Credentials) -> Option<uuid::Uuid> {
+//     if credentials.username.to_lowercase() == "user1"
+//         && credentials.password.expose_secret() == "1234"
+//     {
+//         Some(Uuid::from_u128(0x8CD36EFFDF5744FF953B29A473D12347))
+//     } else if credentials.username.to_lowercase() == "user2"
+//         && credentials.password.expose_secret() == "1234"
+//     {
+//         Some(Uuid::from_u128(0xD75B0169E7C343838298136E3D63375C))
+//     } else {
+//         None
+//     }
+// }
+
+pub async fn login_post(
+    (session, form, req): (Session, web::Form<LoginFormData>, HttpRequest),
+) -> Result<HttpResponse, AWError> {
+    let db = req.app_data::<SqlitePool>().unwrap();
+
+    let credentials = Credentials {
+        username: form.0.username,
+        password: form.0.password,
+    };
+
+    if let Ok(user_id) = db::validate_login_db(db, &credentials.username, credentials.password.expose_secret()).await.map_err(map_sqlx_error) {
+        session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+        if session.insert("user_id", user_id).is_ok() {
+            return Ok(HttpResponse::SeeOther()
+                .insert_header((LOCATION, "/"))
+                .finish());
+        }
+    }
+
+    session.purge();
+    FlashMessage::error("Authentication error".to_string()).send();
+    Ok(HttpResponse::SeeOther()
+        .insert_header((LOCATION, "/login"))
+        .finish())
+}
+
+pub async fn new_user_get(flash_messages: IncomingFlashMessages) -> Result<HttpResponse, AWError> {
+
+    let mut error_html = String::from("");
+    for m in flash_messages.iter().filter(|m| m.level() == Level::Error) {
+        writeln!(error_html, "<p><i>{}</i></p>", m.content()).unwrap(); 
+    }
+
+    Ok(HttpResponse::Ok()
+        .content_type(ContentType::html())
+        //.insert_header(("X-Hdr", "sample"))
+        .body(format!(r##"<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8">
+        <title>Login</title>
+        <script>
+            function setTheme() {{
+                var mode = localStorage.getItem("mode");
+                if ((window.matchMedia( "(prefers-color-scheme: dark)" ).matches || mode == "dark") && mode != "light") {{
+                    document.querySelector("HTML").classList.add("dark");
+                }}
+                else {{
+                    document.querySelector("HTML").classList.remove("dark");
+                }}
+            }}
+            setTheme();
+        </script>
+        <style>
+            BODY {{ font-family:helvetica;arial;display: flex;align-items: center;justify-content: center;height: 87vh; flex-direction: column; }}
+            TABLE {{ border:2px solid black;padding: 24px;border-radius: 10px; }}
+            BUTTON {{ padding: 3px 16px; }}
+            .dark BODY {{ background-color:black;color:white; }}
+            .dark INPUT {{ background-color:black;color:white;border: 2px solid white;border-radius: 6px; }}
+            .dark TABLE {{ border:2px solid white; }}
+            .dark BUTTON {{ background-color:black;color:white;border:1px solid white; }}
+        </style>
+    </head>
+    <body>
         <form action="/newuser" method="post">
             <table>
                 <tbody>
+                <tr><td colspan="2" align="center">{}</td></tr>
                     <tr>
                         <td>               
                             <label for="username">Username</label>
@@ -128,10 +221,10 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
                     </tr>
                     <tr>
                         <td>
-                            <label for="password2">Retype Password</label>
+                            <label for="confirm_password">Confirm Password</label>
                         </td>
                         <td>
-                            <input type="password" id="password2" name="password2">
+                            <input type="password" id="confirm_password" name="confirm_password">
                         </td>
                     </tr><tr>
                     <td>
@@ -169,29 +262,33 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
 //     }
 // }
 
-pub async fn login_post(
-    (session, form, req): (Session, web::Form<FormData>, HttpRequest),
+pub async fn new_user_post(
+    (/*session, */form, req): (/*Session,*/ web::Form<CreateUserFormData>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
 
-    let credentials = Credentials {
-        username: form.0.username,
-        password: form.0.password,
-    };
+    let username = form.0.username;
+    let password = form.0.password;
+    let confirm_password = form.0.confirm_password;
+    let email = form.0.email;
 
-    if let Ok(user_id) = db::validate_login_db(db, &credentials.username, credentials.password.expose_secret()).await.map_err(map_sqlx_error) {
-        session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-        if session.insert("user_id", user_id).is_ok() {
-            return Ok(HttpResponse::SeeOther()
-                .insert_header((LOCATION, "/"))
-                .finish());
+    let timestamp = get_timestamp();
+
+    if password == confirm_password {
+        if let Ok(user_id) = db::create_user(db, &username, &password, &email, timestamp).await.map_err(map_sqlx_error) {
+            //session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+            //if session.insert("user_id", user_id).is_ok() {
+                return Ok(HttpResponse::SeeOther()
+                    .insert_header((LOCATION, "/login"))
+                    .finish());
+            //}
         }
     }
 
-    session.purge();
-    FlashMessage::error("Login incorrect".to_string()).send();
+    //session.purge();
+    FlashMessage::error("Create user error".to_string()).send();
     Ok(HttpResponse::SeeOther()
-        .insert_header((LOCATION, "/login"))
+        .insert_header((LOCATION, "/newuser"))
         .finish())
 }
 

@@ -687,6 +687,8 @@ async fn main() -> io::Result<()> {
 fn config(cfg: &mut web::ServiceConfig) {
     cfg.route("/login", web::get().to(login::login_get))
         .route("/login", web::post().to(login::login_post))
+        .route("/newuser", web::get().to(login::new_user_get))
+        .route("/newuser", web::post().to(login::new_user_post))
         .service(web::resource("/healthzzz").route(web::get().to(health_check)))
         .service(web::resource("/enter").route(web::post().to(enter)))
         .service(web::resource("/new").route(web::post().to(create_session)))

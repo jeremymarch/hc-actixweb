@@ -437,6 +437,11 @@ pub async fn update_answer_move(
 }
 
 pub async fn create_user(pool: &SqlitePool, username:&str, password:&str, email:&str, timestamp:i64) -> Result<Uuid, sqlx::Error> {
+
+    if username.len() < 8 || password.len() < 8 || email.len() < 8 {
+        return Err(sqlx::Error::RowNotFound);
+    }
+
     let uuid = sqlx::types::Uuid::new_v4();
     let query = "INSERT INTO users VALUES (?,?,?,?,?);";
     let _res = sqlx::query(query)
