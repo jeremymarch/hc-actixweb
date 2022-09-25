@@ -740,9 +740,9 @@ mod tests {
         // let uuid1 = Uuid::from_u128(0x8CD36EFFDF5744FF953B29A473D12347);
         // let uuid2 = Uuid::from_u128(0xD75B0169E7C343838298136E3D63375C);
         // let invalid_uuid = Uuid::from_u128(0x00000000000000000000000000000001);
-        let uuid1 = create_user(&db, "testuser1", "abc", "user1@blah.com", timestamp).await.unwrap();
-        let uuid2 = create_user(&db, "testuser2", "abc", "user2@blah.com", timestamp).await.unwrap();
-        let invalid_uuid = create_user(&db, "testuser3", "abc", "user3@blah.com", timestamp).await.unwrap();
+        let uuid1 = create_user(&db, "testuser1", "abcdabcd", "user1@blah.com", timestamp).await.unwrap();
+        let uuid2 = create_user(&db, "testuser2", "abcdabcd", "user2@blah.com", timestamp).await.unwrap();
+        let invalid_uuid = create_user(&db, "testuser3", "abcdabcd", "user3@blah.com", timestamp).await.unwrap();
 
         let csq = CreateSessionQuery {
             qtype:"abc".to_string(),
