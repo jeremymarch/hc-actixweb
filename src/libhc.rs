@@ -1,6 +1,73 @@
 use super::*;
 use rustunicodetests::hgk_compare_sqlite;
 
+pub async fn hc_mf_pressed(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timestamp:i64, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> {
+    let s = db::get_session(db, info.session_id).await?;
+    
+    //pull prev move from db to get verb and params and to prevent out-of-sequence answers
+    let m = match db::get_last_move(db, info.session_id).await {
+        Ok(m) => {
+            if m.ask_user_id == user_id {
+                return Err(sqlx::Error::RowNotFound);//same user cannot answer question they asked
+            }
+            else if m.is_correct.is_some() {
+                return Err(sqlx::Error::RowNotFound);//previous question must not already be answered
+            }
+            else {
+                m
+            }
+            },
+        Err(_) => { return Err(sqlx::Error::RowNotFound); } //this is first move, nothing to answer
+    };
+
+    //test answer to get correct_answer and is_correct
+    //let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+    //let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR).unwrap());
+    let idx = if m.verb_id.is_some() && (m.verb_id.unwrap() as usize) < verbs.len() { m.verb_id.unwrap() as usize } else { 0 };
+    let prev_form = HcGreekVerbForm {verb:verbs[idx].clone(), person:HcPerson::from_u8(m.person.unwrap()), number:HcNumber::from_u8(m.number.unwrap()), tense:HcTense::from_u8(m.tense.unwrap()), voice:HcVoice::from_u8(m.voice.unwrap()), mood:HcMood::from_u8(m.mood.unwrap()), gender:None, case:None};
+
+    let correct_answer = prev_form.get_form(false).unwrap().last().unwrap().form.replace(" /", ",");
+
+    if correct_answer.contains(',') {
+
+        let mut res = db::get_session_state(db, user_id, info.session_id).await?;
+        if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
+            res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
+        }
+        res.response_to = "mfpressedresponse".to_string();
+        res.success = true;
+        res.mesg = Some("verb does have multiple forms".to_string());
+        res.verbs = None;
+
+        Ok(res)
+    }
+    else {
+        let is_correct = false;
+        let _res = update_answer_move(
+            db,
+            info.session_id,
+            user_id,
+            &info.answer,
+            &correct_answer,
+            is_correct,
+            &info.time,
+            true,
+            info.timed_out,
+            timestamp).await?;
+    
+        let mut res = db::get_session_state(db, user_id, info.session_id).await?;
+        if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
+            res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
+        }
+        res.response_to = "mfpressedresponse".to_string();
+        res.success = true;
+        res.mesg = Some("verb does not have multiple forms".to_string());
+        res.verbs = if res.move_type == MoveType::FirstMoveMyTurn && !is_correct { Some(hc_get_available_verbs(&db, user_id, info.session_id, s.highest_unit, &verbs).await.unwrap()) } else { None };
+    
+        Ok(res)
+    }
+}
+
 pub async fn hc_ask(db: &SqlitePool, user_id:Uuid, info:&AskQuery, timestamp:i64, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> {
     //todo check that user_id is either challenger_user_id or challenged_user_id
     //todo check that user_id == challenger_user_id if this is first move

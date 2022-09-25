@@ -422,6 +422,51 @@ async fn ask(
     }
 }
 
+async fn mf(
+    (info, req, session): (web::Form<AnswerQuery>, HttpRequest, Session)) -> Result<HttpResponse, AWError> {
+    let db = req.app_data::<SqlitePool>().unwrap();
+    let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
+
+    let timestamp = get_timestamp();
+    //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
+    //let user_agent = get_user_agent(&req).unwrap_or("");
+
+    if let Some(user_id) = login::get_user_id(session) {
+        
+        let res = libhc::hc_mf_pressed(db, user_id, &info, timestamp, verbs).await.map_err(map_sqlx_error)?;
+
+        Ok(HttpResponse::Ok().json(res))
+    }
+    else {
+        let res = SessionState {
+            session_id: info.session_id,
+            move_type: MoveType::Practice,
+            myturn: false,
+            starting_form:None,
+            answer:None,
+            is_correct: None,
+            correct_answer:None,
+            verb: None,
+            person: None,
+            number: None,
+            tense: None,
+            voice: None,
+            mood: None,
+            person_prev: None,
+            number_prev: None,
+            tense_prev: None,
+            voice_prev: None,
+            mood_prev: None,
+            time: None,//time for prev answer
+            response_to:"ask".to_string(),
+            success:false,
+            mesg:Some("not logged in".to_string()),
+            verbs: None,
+        };
+        Ok(HttpResponse::Ok().json(res))
+    }
+}
+
 #[derive(Error, Debug)]
 pub struct PhilologusError {
     code: StatusCode,
@@ -641,6 +686,7 @@ fn config(cfg: &mut web::ServiceConfig) {
         .service(web::resource("/list").route(web::post().to(get_sessions)))
         .service(web::resource("/getmove").route(web::post().to(get_move)))
         .service(web::resource("/ask").route(web::post().to(ask)))
+        .service(web::resource("/mf").route(web::post().to(mf)))
         .service(
             fs::Files::new("/", "./static")
                 .prefer_utf8(true)
