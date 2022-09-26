@@ -438,7 +438,7 @@ pub async fn update_answer_move(
 
 pub async fn create_user(pool: &SqlitePool, username:&str, password:&str, email:&str, timestamp:i64) -> Result<Uuid, sqlx::Error> {
 
-    if username.len() < 8 || password.len() < 8 || email.len() < 8 {
+    if username.len() < 2 || password.len() < 8 || email.len() < 6 {
         return Err(sqlx::Error::RowNotFound);
     }
 

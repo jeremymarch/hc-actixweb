@@ -1,5 +1,5 @@
 /*
-gkvocabdb
+hc-actixweb
 
 Copyright (C) 2021  Jeremy March
 
@@ -70,6 +70,18 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
                 }}
             }}
             setTheme();
+            function validate() {{
+                let u = document.forms[0]["username"].value;
+                let p = document.forms[0]["password"].value;
+                if (u == "") {{
+                  alert("Please enter a username");
+                  return false;
+                }}
+                if (p == "") {{
+                    alert("Please enter a password");
+                    return false;
+                  }}
+              }}
         </script>
         <style>
             BODY {{ font-family:helvetica;arial;display: flex;align-items: center;justify-content: center;height: 87vh; flex-direction: column; }}
@@ -82,7 +94,7 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
         </style>
     </head>
     <body>
-        <form action="/login" method="post">
+        <form action="/login" method="post" onsubmit="return validate()">
             <table>
                 <tbody>
                     <tr><td colspan="2" align="center">{}</td></tr>
@@ -117,7 +129,8 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
         </form>
         <script>/*document.getElementById("username").focus();*/</script>
     </body>
-</html>"##, error_html)))
+</html>
+"##, error_html)))
 }
 
 //for testing without db
@@ -187,6 +200,28 @@ pub async fn new_user_get(flash_messages: IncomingFlashMessages) -> Result<HttpR
                 }}
             }}
             setTheme();
+            function validate() {{
+                let u = document.forms[0]["username"].value;
+                let p = document.forms[0]["password"].value;
+                let c = document.forms[0]["confirm_password"].value;
+                let e = document.forms[0]["email"].value;
+                if (u.length < 2) {{
+                  alert("Please enter a username");
+                  return false;
+                }}
+                if (p.length < 8) {{
+                    alert("Please enter a password of at least 8 characters");
+                    return false;
+                }}
+                if (p != c) {{
+                    alert("Password fields do not match");
+                    return false;
+                }}
+                if (e.length < 6) {{
+                    alert("Please enter an email");
+                    return false;
+                }}
+              }}
         </script>
         <style>
             BODY {{ font-family:helvetica;arial;display: flex;align-items: center;justify-content: center;height: 87vh; flex-direction: column; }}
@@ -199,7 +234,7 @@ pub async fn new_user_get(flash_messages: IncomingFlashMessages) -> Result<HttpR
         </style>
     </head>
     <body>
-        <form action="/newuser" method="post">
+        <form action="/newuser" method="post" onsubmit="return validate()">
             <table>
                 <tbody>
                 <tr><td colspan="2" align="center">{}</td></tr>
@@ -244,7 +279,8 @@ pub async fn new_user_get(flash_messages: IncomingFlashMessages) -> Result<HttpR
         </form>
         <script>/*document.getElementById("username").focus();*/</script>
     </body>
-</html>"##, error_html)))
+</html>
+"##, error_html)))
 }
 
 //for testing without db
