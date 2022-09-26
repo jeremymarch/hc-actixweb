@@ -182,6 +182,14 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif; }
 SELECT, OPTION {
     /* font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial; */
 }
+.paramdiv {
+    margin: 10px 4px;
+    border-bottom: 4px solid white;
+    padding-bottom: 4px;
+}
+.paramdivchanged {
+    border-bottom: 4px solid red;
+}
     </style>
     </head>
     <body onload="start()">
@@ -212,37 +220,48 @@ SELECT, OPTION {
     </div>
     
     <div id="changedesc" class="changedesc"></div>
+
     <div id="askparamsdiv">
         <div id="askparamsdivinner">
-        <select id="personparam">
-            <option value="0">First</option>
-            <option value="1">Second</option>
-            <option value="2">Third</option>
-        </select>
-        <select id="numberparam">
-            <option value="0">Singular</option>
-            <option value="1">Plural</option>
-        </select>
-        <select id="tenseparam">
-            <option value="0">Present</option>
-            <option value="1">Imperfect</option>
-            <option value="2">Future</option>
-            <option value="3">Aorist</option>
-            <option value="4">Perfect</option>
-            <option value="5">Pluperfect</option>
-        </select>
-        <select id="moodparam">
-            <option value="0">Indicative</option>
-            <option value="1">Subjunctive</option>
-            <option value="2">Optative</option>
-            <option value="3">Imperative</option>
-        </select>
-        <select id="voiceparam">
-            <option value="0">Active</option>
-            <option value="1">Middle</option>
-            <option value="2">Passive</option>
-        </select>
-    </div>
+            <div id="personparamdiv" class="paramdiv">
+                <select id="personparam" onchange="select_changed(this)">
+                    <option value="0">First</option>
+                    <option value="1">Second</option>
+                    <option value="2">Third</option>
+                </select>
+            </div>
+            <div id="numberparamdiv" class="paramdiv">
+                <select id="numberparam" onchange="select_changed(this)">
+                    <option value="0">Singular</option>
+                    <option value="1">Plural</option>
+                </select>
+            </div>
+            <div id="tenseparamdiv" class="paramdiv">
+                <select id="tenseparam" onchange="select_changed(this)">
+                    <option value="0">Present</option>
+                    <option value="1">Imperfect</option>
+                    <option value="2">Future</option>
+                    <option value="3">Aorist</option>
+                    <option value="4">Perfect</option>
+                    <option value="5">Pluperfect</option>
+                </select>
+            </div>
+            <div id="moodparamdiv" class="paramdiv">
+                <select id="moodparam" onchange="select_changed(this)">
+                    <option value="0">Indicative</option>
+                    <option value="1">Subjunctive</option>
+                    <option value="2">Optative</option>
+                    <option value="3">Imperative</option>
+                </select>
+            </div>
+            <div id="voiceparamdiv" class="paramdiv">
+                <select id="voiceparam" onchange="select_changed(this)">
+                    <option value="0">Active</option>
+                    <option value="1">Middle</option>
+                    <option value="2">Passive</option>
+                </select>
+            </div>
+        </div>
     </div>
     <textarea id="answerform" class="gkinput newform disablecopypaste" disabled autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="padding:10px;"></textarea>
     <div id="correctanswer" class="gkinput correctanswer" style="visibility: hidden;"></div>
@@ -258,6 +277,23 @@ SELECT, OPTION {
 	if (!('WebAssembly' in window)) {
 		alert('you need a browser with wasm support enabled :(');
 	}
+
+    var max_changes = null;
+    function select_changed(s) {
+        let changed_nodes = document.querySelectorAll(".paramdivchanged");
+        if (changed_nodes && max_changes !== null && changed_nodes.length >= max_changes 
+            && s.value != s.getAttribute("orig") 
+            && !s.parentNode.classList.contains("paramdivchanged")) {
+            s.value = s.getAttribute("orig");
+        }
+
+        if (s.value != s.getAttribute("orig") && max_changes !== null) {
+            s.parentNode.classList.add("paramdivchanged");
+        }
+        else {
+            s.parentNode.classList.remove("paramdivchanged");
+        }
+    }
 	
 	function loadWebAssembly(filename, imports) {
 		return fetch(filename)
@@ -604,11 +640,23 @@ SELECT, OPTION {
     }
 
     function set_params_dropdowns(person, number, tense, voice, mood, verb_id) {
-        document.querySelector("#personparam").value = person;
-        document.querySelector("#numberparam").value = number;
-        document.querySelector("#tenseparam").value = tense;
-        document.querySelector("#moodparam").value = mood;
-        document.querySelector("#voiceparam").value = voice;
+        let a = document.querySelectorAll(".paramdivchanged").forEach(e => e.classList.remove("paramdivchanged"));
+        
+        let p = document.querySelector("#personparam");
+        p.value = person;
+        p.setAttribute("orig", person);
+        let n = document.querySelector("#numberparam");
+        n.value = number;
+        n.setAttribute("orig", number);
+        let t = document.querySelector("#tenseparam");
+        t.value = tense;
+        t.setAttribute("orig", tense);
+        let m = document.querySelector("#moodparam");
+        m.value = mood;
+        m.setAttribute("orig", mood);
+        let v = document.querySelector("#voiceparam");
+        v.value = voice;
+        v.setAttribute("orig", voice);
         let vc = document.querySelector("#verbchooser");
         //if the dropdown doesn't have enough rows to assign value, just add a new row for it. it's ok: we can't see it
         if (verb_id >= vc.options.length && vc.value != verb_id /* so we don't get two of same option */) {
@@ -910,6 +958,7 @@ SELECT, OPTION {
         submitbutton.disabled = false;
         document.querySelector("#mfbutton").disabled = true;
         if (data.move_type == "FirstMoveMyTurn") {
+            max_changes = null; //can change all
             set_params_dropdowns(null, null, null, null, null, null);
             let verbchooser = document.querySelector("#verbchooser");
             //remove verb options
@@ -932,6 +981,7 @@ SELECT, OPTION {
             
         }
         else {
+            max_changes = 2;
             set_params_dropdowns(data.person, data.number, data.tense, data.voice, data.mood, data.verb);
             document.querySelector("#startingform").innerText = data.correct_answer;
             document.querySelector("#verbchooser").style.display = "none";
