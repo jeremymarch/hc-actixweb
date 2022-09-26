@@ -470,6 +470,13 @@ async fn mf(
     }
 }
 
+#[derive(Serialize)]
+struct ErrorResponse {
+    code: u16,
+    error: String,
+    message: String,
+}
+
 #[derive(Error, Debug)]
 pub struct PhilologusError {
     code: StatusCode,
@@ -583,13 +590,6 @@ fn map_sqlx_error(e: sqlx::Error) -> PhilologusError {
             error: "sqlx Unknown error".to_string(),
         },
     }
-}
-
-#[derive(Serialize)]
-struct ErrorResponse {
-    code: u16,
-    error: String,
-    message: String,
 }
 
 fn load_verbs(path:&str) -> Vec<Arc<HcGreekVerb>> {
@@ -1076,6 +1076,84 @@ mod tests {
         };
 
         //println!("{:?}", ss2.as_ref().unwrap());
+        assert!(ss2.unwrap() == ss_res2);
+
+        //ask new verb after incorrect result
+        let aq3 = AskQuery {
+            session_id: *session_uuid.as_ref().unwrap(),
+            person: 0,
+            number: 0,
+            tense: 1,
+            voice: 1,
+            mood: 1,
+            verb: 1,
+        };
+
+        timestamp += 1;
+        //a valid ask
+        let ask = hc_ask(&db, uuid1, &aq3, timestamp, &verbs).await;
+        assert!(ask.is_ok());
+
+        let ss = hc_get_move(&db, uuid1, &m, &verbs).await;
+        assert!(ss.is_ok());
+        let ss_res = SessionState { 
+            session_id: *session_uuid.as_ref().unwrap(), 
+            move_type: MoveType::AnswerTheirTurn, 
+            myturn: false, 
+            starting_form: Some("πέμπω".to_string()), 
+            answer: None, 
+            is_correct: None, 
+            correct_answer: None, 
+            verb: Some(1), 
+            person: Some(0), 
+            number: Some(0), 
+            tense: Some(1), 
+            voice: Some(1), 
+            mood: Some(1), 
+            person_prev: None, 
+            number_prev: None, 
+            tense_prev: None, 
+            voice_prev: None, 
+            mood_prev: None, 
+            time: None, 
+            response_to: "getmoves".to_string(),
+            success: true, 
+            mesg: None,
+            verbs: None,
+        };
+        //println!("1: {:?}", ss.as_ref().unwrap());
+        //println!("2: {:?}", ss_res);
+        assert!(ss.unwrap() == ss_res);
+
+        let ss2 = hc_get_move(&db, uuid2, &m, &verbs).await;
+
+        let ss_res2 = SessionState { 
+            session_id: *session_uuid.as_ref().unwrap(), 
+            move_type: MoveType::AnswerMyTurn, 
+            myturn: true, 
+            starting_form: Some("πέμπω".to_string()), 
+            answer: None, 
+            is_correct: None, 
+            correct_answer: None, 
+            verb: Some(1), 
+            person: Some(0), 
+            number: Some(0), 
+            tense: Some(1), 
+            voice: Some(1), 
+            mood: Some(1), 
+            person_prev: None, 
+            number_prev: None, 
+            tense_prev: None, 
+            voice_prev: None, 
+            mood_prev: None,  
+            time: None, 
+            response_to: "getmoves".to_string(), 
+            success: true, 
+            mesg: None,
+            verbs: None,
+        };
+        //println!("1: {:?}", ss2.as_ref().unwrap());
+        //println!("2: {:?}", ss_res2);
         assert!(ss2.unwrap() == ss_res2);
     }
 }

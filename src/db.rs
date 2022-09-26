@@ -180,7 +180,7 @@ pub async fn get_last_two_moves<'a, 'b>(
 //5 q has not been asked by you: starting_form from -1, desc from -1, desc from 0, is_correct, correct answer, given answer, time, mf, timedout
 //6 q has not been answered by you: starting_form from -1, desc from -1, desc from 0,
 //7 game has ended (no ones turn): starting_form from -1, desc from -1, desc from 0, is_correct, correct answer, given answer, time, mf, timedout
-fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>) -> (bool, MoveType) {
+pub fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>) -> (bool, MoveType) {
     let myturn:bool;
     let move_type:MoveType;
 
@@ -274,61 +274,6 @@ pub async fn get_used_verbs(
         .await?;
 
     Ok(res)
-}
-
-pub async fn get_session_state(
-    pool: &SqlitePool,
-    user_id: sqlx::types::Uuid,
-    session_id: sqlx::types::Uuid,
-) -> Result<SessionState, sqlx::Error> {
-    let mut tx = pool.begin().await?;
-
-    let query = "SELECT * \
-    FROM sessions \
-    where session_id = ? \
-    LIMIT 1;";
-
-    //println!("query: {} {:?}", query, user_id);
-    let res: SessionResult = sqlx::query_as(query)
-        .bind(session_id)
-        .fetch_one(&mut tx)
-        .await?;
-
-    let m = get_last_two_moves(&mut tx, session_id).await?;
-    let first = if !m.is_empty() { Some(&m[0]) } else { None };
-    let (myturn, move_type) = move_get_type(first, user_id, res.challenged_user_id);
-
-    let asking_new_verb:bool = move_type == MoveType::FirstMoveMyTurn; //don't old show desc when *asking* a new verb
-    let answering_new_verb = m.len() > 1 && m[0].verb_id != m[1].verb_id; //don't show old desc when *answering* a new verb
-
-    let r = SessionState {
-        session_id: session_id,
-        move_type: move_type,
-        myturn: myturn,
-        starting_form: if m.len() == 2 && m[0].verb_id == m[1].verb_id { m[1].correct_answer.clone() } else { None },
-        answer: if !m.is_empty() { m[0].answer.clone() } else { None },
-        is_correct: if !m.is_empty() && m[0].is_correct.is_some() { Some(m[0].is_correct.unwrap() != 0) } else { None },
-        correct_answer: if !m.is_empty() { m[0].correct_answer.clone() } else { None },
-        verb: if !m.is_empty() { m[0].verb_id } else { None },
-        person: if !m.is_empty() { m[0].person } else { None },
-        number: if !m.is_empty() { m[0].number } else { None },
-        tense: if !m.is_empty() { m[0].tense } else { None },
-        voice: if !m.is_empty() { m[0].voice } else { None },
-        mood: if !m.is_empty() { m[0].mood } else { None },
-        person_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb { m[1].person } else { None },
-        number_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb { m[1].number } else { None },
-        tense_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb { m[1].tense } else { None },
-        voice_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb { m[1].voice } else { None },
-        mood_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb { m[1].mood } else { None },
-        time: if !m.is_empty() { m[0].time.clone() } else { None },
-        response_to:"".to_string(),
-        success:true,
-        mesg:None,
-        verbs: None,
-    };
-        
-    tx.commit().await?;
-    Ok(r)
 }
 
 pub async fn get_move_type<'a, 'b>(

@@ -20,6 +20,52 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 use super::*;
 use polytonic_greek::hgk_compare_sqlite;
 
+pub async fn get_session_state(
+    pool: &SqlitePool,
+    user_id: sqlx::types::Uuid,
+    session_id: sqlx::types::Uuid,
+) -> Result<SessionState, sqlx::Error> {
+    let mut tx = pool.begin().await?;
+
+    let res = db::get_session(pool, session_id).await?;
+
+    let m = db::get_last_two_moves(&mut tx, session_id).await?;
+    let first = if !m.is_empty() { Some(&m[0]) } else { None };
+    let (myturn, move_type) = db::move_get_type(first, user_id, res.challenged_user_id);
+
+    let asking_new_verb:bool = move_type == MoveType::FirstMoveMyTurn; //don't old show desc when *asking* a new verb
+    let answering_new_verb = m.len() > 1 && m[0].verb_id != m[1].verb_id; //don't show old desc when *answering* a new verb
+
+    let r = SessionState {
+        session_id: session_id,
+        move_type: move_type,
+        myturn: myturn,
+        starting_form: if m.len() == 2 && m[0].verb_id == m[1].verb_id { m[1].correct_answer.clone() } else { None },
+        answer: if !m.is_empty() { m[0].answer.clone() } else { None },
+        is_correct: if !m.is_empty() && m[0].is_correct.is_some() { Some(m[0].is_correct.unwrap() != 0) } else { None },
+        correct_answer: if !m.is_empty() { m[0].correct_answer.clone() } else { None },
+        verb: if !m.is_empty() { m[0].verb_id } else { None },
+        person: if !m.is_empty() { m[0].person } else { None },
+        number: if !m.is_empty() { m[0].number } else { None },
+        tense: if !m.is_empty() { m[0].tense } else { None },
+        voice: if !m.is_empty() { m[0].voice } else { None },
+        mood: if !m.is_empty() { m[0].mood } else { None },
+        person_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb { m[1].person } else { None },
+        number_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb { m[1].number } else { None },
+        tense_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb { m[1].tense } else { None },
+        voice_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb { m[1].voice } else { None },
+        mood_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb { m[1].mood } else { None },
+        time: if !m.is_empty() { m[0].time.clone() } else { None },
+        response_to:"".to_string(),
+        success:true,
+        mesg:None,
+        verbs: None,
+    };
+        
+    tx.commit().await?;
+    Ok(r)
+}
+
 pub async fn hc_mf_pressed(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timestamp:i64, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> {
     let s = db::get_session(db, info.session_id).await?;
 
@@ -49,7 +95,7 @@ pub async fn hc_mf_pressed(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, tim
 
     if correct_answer.contains(',') {
 
-        let mut res = db::get_session_state(db, user_id, info.session_id).await?;
+        let mut res = get_session_state(db, user_id, info.session_id).await?;
         if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
             res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
         }
@@ -74,7 +120,7 @@ pub async fn hc_mf_pressed(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, tim
             info.timed_out,
             timestamp).await?;
     
-        let mut res = db::get_session_state(db, user_id, info.session_id).await?;
+        let mut res = get_session_state(db, user_id, info.session_id).await?;
         if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
             res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
         }
@@ -112,11 +158,11 @@ pub async fn hc_ask(db: &SqlitePool, user_id:Uuid, info:&AskQuery, timestamp:i64
         Err(_) => () //this is first move, nothing to check
     }
 
-    //get move seq and add one
+    //get move seq and add one?
     
     let _ = db::insert_ask_move(db, user_id, info.session_id, info.person, info.number, info.tense, info.mood, info.voice, info.verb, timestamp).await?;
 
-    let mut res = db::get_session_state(db, user_id, info.session_id).await?;
+    let mut res = get_session_state(db, user_id, info.session_id).await?;
 
     if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
         res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
@@ -173,7 +219,7 @@ pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timesta
         info.timed_out,
         timestamp).await?;
 
-    let mut res = db::get_session_state(db, user_id, info.session_id).await?;
+    let mut res = get_session_state(db, user_id, info.session_id).await?;
     if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
         res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
     }
@@ -187,7 +233,7 @@ pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timesta
 
 pub async fn hc_get_move(db: &SqlitePool, user_id:Uuid, info:&GetMoveQuery, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> { 
     let s = db::get_session(db, info.session_id).await?;
-    let mut res = db::get_session_state(db, user_id, info.session_id).await?;
+    let mut res = get_session_state(db, user_id, info.session_id).await?;
 
     //set starting_form to 1st pp of verb if verb is set, but starting form is None (i.e. we just changed verbs)
     if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
