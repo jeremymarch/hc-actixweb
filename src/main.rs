@@ -81,7 +81,7 @@ pub enum MoveType {
     GameOver,
 }
 
-#[derive(Deserialize,Serialize,PartialEq,Debug)]
+#[derive(Deserialize,Serialize,PartialEq,Eq,Debug)]
 pub struct HCVerbOption {
     id:u32,
     verb:String,

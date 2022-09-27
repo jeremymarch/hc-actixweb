@@ -127,7 +127,7 @@ pub async fn hc_mf_pressed(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, tim
         res.response_to = "mfpressedresponse".to_string();
         res.success = true;
         res.mesg = Some("verb does not have multiple forms".to_string());
-        res.verbs = if res.move_type == MoveType::FirstMoveMyTurn && !is_correct { Some(hc_get_available_verbs(&db, user_id, info.session_id, s.highest_unit, &verbs).await.unwrap()) } else { None };
+        res.verbs = if res.move_type == MoveType::FirstMoveMyTurn && !is_correct { Some(hc_get_available_verbs(db, user_id, info.session_id, s.highest_unit, verbs).await.unwrap()) } else { None };
     
         Ok(res)
     }
@@ -226,7 +226,7 @@ pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timesta
     res.response_to = "answerresponse".to_string();
     res.success = true;
     res.mesg = None;
-    res.verbs = if res.move_type == MoveType::FirstMoveMyTurn && !is_correct { Some(hc_get_available_verbs(&db, user_id, info.session_id, s.highest_unit, &verbs).await.unwrap()) } else { None };
+    res.verbs = if res.move_type == MoveType::FirstMoveMyTurn && !is_correct { Some(hc_get_available_verbs(db, user_id, info.session_id, s.highest_unit, verbs).await.unwrap()) } else { None };
 
     Ok(res)
 }
@@ -243,7 +243,7 @@ pub async fn hc_get_move(db: &SqlitePool, user_id:Uuid, info:&GetMoveQuery, verb
     res.response_to = "getmoves".to_string();
     res.success = true;
     res.mesg = None;
-    res.verbs = if res.move_type == MoveType::FirstMoveMyTurn { Some(hc_get_available_verbs(&db, user_id, info.session_id, s.highest_unit, &verbs).await.unwrap()) } else {None};
+    res.verbs = if res.move_type == MoveType::FirstMoveMyTurn { Some(hc_get_available_verbs(db, user_id, info.session_id, s.highest_unit, verbs).await.unwrap()) } else {None};
 
     Ok(res)
 }
