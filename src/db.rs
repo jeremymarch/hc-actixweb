@@ -24,10 +24,7 @@ use crate::SessionsListQuery;
 use crate::UserResult;
 use crate::MoveResult;
 use crate::SessionResult;
-use crate::SessionState;
 use crate::MoveType;
-
-//use unicode_normalization::UnicodeNormalization;
 
 pub async fn validate_login_db(
     pool: &SqlitePool,
@@ -107,7 +104,7 @@ pub async fn get_sessions(
     LIMIT 20000;";
 
     //println!("query: {} {:?}", query, user_id);
-    let mut res: Vec<SessionsListQuery> = sqlx::query(query)
+    let res: Vec<SessionsListQuery> = sqlx::query(query)
         .bind(user_id)
         .bind(user_id)
         .map(|rec: SqliteRow| {
@@ -115,10 +112,6 @@ pub async fn get_sessions(
         })
         .fetch_all(&mut tx)
         .await?;
-
-    for r in &mut res {
-        (r.myturn, r.move_type) = get_move_type(&mut tx, r.session_id, user_id, r.challenged).await;
-    }   
 
     tx.commit().await?;
         
@@ -172,72 +165,6 @@ pub async fn get_last_two_moves<'a, 'b>(
     Ok(res)
 }
 
-//0 practice, always my turn
-//1 no moves have not been asked, I am challenger (I need to ask, it's my turn): nothing
-//2 no moves have been asked: nothing
-//3 q has not been answered by me: starting_form from -1, desc from -1, desc from 0
-//4 q has not been asked by me: starting_form from -1, desc from -1, desc from 0, is_correct, correct answer, given answer, time, mf, timedout
-//5 q has not been asked by you: starting_form from -1, desc from -1, desc from 0, is_correct, correct answer, given answer, time, mf, timedout
-//6 q has not been answered by you: starting_form from -1, desc from -1, desc from 0,
-//7 game has ended (no ones turn): starting_form from -1, desc from -1, desc from 0, is_correct, correct answer, given answer, time, mf, timedout
-pub fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>) -> (bool, MoveType) {
-    let myturn:bool;
-    let move_type:MoveType;
-
-    let change_verb_on_incorrect = true;
-
-    match s {
-        Some(s) => { 
-            if challenged_id.is_none() { 
-                myturn = true;
-                move_type = MoveType::Practice; //practice, my turn always
-            }
-            else if s.ask_user_id == user_id { 
-                if s.answer_user_id.is_some() { //xxxanswered, my turn to ask | I asked, they answered, their turn to ask (waiting for them to ask)
-                    myturn = false;
-                    move_type = MoveType::AskTheirTurn;
-                }
-                else {
-                    myturn = false; //unanswered, their turn to answer
-                    move_type = MoveType::AnswerTheirTurn;
-                }
-            } else { 
-                if s.answer_user_id.is_some() { //xxxanswered, their turn to ask | they asked, I answered, my turn to ask
-                    myturn = true;
-                    
-                    if change_verb_on_incorrect && s.is_correct.is_some() && s.is_correct.unwrap() == 0 {
-                        move_type = MoveType::FirstMoveMyTurn; //user must ask a new verb because answered incorrectly
-                    }
-                    else {
-                        move_type = MoveType::AskMyTurn;
-                    }
-                }
-                else {
-                    myturn = true; //unanswered, my turn to answer
-                    move_type = MoveType::AnswerMyTurn;
-                } 
-            } 
-        },
-        None => {
-            if let Some(cid) = challenged_id {
-                if cid == user_id {
-                    myturn = false;
-                    move_type = MoveType::FirstMoveTheirTurn; //no moves yet, their turn to ask
-                } 
-                else {
-                    myturn = true;
-                    move_type = MoveType::FirstMoveMyTurn; //no moves yet, my turn to ask
-                }
-            }
-            else {
-                myturn = true;
-                move_type = MoveType::Practice; //practice, my turn always (no moves yet)
-            }
-        },
-    }
-    (myturn, move_type)
-}
-
 pub async fn get_session(
     pool: &SqlitePool,
     session_id: sqlx::types::Uuid,
@@ -276,24 +203,6 @@ pub async fn get_used_verbs(
     Ok(res)
 }
 
-pub async fn get_move_type<'a, 'b>(
-    tx: &'a mut sqlx::Transaction<'b, sqlx::Sqlite>, session_id:Uuid, user_id: Uuid, challenged_id:Option<Uuid>) -> (bool, MoveType) {
-    let query = "SELECT * FROM moves WHERE session_id = ? ORDER BY asktimestamp DESC LIMIT 1;";
-    let subres:Result<MoveResult, sqlx::Error> = sqlx::query_as(query)
-    .bind(session_id)
-    .fetch_one(&mut *tx)
-    .await;
-
-    match subres {
-        Ok(s) => {
-            move_get_type(Some(&s), user_id, challenged_id)
-        },
-        Err(_) => {
-            move_get_type(None, user_id, challenged_id)
-        }
-    }
-}
-
 pub async fn insert_ask_move(
     pool: &SqlitePool,
     user_id: Uuid,
@@ -325,21 +234,6 @@ pub async fn insert_ask_move(
         //answer timestamp
         .execute(&mut tx)
         .await?;
-
-        // move_id BLOB PRIMARY KEY NOT NULL, 
-        // session_id BLOB, 
-        // ask_user_id BLOB, 
-        // answer_user_id BLOB, 
-        // verb_id INT, 
-        // person INT, 
-        // number INT, 
-        // tense INT, 
-        // mood INT, 
-        // voice INT, 
-        // time TEXT, 
-        // timed_out INT, 
-        // mf_pressed INT, 
-        // timestamp INT NOT NULL DEFAULT 0, 
 
     tx.commit().await?;
 

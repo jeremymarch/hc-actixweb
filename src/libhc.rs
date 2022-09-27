@@ -31,7 +31,7 @@ pub async fn get_session_state(
 
     let m = db::get_last_two_moves(&mut tx, session_id).await?;
     let first = if !m.is_empty() { Some(&m[0]) } else { None };
-    let (myturn, move_type) = db::move_get_type(first, user_id, res.challenged_user_id);
+    let (myturn, move_type) = move_get_type(first, user_id, res.challenged_user_id);
 
     let asking_new_verb:bool = move_type == MoveType::FirstMoveMyTurn; //don't old show desc when *asking* a new verb
     let answering_new_verb = m.len() > 1 && m[0].verb_id != m[1].verb_id; //don't show old desc when *answering* a new verb
@@ -248,8 +248,80 @@ pub async fn hc_get_move(db: &SqlitePool, user_id:Uuid, info:&GetMoveQuery, verb
     Ok(res)
 }
 
+//0 practice, always my turn
+//1 no moves have not been asked, I am challenger (I need to ask, it's my turn): nothing
+//2 no moves have been asked: nothing
+//3 q has not been answered by me: starting_form from -1, desc from -1, desc from 0
+//4 q has not been asked by me: starting_form from -1, desc from -1, desc from 0, is_correct, correct answer, given answer, time, mf, timedout
+//5 q has not been asked by you: starting_form from -1, desc from -1, desc from 0, is_correct, correct answer, given answer, time, mf, timedout
+//6 q has not been answered by you: starting_form from -1, desc from -1, desc from 0,
+//7 game has ended (no ones turn): starting_form from -1, desc from -1, desc from 0, is_correct, correct answer, given answer, time, mf, timedout
+fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>) -> (bool, MoveType) {
+    let myturn:bool;
+    let move_type:MoveType;
+
+    let change_verb_on_incorrect = true;
+
+    match s {
+        Some(s) => { 
+            if challenged_id.is_none() {
+                myturn = true;
+                move_type = MoveType::Practice; //practice, my turn always
+            }
+            else if s.ask_user_id == user_id { 
+                if s.answer_user_id.is_some() { //xxxanswered, my turn to ask | I asked, they answered, their turn to ask (waiting for them to ask)
+                    myturn = false;
+                    move_type = MoveType::AskTheirTurn;
+                }
+                else {
+                    myturn = false; //unanswered, their turn to answer
+                    move_type = MoveType::AnswerTheirTurn;
+                }
+            } else { 
+                if s.answer_user_id.is_some() { //xxxanswered, their turn to ask | they asked, I answered, my turn to ask
+                    myturn = true;
+                    
+                    if change_verb_on_incorrect && s.is_correct.is_some() && s.is_correct.unwrap() == 0 {
+                        move_type = MoveType::FirstMoveMyTurn; //user must ask a new verb because answered incorrectly
+                    }
+                    else {
+                        move_type = MoveType::AskMyTurn;
+                    }
+                }
+                else {
+                    myturn = true; //unanswered, my turn to answer
+                    move_type = MoveType::AnswerMyTurn;
+                } 
+            } 
+        },
+        None => {
+            if let Some(cid) = challenged_id {
+                if cid == user_id {
+                    myturn = false;
+                    move_type = MoveType::FirstMoveTheirTurn; //no moves yet, their turn to ask
+                } 
+                else {
+                    myturn = true;
+                    move_type = MoveType::FirstMoveMyTurn; //no moves yet, my turn to ask
+                }
+            }
+            else {
+                myturn = true;
+                move_type = MoveType::Practice; //practice, my turn always (no moves yet)
+            }
+        },
+    }
+    (myturn, move_type)
+}
+
 pub async fn hc_get_sessions(db: &SqlitePool, user_id:Uuid) -> Result<Vec<SessionsListQuery>, sqlx::Error> { 
-    db::get_sessions(db, user_id).await
+    let mut res = db::get_sessions(db, user_id).await?;
+
+    for r in &mut res {
+        let m = db::get_last_move(db, r.session_id).await?;
+        (r.myturn, r.move_type) = move_get_type(Some(&m), user_id, r.challenged);
+    }
+    Ok(res) 
 }
 
 pub async fn hc_insert_session(db: &SqlitePool, user_id:Uuid, info:&CreateSessionQuery, timestamp:i64) -> Result<Uuid, sqlx::Error> { 
