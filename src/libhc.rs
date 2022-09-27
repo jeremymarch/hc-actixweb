@@ -318,8 +318,12 @@ pub async fn hc_get_sessions(db: &SqlitePool, user_id:Uuid) -> Result<Vec<Sessio
     let mut res = db::get_sessions(db, user_id).await?;
 
     for r in &mut res {
-        let m = db::get_last_move(db, r.session_id).await?;
-        (r.myturn, r.move_type) = move_get_type(Some(&m), user_id, r.challenged);
+        if let Ok(m) = db::get_last_move(db, r.session_id).await {
+            (r.myturn, r.move_type) = move_get_type(Some(&m), user_id, r.challenged);
+        }
+        else {
+            (r.myturn, r.move_type) = move_get_type(None, user_id, r.challenged);
+        }
     }
     Ok(res) 
 }
