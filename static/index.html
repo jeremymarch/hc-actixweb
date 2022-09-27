@@ -353,10 +353,15 @@ SELECT, OPTION {
         })();
 	    //console.log(supported ? "WebAssembly is supported" : "WebAssembly is not supported");
 	
-		$(".gkinput").keypress(handleKey);
-		//$("#inp").focus();
+        //block pasting
+        let answerform = document.querySelector("#answerform");
+        answerform.addEventListener('paste', (event) => {
+            event.preventDefault();
+        });
 
-        //send_answer("", "", false, false); //get new
+        answerform.addEventListener('keypress', handleKey, false);
+        //$(".gkinput").keypress(handleKey);
+
         get_sessions();
 	}
 	
@@ -391,6 +396,7 @@ SELECT, OPTION {
 	
 		var val = this.value;
 		e = e || event;
+        
 		if (typeof(this.selectionStart) == "number" && typeof(this.selectionEnd) == "number") {
 			var start = this.selectionStart;
 			var end = this.selectionEnd;
@@ -423,7 +429,7 @@ SELECT, OPTION {
 					}
 				}
 	
-				unicodeMode = 0;//$("input:radio[name='unicodeMode']:checked").val();
+				unicodeMode = 0;
 	
 				newLetter = accentSyllable(val.slice(start - offset, start), hckey);
 				replacing = start - (start - offset);
@@ -434,6 +440,8 @@ SELECT, OPTION {
 				this.value = val.slice(0, start - replacing) + newLetter + val.slice(end);
 				// Move the caret
 				this.selectionStart = this.selectionEnd = (start - replacing) + newLetter.length;
+                //e.stopPropagation();
+                e.preventDefault(); //called by default when keypress is attached with jquery and returning false
 				return false;
 			}
 		}    
@@ -441,19 +449,109 @@ SELECT, OPTION {
 	}
 
     function send_ask(session_id, person, number, tense, mood, voice, verb_id) {
+        let send_data = {session_id: session_id, person: person, number: number, tense: tense, mood: mood, voice: voice, verb: verb_id};
+        generic_send_request("ask", send_data, null);
+    }
+    /*
+    //https://github.com/le717/microajax
+    function microAjax(options) {
+      "use strict";
+
+      // Default to GET
+      if (!options.method) {
+        options.method = "GET";
+      }
+
+      // Default empty functions for the callbacks
+      function noop() {}
+      if (!options.success) {
+        options.success = noop;
+      }
+      if (!options.warning) {
+        options.warning = noop;
+      }
+      if (!options.error) {
+        options.error = noop;
+      }
+
+      var request = new XMLHttpRequest();
+      request.open(options.method, options.url, true);
+      request.send(options.data);
+
+      request.onload = function() {
+        // Success!
+        if (request.readyState === 4 && request.status === 200) {
+          options.success(request.responseText);
+
+          // We reached our target destination, but it returned an error
+        } else {
+          options.warning(request.responseText);
+        }
+      };
+
+      // There was a connection error of some sort
+      request.onerror = options.error;
+    }
+    
+    
+    microAjax({
+          url: url,
+          method: "GET",
+          success: procResponse,
+          warning: procResponseError,
+          error: null
+        });
+
+        function procResponse(str, status) {}
+    
+    */
+
+    function generic_send_request(send_url, send_data, handle_response) {
         $.ajax({
-            url: "ask",
+            url: send_url,
             type: "POST",
-            data: {session_id: session_id, person: person, number: number, tense: tense, mood: mood, voice: voice, verb: verb_id},
-            dataType: "json",//JSON automatically deserializes json
+            data: send_data,
+            dataType: "json",
             success: function (data, textStatus, jqXHR) {
-                //console.log("data: " + data[0] + "ha " + data[1]);
-                //var returnObj = JSON.parse(data);
-                if (data.response_to == "ask" && data.success) {
+                console.log(data);
+
+                if (handle_response !== null) {
+                    handle_response(data);
+                }
+                else if (data.response_to == "ask" && data.success) {
                     uiModeAskResponse(data);
                 }
+                else if (data.response_to == "answerresponse" && data.success) {
+                    starting_form = data.starting_form;
+                    change_desc = data.change_desc;
+                    uiModeAnswerResponseReceived(data);
+                }
+                else if (data.response_to == "mfpressedresponse" && data.success) {
+                    if (data.is_correct == false) {
+                        uiModeClickedEnter();
+                    
+                        starting_form = data.starting_form;
+                        change_desc = data.change_desc;
+                        uiModeAnswerResponseReceived(data);
 
-                console.log(data);
+                        reqPending = false;
+                    }
+                }
+                else if (data.response_to == "newsession" && data.success) {
+                    
+                }
+                else if (data.response_to == "getmoves" && data.success) {
+                    setUI(data);
+                }
+                else if (data.response_to == "getsessions" && data.success) {
+                    let rows = "";
+                    for (var i = 0; i < data.sessions.length; i++) {
+                        if (data.sessions[i].move_type != "FirstMoveTheirTurn") {
+                            rows += "<p class='gamerow" + ((data.sessions[i].myturn) ? " myturn" : "") + "' opponent='" + data.sessions[i].opponent_name + "'><a href='#' onclick='get_move(this,\"" + data.sessions[i].session_id + "\");return false;'>" + ((data.sessions[i].move_type == "Practice") ? "Practise" : "Game") + ((data.sessions[i].opponent_name) ? " vs. " + data.sessions[i].opponent_name : "") + " (" + data.sessions[i].move_type + ")</a> " + ((data.sessions[i].myturn) ? myturnIcon : "") + "</p>";
+                        }
+                    }
+                    document.querySelector("#list").innerHTML = rows;
+                }
             },
             error: function(response) {
                 console.log("error: " + response);
@@ -464,75 +562,23 @@ SELECT, OPTION {
     var starting_form = null;
     var change_desc = null;
     function send_answer(answer, time, mfPressed, timedOut) {
-        $.ajax({
-            url: "enter",
-            type: "POST",
-            data: {qtype:"submit", answer:answer, time:time, mf_pressed:mfPressed, timed_out:timedOut, session_id:session_id},
-            dataType: "json",//JSON automatically deserializes json
-            success: function (data, textStatus, jqXHR) {
-                //console.log("data: " + data[0] + "ha " + data[1]);
-                //var returnObj = JSON.parse(data);
 
-                console.log(data);
-                starting_form = data.starting_form;
-                change_desc = data.change_desc;
-                uiModeAnswerResponseReceived(data);
-
-                reqPending = false;
-            },
-            error: function(response) {
-                console.log("error: " + response);
-                reqPending = false;
-            }
-        });
+        let send_data = {qtype:"submit", answer:answer, time:time, mf_pressed:mfPressed, timed_out:timedOut, session_id:session_id};
+        generic_send_request("enter", send_data, null);
     }
 
     function send_mf(answer, time, mfPressed, timedOut) {
-        $.ajax({
-            url: "mf",
-            type: "POST",
-            data: {qtype:"mfpressed", answer:answer, time:time, mf_pressed:mfPressed, timed_out:timedOut, session_id:session_id},
-            dataType: "json",//JSON automatically deserializes json
-            success: function (data, textStatus, jqXHR) {
-                //console.log("data: " + data[0] + "ha " + data[1]);
-                //var returnObj = JSON.parse(data);
 
-                console.log(data);
-                if (data.is_correct == false) {
-                    //submit_clicked()
-                    uiModeClickedEnter();
-                   
-                    starting_form = data.starting_form;
-                    change_desc = data.change_desc;
-                    uiModeAnswerResponseReceived(data);
-
-                    reqPending = false;
-                }
-            },
-            error: function(response) {
-                console.log("error: " + response);
-            }
-        });
+        let send_data = {qtype:"mfpressed", answer:answer, time:time, mf_pressed:mfPressed, timed_out:timedOut, session_id:session_id};
+        generic_send_request("mf", send_data, null);
     }
 
     function new_game_clicked() {
         let unitv = document.querySelector("#unitinput").value.trim();
         let opponentv = document.querySelector("#opponentinput").value.trim();
-        $.ajax({
-            url: "new",
-            type: "POST",
-            data: {qtype:"newsession", unit:unitv, opponent:opponentv},
-            dataType: "json",//JSON automatically deserializes json
-            success: function (data, textStatus, jqXHR) {
-                //console.log("data: " + data[0] + "ha " + data[1]);
-                //var returnObj = JSON.parse(data);
 
-                console.log(data);
-            },
-            error: function(response) {
-                console.log("error: " + response);
-            }
-        });
+        let send_data = {qtype:"newsession", unit:unitv, opponent:opponentv};
+        generic_send_request("new", send_data, null);
     }
 
     var reqPending = false;
@@ -545,13 +591,11 @@ SELECT, OPTION {
             let answer = document.querySelector("#answerform").value.trim();
             let time = document.querySelector("#mainTime").innerText.trim();
             console.log("Enter clicked: " + answer + ", time: " + time + ", mfPressed: " + mfPressed + ", timedout: " + timedOut);
-            //get iscorrect and correct answer if wrong
+        
             send_answer(answer, time, mfPressed, timedOut);
         }
         else if (submitbutton.innerText == "Continue" || submitbutton.innerText == "Start") {
             console.log(submitbutton.innerText + " clicked");
-            //get starting form, change desc, (and maybe whether this form has multiple forms?)
-            //uiModeClickedContinue(starting_form, change_desc);
             uiModeAskForm2();
         }
         else if (submitbutton.innerText == "Ask") {
@@ -560,8 +604,6 @@ SELECT, OPTION {
         }
         else if (submitbutton.innerText == "Go") {
             console.log(submitbutton.innerText + " clicked");
-            //get starting form, change desc, (and maybe whether this form has multiple forms?)
-            //uiModeClickedContinue(starting_form, change_desc);
             uiModeAnwerGoForm(starting_form, change_desc);
         }
     }
@@ -575,8 +617,6 @@ SELECT, OPTION {
         let answer = document.querySelector("#answerform").value.trim();
         let time = document.querySelector("#mainTime").innerText.trim();
         console.log("MF clicked: " + answer + ", time: " + time + ", mfPressed: " + mfPressed + ", timedout: " + timedOut);
-        //get iscorrect and correct answer if wrong
-        //send_answer(answer, time, mfPressed, timedOut);
 
         send_mf(answer, time, mfPressed, timedOut);
     }
@@ -593,50 +633,17 @@ SELECT, OPTION {
     function get_move(therow, sessionid) {
         document.querySelectorAll(".selectedGame").forEach((row) => {
             row.classList.remove("selectedGame");
-        });
-        
+        });        
         therow.parentNode.classList.add("selectedGame");
         session_id = sessionid;
-        $.ajax({
-            url: "getmove",
-            type: "POST",
-            data: {session_id:sessionid},
-            dataType: "json",//JSON automatically deserializes json
-            success: function (data, textStatus, jqXHR) {
-                //console.log("data: " + data[0] + "ha " + data[1]);
-                //var returnObj = JSON.parse(data);
-                setUI(data);
-                console.log(data);
-            },
-            error: function(response) {
-                console.log("error: " + response);
-            }
-        });
+
+        let send_data = {session_id:sessionid};
+        generic_send_request("getmove", send_data, null);
     }
 
     function get_sessions() {
-        $.ajax({
-            url: "list",
-            type: "POST",
-            data: {practice:true,game:true},
-            dataType: "json",//JSON automatically deserializes json
-            success: function (data, textStatus, jqXHR) {
-                //console.log("data: " + data[0] + "ha " + data[1]);
-                //var returnObj = JSON.parse(data);
-
-                console.log(data);
-                let rows = "";
-                for (var i = 0; i < data.length; i++) {
-                    if (data[i].move_type != "FirstMoveTheirTurn") {
-                        rows += "<p class='gamerow" + ((data[i].myturn) ? " myturn" : "") + "'><a href='#' onclick='get_move(this,\"" + data[i].session_id + "\")'>" + ((data[i].move_type == "Practice") ? "Practise" : "Game") + ((data[i].opponent_name) ? " vs. " + data[i].opponent_name : "") + " (" + data[i].move_type + ")</a> " + ((data[i].myturn) ? myturnIcon : "") + "</p>";
-                    }
-                }
-                document.querySelector("#list").innerHTML = rows;
-            },
-            error: function(response) {
-                console.log("error: " + response);
-            }
-        });
+        let send_data = {practice:true,game:true};
+        generic_send_request("list", send_data, null);
     }
 
     function set_params_dropdowns(person, number, tense, voice, mood, verb_id) {
@@ -680,14 +687,6 @@ SELECT, OPTION {
         return [p,n,t,m,v,verb_id];
     }
 
-//0 practice, always my turn
-//1 no moves have not been asked, I am challenger (I need to ask, it's my turn)
-//2 no moves have been asked
-//3 q has not been answered by me
-//4 q has not been asked by me
-//5 q has not been asked by you
-//6 q has not been answered by you
-//7 game has ended (no ones turn)
     function setUI(data) {
         document.querySelector(".hcform").style.display = "block";
         switch(data.move_type) {
@@ -778,6 +777,7 @@ SELECT, OPTION {
         document.querySelector("#statusmesg").innerHTML = "Practice Mode";
         document.querySelector("#answerform").value = "";
         document.querySelector("#answerform").disabled = true;
+        document.querySelector("#mfbutton").disabled = true;
         document.querySelector("#correctanswer").innerHTML = "";
         document.querySelector("#correctanswer").style.visibility = "hidden";
         document.querySelector("#startingform").innerText = "";
@@ -1053,12 +1053,6 @@ SELECT, OPTION {
 
         timerRef.innerHTML = ((minutes > 0) ? ((minutes < 10) ? ("0" + minutes + ":") : minutes + ":") : "") + ((seconds < 10) ? ("0" + seconds + ":") : seconds + ":") + ((ms < 10) ? ("0" + ms) : ms);
     }
-
-    $(document).ready(function () {
-    $('.disablecopypaste').bind('paste', function (e) {
-       e.preventDefault();
-    });
-  });
     </script>
 </body>
 </html>

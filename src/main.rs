@@ -130,6 +130,13 @@ pub struct SessionsListQuery {
 }
 
 #[derive(Deserialize,Serialize)]
+pub struct SessionsListResponse {
+    response_to: String,
+    sessions: Vec<SessionsListQuery>,
+    success: bool,
+}
+
+#[derive(Deserialize,Serialize)]
 pub struct GetMoveQuery {
     session_id:sqlx::types::Uuid,
 }
@@ -241,7 +248,12 @@ async fn get_sessions(
         //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
         //let user_agent = get_user_agent(&req).unwrap_or("");
         
-        let res = libhc::hc_get_sessions(db, user_id).await.map_err(map_sqlx_error)?;
+        let res = SessionsListResponse {
+            response_to: "getsessions".to_string(),
+            sessions: libhc::hc_get_sessions(db, user_id).await.map_err(map_sqlx_error)?,
+            success: true,
+        };
+
         Ok(HttpResponse::Ok().json(res))
     }
     else {
