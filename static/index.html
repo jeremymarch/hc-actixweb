@@ -197,7 +197,7 @@ SELECT, OPTION {
     </style>
     </head>
     <body onload="start()">
-        <div id="menubar"><div style="padding:0px 20px"><a id="loginlink" href="login">login</a><span id="logoutlink" style="display:none;"><span id="username"></span><a href="logout"> (logout)</a></span></div><div style="font-weight:bold;">HOPLITE CHALLENGE</div></div>
+        <div id="menubar"><div style="padding:0px 20px"><a id="loginlink" href="login">login</a><span id="logoutlink" style="display:none;"><span id="username"></span> (<a href="logout">logout</a>)</span></div><div style="font-weight:bold;">HOPLITE CHALLENGE</div></div>
         <div id="settings">
             <button id="creategamebutton" onclick="new_game_clicked()">Create Game</button>
             Top Unit: <input id="unitinput" type="text" value="20"/><br/>
@@ -534,7 +534,7 @@ SELECT, OPTION {
             let rows = "";
             for (var i = 0; i < data.sessions.length; i++) {
                 if (data.sessions[i].move_type != "FirstMoveTheirTurn") {
-                    rows += "<p class='gamerow" + ((data.sessions[i].myturn) ? " myturn" : "") + "' opponent='" + data.sessions[i].opponent_name + "'><a href='#' onclick='get_move(this,\"" + data.sessions[i].session_id + "\");return false;'>" + ((data.sessions[i].move_type == "Practice") ? "Practise" : "Game") + ((data.sessions[i].opponent_name) ? " vs. " + data.sessions[i].opponent_name : "") + " (" + data.sessions[i].move_type + ")</a> " + ((data.sessions[i].myturn) ? myturnIcon : "") + "</p>";
+                    rows += "<p class='gamerow" + ((data.sessions[i].myturn) ? " myturn" : "") + "' opponent='" + data.sessions[i].opponent_name + "'><a href='#' title='" + data.sessions[i].move_type + "'' onclick='get_move(this,\"" + data.sessions[i].session_id + "\");return false;'>" + ((data.sessions[i].move_type == "Practice") ? "Practise" : "Game") + ((data.sessions[i].opponent_name) ? " vs. " + data.sessions[i].opponent_name : "") + "</a> " + ((data.sessions[i].myturn) ? myturnIcon : "") + "</p>";
                 }
             }
             document.querySelector("#list").innerHTML = rows;
