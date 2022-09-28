@@ -34,7 +34,7 @@
     font-family: 'WebNewAthenaUnicode';
     src: url('/newathu5_8.ttf') format('truetype');
 }
-BODY { font-family:helvetica neue,helvetica, arial, sans-serif; }
+BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
 .gkinput, .gkinputnontyping {
     font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
 }
@@ -59,11 +59,23 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif; }
     outline:2px solid #6677dd;
 }*/
 
-.startingform, .newform {
+.startingform {
     width:100%;
     display:block;
     margin:0px auto;
     height:40px;
+    font-size:24pt;
+    border:1px solid black;
+    text-align: center;
+    padding-top:20px;
+    border-radius:6px;
+    font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
+}
+.newform {
+    width:100%;
+    display:block;
+    margin:0px auto;
+    height:60px;
     font-size:24pt;
     border:1px solid black;
     text-align: center;
@@ -132,7 +144,21 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif; }
     width:300px;
     position: absolute;
     top: 28px;
+    right: 10px;
+    padding:10px;
+}
+.addheight{
+    top:28px;
+}
+#list {
+border:2px solid black;
+    width:300px;
+    position: absolute;
+    top: 28px;
     left: 8px;
+    transition: top 2s;
+    z-index:899;
+    
 }
 #creategamebutton {
     display: block;
@@ -142,6 +168,10 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif; }
     border-bottom:1px solid black;
     display:flex;
     justify-content: flex-end;
+    background-color:white;
+    position:relative;
+    z-index:900;
+    padding:3px 10px;
 }
 .myturn {
     /* background-color: red; */
@@ -203,8 +233,9 @@ SELECT, OPTION {
             Top Unit: <input id="unitinput" type="text" value="20"/><br/>
             Opponent: <input id="opponentinput" type="text"/><br/>
             <button onclick="get_sessions()">refresh</button>
-            <div id="list"></div>
+            
         </div>
+        <div id="list"></div>
         <div class="hcform">
         <div class="hbox">
             <button id="mfbutton" class="mfbutton" onclick="mf_clicked()" title="Multiple Forms Button">MF</button>

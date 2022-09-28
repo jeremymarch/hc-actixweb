@@ -204,8 +204,12 @@ pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timesta
     let idx = if m.verb_id.is_some() && (m.verb_id.unwrap() as usize) < verbs.len() { m.verb_id.unwrap() as usize } else { 0 };
     let prev_form = HcGreekVerbForm {verb:verbs[idx].clone(), person:HcPerson::from_u8(m.person.unwrap()), number:HcNumber::from_u8(m.number.unwrap()), tense:HcTense::from_u8(m.tense.unwrap()), voice:HcVoice::from_u8(m.voice.unwrap()), mood:HcMood::from_u8(m.mood.unwrap()), gender:None, case:None};
 
-    let correct_answer = prev_form.get_form(false).unwrap().last().unwrap().form.replace(" /", ",");
-    let is_correct = hgk_compare_multiple_forms(&correct_answer.replace('/', ","), &info.answer);
+    let correct_answer_result = prev_form.get_form(false);
+    let correct_answer = match correct_answer_result {
+        Ok(a) => a.last().unwrap().form.replace(" /", ","),
+        Err(_) => "—".to_string(),
+    };
+    let is_correct = hgk_compare_multiple_forms(&correct_answer, &info.answer.replace("---", "—"));
 
     let _res = update_answer_move(
         db,
