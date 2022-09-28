@@ -310,8 +310,8 @@ pub async fn new_user_post(
 
     let timestamp = get_timestamp();
 
-    if password == confirm_password {
-        if let Ok(user_id) = db::create_user(db, &username, &password, &email, timestamp).await.map_err(map_sqlx_error) {
+    if username.len() > 1 && password.len() > 3 && email.len() > 6 && password == confirm_password {
+        if let Ok(_user_id) = db::create_user(db, &username, &password, &email, timestamp).await.map_err(map_sqlx_error) {
             //session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
             //if session.insert("user_id", user_id).is_ok() {
                 return Ok(HttpResponse::SeeOther()
