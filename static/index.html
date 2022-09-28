@@ -197,7 +197,7 @@ SELECT, OPTION {
     </style>
     </head>
     <body onload="start()">
-        <div id="menubar"><div style="padding:0px 20px"><a id="loginout" href="login">login</a></div><div style="font-weight:bold;">HOPLITE CHALLENGE</div></div>
+        <div id="menubar"><div style="padding:0px 20px"><a id="loginlink" href="login">login</a><span id="logoutlink" style="display:none;"><span id="username"></span><a href="logout"> (logout)</a></span></div><div style="font-weight:bold;">HOPLITE CHALLENGE</div></div>
         <div id="settings">
             <button id="creategamebutton" onclick="new_game_clicked()">Create Game</button>
             Top Unit: <input id="unitinput" type="text" value="20"/><br/>
@@ -538,6 +538,17 @@ SELECT, OPTION {
                 }
             }
             document.querySelector("#list").innerHTML = rows;
+
+            if (data.username) {
+                document.querySelector("#loginlink").style.display = "none";
+                document.querySelector("#logoutlink").style.display = "inline";
+                document.querySelector("#username").innerText = data.username;
+            }
+            else {
+                document.querySelector("#loginlink").style.display = "inline";
+                document.querySelector("#logoutlink").style.display = "none";
+                document.querySelector("#username").innerText = "";
+            }
         }
     }
 

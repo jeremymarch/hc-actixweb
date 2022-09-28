@@ -88,13 +88,6 @@ pub struct HCVerbOption {
 }
 
 #[derive(Deserialize)]
-pub struct CreateUserQuery {
-    username: String,
-    password: String,
-    email: String,
-}
-
-#[derive(Deserialize)]
 pub struct AnswerQuery {
     qtype: String,
     answer: String,
@@ -134,6 +127,7 @@ pub struct SessionsListResponse {
     response_to: String,
     sessions: Vec<SessionsListQuery>,
     success: bool,
+    username: Option<String>,
 }
 
 #[derive(Deserialize,Serialize)]
@@ -242,7 +236,9 @@ async fn get_sessions(
     (session, req): (Session, HttpRequest)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
 
-    if let Some(user_id) = login::get_user_id(session) {
+    if let Some(user_id) = login::get_user_id(session.clone()) {
+
+        let username = login::get_username(session);
 
         //let timestamp = get_timestamp();
         //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
@@ -252,6 +248,7 @@ async fn get_sessions(
             response_to: "getsessions".to_string(),
             sessions: libhc::hc_get_sessions(db, user_id).await.map_err(map_sqlx_error)?,
             success: true,
+            username,
         };
 
         Ok(HttpResponse::Ok().json(res))
@@ -702,6 +699,7 @@ fn config(cfg: &mut web::ServiceConfig) {
         .route("/login", web::post().to(login::login_post))
         .route("/newuser", web::get().to(login::new_user_get))
         .route("/newuser", web::post().to(login::new_user_post))
+        .route("/logout", web::get().to(login::logout))
         .service(web::resource("/healthzzz").route(web::get().to(health_check)))
         .service(web::resource("/enter").route(web::post().to(enter)))
         .service(web::resource("/new").route(web::post().to(create_session)))

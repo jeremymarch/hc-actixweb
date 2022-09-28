@@ -44,6 +44,14 @@ pub struct Credentials {
     pub password: Secret<String>,
 }
 
+pub async fn logout(session: Session) -> Result<HttpResponse, AWError> {
+    session.purge();
+    //FlashMessage::error("Authentication error".to_string()).send();
+    Ok(HttpResponse::SeeOther()
+        .insert_header((LOCATION, "/login"))
+        .finish())
+}
+
 pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResponse, AWError> {
 
     let mut error_html = String::from("");
@@ -160,7 +168,7 @@ pub async fn login_post(
 
     if let Ok(user_id) = db::validate_login_db(db, &credentials.username, credentials.password.expose_secret()).await.map_err(map_sqlx_error) {
         session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-        if session.insert("user_id", user_id).is_ok() {
+        if session.insert("user_id", user_id).is_ok() && session.insert("username", credentials.username).is_ok() {
             return Ok(HttpResponse::SeeOther()
                 .insert_header((LOCATION, "/"))
                 .finish());
@@ -314,9 +322,9 @@ pub async fn new_user_post(
         if let Ok(_user_id) = db::create_user(db, &username, &password, &email, timestamp).await.map_err(map_sqlx_error) {
             //session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
             //if session.insert("user_id", user_id).is_ok() {
-                return Ok(HttpResponse::SeeOther()
-                    .insert_header((LOCATION, "/login"))
-                    .finish());
+            return Ok(HttpResponse::SeeOther()
+                .insert_header((LOCATION, "/login"))
+                .finish());
             //}
         }
     }
@@ -330,6 +338,14 @@ pub async fn new_user_post(
 
 pub fn get_user_id(session: Session) -> Option<uuid::Uuid> {
     if let Ok(s) = session.get::<uuid::Uuid>("user_id") {
+        s
+    }
+    else {
+        None
+    }
+}
+pub fn get_username(session: Session) -> Option<String> {
+    if let Ok(s) = session.get::<String>("username") {
         s
     }
     else {
