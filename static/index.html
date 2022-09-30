@@ -144,18 +144,19 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
     width:300px;
     position: absolute;
     top: 28px;
-    right: 10px;
+    left: 10px;
     padding:10px;
+    height:120px;
 }
 .addheight{
     top:28px;
 }
 #list {
 border:2px solid black;
-    width:300px;
+    width:320px;
     position: absolute;
-    top: 28px;
-    left: 8px;
+    top: 170px;
+    left: 10px;
     transition: top 2s;
     z-index:899;
     
@@ -226,6 +227,13 @@ SELECT, OPTION {
 }
 
 BUTTON {border-radius: 3px;}
+a {color:blue;}
+
+#refreshbutton {
+    position: absolute;
+    left: 7px;
+    top: 3px;
+}
 
 .dark BODY { background-color: black;color:white; }
 .dark .hcform { background-color: black;color:white; }
@@ -238,18 +246,29 @@ BUTTON {border-radius: 3px;}
 .dark #mfbutton {background-color: black;color:white;border: 1px solid white;}
 .dark #submitbutton {background-color: black;color:white;border: 1px solid white;}
 .dark .paramdiv {border-bottom: 4px solid black;}
+.dark .paramdivchanged { border-bottom: 4px solid red;}
+.dark a {color:#03A5F3;}
     </style>
     </head>
     <body onload="start()">
-        <div id="menubar"><div style="padding:0px 20px"><a id="loginlink" href="login">login</a><span id="logoutlink" style="display:none;"><span id="username"></span> (<a href="logout">logout</a>)</span></div><div style="font-weight:bold;">HOPLITE CHALLENGE</div></div>
+        <div id="menubar">
+            <button id="refreshbutton" onclick="get_sessions()">refresh</button>
+            <div style="padding:0px 20px"><a id="loginlink" href="login">login</a>
+                <span id="logoutlink" style="display:none;"><span id="username"></span> (<a href="logout">logout</a>)</span>
+            </div>
+            <div style="font-weight:bold;">HOPLITE CHALLENGE</div>
+        </div>
+        <div id="listouter">
         <div id="settings">
-            <button id="creategamebutton" onclick="new_game_clicked()">Create Game</button>
-            Top Unit: <input id="unitinput" type="text" value="20"/><br/>
-            Opponent: <input id="opponentinput" type="text"/><br/>
-            <button onclick="get_sessions()">refresh</button>
-            
+            <table cellpadding="4" cellspacing="0">
+                <tr><td colspan="2">New Game</td></tr>
+                <tr><td>Top Unit:</td><td><input id="unitinput" type="text" value="20"/></td></tr>
+                <tr><td>Opponent:</td><td><input id="opponentinput" type="text"/></td></tr>
+                <tr><td align="center" colspan="2"><button id="creategamebutton" onclick="new_game_clicked()">Create Game</button></td></tr>
+            </table>
         </div>
         <div id="list"></div>
+    </div>
         <div class="hcform">
         <div class="hbox">
             <button id="mfbutton" class="mfbutton" onclick="mf_clicked()" title="Multiple Forms Button">MF</button>

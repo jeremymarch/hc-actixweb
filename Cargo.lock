@@ -921,6 +921,7 @@ dependencies = [
  "hex",
  "hoplite_verbs_rs",
  "polytonic-greek",
+ "rand",
  "secrecy",
  "serde",
  "serde_json",
@@ -974,7 +975,7 @@ dependencies = [
 [[package]]
 name = "hoplite_verbs_rs"
 version = "0.3.2"
-source = "git+https://github.com/jeremymarch/hoplite_verbs_rs#264b2d4fd7d87f3672dec1e658800f34b3f0c31c"
+source = "git+https://github.com/jeremymarch/hoplite_verbs_rs#189cd14e3ce4582a8f3149b59d86e29905c99474"
 dependencies = [
  "itertools",
  "polytonic-greek",

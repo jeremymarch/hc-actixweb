@@ -160,7 +160,7 @@ pub async fn hc_ask(db: &SqlitePool, user_id:Uuid, info:&AskQuery, timestamp:i64
 
     //get move seq and add one?
     
-    let _ = db::insert_ask_move(db, user_id, info.session_id, info.person, info.number, info.tense, info.mood, info.voice, info.verb, timestamp).await?;
+    let _ = db::insert_ask_move(db, Some(user_id), info.session_id, info.person, info.number, info.tense, info.mood, info.voice, info.verb, timestamp).await?;
 
     let mut res = get_session_state(db, user_id, info.session_id).await?;
 
@@ -202,7 +202,7 @@ pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timesta
     //let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
     //let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR).unwrap());
     let idx = if m.verb_id.is_some() && (m.verb_id.unwrap() as usize) < verbs.len() { m.verb_id.unwrap() as usize } else { 0 };
-    let prev_form = HcGreekVerbForm {verb:verbs[idx].clone(), person:HcPerson::from_u8(m.person.unwrap()), number:HcNumber::from_u8(m.number.unwrap()), tense:HcTense::from_u8(m.tense.unwrap()), voice:HcVoice::from_u8(m.voice.unwrap()), mood:HcMood::from_u8(m.mood.unwrap()), gender:None, case:None};
+    let mut prev_form = HcGreekVerbForm {verb:verbs[idx].clone(), person:HcPerson::from_u8(m.person.unwrap()), number:HcNumber::from_u8(m.number.unwrap()), tense:HcTense::from_u8(m.tense.unwrap()), voice:HcVoice::from_u8(m.voice.unwrap()), mood:HcMood::from_u8(m.mood.unwrap()), gender:None, case:None};
 
     let correct_answer_result = prev_form.get_form(false);
     let correct_answer = match correct_answer_result {
@@ -222,6 +222,29 @@ pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timesta
         info.mf_pressed,
         info.timed_out,
         timestamp).await?;
+
+    //for practice sessions we should do the ask here
+    if s.challenged_user_id.is_none() {
+        let persons = vec![HcPerson::First, HcPerson::Second, HcPerson::Third];
+        let numbers = vec![HcNumber::Singular, HcNumber::Plural];
+        let tenses = vec![HcTense::Present, HcTense::Imperfect, HcTense::Future, HcTense::Aorist, HcTense::Perfect, HcTense::Pluperfect];
+        let moods = vec![HcMood::Indicative, HcMood::Subjunctive, HcMood::Optative, HcMood::Imperative];
+        let voices = vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive];
+
+        //a = HcGreekVerbForm { verb: verbs[idx].clone(), person, number, tense, voice, mood, gender: None, case: None};
+
+
+        prev_form.change_params(2, &persons, &numbers, &tenses, &voices, &moods);
+
+        // let person = *persons.choose(&mut rand::thread_rng()).unwrap();
+        // let number = *numbers.choose(&mut rand::thread_rng()).unwrap();
+        // let tense = *tenses.choose(&mut rand::thread_rng()).unwrap();
+        // let voice = *voices.choose(&mut rand::thread_rng()).unwrap();
+        // let mood = *moods.choose(&mut rand::thread_rng()).unwrap();
+        //ask
+        let _ = db::insert_ask_move(db, None, info.session_id, prev_form.person.to_u8(), prev_form.number.to_u8(), prev_form.tense.to_u8(), 
+            prev_form.mood.to_u8(), prev_form.voice.to_u8(), prev_form.verb.id, timestamp + 1).await?;
+    }
 
     let mut res = get_session_state(db, user_id, info.session_id).await?;
     if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {

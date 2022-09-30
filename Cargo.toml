@@ -25,6 +25,8 @@ argon2 = { version = "0.4.1", features = ["std"] }
 chrono = "0.4.22"
 hex = "0.4.3"
 
+rand = "0.8.5"
+
 uuid = { version = "1.1.2", features = ["v4", "serde"] }
 
 #polytonic-greek = { path = "../polytonic-greek" }

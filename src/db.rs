@@ -205,7 +205,7 @@ pub async fn get_used_verbs(
 
 pub async fn insert_ask_move(
     pool: &SqlitePool,
-    user_id: Uuid,
+    user_id: Option<Uuid>,
     session_id: Uuid,
     person: u8,
     number: u8,
