@@ -236,8 +236,8 @@ a {color:blue;}
 }
 
 .dark BODY { background-color: black;color:white; }
-.dark .hcform { background-color: black;color:white; }
-.dark .startingform {border: 1px solid white;}
+.dark .hcform { background-color: #202124;color:white; }
+.dark .startingform {border: 1px solid white;background-color:black}
 .dark #statusmesg {border-top: 1px solid white;}
 .dark #list {border: 2px solid white;}
 .dark #settings {border: 2px solid white;}
@@ -248,6 +248,8 @@ a {color:blue;}
 .dark .paramdiv {border-bottom: 4px solid black;}
 .dark .paramdivchanged { border-bottom: 4px solid red;}
 .dark a {color:#03A5F3;}
+
+
     </style>
     </head>
     <body onload="start()">
@@ -572,7 +574,7 @@ a {color:blue;}
         if (data.response_to == "ask" && data.success) {
             uiModeAskResponse(data);
         }
-        else if (data.response_to == "answerresponse" && data.success) {
+        else if ((data.response_to == "answerresponse" || data.response_to == "answerresponsepractice") && data.success) {
             starting_form = data.starting_form;
             change_desc = data.change_desc;
             uiModeAnswerResponseReceived(data);
@@ -598,7 +600,7 @@ a {color:blue;}
             let rows = "";
             for (var i = 0; i < data.sessions.length; i++) {
                 if (data.sessions[i].move_type != "FirstMoveTheirTurn") {
-                    rows += "<p class='gamerow" + ((data.sessions[i].myturn) ? " myturn" : "") + "' opponent='" + data.sessions[i].opponent_name + "'><a href='#' title='" + data.sessions[i].move_type + "'' onclick='get_move(this,\"" + data.sessions[i].session_id + "\");return false;'>" + ((data.sessions[i].move_type == "Practice") ? "Practise" : "Game") + ((data.sessions[i].opponent_name) ? " vs. " + data.sessions[i].opponent_name : "") + "</a> " + ((data.sessions[i].myturn) ? myturnIcon : "") + "</p>";
+                    rows += "<p class='gamerow" + ((data.sessions[i].myturn) ? " myturn" : "") + "' opponent='" + data.sessions[i].opponent_name + "'><a href='#' title='" + data.sessions[i].move_type + "'' onclick='get_move(this,\"" + data.sessions[i].session_id + "\");return false;'>" + ((data.sessions[i].move_type == "Practice") ? "Practice" : "Game") + ((data.sessions[i].opponent_name) ? " vs. " + data.sessions[i].opponent_name : "") + "</a> " + ((data.sessions[i].myturn) ? myturnIcon : "") + "</p>";
                 }
             }
             document.querySelector("#list").innerHTML = rows;
@@ -692,13 +694,7 @@ a {color:blue;}
         }
         else if (submitbutton.innerText == "Continue" || submitbutton.innerText == "Start") {
             console.log(submitbutton.innerText + " clicked");
-            if (practice) {
-                let send_data = {session_id:session_id};
-                generic_send_request("getmove", send_data, null);
-            }
-            else {
-                uiModeAskForm2();
-            }
+            uiModeAskForm2();
         }
         else if (submitbutton.innerText == "Ask") {
             let vals = get_param_values();
@@ -1124,21 +1120,26 @@ a {color:blue;}
 
     var practice = false;
     function uiModeAnswerResponseReceived(data) {
+        let submitbutton = document.querySelector("#submitbutton");
         if (data.move_type == "Practice") {
+            submitbutton.innerText = "Go";
             practice = true;
+            starting_form = data.starting_form;
+            change_desc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+            document.querySelector("#statusmesg").innerHTML = "Click Go to answer the next form."
         }
         else {
             practice = false;
+            submitbutton.innerText = "Continue";
+            document.querySelector("#statusmesg").innerHTML = "Click Continue to ask the next form."
         }
         global_session_state = data;
-        let submitbutton = document.querySelector("#submitbutton");
-        submitbutton.innerText = "Continue";
         submitbutton.disabled = false;
         document.querySelector("#mfbutton").disabled = true;
         //mark (in)correct, show correct answer
         document.querySelector("#correctanswer").style.visibility = "visible";
         document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + data.correct_answer;
-        document.querySelector("#statusmesg").innerHTML = "Click Continue to ask the next form."
+        
     }
 
     var timer = null;

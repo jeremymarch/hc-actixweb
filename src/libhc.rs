@@ -223,16 +223,7 @@ pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timesta
         info.timed_out,
         timestamp).await?;
 
-    let mut res = get_session_state(db, user_id, info.session_id).await?;
-    if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
-        res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
-    }
-    res.response_to = "answerresponse".to_string();
-    res.success = true;
-    res.mesg = None;
-    res.verbs = if res.move_type == MoveType::FirstMoveMyTurn && !is_correct { Some(hc_get_available_verbs(db, user_id, info.session_id, s.highest_unit, verbs).await.unwrap()) } else { None };
-
-    //for practice sessions we should do the ask here
+            //for practice sessions we should do the ask here
     if s.challenged_user_id.is_none() {
         let persons = vec![HcPerson::First, HcPerson::Second, HcPerson::Third];
         let numbers = vec![HcNumber::Singular, HcNumber::Plural];
@@ -254,6 +245,25 @@ pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timesta
         let _ = db::insert_ask_move(db, None, info.session_id, prev_form.person.to_u8(), prev_form.number.to_u8(), prev_form.tense.to_u8(), 
             prev_form.mood.to_u8(), prev_form.voice.to_u8(), prev_form.verb.id, timestamp + 1).await?;
     }
+
+    let mut res = get_session_state(db, user_id, info.session_id).await?;
+    if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
+        res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
+    }
+    if s.challenged_user_id.is_none() {
+        res.is_correct = Some(is_correct);
+        res.correct_answer = Some(correct_answer);
+        res.response_to = "answerresponsepractice".to_string();
+    }
+    else {
+        res.response_to = "answerresponse".to_string();
+    }
+
+    res.success = true;
+    res.mesg = None;
+    res.verbs = if res.move_type == MoveType::FirstMoveMyTurn && !is_correct { Some(hc_get_available_verbs(db, user_id, info.session_id, s.highest_unit, verbs).await.unwrap()) } else { None };
+
+
 
     Ok(res)
 }
