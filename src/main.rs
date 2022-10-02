@@ -163,7 +163,7 @@ pub struct SessionResult {
 pub struct MoveResult {
     move_id: sqlx::types::Uuid,
     session_id: sqlx::types::Uuid,
-    ask_user_id: sqlx::types::Uuid,
+    ask_user_id: Option<sqlx::types::Uuid>,
     answer_user_id: Option<sqlx::types::Uuid>,
     verb_id: Option<u32>,
     person: Option<u8>,
@@ -266,14 +266,15 @@ async fn get_sessions(
 async fn create_session(
     (session, info, req): (Session, web::Form<CreateSessionQuery>, HttpRequest)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
-    
+    let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
+
     if let Some(user_id) = login::get_user_id(session) {
 
         let timestamp = get_timestamp();
         //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
         //let user_agent = get_user_agent(&req).unwrap_or("");
 
-        let (mesg, success) = match libhc::hc_insert_session(db, user_id, &info, timestamp).await {
+        let (mesg, success) = match libhc::hc_insert_session(db, user_id, &info, verbs, timestamp).await {
             Ok(_session_uuid) => {
                 ("inserted!".to_string(), true) 
             },
@@ -636,6 +637,10 @@ async fn main() -> io::Result<()> {
             l.to_lowercase().cmp(&r.to_lowercase())
         });
 
+    // let pool = PgPoolOptions::new()
+    //     .max_connections(5)
+    //     .connect("postgres://postgres:password@localhost/test").await?;
+
     let db_pool = SqlitePool::connect_with(options)
         .await
         .expect("Could not connect to db.");
@@ -761,7 +766,7 @@ mod tests {
             opponent: "testuser2".to_string(),
         };
 
-        let session_uuid = hc_insert_session(&db, uuid1, &csq, timestamp).await;
+        let session_uuid = hc_insert_session(&db, uuid1, &csq, &verbs, timestamp).await;
         assert!(res.is_ok());
 
         let aq = AskQuery {

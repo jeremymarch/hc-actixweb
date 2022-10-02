@@ -28,8 +28,8 @@ pub async fn get_session_state(
     let mut tx = pool.begin().await?;
 
     let res = db::get_session(pool, session_id).await?;
-
     let m = db::get_last_two_moves(&mut tx, session_id).await?;
+
     let first = if !m.is_empty() { Some(&m[0]) } else { None };
     let (myturn, move_type) = move_get_type(first, user_id, res.challenged_user_id);
 
@@ -72,7 +72,7 @@ pub async fn hc_mf_pressed(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, tim
     //pull prev move from db to get verb and params and to prevent out-of-sequence answers
     let m = match db::get_last_move(db, info.session_id).await {
         Ok(m) => {
-            if m.ask_user_id == user_id {
+            if m.ask_user_id == Some(user_id) {
                 return Err(sqlx::Error::RowNotFound);//same user cannot answer question they asked
             }
             else if m.is_correct.is_some() {
@@ -145,7 +145,7 @@ pub async fn hc_ask(db: &SqlitePool, user_id:Uuid, info:&AskQuery, timestamp:i64
     //prevent out-of-sequence asks
     match db::get_last_move(db, info.session_id).await {
         Ok(m) => {
-            if m.ask_user_id == user_id {
+            if m.ask_user_id == Some(user_id) {
                 return Err(sqlx::Error::RowNotFound);//same user cannot ask twice in a row
             }
             else if m.answer_user_id != Some(user_id) {
@@ -185,7 +185,7 @@ pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timesta
     //pull prev move from db to get verb and params and to prevent out-of-sequence answers
     let m = match db::get_last_move(db, info.session_id).await {
         Ok(m) => {
-            if m.ask_user_id == user_id {
+            if m.ask_user_id == Some(user_id) {
                 return Err(sqlx::Error::RowNotFound);//same user cannot answer question they asked
             }
             else if m.is_correct.is_some() {
@@ -223,6 +223,15 @@ pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timesta
         info.timed_out,
         timestamp).await?;
 
+    let mut res = get_session_state(db, user_id, info.session_id).await?;
+    if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
+        res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
+    }
+    res.response_to = "answerresponse".to_string();
+    res.success = true;
+    res.mesg = None;
+    res.verbs = if res.move_type == MoveType::FirstMoveMyTurn && !is_correct { Some(hc_get_available_verbs(db, user_id, info.session_id, s.highest_unit, verbs).await.unwrap()) } else { None };
+
     //for practice sessions we should do the ask here
     if s.challenged_user_id.is_none() {
         let persons = vec![HcPerson::First, HcPerson::Second, HcPerson::Third];
@@ -246,20 +255,59 @@ pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timesta
             prev_form.mood.to_u8(), prev_form.voice.to_u8(), prev_form.verb.id, timestamp + 1).await?;
     }
 
-    let mut res = get_session_state(db, user_id, info.session_id).await?;
-    if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
-        res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
-    }
-    res.response_to = "answerresponse".to_string();
-    res.success = true;
-    res.mesg = None;
-    res.verbs = if res.move_type == MoveType::FirstMoveMyTurn && !is_correct { Some(hc_get_available_verbs(db, user_id, info.session_id, s.highest_unit, verbs).await.unwrap()) } else { None };
-
     Ok(res)
 }
 
 pub async fn hc_get_move(db: &SqlitePool, user_id:Uuid, info:&GetMoveQuery, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> { 
     let s = db::get_session(db, info.session_id).await?;
+
+    /*
+    //for practice sessions we should do the ask here
+    if s.challenged_user_id.is_none() {
+        //pull prev move from db to get verb and params and to prevent out-of-sequence answers
+        let m = match db::get_last_move(db, info.session_id).await {
+            Ok(m) => {
+                if m.ask_user_id == Some(user_id) {
+                    return Err(sqlx::Error::RowNotFound);//same user cannot answer question they asked
+                }
+                else if m.is_correct.is_some() {
+                    return Err(sqlx::Error::RowNotFound);//previous question must not already be answered
+                }
+                else {
+                    m
+                }
+            },
+            Err(_) => { return Err(sqlx::Error::RowNotFound); } //this is first move, nothing to answer
+        };
+
+        //test answer to get correct_answer and is_correct
+        //let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+        //let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR).unwrap());
+        let idx = if m.verb_id.is_some() && (m.verb_id.unwrap() as usize) < verbs.len() { m.verb_id.unwrap() as usize } else { 0 };
+        let mut prev_form = HcGreekVerbForm {verb:verbs[idx].clone(), person:HcPerson::from_u8(m.person.unwrap()), number:HcNumber::from_u8(m.number.unwrap()), tense:HcTense::from_u8(m.tense.unwrap()), voice:HcVoice::from_u8(m.voice.unwrap()), mood:HcMood::from_u8(m.mood.unwrap()), gender:None, case:None};
+
+
+        let persons = vec![HcPerson::First, HcPerson::Second, HcPerson::Third];
+        let numbers = vec![HcNumber::Singular, HcNumber::Plural];
+        let tenses = vec![HcTense::Present, HcTense::Imperfect, HcTense::Future, HcTense::Aorist, HcTense::Perfect, HcTense::Pluperfect];
+        let moods = vec![HcMood::Indicative, HcMood::Subjunctive, HcMood::Optative, HcMood::Imperative];
+        let voices = vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive];
+
+        //a = HcGreekVerbForm { verb: verbs[idx].clone(), person, number, tense, voice, mood, gender: None, case: None};
+
+
+        prev_form.change_params(2, &persons, &numbers, &tenses, &voices, &moods);
+
+        // let person = *persons.choose(&mut rand::thread_rng()).unwrap();
+        // let number = *numbers.choose(&mut rand::thread_rng()).unwrap();
+        // let tense = *tenses.choose(&mut rand::thread_rng()).unwrap();
+        // let voice = *voices.choose(&mut rand::thread_rng()).unwrap();
+        // let mood = *moods.choose(&mut rand::thread_rng()).unwrap();
+        //ask
+        let _ = db::insert_ask_move(db, None, info.session_id, prev_form.person.to_u8(), prev_form.number.to_u8(), prev_form.tense.to_u8(), 
+            prev_form.mood.to_u8(), prev_form.voice.to_u8(), prev_form.verb.id, timestamp + 1).await?;
+    }*/
+
     let mut res = get_session_state(db, user_id, info.session_id).await?;
 
     //set starting_form to 1st pp of verb if verb is set, but starting form is None (i.e. we just changed verbs)
@@ -295,7 +343,7 @@ fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>
                 myturn = true;
                 move_type = MoveType::Practice; //practice, my turn always
             }
-            else if s.ask_user_id == user_id { 
+            else if s.ask_user_id == Some(user_id) { 
                 if s.answer_user_id.is_some() { //xxxanswered, my turn to ask | I asked, they answered, their turn to ask (waiting for them to ask)
                     myturn = false;
                     move_type = MoveType::AskTheirTurn;
@@ -355,7 +403,7 @@ pub async fn hc_get_sessions(db: &SqlitePool, user_id:Uuid) -> Result<Vec<Sessio
     Ok(res) 
 }
 
-pub async fn hc_insert_session(db: &SqlitePool, user_id:Uuid, info:&CreateSessionQuery, timestamp:i64) -> Result<Uuid, sqlx::Error> { 
+pub async fn hc_insert_session(db: &SqlitePool, user_id:Uuid, info:&CreateSessionQuery, verbs:&Vec<Arc<HcGreekVerb>>, timestamp:i64) -> Result<Uuid, sqlx::Error> { 
     let opponent_user_id:Option<Uuid>;
     if !info.opponent.is_empty() {
         let o = db::get_user_id(db, &info.opponent).await?; //we want to return an error if len of info.opponent > 0 and not found, else it is practice game
@@ -375,6 +423,23 @@ pub async fn hc_insert_session(db: &SqlitePool, user_id:Uuid, info:&CreateSessio
 
     match db::insert_session(db, user_id, highest_unit, opponent_user_id, max_changes, timestamp).await {
         Ok(session_uuid) => {
+            //for practice sessions we should do the ask here
+            if opponent_user_id.is_none() {
+                let persons = vec![HcPerson::First, HcPerson::Second, HcPerson::Third];
+                let numbers = vec![HcNumber::Singular, HcNumber::Plural];
+                let tenses = vec![HcTense::Present, HcTense::Imperfect, HcTense::Future, HcTense::Aorist, HcTense::Perfect, HcTense::Pluperfect];
+                let moods = vec![HcMood::Indicative, HcMood::Subjunctive, HcMood::Optative, HcMood::Imperative];
+                let voices = vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive];
+
+                let idx = 0;
+
+                let mut prev_form = HcGreekVerbForm { verb: verbs[idx].clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Active, mood:HcMood::Indicative, gender: None, case: None};
+                prev_form.change_params(2, &persons, &numbers, &tenses, &voices, &moods);
+
+                //ask
+                let _ = db::insert_ask_move(db, None, session_uuid, prev_form.person.to_u8(), prev_form.number.to_u8(), prev_form.tense.to_u8(), 
+                    prev_form.mood.to_u8(), prev_form.voice.to_u8(), prev_form.verb.id, timestamp + 1).await?;
+            }
             Ok(session_uuid)
         },
         Err(e) => {

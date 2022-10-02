@@ -692,7 +692,13 @@ a {color:blue;}
         }
         else if (submitbutton.innerText == "Continue" || submitbutton.innerText == "Start") {
             console.log(submitbutton.innerText + " clicked");
-            uiModeAskForm2();
+            if (practice) {
+                let send_data = {session_id:session_id};
+                generic_send_request("getmove", send_data, null);
+            }
+            else {
+                uiModeAskForm2();
+            }
         }
         else if (submitbutton.innerText == "Ask") {
             let vals = get_param_values();
@@ -784,10 +790,11 @@ a {color:blue;}
     }
 
     function setUI(data) {
+        practice = false;
         document.querySelector(".hcform").style.display = "block";
         switch(data.move_type) {
             case "Practice": 
-                uiModePractice(); //practice
+                uiModePractice(data); //practice
                 break;
             case "FirstMoveMyTurn": 
                 uiModeAskForm(data, 5); //I need to ask first move
@@ -867,18 +874,26 @@ a {color:blue;}
         document.querySelector("#verbchooser").style.display = "none";
     }
 
-    function uiModePractice() {
+    //need to set prev params for first form
+    function uiModePractice(data) {
         let submitbutton = document.querySelector("#submitbutton");
-        submitbutton.disabled = true;
+        submitbutton.disabled = false;
+        submitbutton.innerText = "Go";
+        starting_form = data.starting_form;
+        change_desc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+        //document.querySelector("#statusmesg").innerHTML = "Click Go to answer!"
         document.querySelector("#statusmesg").innerHTML = "Practice Mode";
+        document.querySelector("#changedesc").innerHTML = (data.person_prev !== null) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, null, null, null, null, null) : "";
         document.querySelector("#answerform").value = "";
         document.querySelector("#answerform").disabled = true;
         document.querySelector("#mfbutton").disabled = true;
         document.querySelector("#correctanswer").innerHTML = "";
         document.querySelector("#correctanswer").style.visibility = "hidden";
-        document.querySelector("#startingform").innerText = "";
-        document.querySelector("#verbchooser").style.display = "none";
+        document.querySelector("#startingform").innerText = (data.starting_form) ? data.starting_form : "";
+
         document.querySelector("#askparamsdiv").style.display = "none";
+        document.querySelector("#submitbutton").style.display = "block";
+        document.querySelector("#verbchooser").style.display = "none";
     }
 
     function uiModeAnwerForm(data) {
@@ -1005,6 +1020,7 @@ a {color:blue;}
         }
         document.querySelector("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
     }
+
     var global_session_state = null;
     function uiModeAskForm(data, max_params_to_change) {
         global_session_state = data;
@@ -1106,7 +1122,14 @@ a {color:blue;}
         document.querySelector("#answerform").disabled = true;
     }
 
+    var practice = false;
     function uiModeAnswerResponseReceived(data) {
+        if (data.move_type == "Practice") {
+            practice = true;
+        }
+        else {
+            practice = false;
+        }
         global_session_state = data;
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.innerText = "Continue";
