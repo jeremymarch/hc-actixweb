@@ -675,7 +675,7 @@ a {color:blue;}
         let unitv = document.querySelector("#unitinput").value.trim();
         let opponentv = document.querySelector("#opponentinput").value.trim();
 
-        let send_data = {qtype:"newsession", unit:unitv, opponent:opponentv};
+        let send_data = {qtype:"newsession", unit:unitv, opponent:opponentv,practice_reps_per_verb:4};
         generic_send_request("new", send_data, null);
     }
 

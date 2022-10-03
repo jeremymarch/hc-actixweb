@@ -109,6 +109,7 @@ pub struct CreateSessionQuery {
     qtype:String,
     unit: String,
     opponent:String,
+    practice_reps_per_verb:Option<u32>,
 }
 
 #[derive(Deserialize,Serialize, FromRow)]
@@ -155,6 +156,7 @@ pub struct SessionResult {
     max_changes: u8,
     challenger_score: Option<u32>,
     challenged_score: Option<u32>,
+    practice_reps_per_verb: Option<u32>,
     timestamp: i64,
     // challenger_score:Option<u32>,
     // challenged_score:Option<u32>,
@@ -765,6 +767,7 @@ mod tests {
             qtype:"abc".to_string(),
             unit: "20".to_string(),
             opponent: "testuser2".to_string(),
+            practice_reps_per_verb: Some(4),
         };
 
         let session_uuid = hc_insert_session(&db, uuid1, &csq, &verbs, timestamp).await;

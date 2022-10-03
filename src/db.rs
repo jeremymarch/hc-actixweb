@@ -62,19 +62,21 @@ pub async fn insert_session(
     highest_unit: Option<u32>,
     opponent_id: Option<Uuid>,
     max_changes: u8,
+    practice_reps_per_verb: Option<u32>,
     timestamp: i64,
 ) -> Result<Uuid, sqlx::Error> {
     let mut tx = pool.begin().await?;
 
     let uuid = sqlx::types::Uuid::new_v4();
 
-    let query = r#"INSERT INTO sessions VALUES (?,?,?,?,"",?,0,0,?);"#;
+    let query = r#"INSERT INTO sessions VALUES (?,?,?,?,"",?,0,0,?,?);"#;
     let _res = sqlx::query(query)
         .bind(uuid)
         .bind(user_id)
         .bind(opponent_id)
         .bind(highest_unit)
         .bind(max_changes)
+        .bind(practice_reps_per_verb)
         .bind(timestamp)
         .execute(&mut tx)
         .await?;
@@ -321,6 +323,7 @@ custom_verbs TEXT,
 max_changes INT,
 challenger_score INT,
 challenged_score INT,
+practice_reps_per_verb INT,
 timestamp INT NOT NULL DEFAULT 0,
 FOREIGN KEY (challenger_user_id) REFERENCES users(user_id), 
 FOREIGN KEY (challenged_user_id) REFERENCES users(user_id)

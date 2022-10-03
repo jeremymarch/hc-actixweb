@@ -179,6 +179,7 @@ pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timesta
     //todo check that user_id is either challenger_user_id or challenged_user_id
     let s = db::get_session(db, info.session_id).await?;
     if user_id != s.challenger_user_id && Some(user_id) != s.challenged_user_id {
+        println!("HERE1");
         return Err(sqlx::Error::RowNotFound);
     }
 
@@ -186,16 +187,18 @@ pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timesta
     let m = match db::get_last_move(db, info.session_id).await {
         Ok(m) => {
             if m.ask_user_id == Some(user_id) {
+                println!("HERE2");
                 return Err(sqlx::Error::RowNotFound);//same user cannot answer question they asked
             }
             else if m.is_correct.is_some() {
+                println!("HERE3");
                 return Err(sqlx::Error::RowNotFound);//previous question must not already be answered
             }
             else {
                 m
             }
          },
-        Err(_) => { return Err(sqlx::Error::RowNotFound); } //this is first move, nothing to answer
+        Err(_) => { println!("HERE4");return Err(sqlx::Error::RowNotFound); } //this is first move, nothing to answer
     };
 
     //test answer to get correct_answer and is_correct
@@ -233,7 +236,12 @@ pub async fn hc_answer(db: &SqlitePool, user_id:Uuid, info:&AnswerQuery, timesta
 
         //a = HcGreekVerbForm { verb: verbs[idx].clone(), person, number, tense, voice, mood, gender: None, case: None};
 
-        prev_form.change_params(2, &persons, &numbers, &tenses, &voices, &moods);
+        loop {
+            prev_form.change_params(2, &persons, &numbers, &tenses, &voices, &moods);
+            if let Ok(ff) = prev_form.get_form(false) {
+                break;
+            }
+        }
 
         //ask
         let _ = db::insert_ask_move(db, None, info.session_id, prev_form.person.to_u8(), prev_form.number.to_u8(), prev_form.tense.to_u8(), 
@@ -369,7 +377,7 @@ pub async fn hc_insert_session(db: &SqlitePool, user_id:Uuid, info:&CreateSessio
     let highest_unit = if let Ok(v) = info.unit.parse::<u32>() { Some(v) } else { None };
     let max_changes = 2;
 
-    match db::insert_session(db, user_id, highest_unit, opponent_user_id, max_changes, timestamp).await {
+    match db::insert_session(db, user_id, highest_unit, opponent_user_id, max_changes, info.practice_reps_per_verb, timestamp).await {
         Ok(session_uuid) => {
             //for practice sessions we should do the ask here
             if opponent_user_id.is_none() {
