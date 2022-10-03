@@ -697,7 +697,7 @@ async fn main() -> io::Result<()> {
     HttpServer::new(move || {
 
         App::new()
-            .app_data(load_verbs("../hoplite_verbs_rs/testdata/pp.txt"))
+            .app_data(load_verbs("pp.txt"))
             .app_data(hcdb.clone())
             .wrap(middleware::Compress::default()) // enable automatic response compression - usually register this first
             .wrap(SessionMiddleware::builder(
@@ -749,7 +749,7 @@ mod tests {
     #[test]
     async fn test_index_post() {
 
-        let verbs = load_verbs("../hoplite_verbs_rs/testdata/pp.txt");
+        let verbs = load_verbs("pp.txt");
         
         let db_path = "sqlite::memory:";
         let options = SqliteConnectOptions::from_str(&db_path)

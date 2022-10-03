@@ -176,6 +176,7 @@ pub async fn hc_ask(db: &HcSqliteDb, user_id:Uuid, info:&AskQuery, timestamp:i64
         Err(m) => Err(m) //this is first move, nothing to check
     };
 
+    //be sure this asktimestamp is at least one greater than previous, if there was a previous one
     let new_time_stamp = if m.is_ok() && timestamp <= m.as_ref().unwrap().asktimestamp { m.unwrap().asktimestamp + 1 } else { timestamp };
 
     //get move seq and add one?
@@ -263,13 +264,14 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
                 break;
             }
         }
+
+        //be sure this asktimestamp is at least one greater than previous one
         let new_time_stamp = if timestamp > m.asktimestamp { timestamp } else { m.asktimestamp + 1 };
         //ask
         let _ = db.insert_ask_move_tx(&mut tx, None, info.session_id, prev_form.person.to_u8(), prev_form.number.to_u8(), prev_form.tense.to_u8(), 
             prev_form.mood.to_u8(), prev_form.voice.to_u8(), prev_form.verb.id, new_time_stamp).await?;
     }
     
-
     let mut res = get_session_state_tx(&mut tx, db, user_id, info.session_id).await?;
     if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
         res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
@@ -414,7 +416,12 @@ pub async fn hc_insert_session(db: &HcSqliteDb, user_id:Uuid, info:&CreateSessio
                 let idx = 0;
 
                 let mut prev_form = HcGreekVerbForm { verb: verbs[idx].clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Active, mood:HcMood::Indicative, gender: None, case: None};
-                prev_form.change_params(2, &persons, &numbers, &tenses, &voices, &moods);
+                loop {
+                    prev_form.change_params(2, &persons, &numbers, &tenses, &voices, &moods);
+                    if let Ok(_ff) = prev_form.get_form(false) {
+                        break;
+                    }
+                }
 
                 //ask
                 let _ = db.insert_ask_move(None, session_uuid, prev_form.person.to_u8(), prev_form.number.to_u8(), prev_form.tense.to_u8(), 
