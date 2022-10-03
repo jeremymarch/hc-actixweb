@@ -39,7 +39,7 @@ use std::io::BufReader;
 use std::io::BufRead;
 
 use polytonic_greek::hgk_compare_multiple_forms;
-use crate::db::update_answer_move;
+
 use std::sync::Arc;
 
 use std::io;
@@ -72,16 +72,16 @@ pub struct HcSqliteDb {
     db:SqlitePool,
 }
 
-pub trait HcDb {
-    fn insert_session(&self,
-        pool: &SqlitePool,
-        user_id: Uuid,
-        highest_unit: Option<u32>,
-        opponent_id: Option<Uuid>,
-        max_changes: u8,
-        practice_reps_per_verb: Option<u32>,
-        timestamp: i64) -> Result<Uuid, sqlx::Error>;
-}
+// pub trait HcDb {
+//     fn insert_session(&self,
+//         pool: &SqlitePool,
+//         user_id: Uuid,
+//         highest_unit: Option<u32>,
+//         opponent_id: Option<Uuid>,
+//         max_changes: u8,
+//         practice_reps_per_verb: Option<u32>,
+//         timestamp: i64) -> Result<Uuid, sqlx::Error>;
+// }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum MoveType {
@@ -265,7 +265,7 @@ async fn get_sessions(
         
         let res = SessionsListResponse {
             response_to: "getsessions".to_string(),
-            sessions: libhc::hc_get_sessions(&db, user_id).await.map_err(map_sqlx_error)?,
+            sessions: libhc::hc_get_sessions(db, user_id).await.map_err(map_sqlx_error)?,
             success: true,
             username,
         };
@@ -293,7 +293,7 @@ async fn create_session(
         //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
         //let user_agent = get_user_agent(&req).unwrap_or("");
 
-        let (mesg, success) = match libhc::hc_insert_session(&db, user_id, &info, verbs, timestamp).await {
+        let (mesg, success) = match libhc::hc_insert_session(db, user_id, &info, verbs, timestamp).await {
             Ok(_session_uuid) => {
                 ("inserted!".to_string(), true) 
             },
@@ -306,8 +306,8 @@ async fn create_session(
         };
         let res = StatusResponse {
             response_to: "newsession".to_string(),
-            mesg: mesg,
-            success: success,
+            mesg,
+            success,
         };
         Ok(HttpResponse::Ok().json(res))
     }
@@ -330,7 +330,7 @@ async fn get_move(
 
     if let Some(user_id) = login::get_user_id(session) {
         
-        let res = libhc::hc_get_move(&db, user_id, &info, verbs).await.map_err(map_sqlx_error)?;
+        let res = libhc::hc_get_move(db, user_id, &info, verbs).await.map_err(map_sqlx_error)?;
 
         Ok(HttpResponse::Ok().json(res))
     }
@@ -377,7 +377,7 @@ async fn enter(
 
     if let Some(user_id) = login::get_user_id(session) {
 
-        let res = libhc::hc_answer(&db, user_id, &info, timestamp, verbs).await.map_err(map_sqlx_error)?;
+        let res = libhc::hc_answer(db, user_id, &info, timestamp, verbs).await.map_err(map_sqlx_error)?;
 
         return Ok(HttpResponse::Ok().json(res));
     }
@@ -420,7 +420,7 @@ async fn ask(
 
     if let Some(user_id) = login::get_user_id(session) {
         
-        let res = libhc::hc_ask(&db, user_id, &info, timestamp, verbs).await.map_err(map_sqlx_error)?;
+        let res = libhc::hc_ask(db, user_id, &info, timestamp, verbs).await.map_err(map_sqlx_error)?;
 
         Ok(HttpResponse::Ok().json(res))
     }
@@ -465,7 +465,7 @@ async fn mf(
 
     if let Some(user_id) = login::get_user_id(session) {
         
-        let res = libhc::hc_mf_pressed(&db, user_id, &info, timestamp, verbs).await.map_err(map_sqlx_error)?;
+        let res = libhc::hc_mf_pressed(db, user_id, &info, timestamp, verbs).await.map_err(map_sqlx_error)?;
 
         Ok(HttpResponse::Ok().json(res))
     }
@@ -660,13 +660,12 @@ async fn main() -> io::Result<()> {
     //     .max_connections(5)
     //     .connect("postgres://postgres:password@localhost/test").await?;
 
-    let mut hcdb:HcSqliteDb;
     let hcdb = HcSqliteDb { db: SqlitePool::connect_with(options)
         .await
         .expect("Could not connect to db.")
     };
 
-    let res = db::create_db(&hcdb.db).await;
+    let res = hcdb.create_db().await;
     if res.is_err() {
         println!("error: {:?}", res);
     }
@@ -746,7 +745,6 @@ mod tests {
     use super::*;
     use actix_web::{test, web, App};
     use crate::libhc::*;
-    use crate::db::create_user;
 
     #[test]
     async fn test_index_post() {
@@ -763,11 +761,12 @@ mod tests {
                 l.to_lowercase().cmp(&r.to_lowercase())
             });
     
-        let db = SqlitePool::connect_with(options)
-            .await
-            .expect("Could not connect to db.");
+        let db = HcSqliteDb { db: SqlitePool::connect_with(options)
+                .await
+                .expect("Could not connect to db.")
+            };
     
-        let res = db::create_db(&db).await;
+        let res = db.create_db().await;
         if res.is_err() {
             println!("error: {:?}", res);
         }
@@ -777,9 +776,9 @@ mod tests {
         // let uuid1 = Uuid::from_u128(0x8CD36EFFDF5744FF953B29A473D12347);
         // let uuid2 = Uuid::from_u128(0xD75B0169E7C343838298136E3D63375C);
         // let invalid_uuid = Uuid::from_u128(0x00000000000000000000000000000001);
-        let uuid1 = create_user(&db, "testuser1", "abcdabcd", "user1@blah.com", timestamp).await.unwrap();
-        let uuid2 = create_user(&db, "testuser2", "abcdabcd", "user2@blah.com", timestamp).await.unwrap();
-        let invalid_uuid = create_user(&db, "testuser3", "abcdabcd", "user3@blah.com", timestamp).await.unwrap();
+        let uuid1 = db.create_user("testuser1", "abcdabcd", "user1@blah.com", timestamp).await.unwrap();
+        let uuid2 = db.create_user("testuser2", "abcdabcd", "user2@blah.com", timestamp).await.unwrap();
+        let invalid_uuid = db.create_user("testuser3", "abcdabcd", "user3@blah.com", timestamp).await.unwrap();
 
         let csq = CreateSessionQuery {
             qtype:"abc".to_string(),

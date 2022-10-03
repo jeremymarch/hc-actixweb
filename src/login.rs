@@ -159,14 +159,14 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
 pub async fn login_post(
     (session, form, req): (Session, web::Form<LoginFormData>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
-    let db = req.app_data::<SqlitePool>().unwrap();
+    let db = req.app_data::<HcSqliteDb>().unwrap();
 
     let credentials = Credentials {
         username: form.0.username,
         password: form.0.password,
     };
 
-    if let Ok(user_id) = db::validate_login_db(db, &credentials.username, credentials.password.expose_secret()).await.map_err(map_sqlx_error) {
+    if let Ok(user_id) = db.validate_login_db(&credentials.username, credentials.password.expose_secret()).await.map_err(map_sqlx_error) {
         session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
         if session.insert("user_id", user_id).is_ok() && session.insert("username", credentials.username).is_ok() {
             return Ok(HttpResponse::SeeOther()
@@ -309,7 +309,7 @@ pub async fn new_user_get(flash_messages: IncomingFlashMessages) -> Result<HttpR
 pub async fn new_user_post(
     (/*session, */form, req): (/*Session,*/ web::Form<CreateUserFormData>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
-    let db = req.app_data::<SqlitePool>().unwrap();
+    let db = req.app_data::<HcSqliteDb>().unwrap();
 
     let username = form.0.username;
     let password = form.0.password;
@@ -319,7 +319,7 @@ pub async fn new_user_post(
     let timestamp = get_timestamp();
 
     if username.len() > 1 && password.len() > 3 && email.len() > 6 && password == confirm_password {
-        if let Ok(_user_id) = db::create_user(db, &username, &password, &email, timestamp).await.map_err(map_sqlx_error) {
+        if let Ok(_user_id) = db.create_user(&username, &password, &email, timestamp).await.map_err(map_sqlx_error) {
             //session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
             //if session.insert("user_id", user_id).is_ok() {
             return Ok(HttpResponse::SeeOther()

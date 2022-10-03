@@ -26,10 +26,11 @@ use crate::MoveResult;
 use crate::SessionResult;
 use crate::MoveType;
 use crate::HcSqliteDb;
-use crate::HcDb;
+
+impl HcSqliteDb {
 
 pub async fn validate_login_db(
-    pool: &SqlitePool,
+    &self,
     username:&str,
     password:&str,
 ) -> Result<Uuid, sqlx::Error> {
@@ -38,31 +39,30 @@ pub async fn validate_login_db(
     let res:UserResult = sqlx::query_as(query)
         .bind(username)
         .bind(password)
-        .fetch_one(pool)
+        .fetch_one(&self.db)
         .await?;
 
     Ok(res.user_id)
 }
 
 pub async fn get_user_id(
-    pool: &SqlitePool,
+    &self,
     username:&str,
 ) -> Result<UserResult, sqlx::Error> {
 
     let query = "SELECT user_id,user_name,password,email,user_type,timestamp FROM users WHERE user_name = ? LIMIT 1;";
     let res:UserResult = sqlx::query_as(query)
         .bind(username)
-        .fetch_one(pool)
+        .fetch_one(&self.db)
         .await?;
 
     Ok(res)
 }
 
-impl HcDb for HcSqliteDb {
 
-    async fn insert_session(
+
+    pub async fn insert_session(
         &self,
-        pool: &SqlitePool,
         user_id: Uuid,
         highest_unit: Option<u32>,
         opponent_id: Option<Uuid>,
@@ -70,7 +70,7 @@ impl HcDb for HcSqliteDb {
         practice_reps_per_verb: Option<u32>,
         timestamp: i64,
     ) -> Result<Uuid, sqlx::Error> {
-        let mut tx = pool.begin().await?;
+        let mut tx = self.db.begin().await?;
 
         let uuid = sqlx::types::Uuid::new_v4();
 
@@ -90,13 +90,13 @@ impl HcDb for HcSqliteDb {
 
         Ok(uuid)
     }
-}
+
 
 pub async fn get_sessions(
-    pool: &SqlitePool,
+    &self,
     user_id: sqlx::types::Uuid,
 ) -> Result<Vec<SessionsListQuery>, sqlx::Error> {
-    let mut tx = pool.begin().await?;
+    let mut tx = self.db.begin().await?;
 
     //strftime('%Y-%m-%d %H:%M:%S', DATETIME(timestamp, 'unixepoch')) as timestamp, 
     //    ORDER BY updated DESC \
@@ -126,14 +126,14 @@ pub async fn get_sessions(
     Ok(res)
 }
 
-pub async fn get_last_move(pool: &SqlitePool, session_id: sqlx::types::Uuid) -> Result<MoveResult, sqlx::Error> {
-    let mut tx = pool.begin().await?;
-    let res = get_last_move_tx(&mut tx, session_id).await?;
+pub async fn get_last_move(&self, session_id: sqlx::types::Uuid) -> Result<MoveResult, sqlx::Error> {
+    let mut tx = self.db.begin().await?;
+    let res = self.get_last_move_tx(&mut tx, session_id).await?;
     tx.commit().await?;
     Ok(res)
 }
 
-pub async fn get_last_move_tx<'a, 'b>(
+pub async fn get_last_move_tx<'a, 'b>(&self,
     tx: &'a mut sqlx::Transaction<'b, sqlx::Sqlite>,
     session_id: sqlx::types::Uuid,
 ) -> Result<MoveResult, sqlx::Error> {
@@ -153,7 +153,7 @@ pub async fn get_last_move_tx<'a, 'b>(
     Ok(res)
 }
 
-pub async fn get_last_two_moves<'a, 'b>(
+pub async fn get_last_two_moves<'a, 'b>(&self,
     tx: &'a mut sqlx::Transaction<'b, sqlx::Sqlite>,
     session_id: sqlx::types::Uuid,
 ) -> Result<Vec<MoveResult>, sqlx::Error> {
@@ -174,7 +174,7 @@ pub async fn get_last_two_moves<'a, 'b>(
 }
 
 pub async fn get_session(
-    pool: &SqlitePool,
+    &self,
     session_id: sqlx::types::Uuid,
 ) -> Result<SessionResult, sqlx::Error> {
 
@@ -185,14 +185,14 @@ pub async fn get_session(
 
     let res: SessionResult = sqlx::query_as(query)
         .bind(session_id)
-        .fetch_one(pool)
+        .fetch_one(&self.db)
         .await?;
 
     Ok(res)
 }
 
 pub async fn get_used_verbs(
-    pool: &SqlitePool,
+    &self,
     session_id: sqlx::types::Uuid,
 ) -> Result<Vec<u32>, sqlx::Error> {
 
@@ -205,14 +205,14 @@ pub async fn get_used_verbs(
         .map(|rec: SqliteRow| {
             rec.get("verb_id")
         })
-        .fetch_all(pool)
+        .fetch_all(&self.db)
         .await?;
 
     Ok(res)
 }
 
 pub async fn insert_ask_move(
-    pool: &SqlitePool,
+    &self,
     user_id: Option<Uuid>,
     session_id: Uuid,
     person: u8,
@@ -223,7 +223,7 @@ pub async fn insert_ask_move(
     verb_id: u32,
     timestamp:i64,
 ) -> Result<Uuid, sqlx::Error> {
-    let mut tx = pool.begin().await?;
+    let mut tx = self.db.begin().await?;
 
     let uuid = sqlx::types::Uuid::new_v4();
 
@@ -249,7 +249,7 @@ pub async fn insert_ask_move(
 }
 
 pub async fn update_answer_move(
-    pool: &SqlitePool,
+    &self,
     session_id: Uuid,
     user_id: Uuid,
     answer: &str,
@@ -260,9 +260,9 @@ pub async fn update_answer_move(
     timed_out:bool,
     timestamp:i64,
 ) -> Result<u32, sqlx::Error> {
-    let mut tx = pool.begin().await?;
+    let mut tx = self.db.begin().await?;
 
-    let m = get_last_move_tx(&mut tx, session_id).await?;
+    let m = self.get_last_move_tx(&mut tx, session_id).await?;
 
     let query = "UPDATE moves SET answer_user_id=?, answer=?, correct_answer=?, is_correct=?, time=?, mf_pressed=?, timed_out=?, answeredtimestamp=? WHERE move_id=?;";
     let _res = sqlx::query(query)
@@ -283,7 +283,7 @@ pub async fn update_answer_move(
     Ok(1)
 }
 
-pub async fn create_user(pool: &SqlitePool, username:&str, password:&str, email:&str, timestamp:i64) -> Result<Uuid, sqlx::Error> {
+pub async fn create_user(&self, username:&str, password:&str, email:&str, timestamp:i64) -> Result<Uuid, sqlx::Error> {
 
     if username.len() < 2 || username.len() > 30 || password.len() < 8 || password.len() > 60 || email.len() < 6 || email.len() > 120 {
         return Err(sqlx::Error::RowNotFound);
@@ -297,14 +297,14 @@ pub async fn create_user(pool: &SqlitePool, username:&str, password:&str, email:
         .bind(password)
         .bind(email)
         .bind(timestamp)
-        .execute(pool)
+        .execute(&self.db)
         .await?;
 
     Ok(uuid)
 }
 
-pub async fn create_db(pool: &SqlitePool) -> Result<u32, sqlx::Error> {
-    let mut tx = pool.begin().await?;
+pub async fn create_db(&self) -> Result<u32, sqlx::Error> {
+    let mut tx = self.db.begin().await?;
 
     let query = r#"CREATE TABLE IF NOT EXISTS users ( 
 user_id BLOB PRIMARY KEY NOT NULL, 
@@ -405,4 +405,5 @@ FOREIGN KEY (session_id) REFERENCES sessions(session_id)
     tx.commit().await?;
 
     Ok(1)
+}
 }
