@@ -158,7 +158,7 @@ pub async fn hc_ask(db: &HcSqliteDb, user_id:Uuid, info:&AskQuery, timestamp:i64
     }
     
     //prevent out-of-sequence asks
-    match db.get_last_move(info.session_id).await {
+    let m = match db.get_last_move(info.session_id).await {
         Ok(m) => {
             if m.ask_user_id == Some(user_id) {
                 return Err(sqlx::Error::RowNotFound);//same user cannot ask twice in a row
@@ -169,13 +169,18 @@ pub async fn hc_ask(db: &HcSqliteDb, user_id:Uuid, info:&AskQuery, timestamp:i64
             else if m.is_correct.is_none() {
                 return Err(sqlx::Error::RowNotFound);//previous answer must be marked correct or incorrect
             }
+            else {
+                Ok(m)
+            }
          },
-        Err(_) => () //this is first move, nothing to check
-    }
+        Err(m) => Err(m) //this is first move, nothing to check
+    };
+
+    let new_time_stamp = if m.is_ok() && timestamp <= m.as_ref().unwrap().asktimestamp { m.unwrap().asktimestamp + 1 } else { timestamp };
 
     //get move seq and add one?
     
-    let _ = db.insert_ask_move(Some(user_id), info.session_id, info.person, info.number, info.tense, info.mood, info.voice, info.verb, timestamp).await?;
+    let _ = db.insert_ask_move(Some(user_id), info.session_id, info.person, info.number, info.tense, info.mood, info.voice, info.verb, new_time_stamp).await?;
 
     let mut res = get_session_state(db, user_id, info.session_id).await?;
 
@@ -258,10 +263,10 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
                 break;
             }
         }
-
+        let new_time_stamp = if timestamp > m.asktimestamp { timestamp } else { m.asktimestamp + 1 };
         //ask
         let _ = db.insert_ask_move_tx(&mut tx, None, info.session_id, prev_form.person.to_u8(), prev_form.number.to_u8(), prev_form.tense.to_u8(), 
-            prev_form.mood.to_u8(), prev_form.voice.to_u8(), prev_form.verb.id, timestamp + 1).await?;
+            prev_form.mood.to_u8(), prev_form.voice.to_u8(), prev_form.verb.id, new_time_stamp).await?;
     }
     
 
