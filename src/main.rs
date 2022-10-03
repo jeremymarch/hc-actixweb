@@ -141,6 +141,7 @@ pub struct UserResult {
     user_name: String,
     password: String,
     email: String,
+    user_type: u32,
     timestamp: i64,
 }
 

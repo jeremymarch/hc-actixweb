@@ -32,7 +32,7 @@ pub async fn validate_login_db(
     password:&str,
 ) -> Result<Uuid, sqlx::Error> {
 
-    let query = "SELECT user_id,user_name,password,email,timestamp FROM users WHERE user_name = ? AND password = ? LIMIT 1;";
+    let query = "SELECT user_id,user_name,password,email,user_type,timestamp FROM users WHERE user_name = ? AND password = ? LIMIT 1;";
     let res:UserResult = sqlx::query_as(query)
         .bind(username)
         .bind(password)
@@ -47,7 +47,7 @@ pub async fn get_user_id(
     username:&str,
 ) -> Result<UserResult, sqlx::Error> {
 
-    let query = "SELECT user_id,user_name,password,email,timestamp FROM users WHERE user_name = ? LIMIT 1;";
+    let query = "SELECT user_id,user_name,password,email,user_type,timestamp FROM users WHERE user_name = ? LIMIT 1;";
     let res:UserResult = sqlx::query_as(query)
         .bind(username)
         .fetch_one(pool)
@@ -282,7 +282,7 @@ pub async fn create_user(pool: &SqlitePool, username:&str, password:&str, email:
     }
 
     let uuid = sqlx::types::Uuid::new_v4();
-    let query = "INSERT INTO users VALUES (?,?,?,?,?);";
+    let query = "INSERT INTO users VALUES (?,?,?,?,0,?);";
     let _res = sqlx::query(query)
         .bind(uuid)
         .bind(username)
@@ -303,6 +303,7 @@ user_id BLOB PRIMARY KEY NOT NULL,
 user_name TEXT, 
 password TEXT, 
 email TEXT,
+user_type INT NOT NULL DEFAULT 0,
 timestamp INT NOT NULL DEFAULT 0,
 UNIQUE(user_name)
 );"#;
@@ -360,7 +361,7 @@ FOREIGN KEY (session_id) REFERENCES sessions(session_id)
         .execute(&mut tx)
         .await?;
 
-    let query = "REPLACE INTO users VALUES (?,?,?,?,?);";
+    let query = "REPLACE INTO users VALUES (?,?,?,?,0,?);";
     let uuid = Uuid::from_u128(0x8CD36EFFDF5744FF953B29A473D12347);//sqlx::types::Uuid::new_v4();
     let _res = sqlx::query(query)
         .bind(uuid)
