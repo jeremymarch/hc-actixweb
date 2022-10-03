@@ -67,6 +67,22 @@ async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
     Ok(HttpResponse::Ok().finish()) //send 200 with empty body
 }
 
+#[derive(Clone)]
+pub struct HcSqliteDb {
+    db:SqlitePool,
+}
+
+pub trait HcDb {
+    fn insert_session(&self,
+        pool: &SqlitePool,
+        user_id: Uuid,
+        highest_unit: Option<u32>,
+        opponent_id: Option<Uuid>,
+        max_changes: u8,
+        practice_reps_per_verb: Option<u32>,
+        timestamp: i64) -> Result<Uuid, sqlx::Error>;
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum MoveType {
     Practice,
@@ -237,7 +253,7 @@ fn get_timestamp() -> i64 {
 
 async fn get_sessions(
     (session, req): (Session, HttpRequest)) -> Result<HttpResponse, AWError> {
-    let db = req.app_data::<SqlitePool>().unwrap();
+    let db = req.app_data::<HcSqliteDb>().unwrap();
 
     if let Some(user_id) = login::get_user_id(session.clone()) {
 
@@ -249,7 +265,7 @@ async fn get_sessions(
         
         let res = SessionsListResponse {
             response_to: "getsessions".to_string(),
-            sessions: libhc::hc_get_sessions(db, user_id).await.map_err(map_sqlx_error)?,
+            sessions: libhc::hc_get_sessions(&db, user_id).await.map_err(map_sqlx_error)?,
             success: true,
             username,
         };
@@ -268,7 +284,7 @@ async fn get_sessions(
 
 async fn create_session(
     (session, info, req): (Session, web::Form<CreateSessionQuery>, HttpRequest)) -> Result<HttpResponse, AWError> {
-    let db = req.app_data::<SqlitePool>().unwrap();
+    let db = req.app_data::<HcSqliteDb>().unwrap();
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     if let Some(user_id) = login::get_user_id(session) {
@@ -277,7 +293,7 @@ async fn create_session(
         //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
         //let user_agent = get_user_agent(&req).unwrap_or("");
 
-        let (mesg, success) = match libhc::hc_insert_session(db, user_id, &info, verbs, timestamp).await {
+        let (mesg, success) = match libhc::hc_insert_session(&db, user_id, &info, verbs, timestamp).await {
             Ok(_session_uuid) => {
                 ("inserted!".to_string(), true) 
             },
@@ -307,14 +323,14 @@ async fn create_session(
 
 async fn get_move(
     (info, req, session): (web::Form<GetMoveQuery>, HttpRequest, Session)) -> Result<HttpResponse, AWError> {
-    let db = req.app_data::<SqlitePool>().unwrap();
+    let db = req.app_data::<HcSqliteDb>().unwrap();
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     //"ask", prev form to start from or null, prev answer and is_correct, correct answer
 
     if let Some(user_id) = login::get_user_id(session) {
         
-        let res = libhc::hc_get_move(db, user_id, &info, verbs).await.map_err(map_sqlx_error)?;
+        let res = libhc::hc_get_move(&db, user_id, &info, verbs).await.map_err(map_sqlx_error)?;
 
         Ok(HttpResponse::Ok().json(res))
     }
@@ -352,7 +368,7 @@ async fn get_move(
 
 async fn enter(
     (info, req, session): (web::Form<AnswerQuery>, HttpRequest, Session)) -> Result<HttpResponse, AWError> {
-    let db = req.app_data::<SqlitePool>().unwrap();
+    let db = req.app_data::<HcSqliteDb>().unwrap();
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     let timestamp = get_timestamp();
@@ -361,7 +377,7 @@ async fn enter(
 
     if let Some(user_id) = login::get_user_id(session) {
 
-        let res = libhc::hc_answer(db, user_id, &info, timestamp, verbs).await.map_err(map_sqlx_error)?;
+        let res = libhc::hc_answer(&db, user_id, &info, timestamp, verbs).await.map_err(map_sqlx_error)?;
 
         return Ok(HttpResponse::Ok().json(res));
     }
@@ -395,7 +411,7 @@ async fn enter(
 
 async fn ask(
     (info, req, session): (web::Form<AskQuery>, HttpRequest, Session)) -> Result<HttpResponse, AWError> {
-    let db = req.app_data::<SqlitePool>().unwrap();
+    let db = req.app_data::<HcSqliteDb>().unwrap();
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     let timestamp = get_timestamp();
@@ -404,7 +420,7 @@ async fn ask(
 
     if let Some(user_id) = login::get_user_id(session) {
         
-        let res = libhc::hc_ask(db, user_id, &info, timestamp, verbs).await.map_err(map_sqlx_error)?;
+        let res = libhc::hc_ask(&db, user_id, &info, timestamp, verbs).await.map_err(map_sqlx_error)?;
 
         Ok(HttpResponse::Ok().json(res))
     }
@@ -440,7 +456,7 @@ async fn ask(
 
 async fn mf(
     (info, req, session): (web::Form<AnswerQuery>, HttpRequest, Session)) -> Result<HttpResponse, AWError> {
-    let db = req.app_data::<SqlitePool>().unwrap();
+    let db = req.app_data::<HcSqliteDb>().unwrap();
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     let timestamp = get_timestamp();
@@ -449,7 +465,7 @@ async fn mf(
 
     if let Some(user_id) = login::get_user_id(session) {
         
-        let res = libhc::hc_mf_pressed(db, user_id, &info, timestamp, verbs).await.map_err(map_sqlx_error)?;
+        let res = libhc::hc_mf_pressed(&db, user_id, &info, timestamp, verbs).await.map_err(map_sqlx_error)?;
 
         Ok(HttpResponse::Ok().json(res))
     }
@@ -644,11 +660,13 @@ async fn main() -> io::Result<()> {
     //     .max_connections(5)
     //     .connect("postgres://postgres:password@localhost/test").await?;
 
-    let db_pool = SqlitePool::connect_with(options)
+    let mut hcdb:HcSqliteDb;
+    let hcdb = HcSqliteDb { db: SqlitePool::connect_with(options)
         .await
-        .expect("Could not connect to db.");
+        .expect("Could not connect to db.")
+    };
 
-    let res = db::create_db(&db_pool).await;
+    let res = db::create_db(&hcdb.db).await;
     if res.is_err() {
         println!("error: {:?}", res);
     }
@@ -681,7 +699,7 @@ async fn main() -> io::Result<()> {
 
         App::new()
             .app_data(load_verbs("../hoplite_verbs_rs/testdata/pp.txt"))
-            .app_data(db_pool.clone())
+            .app_data(hcdb.clone())
             .wrap(middleware::Compress::default()) // enable automatic response compression - usually register this first
             .wrap(SessionMiddleware::builder(
                 CookieSessionStore::default(), secret_key.clone())

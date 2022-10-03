@@ -25,6 +25,8 @@ use crate::UserResult;
 use crate::MoveResult;
 use crate::SessionResult;
 use crate::MoveType;
+use crate::HcSqliteDb;
+use crate::HcDb;
 
 pub async fn validate_login_db(
     pool: &SqlitePool,
@@ -56,34 +58,38 @@ pub async fn get_user_id(
     Ok(res)
 }
 
-pub async fn insert_session(
-    pool: &SqlitePool,
-    user_id: Uuid,
-    highest_unit: Option<u32>,
-    opponent_id: Option<Uuid>,
-    max_changes: u8,
-    practice_reps_per_verb: Option<u32>,
-    timestamp: i64,
-) -> Result<Uuid, sqlx::Error> {
-    let mut tx = pool.begin().await?;
+impl HcDb for HcSqliteDb {
 
-    let uuid = sqlx::types::Uuid::new_v4();
+    async fn insert_session(
+        &self,
+        pool: &SqlitePool,
+        user_id: Uuid,
+        highest_unit: Option<u32>,
+        opponent_id: Option<Uuid>,
+        max_changes: u8,
+        practice_reps_per_verb: Option<u32>,
+        timestamp: i64,
+    ) -> Result<Uuid, sqlx::Error> {
+        let mut tx = pool.begin().await?;
 
-    let query = r#"INSERT INTO sessions VALUES (?,?,?,?,"",?,0,0,?,?);"#;
-    let _res = sqlx::query(query)
-        .bind(uuid)
-        .bind(user_id)
-        .bind(opponent_id)
-        .bind(highest_unit)
-        .bind(max_changes)
-        .bind(practice_reps_per_verb)
-        .bind(timestamp)
-        .execute(&mut tx)
-        .await?;
+        let uuid = sqlx::types::Uuid::new_v4();
 
-    tx.commit().await?;
+        let query = r#"INSERT INTO sessions VALUES (?,?,?,?,"",?,0,0,?,?);"#;
+        let _res = sqlx::query(query)
+            .bind(uuid)
+            .bind(user_id)
+            .bind(opponent_id)
+            .bind(highest_unit)
+            .bind(max_changes)
+            .bind(practice_reps_per_verb)
+            .bind(timestamp)
+            .execute(&mut tx)
+            .await?;
 
-    Ok(uuid)
+        tx.commit().await?;
+
+        Ok(uuid)
+    }
 }
 
 pub async fn get_sessions(
