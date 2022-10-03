@@ -27,8 +27,25 @@ pub async fn get_session_state(
 ) -> Result<SessionState, sqlx::Error> {
     let mut tx = db.db.begin().await?;
 
-    let res = db.get_session(session_id).await?;
-    let m = db.get_last_two_moves(&mut tx, session_id).await?;
+    let r = get_session_state_tx(
+       &mut tx,
+       db,
+        user_id,
+        session_id,
+    ).await?;
+        
+    tx.commit().await?;
+    Ok(r)
+}
+pub async fn get_session_state_tx<'a, 'b>(
+    tx: &'a mut sqlx::Transaction<'b, sqlx::Sqlite>,
+    db: &HcSqliteDb,
+    user_id: sqlx::types::Uuid,
+    session_id: sqlx::types::Uuid,
+) -> Result<SessionState, sqlx::Error> {
+
+    let res = db.get_session_tx(&mut *tx, session_id).await?;
+    let m = db.get_last_two_moves(&mut *tx, session_id).await?;
 
     let first = if !m.is_empty() { Some(&m[0]) } else { None };
     let (myturn, move_type) = move_get_type(first, user_id, res.challenged_user_id);
@@ -62,7 +79,6 @@ pub async fn get_session_state(
         verbs: None,
     };
         
-    tx.commit().await?;
     Ok(r)
 }
 
@@ -176,14 +192,16 @@ pub async fn hc_ask(db: &HcSqliteDb, user_id:Uuid, info:&AskQuery, timestamp:i64
 
 pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timestamp:i64, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> { 
     //todo check that user_id is either challenger_user_id or challenged_user_id
-    let s = db.get_session(info.session_id).await?;
+    let mut tx = db.db.begin().await?;
+
+    let s = db.get_session_tx(&mut tx, info.session_id).await?;
     if user_id != s.challenger_user_id && Some(user_id) != s.challenged_user_id {
         println!("HERE1");
         return Err(sqlx::Error::RowNotFound);
     }
 
     //pull prev move from db to get verb and params and to prevent out-of-sequence answers
-    let m = match db.get_last_move(info.session_id).await {
+    let m = match db.get_last_move_tx(&mut tx, info.session_id).await {
         Ok(m) => {
             if m.ask_user_id == Some(user_id) {
                 println!("HERE2");
@@ -213,7 +231,7 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
     };
     let is_correct = hgk_compare_multiple_forms(&correct_answer, &info.answer.replace("---", "—"));
 
-    let _res = db.update_answer_move(
+    let _res = db.update_answer_move_tx(&mut tx, 
         info.session_id,
         user_id,
         &info.answer,
@@ -242,14 +260,17 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
         }
 
         //ask
-        let _ = db.insert_ask_move(None, info.session_id, prev_form.person.to_u8(), prev_form.number.to_u8(), prev_form.tense.to_u8(), 
+        let _ = db.insert_ask_move_tx(&mut tx, None, info.session_id, prev_form.person.to_u8(), prev_form.number.to_u8(), prev_form.tense.to_u8(), 
             prev_form.mood.to_u8(), prev_form.voice.to_u8(), prev_form.verb.id, timestamp + 1).await?;
     }
+    
 
-    let mut res = get_session_state(db, user_id, info.session_id).await?;
+    let mut res = get_session_state_tx(&mut tx, db, user_id, info.session_id).await?;
     if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
         res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
     }
+
+    tx.commit().await?;
 
     //if practice session, add in is_correct and correct_answer back into session state here
     if s.challenged_user_id.is_none() {

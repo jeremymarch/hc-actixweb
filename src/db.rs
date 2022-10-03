@@ -177,7 +177,7 @@ pub async fn get_session(
     &self,
     session_id: sqlx::types::Uuid,
 ) -> Result<SessionResult, sqlx::Error> {
-
+    
     let query = "SELECT * \
     FROM sessions \
     where session_id = ? \
@@ -186,6 +186,24 @@ pub async fn get_session(
     let res: SessionResult = sqlx::query_as(query)
         .bind(session_id)
         .fetch_one(&self.db)
+        .await?;
+
+    Ok(res)
+}
+
+pub async fn get_session_tx<'a, 'b>(&self,
+    tx: &'a mut sqlx::Transaction<'b, sqlx::Sqlite>,
+    session_id: sqlx::types::Uuid,
+) -> Result<SessionResult, sqlx::Error> {
+
+    let query = "SELECT * \
+    FROM sessions \
+    where session_id = ? \
+    LIMIT 1;";
+
+    let res: SessionResult = sqlx::query_as(query)
+        .bind(session_id)
+        .fetch_one(&mut *tx)
         .await?;
 
     Ok(res)
@@ -225,6 +243,38 @@ pub async fn insert_ask_move(
 ) -> Result<Uuid, sqlx::Error> {
     let mut tx = self.db.begin().await?;
 
+    let uuid = self.insert_ask_move_tx(
+        &mut tx,
+        user_id,
+        session_id,
+        person,
+        number,
+        tense,
+        mood,
+        voice,
+        verb_id,
+        timestamp,
+    ).await?;
+
+    tx.commit().await?;
+
+    Ok(uuid)
+}
+
+pub async fn insert_ask_move_tx<'a, 'b>(
+    &self,
+    tx: &'a mut sqlx::Transaction<'b, sqlx::Sqlite>,
+    user_id: Option<Uuid>,
+    session_id: Uuid,
+    person: u8,
+    number: u8,
+    tense: u8,
+    mood: u8,
+    voice: u8,
+    verb_id: u32,
+    timestamp:i64,
+) -> Result<Uuid, sqlx::Error> {
+
     let uuid = sqlx::types::Uuid::new_v4();
 
     let query = "INSERT INTO moves VALUES (?,?,?,NULL,?,?,?,?,?,?,NULL,NULL,NULL,NULL,NULL,NULL,?, NULL);";
@@ -240,10 +290,8 @@ pub async fn insert_ask_move(
         .bind(voice)
         .bind(timestamp)
         //answer timestamp
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await?;
-
-    tx.commit().await?;
 
     Ok(uuid)
 }
@@ -262,7 +310,39 @@ pub async fn update_answer_move(
 ) -> Result<u32, sqlx::Error> {
     let mut tx = self.db.begin().await?;
 
-    let m = self.get_last_move_tx(&mut tx, session_id).await?;
+    self.update_answer_move_tx(
+        &mut tx,
+        session_id,
+        user_id,
+        answer,
+        correct_answer,
+        is_correct,
+        time,
+        mf_pressed,
+        timed_out,
+        timestamp,
+    ).await?;
+
+    tx.commit().await?;
+
+    Ok(1)
+}
+
+pub async fn update_answer_move_tx<'a, 'b>(
+    &self,
+    tx: &'a mut sqlx::Transaction<'b, sqlx::Sqlite>,
+    session_id: Uuid,
+    user_id: Uuid,
+    answer: &str,
+    correct_answer:&str,
+    is_correct:bool,
+    time: &str,
+    mf_pressed:bool,
+    timed_out:bool,
+    timestamp:i64,
+) -> Result<u32, sqlx::Error> {
+
+    let m = self.get_last_move_tx(&mut *tx, session_id).await?;
 
     let query = "UPDATE moves SET answer_user_id=?, answer=?, correct_answer=?, is_correct=?, time=?, mf_pressed=?, timed_out=?, answeredtimestamp=? WHERE move_id=?;";
     let _res = sqlx::query(query)
@@ -275,10 +355,8 @@ pub async fn update_answer_move(
         .bind(timed_out)
         .bind(timestamp)
         .bind(m.move_id)
-        .execute(&mut tx)
+        .execute(&mut *tx)
         .await?;
-
-    tx.commit().await?;
 
     Ok(1)
 }
