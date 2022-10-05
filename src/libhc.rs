@@ -61,7 +61,7 @@ pub async fn get_session_state_tx<'a, 'b>(
         myturn,
         starting_form: if m.len() == 2 && m[0].verb_id == m[1].verb_id { m[1].correct_answer.clone() } else { None },
         answer: if !m.is_empty() { m[0].answer.clone() } else { None },
-        is_correct: if !m.is_empty() && m[0].is_correct.is_some() { Some(m[0].is_correct.unwrap() != 0) } else { None },
+        is_correct: if !m.is_empty() && m[0].is_correct.is_some() { Some(m[0].is_correct.unwrap()) } else { None },
         correct_answer: if !m.is_empty() { m[0].correct_answer.clone() } else { None },
         verb: if !m.is_empty() { m[0].verb_id } else { None },
         person: if !m.is_empty() { m[0].person } else { None },
@@ -258,6 +258,7 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
         //a = HcGreekVerbForm { verb: verbs[idx].clone(), person, number, tense, voice, mood, gender: None, case: None};
 
         loop {
+            //println!("changing verb");
             prev_form.change_params(2, &persons, &numbers, &tenses, &voices, &moods);
             if let Ok(_ff) = prev_form.get_form(false) {
                 break;
@@ -267,8 +268,8 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
         //be sure this asktimestamp is at least one greater than previous one
         let new_time_stamp = if timestamp > m.asktimestamp { timestamp } else { m.asktimestamp + 1 };
         //ask
-        let _ = db.insert_ask_move_tx(&mut tx, None, info.session_id, prev_form.person.to_u8() as i8, prev_form.number.to_u8() as i8, prev_form.tense.to_u8() as i8, 
-            prev_form.mood.to_u8() as i8, prev_form.voice.to_u8() as i8, prev_form.verb.id as i32, new_time_stamp).await?;
+        let _ = db.insert_ask_move_tx(&mut tx, None, info.session_id, prev_form.person.to_u8() as i32, prev_form.number.to_u8() as i32, prev_form.tense.to_u8() as i32, 
+            prev_form.mood.to_u8() as i32, prev_form.voice.to_u8() as i32, prev_form.verb.id as i32, new_time_stamp).await?;
     }
     
     let mut res = get_session_state_tx(&mut tx, db, user_id, info.session_id).await?;
@@ -337,7 +338,7 @@ fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>
                 if s.answer_user_id.is_some() { //xxxanswered, their turn to ask | they asked, I answered, my turn to ask
                     myturn = true;
                     
-                    if change_verb_on_incorrect && s.is_correct.is_some() && s.is_correct.unwrap() == 0 {
+                    if change_verb_on_incorrect && s.is_correct.is_some() && s.is_correct.unwrap() == false {
                         move_type = MoveType::FirstMoveMyTurn; //user must ask a new verb because answered incorrectly
                     }
                     else {
@@ -423,8 +424,8 @@ pub async fn hc_insert_session(db: &HcSqliteDb, user_id:Uuid, info:&CreateSessio
                 }
 
                 //ask
-                let _ = db.insert_ask_move(None, session_uuid, prev_form.person.to_u8() as i8, prev_form.number.to_u8() as i8, prev_form.tense.to_u8() as i8, 
-                    prev_form.mood.to_u8() as i8, prev_form.voice.to_u8() as i8, prev_form.verb.id as i32, timestamp + 1).await?;
+                let _ = db.insert_ask_move(None, session_uuid, prev_form.person.to_u8() as i32, prev_form.number.to_u8() as i32, prev_form.tense.to_u8() as i32, 
+                    prev_form.mood.to_u8() as i32, prev_form.voice.to_u8() as i32, prev_form.verb.id as i32, timestamp + 1).await?;
             }
             Ok(session_uuid)
         },

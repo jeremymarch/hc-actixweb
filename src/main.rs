@@ -137,9 +137,9 @@ pub struct SessionsListQuery {
     challenged: Option<sqlx::types::Uuid>, //the one who didn't start the game, or null for practice
     opponent: Option<sqlx::types::Uuid>,
     opponent_name: Option<String>,
-    timestamp: String,
+    timestamp: i64,
     myturn: bool,
-    move_type:MoveType,
+    move_type: MoveType,
 }
 
 #[derive(Deserialize,Serialize)]
@@ -172,13 +172,11 @@ pub struct SessionResult {
     challenged_user_id: Option<Uuid>,
     highest_unit: Option<i32>,
     custom_verbs: Option<String>, 
-    max_changes: i8,
+    max_changes: i32,
     challenger_score: Option<i32>,
     challenged_score: Option<i32>,
     practice_reps_per_verb: Option<i32>,
     timestamp: i64,
-    // challenger_score:Option<i32>,
-    // challenged_score:Option<i32>,
 }
 
 #[derive(Deserialize, Serialize, FromRow)]
@@ -188,14 +186,14 @@ pub struct MoveResult {
     ask_user_id: Option<sqlx::types::Uuid>,
     answer_user_id: Option<sqlx::types::Uuid>,
     verb_id: Option<i32>,
-    person: Option<i8>,
-    number: Option<i8>,
-    tense: Option<i8>,
-    mood: Option<i8>,
-    voice: Option<i8>,
+    person: Option<i32>,
+    number: Option<i32>,
+    tense: Option<i32>,
+    mood: Option<i32>,
+    voice: Option<i32>,
     answer: Option<String>,
     correct_answer: Option<String>,
-    is_correct: Option<i8>,
+    is_correct: Option<bool>,
     time: Option<String>,
     timed_out: Option<bool>,
     mf_pressed: Option<bool>,
@@ -206,11 +204,11 @@ pub struct MoveResult {
 #[derive(Deserialize,Serialize)]
 pub struct AskQuery {
     session_id: Uuid,
-    person: i8,
-    number: i8,
-    tense: i8,
-    voice: i8,
-    mood: i8,
+    person: i32,
+    number: i32,
+    tense: i32,
+    voice: i32,
+    mood: i32,
     verb: i32,
 }
 
@@ -224,16 +222,16 @@ pub struct SessionState {
     is_correct: Option<bool>,
     correct_answer:Option<String>,
     verb: Option<i32>,
-    person: Option<i8>,
-    number: Option<i8>,
-    tense: Option<i8>,
-    voice: Option<i8>,
-    mood: Option<i8>,
-    person_prev: Option<i8>,
-    number_prev: Option<i8>,
-    tense_prev: Option<i8>,
-    voice_prev: Option<i8>,
-    mood_prev: Option<i8>,
+    person: Option<i32>,
+    number: Option<i32>,
+    tense: Option<i32>,
+    voice: Option<i32>,
+    mood: Option<i32>,
+    person_prev: Option<i32>,
+    number_prev: Option<i32>,
+    tense_prev: Option<i32>,
+    voice_prev: Option<i32>,
+    mood_prev: Option<i32>,
     time: Option<String>, //time for prev answer
     response_to:String,
     success:bool,
@@ -757,27 +755,48 @@ mod tests {
     use super::*;
     use actix_web::{test, web, App};
     use crate::libhc::*;
+    use sqlx::Executor;
 
     #[test]
     async fn test_index_post() {
 
         let verbs = load_verbs("pp.txt");
         
-        let db_path = "sqlite::memory:";
-        let options = SqliteConnectOptions::from_str(&db_path)
+        // let db_path = "sqlite::memory:";
+        // let options = SqliteConnectOptions::from_str(&db_path)
+        //     .expect("Could not connect to db.")
+        //     .foreign_keys(true)
+        //     .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
+        //     .read_only(false)
+        //     .collation("PolytonicGreek", |l, r| {
+        //         l.to_lowercase().cmp(&r.to_lowercase())
+        //     });
+    
+        // let db = HcSqliteDb { db: SqlitePool::connect_with(options)
+        //         .await
+        //         .expect("Could not connect to db.")
+        //     };
+    
+        // let res = db.create_db().await;
+        // if res.is_err() {
+        //     println!("error: {:?}", res);
+        // }
+
+        let db = HcSqliteDb { db: PgPoolOptions::new()
+            .max_connections(5)
+            .connect("postgres://jwm:1234@localhost/hctest")
+            .await
             .expect("Could not connect to db.")
-            .foreign_keys(true)
-            .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
-            .read_only(false)
-            .collation("PolytonicGreek", |l, r| {
-                l.to_lowercase().cmp(&r.to_lowercase())
-            });
+        };
     
-        let db = HcSqliteDb { db: SqlitePool::connect_with(options)
-                .await
-                .expect("Could not connect to db.")
-            };
-    
+        // let hcdb = HcSqliteDb { db: SqlitePool::connect_with(options)
+        //     .await
+        //     .expect("Could not connect to db.")
+        // };
+        let _ = db.db.execute("DROP TABLE IF EXISTS moves;").await;
+        let _ = db.db.execute("DROP TABLE IF EXISTS sessions;").await;
+        let _ = db.db.execute("DROP TABLE IF EXISTS users;").await;
+
         let res = db.create_db().await;
         if res.is_err() {
             println!("error: {:?}", res);

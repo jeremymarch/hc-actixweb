@@ -79,7 +79,7 @@ impl HcSqliteDb {
         user_id: Uuid,
         highest_unit: Option<i32>,
         opponent_id: Option<Uuid>,
-        max_changes: i8,
+        max_changes: i32,
         practice_reps_per_verb: Option<i32>,
         timestamp: i64,
     ) -> Result<Uuid, sqlx::Error> {
@@ -87,16 +87,7 @@ impl HcSqliteDb {
 
         let uuid = sqlx::types::Uuid::new_v4();
 
-        let query = r#"INSERT INTO sessions VALUES ($1,$2,$3,$4,'',$5,0,0,$6,$7);"#;
-        
-        // println!("query: {:?}", sqlx::query::<Postgres>(query).bind(uuid)
-        // .bind(user_id)
-        // .bind(opponent_id)
-        // .bind(highest_unit)
-        // .bind(2)
-        // .bind(practice_reps_per_verb)
-        // .bind(timestamp).sql() );
-
+        let query = r#"INSERT INTO sessions VALUES ($1,$2,$3,$4,NULL,$5,0,0,$6,$7);"#;
         let _res = sqlx::query(query)
             .bind(uuid)
             .bind(user_id)
@@ -255,11 +246,11 @@ impl HcSqliteDb {
         &self,
         user_id: Option<Uuid>,
         session_id: Uuid,
-        person: i8,
-        number: i8,
-        tense: i8,
-        mood: i8,
-        voice: i8,
+        person: i32,
+        number: i32,
+        tense: i32,
+        mood: i32,
+        voice: i32,
         verb_id: i32,
         timestamp:i64,
     ) -> Result<Uuid, sqlx::Error> {
@@ -288,11 +279,11 @@ impl HcSqliteDb {
         tx: &'a mut sqlx::Transaction<'b, Postgres>,
         user_id: Option<Uuid>,
         session_id: Uuid,
-        person: i8,
-        number: i8,
-        tense: i8,
-        mood: i8,
-        voice: i8,
+        person: i32,
+        number: i32,
+        tense: i32,
+        mood: i32,
+        voice: i32,
         verb_id: i32,
         timestamp:i64,
     ) -> Result<Uuid, sqlx::Error> {
@@ -412,7 +403,7 @@ impl HcSqliteDb {
     password TEXT, 
     email TEXT,
     user_type INT NOT NULL DEFAULT 0,
-    timestamp INT NOT NULL DEFAULT 0,
+    timestamp BIGINT NOT NULL DEFAULT 0,
     UNIQUE(user_name)
     );"#;
 
@@ -430,7 +421,7 @@ impl HcSqliteDb {
     challenger_score INT,
     challenged_score INT,
     practice_reps_per_verb INT,
-    timestamp INT NOT NULL DEFAULT 0,
+    timestamp BIGINT NOT NULL DEFAULT 0,
     FOREIGN KEY (challenger_user_id) REFERENCES users(user_id), 
     FOREIGN KEY (challenged_user_id) REFERENCES users(user_id)
     );"#;
@@ -451,12 +442,12 @@ impl HcSqliteDb {
     voice INT, 
     answer TEXT,
     correct_answer TEXT,
-    is_correct INT,
+    is_correct BOOL,
     time TEXT, 
-    timed_out INT, 
-    mf_pressed INT, 
-    asktimestamp INT NOT NULL DEFAULT 0, 
-    answeredtimestamp INT, 
+    timed_out BOOL, 
+    mf_pressed BOOL, 
+    asktimestamp BIGINT NOT NULL DEFAULT 0, 
+    answeredtimestamp BIGINT, 
     FOREIGN KEY (ask_user_id) REFERENCES users(user_id), 
     FOREIGN KEY (answer_user_id) REFERENCES users(user_id), 
     FOREIGN KEY (session_id) REFERENCES sessions(session_id) 
