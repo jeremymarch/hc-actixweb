@@ -717,7 +717,7 @@ async fn main() -> io::Result<()> {
             .wrap(middleware::Compress::default()) // enable automatic response compression - usually register this first
             .wrap(SessionMiddleware::builder(
                 CookieSessionStore::default(), secret_key.clone())
-                    .cookie_secure(false) //cookie_secure must be false if testing without https
+                    .cookie_secure(true) //cookie_secure must be false if testing without https
                     .cookie_same_site(actix_web::cookie::SameSite::Strict)
                     .cookie_content_security(actix_session::config::CookieContentSecurity::Private)
                     .session_lifecycle(
