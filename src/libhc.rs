@@ -37,6 +37,7 @@ pub async fn get_session_state(
     tx.commit().await?;
     Ok(r)
 }
+
 pub async fn get_session_state_tx<'a, 'b>(
     tx: &'a mut sqlx::Transaction<'b, sqlx::Sqlite>,
     db: &HcSqliteDb,
@@ -202,7 +203,6 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
 
     let s = db.get_session_tx(&mut tx, info.session_id).await?;
     if user_id != s.challenger_user_id && Some(user_id) != s.challenged_user_id {
-        println!("HERE1");
         return Err(sqlx::Error::RowNotFound);
     }
 
@@ -210,18 +210,16 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
     let m = match db.get_last_move_tx(&mut tx, info.session_id).await {
         Ok(m) => {
             if m.ask_user_id == Some(user_id) {
-                println!("HERE2");
                 return Err(sqlx::Error::RowNotFound);//same user cannot answer question they asked
             }
             else if m.is_correct.is_some() {
-                println!("HERE3");
                 return Err(sqlx::Error::RowNotFound);//previous question must not already be answered
             }
             else {
                 m
             }
          },
-        Err(_) => { println!("HERE4");return Err(sqlx::Error::RowNotFound); } //this is first move, nothing to answer
+        Err(_) => { return Err(sqlx::Error::RowNotFound); } //this is first move, nothing to answer
     };
 
     //test answer to get correct_answer and is_correct

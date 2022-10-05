@@ -441,7 +441,7 @@ a {color:blue;}
 		//add letter and any combining diacritics to the buffer as code points
 		for (var i = 0; i < len && i < wasmBufferLength; i++) {
 			wasmBuffer0[i] = origChars.codePointAt(i);
-			console.log("accent1: " + origChars.codePointAt(i));
+			//console.log("accent1: " + origChars.codePointAt(i));
 		}
 		//console.log("accent1a: " + len + ", " + key);
 		len = accentSyllableWASM(wasmBuffer0.byteOffset, len, key, 1, parseInt(unicodeMode) );
@@ -476,7 +476,11 @@ a {color:blue;}
 			//console.log("handlekey1: " + charCode);
 			var key = String.fromCharCode(charCode);
 	
-			if (charCode && charCode > 64 && charCode < 123) //transliterate letter
+            if (charCode && charCode == 13) { //enter key
+                submit_clicked();
+                return false;
+            }
+			else if (charCode && charCode > 64 && charCode < 123) //transliterate letter
 			{
 				//newLetter = accentSyllable("", key.codePointAt(0));
 				newLetter = String.fromCharCode( transliterateWASM( key.codePointAt(0) ) );
@@ -484,6 +488,7 @@ a {color:blue;}
 			}
 			else if (charCode && charCode > 47 && charCode < 58) //number: 0-9 are 48-57
 			{ 
+                //console.log("handlekey2: " + charCode + ", " + val.length);
 				//underdot,rough,smooth,acute,grave,circ,macron,breve,iotasub,diaeresis
 				var diacriticKeys = [11,5,6,1,3,2,4,10,7,9];
 				var hckey = diacriticKeys[ parseInt(key) ];
@@ -514,7 +519,11 @@ a {color:blue;}
                 e.preventDefault(); //called by default when keypress is attached with jquery and returning false
 				return false;
 			}
-		}    
+		}
+        if (charCode && charCode > 47 && charCode < 58) {
+            e.stopPropagation();
+            e.preventDefault();
+        }
 		return true; //this allows most punctuation to pass through
 	}
     
@@ -1135,6 +1144,7 @@ a {color:blue;}
         }
         global_session_state = data;
         submitbutton.disabled = false;
+        submitbutton.focus();
         document.querySelector("#mfbutton").disabled = true;
         //mark (in)correct, show correct answer
         document.querySelector("#correctanswer").style.visibility = "visible";
