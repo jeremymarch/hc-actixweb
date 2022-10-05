@@ -712,7 +712,7 @@ async fn main() -> io::Result<()> {
     HttpServer::new(move || {
 
         App::new()
-            .app_data(load_verbs("pp.txt"))
+            //.app_data(load_verbs("pp.txt"))
             .app_data(hcdb.clone())
             .wrap(middleware::Compress::default()) // enable automatic response compression - usually register this first
             .wrap(SessionMiddleware::builder(
