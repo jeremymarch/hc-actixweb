@@ -663,9 +663,14 @@ async fn main() -> io::Result<()> {
     //     .max_connections(5)
     //     .connect("postgres://jwm:1234@localhost/hc").await?;
 
+    //e.g. export HOPLITE_DB=postgres://jwm:1234@localhost/hc
+    let db_string = std::env::var("HOPLITE_DB").unwrap_or_else(|_| {
+        panic!("Environment variable for db string not set: HOPLITE_DB.")
+    });
+
     let hcdb = HcSqliteDb { db: PgPoolOptions::new()
         .max_connections(5)
-        .connect("postgres://jwm:1234@localhost/hc")
+        .connect(&db_string)
         .await
         .expect("Could not connect to db.")
     };
