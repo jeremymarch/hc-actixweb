@@ -52,6 +52,8 @@ use chrono::prelude::*;
 
 use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::SqlitePool;
+use sqlx::postgres::PgPool;
+use sqlx::postgres::PgPoolOptions;
 use sqlx::FromRow;
 use sqlx::types::Uuid;
 use std::str::FromStr;
@@ -69,7 +71,8 @@ async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
 
 #[derive(Clone)]
 pub struct HcSqliteDb {
-    db:SqlitePool,
+    //db:SqlitePool,
+    db: sqlx::postgres::PgPool,
 }
 
 // pub trait HcDb {
@@ -99,7 +102,7 @@ pub enum MoveType {
 
 #[derive(Deserialize,Serialize,PartialEq,Eq,Debug)]
 pub struct HCVerbOption {
-    id:u32,
+    id:i32,
     verb:String,
 }
 
@@ -125,7 +128,7 @@ pub struct CreateSessionQuery {
     qtype:String,
     unit: String,
     opponent:String,
-    practice_reps_per_verb:Option<u32>,
+    practice_reps_per_verb:Option<i32>,
 }
 
 #[derive(Deserialize,Serialize, FromRow)]
@@ -158,7 +161,7 @@ pub struct UserResult {
     user_name: String,
     password: String,
     email: String,
-    user_type: u32,
+    user_type: i32,
     timestamp: i64,
 }
 
@@ -167,15 +170,15 @@ pub struct SessionResult {
     session_id: Uuid, 
     challenger_user_id: Uuid,
     challenged_user_id: Option<Uuid>,
-    highest_unit: Option<u32>,
+    highest_unit: Option<i32>,
     custom_verbs: Option<String>, 
-    max_changes: u8,
-    challenger_score: Option<u32>,
-    challenged_score: Option<u32>,
-    practice_reps_per_verb: Option<u32>,
+    max_changes: i8,
+    challenger_score: Option<i32>,
+    challenged_score: Option<i32>,
+    practice_reps_per_verb: Option<i32>,
     timestamp: i64,
-    // challenger_score:Option<u32>,
-    // challenged_score:Option<u32>,
+    // challenger_score:Option<i32>,
+    // challenged_score:Option<i32>,
 }
 
 #[derive(Deserialize, Serialize, FromRow)]
@@ -184,15 +187,15 @@ pub struct MoveResult {
     session_id: sqlx::types::Uuid,
     ask_user_id: Option<sqlx::types::Uuid>,
     answer_user_id: Option<sqlx::types::Uuid>,
-    verb_id: Option<u32>,
-    person: Option<u8>,
-    number: Option<u8>,
-    tense: Option<u8>,
-    mood: Option<u8>,
-    voice: Option<u8>,
+    verb_id: Option<i32>,
+    person: Option<i8>,
+    number: Option<i8>,
+    tense: Option<i8>,
+    mood: Option<i8>,
+    voice: Option<i8>,
     answer: Option<String>,
     correct_answer: Option<String>,
-    is_correct: Option<u8>,
+    is_correct: Option<i8>,
     time: Option<String>,
     timed_out: Option<bool>,
     mf_pressed: Option<bool>,
@@ -203,12 +206,12 @@ pub struct MoveResult {
 #[derive(Deserialize,Serialize)]
 pub struct AskQuery {
     session_id: Uuid,
-    person: u8,
-    number: u8,
-    tense: u8,
-    voice: u8,
-    mood: u8,
-    verb: u32,
+    person: i8,
+    number: i8,
+    tense: i8,
+    voice: i8,
+    mood: i8,
+    verb: i32,
 }
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Eq)]
@@ -220,17 +223,17 @@ pub struct SessionState {
     answer:Option<String>,
     is_correct: Option<bool>,
     correct_answer:Option<String>,
-    verb: Option<u32>,
-    person: Option<u8>,
-    number: Option<u8>,
-    tense: Option<u8>,
-    voice: Option<u8>,
-    mood: Option<u8>,
-    person_prev: Option<u8>,
-    number_prev: Option<u8>,
-    tense_prev: Option<u8>,
-    voice_prev: Option<u8>,
-    mood_prev: Option<u8>,
+    verb: Option<i32>,
+    person: Option<i8>,
+    number: Option<i8>,
+    tense: Option<i8>,
+    voice: Option<i8>,
+    mood: Option<i8>,
+    person_prev: Option<i8>,
+    number_prev: Option<i8>,
+    tense_prev: Option<i8>,
+    voice_prev: Option<i8>,
+    mood_prev: Option<i8>,
     time: Option<String>, //time for prev answer
     response_to:String,
     success:bool,
@@ -645,25 +648,34 @@ async fn main() -> io::Result<()> {
     // let db_path = std::env::var("GKVOCABDB_DB_PATH").unwrap_or_else(|_| {
     //     panic!("Environment variable for sqlite path not set: GKVOCABDB_DB_PATH.")
     // });
-    let db_path = "testing.sqlite?mode=rwc";
 
-    let options = SqliteConnectOptions::from_str(db_path)
-        .expect("Could not connect to db.")
-        .foreign_keys(true)
-        .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
-        .read_only(false)
-        .collation("PolytonicGreek", |l, r| {
-            l.to_lowercase().cmp(&r.to_lowercase())
-        });
+
+    // let db_path = "testing.sqlite?mode=rwc";
+    // let options = SqliteConnectOptions::from_str(db_path)
+    //     .expect("Could not connect to db.")
+    //     .foreign_keys(true)
+    //     .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
+    //     .read_only(false)
+    //     .collation("PolytonicGreek", |l, r| {
+    //         l.to_lowercase().cmp(&r.to_lowercase())
+    //     });
+
 
     // let pool = PgPoolOptions::new()
     //     .max_connections(5)
-    //     .connect("postgres://postgres:password@localhost/test").await?;
+    //     .connect("postgres://jwm:1234@localhost/hc").await?;
 
-    let hcdb = HcSqliteDb { db: SqlitePool::connect_with(options)
+    let hcdb = HcSqliteDb { db: PgPoolOptions::new()
+        .max_connections(5)
+        .connect("postgres://jwm:1234@localhost/hc")
         .await
         .expect("Could not connect to db.")
     };
+
+    // let hcdb = HcSqliteDb { db: SqlitePool::connect_with(options)
+    //     .await
+    //     .expect("Could not connect to db.")
+    // };
 
     let res = hcdb.create_db().await;
     if res.is_err() {

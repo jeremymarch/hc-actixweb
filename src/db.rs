@@ -28,6 +28,10 @@ use crate::MoveType;
 use crate::HcSqliteDb;
 use sqlx::TransactionManager;
 use sqlx::Transaction;
+use sqlx::postgres::PgRow;
+use sqlx::Postgres;
+use sqlx::Execute;
+
 impl HcSqliteDb {
 
     // pub async fn begin_tx(&self) -> Result<Transaction<sqlx::Sqlite>, sqlx::Error> {
@@ -44,7 +48,7 @@ impl HcSqliteDb {
         password:&str,
     ) -> Result<Uuid, sqlx::Error> {
 
-        let query = "SELECT user_id,user_name,password,email,user_type,timestamp FROM users WHERE user_name = ? AND password = ? LIMIT 1;";
+        let query = "SELECT user_id,user_name,password,email,user_type,timestamp FROM users WHERE user_name = $1 AND password = $2 LIMIT 1;";
         let res:UserResult = sqlx::query_as(query)
             .bind(username)
             .bind(password)
@@ -59,7 +63,7 @@ impl HcSqliteDb {
         username:&str,
     ) -> Result<UserResult, sqlx::Error> {
 
-        let query = "SELECT user_id,user_name,password,email,user_type,timestamp FROM users WHERE user_name = ? LIMIT 1;";
+        let query = "SELECT user_id,user_name,password,email,user_type,timestamp FROM users WHERE user_name = $1 LIMIT 1;";
         let res:UserResult = sqlx::query_as(query)
             .bind(username)
             .fetch_one(&self.db)
@@ -69,36 +73,45 @@ impl HcSqliteDb {
     }
 
 
+    
+    pub async fn insert_session(
+        &self,
+        user_id: Uuid,
+        highest_unit: Option<i32>,
+        opponent_id: Option<Uuid>,
+        max_changes: i8,
+        practice_reps_per_verb: Option<i32>,
+        timestamp: i64,
+    ) -> Result<Uuid, sqlx::Error> {
+        let mut tx = self.db.begin().await?;
 
-        pub async fn insert_session(
-            &self,
-            user_id: Uuid,
-            highest_unit: Option<u32>,
-            opponent_id: Option<Uuid>,
-            max_changes: u8,
-            practice_reps_per_verb: Option<u32>,
-            timestamp: i64,
-        ) -> Result<Uuid, sqlx::Error> {
-            let mut tx = self.db.begin().await?;
+        let uuid = sqlx::types::Uuid::new_v4();
 
-            let uuid = sqlx::types::Uuid::new_v4();
+        let query = r#"INSERT INTO sessions VALUES ($1,$2,$3,$4,'',$5,0,0,$6,$7);"#;
+        
+        // println!("query: {:?}", sqlx::query::<Postgres>(query).bind(uuid)
+        // .bind(user_id)
+        // .bind(opponent_id)
+        // .bind(highest_unit)
+        // .bind(2)
+        // .bind(practice_reps_per_verb)
+        // .bind(timestamp).sql() );
 
-            let query = r#"INSERT INTO sessions VALUES (?,?,?,?,"",?,0,0,?,?);"#;
-            let _res = sqlx::query(query)
-                .bind(uuid)
-                .bind(user_id)
-                .bind(opponent_id)
-                .bind(highest_unit)
-                .bind(max_changes)
-                .bind(practice_reps_per_verb)
-                .bind(timestamp)
-                .execute(&mut tx)
-                .await?;
+        let _res = sqlx::query(query)
+            .bind(uuid)
+            .bind(user_id)
+            .bind(opponent_id)
+            .bind(highest_unit)
+            .bind(max_changes)
+            .bind(practice_reps_per_verb)
+            .bind(timestamp)
+            .execute(&mut tx)
+            .await?;
 
-            tx.commit().await?;
+        tx.commit().await?;
 
-            Ok(uuid)
-        }
+        Ok(uuid)
+    }
 
 
     pub async fn get_sessions(
@@ -110,13 +123,13 @@ impl HcSqliteDb {
         //strftime('%Y-%m-%d %H:%M:%S', DATETIME(timestamp, 'unixepoch')) as timestamp, 
         //    ORDER BY updated DESC \
         let query = "SELECT session_id AS session_id, challenged_user_id AS challenged, challenged_user_id AS opponent_user_id, b.user_name AS username, \
-        strftime('%Y-%m-%d %H:%M:%S', DATETIME(a.timestamp, 'unixepoch')) as timestamp \
+        a.timestamp as timestamp \
         FROM sessions a LEFT JOIN users b ON a.challenged_user_id = b.user_id \
-        where challenger_user_id = ? \
+        where challenger_user_id = $1 \
         UNION SELECT session_id AS session_id, challenged_user_id AS challenged, challenged_user_id AS opponent_user_id, b.user_name AS username, \
-        strftime('%Y-%m-%d %H:%M:%S', DATETIME(a.timestamp, 'unixepoch')) as timestamp \
+        a.timestamp as timestamp \
         FROM sessions a LEFT JOIN users b ON a.challenger_user_id = b.user_id \
-        where challenged_user_id  = ? \
+        where challenged_user_id  = $2 \
         ORDER BY timestamp DESC \
         LIMIT 20000;";
 
@@ -124,7 +137,7 @@ impl HcSqliteDb {
         let res: Vec<SessionsListQuery> = sqlx::query(query)
             .bind(user_id)
             .bind(user_id)
-            .map(|rec: SqliteRow| {
+            .map(|rec: PgRow| {
                 SessionsListQuery { session_id: rec.get("session_id"), challenged:rec.get("challenged"), opponent:rec.get("opponent_user_id"), opponent_name: rec.get("username"),timestamp:rec.get("timestamp"), myturn:false, move_type:MoveType::Practice }
             })
             .fetch_all(&mut tx)
@@ -143,13 +156,13 @@ impl HcSqliteDb {
     }
 
     pub async fn get_last_move_tx<'a, 'b>(&self,
-        tx: &'a mut sqlx::Transaction<'b, sqlx::Sqlite>,
+        tx: &'a mut sqlx::Transaction<'b, Postgres>,
         session_id: sqlx::types::Uuid,
     ) -> Result<MoveResult, sqlx::Error> {
 
         let query = "SELECT * \
         FROM moves \
-        where session_id = ? \
+        where session_id = $1 \
         ORDER BY asktimestamp DESC \
         LIMIT 1;";
 
@@ -163,13 +176,13 @@ impl HcSqliteDb {
     }
 
     pub async fn get_last_two_moves<'a, 'b>(&self,
-        tx: &'a mut sqlx::Transaction<'b, sqlx::Sqlite>,
+        tx: &'a mut sqlx::Transaction<'b, Postgres>,
         session_id: sqlx::types::Uuid,
     ) -> Result<Vec<MoveResult>, sqlx::Error> {
         
         let query = "SELECT * \
             FROM moves \
-            where session_id = ? \
+            where session_id = $1 \
             ORDER BY asktimestamp DESC \
             LIMIT 2;";
         
@@ -189,7 +202,7 @@ impl HcSqliteDb {
         
         let query = "SELECT * \
         FROM sessions \
-        where session_id = ? \
+        where session_id = $1 \
         LIMIT 1;";
 
         let res: SessionResult = sqlx::query_as(query)
@@ -201,13 +214,13 @@ impl HcSqliteDb {
     }
 
     pub async fn get_session_tx<'a, 'b>(&self,
-        tx: &'a mut sqlx::Transaction<'b, sqlx::Sqlite>,
+        tx: &'a mut sqlx::Transaction<'b, Postgres>,
         session_id: sqlx::types::Uuid,
     ) -> Result<SessionResult, sqlx::Error> {
 
         let query = "SELECT * \
         FROM sessions \
-        where session_id = ? \
+        where session_id = $1 \
         LIMIT 1;";
 
         let res: SessionResult = sqlx::query_as(query)
@@ -221,15 +234,15 @@ impl HcSqliteDb {
     pub async fn get_used_verbs(
         &self,
         session_id: sqlx::types::Uuid,
-    ) -> Result<Vec<u32>, sqlx::Error> {
+    ) -> Result<Vec<i32>, sqlx::Error> {
 
         let query = "SELECT verb_id \
         FROM moves \
-        where verb_id IS NOT NULL AND session_id = ?;";
+        where verb_id IS NOT NULL AND session_id = $1;";
 
-        let res: Vec<u32> = sqlx::query(query)
+        let res: Vec<i32> = sqlx::query(query)
             .bind(session_id)
-            .map(|rec: SqliteRow| {
+            .map(|rec: PgRow| {
                 rec.get("verb_id")
             })
             .fetch_all(&self.db)
@@ -242,12 +255,12 @@ impl HcSqliteDb {
         &self,
         user_id: Option<Uuid>,
         session_id: Uuid,
-        person: u8,
-        number: u8,
-        tense: u8,
-        mood: u8,
-        voice: u8,
-        verb_id: u32,
+        person: i8,
+        number: i8,
+        tense: i8,
+        mood: i8,
+        voice: i8,
+        verb_id: i32,
         timestamp:i64,
     ) -> Result<Uuid, sqlx::Error> {
         let mut tx = self.db.begin().await?;
@@ -272,21 +285,21 @@ impl HcSqliteDb {
 
     pub async fn insert_ask_move_tx<'a, 'b>(
         &self,
-        tx: &'a mut sqlx::Transaction<'b, sqlx::Sqlite>,
+        tx: &'a mut sqlx::Transaction<'b, Postgres>,
         user_id: Option<Uuid>,
         session_id: Uuid,
-        person: u8,
-        number: u8,
-        tense: u8,
-        mood: u8,
-        voice: u8,
-        verb_id: u32,
+        person: i8,
+        number: i8,
+        tense: i8,
+        mood: i8,
+        voice: i8,
+        verb_id: i32,
         timestamp:i64,
     ) -> Result<Uuid, sqlx::Error> {
 
         let uuid = sqlx::types::Uuid::new_v4();
 
-        let query = "INSERT INTO moves VALUES (?,?,?,NULL,?,?,?,?,?,?,NULL,NULL,NULL,NULL,NULL,NULL,?, NULL);";
+        let query = "INSERT INTO moves VALUES ($1,$2,$3,NULL,$4,$5,$6,$7,$8,$9,NULL,NULL,NULL,NULL,NULL,NULL,$10, NULL);";
         let _res = sqlx::query(query)
             .bind(uuid)
             .bind(session_id)
@@ -339,7 +352,7 @@ impl HcSqliteDb {
 
     pub async fn update_answer_move_tx<'a, 'b>(
         &self,
-        tx: &'a mut sqlx::Transaction<'b, sqlx::Sqlite>,
+        tx: &'a mut sqlx::Transaction<'b, Postgres>,
         session_id: Uuid,
         user_id: Uuid,
         answer: &str,
@@ -353,7 +366,7 @@ impl HcSqliteDb {
 
         let m = self.get_last_move_tx(&mut *tx, session_id).await?;
 
-        let query = "UPDATE moves SET answer_user_id=?, answer=?, correct_answer=?, is_correct=?, time=?, mf_pressed=?, timed_out=?, answeredtimestamp=? WHERE move_id=?;";
+        let query = "UPDATE moves SET answer_user_id=$1, answer=$2, correct_answer=$3, is_correct=$4, time=$5, mf_pressed=$6, timed_out=$7, answeredtimestamp=$8 WHERE move_id=$9;";
         let _res = sqlx::query(query)
             .bind(user_id)
             .bind(answer)
@@ -377,7 +390,7 @@ impl HcSqliteDb {
         }
 
         let uuid = sqlx::types::Uuid::new_v4();
-        let query = "INSERT INTO users VALUES (?,?,?,?,0,?);";
+        let query = "INSERT INTO users VALUES ($1,$2,$3,$4,0,$5);";
         let _res = sqlx::query(query)
             .bind(uuid)
             .bind(username)
@@ -394,23 +407,23 @@ impl HcSqliteDb {
         let mut tx = self.db.begin().await?;
 
         let query = r#"CREATE TABLE IF NOT EXISTS users ( 
-    user_id BLOB PRIMARY KEY NOT NULL, 
+    user_id UUID PRIMARY KEY NOT NULL, 
     user_name TEXT, 
     password TEXT, 
     email TEXT,
     user_type INT NOT NULL DEFAULT 0,
     timestamp INT NOT NULL DEFAULT 0,
     UNIQUE(user_name)
-    ) STRICT;"#;
+    );"#;
 
         let _res = sqlx::query(query)
             .execute(&mut tx)
             .await?;
 
         let query = r#"CREATE TABLE IF NOT EXISTS sessions ( 
-    session_id BLOB PRIMARY KEY NOT NULL, 
-    challenger_user_id BLOB, 
-    challenged_user_id BLOB, 
+    session_id UUID PRIMARY KEY NOT NULL, 
+    challenger_user_id UUID, 
+    challenged_user_id UUID, 
     highest_unit INT,
     custom_verbs TEXT, 
     max_changes INT,
@@ -420,16 +433,16 @@ impl HcSqliteDb {
     timestamp INT NOT NULL DEFAULT 0,
     FOREIGN KEY (challenger_user_id) REFERENCES users(user_id), 
     FOREIGN KEY (challenged_user_id) REFERENCES users(user_id)
-    ) STRICT;"#;
+    );"#;
         let _res = sqlx::query(query)
             .execute(&mut tx)
             .await?;
 
         let query = r#"CREATE TABLE IF NOT EXISTS moves ( 
-    move_id BLOB PRIMARY KEY NOT NULL, 
-    session_id BLOB, 
-    ask_user_id BLOB, 
-    answer_user_id BLOB, 
+    move_id UUID PRIMARY KEY NOT NULL, 
+    session_id UUID, 
+    ask_user_id UUID, 
+    answer_user_id UUID, 
     verb_id INT, 
     person INT, 
     number INT, 
@@ -447,7 +460,7 @@ impl HcSqliteDb {
     FOREIGN KEY (ask_user_id) REFERENCES users(user_id), 
     FOREIGN KEY (answer_user_id) REFERENCES users(user_id), 
     FOREIGN KEY (session_id) REFERENCES sessions(session_id) 
-    ) STRICT;"#;
+    );"#;
         let _res = sqlx::query(query)
             .execute(&mut tx)
             .await?;
@@ -457,7 +470,7 @@ impl HcSqliteDb {
             .execute(&mut tx)
             .await?;
 
-        let query = "REPLACE INTO users VALUES (?,?,?,?,0,?);";
+        let query = "INSERT INTO users VALUES ($1,$2,$3,$4,0,$5) ON CONFLICT DO NOTHING;";
         let uuid = Uuid::from_u128(0x8CD36EFFDF5744FF953B29A473D12347);//sqlx::types::Uuid::new_v4();
         let _res = sqlx::query(query)
             .bind(uuid)
