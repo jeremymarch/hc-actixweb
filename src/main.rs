@@ -854,17 +854,17 @@ async fn main() -> io::Result<()> {
             .app_data(load_verbs("pp.txt"))
             .app_data(hcdb.clone())
             .wrap(middleware::Compress::default()) // enable automatic response compression - usually register this first
-            // .wrap(SessionMiddleware::builder(
-            //     CookieSessionStore::default(), secret_key.clone())
-            //         .cookie_secure(false) //cookie_secure must be false if testing without https
-            //         .cookie_same_site(actix_web::cookie::SameSite::Strict)
-            //         .cookie_content_security(actix_session::config::CookieContentSecurity::Private)
-            //         .session_lifecycle(
-            //             PersistentSession::default().session_ttl(Duration::seconds(SECS_IN_10_YEARS))
-            //         )
-            //         .cookie_name(String::from("hcid"))
-            //         .build())
-            //.wrap(message_framework.clone())
+            .wrap(SessionMiddleware::builder(
+                CookieSessionStore::default(), secret_key.clone())
+                    .cookie_secure(true) //cookie_secure must be false if testing without https
+                    .cookie_same_site(actix_web::cookie::SameSite::Strict)
+                    .cookie_content_security(actix_session::config::CookieContentSecurity::Private)
+                    .session_lifecycle(
+                        PersistentSession::default().session_ttl(Duration::seconds(SECS_IN_10_YEARS))
+                    )
+                    .cookie_name(String::from("hcid"))
+                    .build())
+            .wrap(message_framework.clone())
             .wrap(middleware::Logger::default()) // enable logger - always register Actix Web Logger middleware last
             .configure(config)
     })
