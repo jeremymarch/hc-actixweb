@@ -764,13 +764,13 @@ fn load_verbs(path:&str) -> Vec<Arc<HcGreekVerb>> {
     //     }
     // }
     let pp_lines = PPS.split("\n");
-    for (idx, line) in pp_lines.enumerate() {
-        
-            if !line.starts_with('#') && line.len() > 0 { //skip commented lines
-                //println!("line: {}", line);
-                verbs.push(Arc::new(HcGreekVerb::from_string_with_properties(idx as u32, &line).unwrap()));
+    for (idx, line) in pp_lines.enumerate() {        
+        if !line.starts_with('#') && line.len() > 0 { //skip commented lines
+            if let Some(l) = HcGreekVerb::from_string_with_properties(idx as u32, &line) {
+                //println!("line: {} {}", idx, line);
+                verbs.push(Arc::new(l));
             }
-        
+        }
     }
 
     verbs
@@ -864,7 +864,7 @@ async fn main() -> io::Result<()> {
                     )
                     .cookie_name(String::from("hcid"))
                     .build())
-            .wrap(message_framework.clone())
+            //.wrap(message_framework.clone())
             .wrap(middleware::Logger::default()) // enable logger - always register Actix Web Logger middleware last
             .configure(config)
     })
