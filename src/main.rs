@@ -803,26 +803,26 @@ async fn main() -> io::Result<()> {
     //     .connect("postgres://jwm:1234@localhost/hc").await?;
 
     //e.g. export HOPLITE_DB=postgres://jwm:1234@localhost/hc
-    let db_string = std::env::var("HOPLITE_DB").unwrap_or_else(|_| {
-        panic!("Environment variable for db string not set: HOPLITE_DB.")
-    });
+    // let db_string = std::env::var("HOPLITE_DB").unwrap_or_else(|_| {
+    //     panic!("Environment variable for db string not set: HOPLITE_DB.")
+    // });
 
-    let hcdb = HcSqliteDb { db: PgPoolOptions::new()
-        .max_connections(5)
-        .connect(&db_string)
-        .await
-        .expect("Could not connect to db.")
-    };
-
-    // let hcdb = HcSqliteDb { db: SqlitePool::connect_with(options)
+    // let hcdb = HcSqliteDb { db: PgPoolOptions::new()
+    //     .max_connections(5)
+    //     .connect(&db_string)
     //     .await
     //     .expect("Could not connect to db.")
     // };
 
-    let res = hcdb.create_db().await;
-    if res.is_err() {
-        println!("error: {:?}", res);
-    }
+    // // let hcdb = HcSqliteDb { db: SqlitePool::connect_with(options)
+    // //     .await
+    // //     .expect("Could not connect to db.")
+    // // };
+
+    // let res = hcdb.create_db().await;
+    // if res.is_err() {
+    //     println!("error: {:?}", res);
+    // }
 
     //1. to make a new key:
     // let secret_key = Key::generate(); // only for testing: should use same key from .env file/variable, else have to login again on each restart
@@ -852,7 +852,7 @@ async fn main() -> io::Result<()> {
 
         App::new()
             .app_data(load_verbs("pp.txt"))
-            .app_data(hcdb.clone())
+            //.app_data(hcdb.clone())
             .wrap(middleware::Compress::default()) // enable automatic response compression - usually register this first
             .wrap(SessionMiddleware::builder(
                 CookieSessionStore::default(), secret_key.clone())
