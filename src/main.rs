@@ -851,21 +851,6 @@ async fn main() -> io::Result<()> {
     HttpServer::new(move || {
 
         App::new()
-            .app_data(load_verbs("pp.txt"))
-            //.app_data(hcdb.clone())
-            .wrap(middleware::Compress::default()) // enable automatic response compression - usually register this first
-            .wrap(SessionMiddleware::builder(
-                CookieSessionStore::default(), secret_key.clone())
-                    .cookie_secure(true) //cookie_secure must be false if testing without https
-                    .cookie_same_site(actix_web::cookie::SameSite::Strict)
-                    .cookie_content_security(actix_session::config::CookieContentSecurity::Private)
-                    .session_lifecycle(
-                        PersistentSession::default().session_ttl(Duration::seconds(SECS_IN_10_YEARS))
-                    )
-                    .cookie_name(String::from("hcid"))
-                    .build())
-            .wrap(message_framework.clone())
-            .wrap(middleware::Logger::default()) // enable logger - always register Actix Web Logger middleware last
             .configure(config)
     })
     .bind("0.0.0.0:8088")?
@@ -874,19 +859,7 @@ async fn main() -> io::Result<()> {
 }
 
 fn config(cfg: &mut web::ServiceConfig) {
-    cfg.route("/login", web::get().to(login::login_get))
-        .route("/login", web::post().to(login::login_post))
-        .route("/newuser", web::get().to(login::new_user_get))
-        .route("/newuser", web::post().to(login::new_user_post))
-        .route("/logout", web::get().to(login::logout))
-        .service(web::resource("/healthzzz").route(web::get().to(health_check)))
-        .service(web::resource("/enter").route(web::post().to(enter)))
-        .service(web::resource("/new").route(web::post().to(create_session)))
-        .service(web::resource("/list").route(web::post().to(get_sessions)))
-        .service(web::resource("/getmove").route(web::post().to(get_move)))
-        .service(web::resource("/ask").route(web::post().to(ask)))
-        .service(web::resource("/mf").route(web::post().to(mf)))
-        .service(
+    cfg.service(
             fs::Files::new("/", "./static")
                 .prefer_utf8(true)
                 .index_file("index.html"),
