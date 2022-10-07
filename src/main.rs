@@ -751,7 +751,7 @@ fn map_sqlx_error(e: sqlx::Error) -> PhilologusError {
     }
 }
 
-fn load_verbs(path:&str) -> Vec<Arc<HcGreekVerb>> {
+fn load_verbs(_path:&str) -> Vec<Arc<HcGreekVerb>> {
     let mut verbs = vec![];
     // if let Ok(pp_file) = File::open(path) {
     //     let pp_reader = BufReader::new(pp_file);
@@ -767,7 +767,7 @@ fn load_verbs(path:&str) -> Vec<Arc<HcGreekVerb>> {
     for (idx, line) in pp_lines.enumerate() {
         
             if !line.starts_with('#') && line.len() > 0 { //skip commented lines
-                println!("line: {}", line);
+                //println!("line: {}", line);
                 verbs.push(Arc::new(HcGreekVerb::from_string_with_properties(idx as u32, &line).unwrap()));
             }
         
