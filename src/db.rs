@@ -155,11 +155,12 @@ impl HcSqliteDb {
         FROM moves \
         where session_id = $1 \
         ORDER BY asktimestamp DESC \
-        LIMIT 1;";
+        LIMIT $2;";
 
         //println!("query: {} {:?}", query, user_id);
         let res: MoveResult = sqlx::query_as(query)
             .bind(session_id)
+            .bind(1)
             .fetch_one(&mut *tx)
             .await?;
             
@@ -175,11 +176,12 @@ impl HcSqliteDb {
             FROM moves \
             where session_id = $1 \
             ORDER BY asktimestamp DESC \
-            LIMIT 2;";
+            LIMIT $2;";
         
         //println!("query: {} {:?}", query, user_id);
         let res: Vec<MoveResult> = sqlx::query_as(query)
             .bind(session_id)
+            .bind(2)
             .fetch_all(&mut *tx)
             .await?;
             

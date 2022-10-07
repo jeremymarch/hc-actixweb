@@ -75,7 +75,7 @@ pub struct HcSqliteDb {
     db: sqlx::postgres::PgPool,
 }
 
-const pps:&str = r##"παιδεύω, παιδεύσω, ἐπαίδευσα, πεπαίδευκα, πεπαίδευμαι, ἐπαιδεύθην % 2
+static PPS:&str = r##"παιδεύω, παιδεύσω, ἐπαίδευσα, πεπαίδευκα, πεπαίδευμαι, ἐπαιδεύθην % 2
 πέμπω, πέμψω, ἔπεμψα, πέπομφα, πέπεμμαι, ἐπέμφθην % 2
 κελεύω, κελεύσω, ἐκέλευσα, κεκέλευκα, κεκέλευσμαι, ἐκελεύσθην % 2
 λῡ́ω, λῡ́σω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην % 2
@@ -763,7 +763,7 @@ fn load_verbs(_path:&str) -> Vec<Arc<HcGreekVerb>> {
     //         }
     //     }
     // }
-    let pp_lines = pps.split("\n");
+    let pp_lines = PPS.split("\n");
     for (idx, line) in pp_lines.enumerate() {
         
             if !line.starts_with('#') && line.len() > 0 { //skip commented lines
@@ -848,6 +848,8 @@ async fn main() -> io::Result<()> {
     let message_store = CookieMessageStore::builder( secret_key.clone() /*Key::from(hmac_secret.expose_secret().as_bytes())*/ ).build();
     let message_framework = FlashMessagesFramework::builder(message_store).build();
     
+    let cookie_secure = !cfg!(debug_assertions); //cookie is secure for release, not secure for debug builds
+
     HttpServer::new(move || {
 
         App::new()
@@ -856,7 +858,7 @@ async fn main() -> io::Result<()> {
             .wrap(middleware::Compress::default()) // enable automatic response compression - usually register this first
             .wrap(SessionMiddleware::builder(
                 CookieSessionStore::default(), secret_key.clone())
-                    .cookie_secure(true) //cookie_secure must be false if testing without https
+                    .cookie_secure(cookie_secure) //cookie_secure must be false if testing without https
                     .cookie_same_site(actix_web::cookie::SameSite::Strict)
                     .cookie_content_security(actix_session::config::CookieContentSecurity::Private)
                     .session_lifecycle(
