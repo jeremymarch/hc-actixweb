@@ -780,90 +780,15 @@ fn load_verbs(path:&str) -> Vec<Arc<HcGreekVerb>> {
 async fn main() -> io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=info");
     env_logger::init();
-
-    //e.g. export GKVOCABDB_DB_PATH=sqlite://db.sqlite?mode=rwc
-    // let db_path = std::env::var("GKVOCABDB_DB_PATH").unwrap_or_else(|_| {
-    //     panic!("Environment variable for sqlite path not set: GKVOCABDB_DB_PATH.")
-    // });
-
-
-    // let db_path = "testing.sqlite?mode=rwc";
-    // let options = SqliteConnectOptions::from_str(db_path)
-    //     .expect("Could not connect to db.")
-    //     .foreign_keys(true)
-    //     .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
-    //     .read_only(false)
-    //     .collation("PolytonicGreek", |l, r| {
-    //         l.to_lowercase().cmp(&r.to_lowercase())
-    //     });
-
-
-    // let pool = PgPoolOptions::new()
-    //     .max_connections(5)
-    //     .connect("postgres://jwm:1234@localhost/hc").await?;
-
-    //e.g. export HOPLITE_DB=postgres://jwm:1234@localhost/hc
-    // let db_string = std::env::var("HOPLITE_DB").unwrap_or_else(|_| {
-    //     panic!("Environment variable for db string not set: HOPLITE_DB.")
-    // });
-
-    // let hcdb = HcSqliteDb { db: PgPoolOptions::new()
-    //     .max_connections(5)
-    //     .connect(&db_string)
-    //     .await
-    //     .expect("Could not connect to db.")
-    // };
-
-    // // let hcdb = HcSqliteDb { db: SqlitePool::connect_with(options)
-    // //     .await
-    // //     .expect("Could not connect to db.")
-    // // };
-
-    // let res = hcdb.create_db().await;
-    // if res.is_err() {
-    //     println!("error: {:?}", res);
-    // }
-
-    //1. to make a new key:
-    // let secret_key = Key::generate(); // only for testing: should use same key from .env file/variable, else have to login again on each restart
-    // println!("key: {}{}", hex::encode( secret_key.signing() ), hex::encode( secret_key.encryption() ));
-
-    //2. a simple example testing key
-    //https://docs.rs/cookie/0.16.0/src/cookie/secure/key.rs.html#35
-    // let key: &Vec<u8> = &(0..64).collect();
-    // let secret_key = Key::from(key);
-
-    //3. to load from string
-    // let string_key_64_bytes = "c67ba35ad969a3f4255085c359f120bae733c5a5756187aaffab31c7c84628b6a9a02ce6a1e923a945609a884f913f83ea50675b184514b5d15c3e1a606a3fd2";
-    // let key = hex::decode(string_key_64_bytes).expect("Decoding key failed");
-    // let secret_key = Key::from(&key);
-
-    //4. or load from env
-    //e.g. export HCKEY=56d520157194bdab7aec18755508bf6d063be7a203ddb61ebaa203eb1335c2ab3c13ecba7fc548f4563ac1d6af0b94e6720377228230f210ac51707389bf3285
-    // let string_key_64_bytes = std::env::var("HCKEY").unwrap_or_else(|_| { panic!("Key env not set.") });
-    // let key = hex::decode(string_key_64_bytes).expect("Decoding key failed");
-    // let secret_key = Key::from(&key);
-
-    // //for flash messages on login page
-    // let message_store = CookieMessageStore::builder( secret_key.clone() /*Key::from(hmac_secret.expose_secret().as_bytes())*/ ).build();
-    // let message_framework = FlashMessagesFramework::builder(message_store).build();
     
     HttpServer::new(move || {
 
         App::new()
-            .configure(config)
-    })
-    .bind("0.0.0.0:8088")?
-    .run()
-    .await
-}
-
-fn config(cfg: &mut web::ServiceConfig) {
-    cfg.service(
-            fs::Files::new("/", "./static")
-                .prefer_utf8(true)
-                .index_file("index.html"),
-        );
+        .service(fs::Files::new("/", "./static").prefer_utf8(true).index_file("index.html"))
+})
+.bind("0.0.0.0:8088")?
+.run()
+.await
 }
 
 
