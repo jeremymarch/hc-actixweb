@@ -26,11 +26,8 @@ use crate::MoveResult;
 use crate::SessionResult;
 use crate::MoveType;
 use crate::HcSqliteDb;
-use sqlx::TransactionManager;
-//use sqlx::Transaction;
 use sqlx::postgres::PgRow;
 use sqlx::Postgres;
-//use sqlx::Execute;
 
 impl HcSqliteDb {
 

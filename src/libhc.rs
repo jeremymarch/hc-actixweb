@@ -161,7 +161,7 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
     //let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
     //let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR).unwrap());
     let idx = if m.verb_id.is_some() && (m.verb_id.unwrap() as usize) < verbs.len() { m.verb_id.unwrap() as usize } else { 0 };
-    let mut prev_form = HcGreekVerbForm {verb:verbs[idx].clone(), person:HcPerson::from_i32(m.person.unwrap()), number:HcNumber::from_i32(m.number.unwrap()), tense:HcTense::from_i32(m.tense.unwrap()), voice:HcVoice::from_i32(m.voice.unwrap()), mood:HcMood::from_i32(m.mood.unwrap()), gender:None, case:None};
+    let prev_form = HcGreekVerbForm {verb:verbs[idx].clone(), person:HcPerson::from_i32(m.person.unwrap()), number:HcNumber::from_i32(m.number.unwrap()), tense:HcTense::from_i32(m.tense.unwrap()), voice:HcVoice::from_i32(m.voice.unwrap()), mood:HcMood::from_i32(m.mood.unwrap()), gender:None, case:None};
 
     let correct_answer_result = prev_form.get_form(false);
     let correct_answer = match correct_answer_result {
@@ -261,7 +261,7 @@ pub async fn hc_mf_pressed(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, tim
     //let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
     //let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR).unwrap());
     let idx = if m.verb_id.is_some() && (m.verb_id.unwrap() as usize) < verbs.len() { m.verb_id.unwrap() as usize } else { 0 };
-    let mut prev_form = HcGreekVerbForm {verb:verbs[idx].clone(), person:HcPerson::from_i32(m.person.unwrap()), number:HcNumber::from_i32(m.number.unwrap()), tense:HcTense::from_i32(m.tense.unwrap()), voice:HcVoice::from_i32(m.voice.unwrap()), mood:HcMood::from_i32(m.mood.unwrap()), gender:None, case:None};
+    let prev_form = HcGreekVerbForm {verb:verbs[idx].clone(), person:HcPerson::from_i32(m.person.unwrap()), number:HcNumber::from_i32(m.number.unwrap()), tense:HcTense::from_i32(m.tense.unwrap()), voice:HcVoice::from_i32(m.voice.unwrap()), mood:HcMood::from_i32(m.mood.unwrap()), gender:None, case:None};
 
     let correct_answer = prev_form.get_form(false).unwrap().last().unwrap().form.replace(" /", ",");
 
