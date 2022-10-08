@@ -47,7 +47,7 @@ pub async fn get_session_state_tx<'a, 'b>(
 ) -> Result<SessionState, sqlx::Error> {
 
     let res = db.get_session_tx(&mut *tx, session_id).await?;
-    let m = db.get_last_two_moves(&mut *tx, session_id).await?;
+    let m = db.get_last_n_moves(&mut *tx, session_id, 2).await?;
 
     let first = if !m.is_empty() { Some(&m[0]) } else { None };
     let (myturn, move_type) = move_get_type(first, user_id, res.challenged_user_id);
@@ -202,6 +202,8 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
             }
         }
 
+        //pf = HcGreekVerbForm { verb: verbs[idx].clone(), person:HcPerson::Second, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender: None, case: None};
+
         //be sure this asktimestamp is at least one greater than previous one
         let new_time_stamp = if timestamp > m.asktimestamp { timestamp } else { m.asktimestamp + 1 };
         //ask
@@ -275,6 +277,8 @@ pub async fn hc_mf_pressed(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, tim
         res.success = true;
         res.mesg = Some("verb does have multiple forms".to_string());
         res.verbs = None;
+
+        tx.rollback().await?;
 
         Ok(res)
     }

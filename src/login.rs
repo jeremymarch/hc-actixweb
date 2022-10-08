@@ -66,6 +66,7 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
 <html lang="en">
     <head>
         <meta http-equiv="content-type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
         <title>Login</title>
         <script>
             function setTheme() {{
@@ -99,6 +100,7 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
             .dark INPUT {{ background-color:black;color:white;border: 2px solid white;border-radius: 6px; }}
             .dark TABLE {{ border:2px solid white; }}
             .dark BUTTON {{ background-color:black;color:white;border:1px solid white; }}
+            .dark a {{color:#03A5F3;}}
         </style>
     </head>
     <body>
@@ -128,8 +130,8 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
                         </td>
                     </tr>
                     <tr>
-                        <td colspan="2" align="center">
-                            <a href="newuser">Create User</a>
+                        <td colspan="2" align="right" style="padding-top:12px;">
+                            <a href="newuser">New User</a>
                         </td>
                     </tr>
                 </tbody>
@@ -196,6 +198,7 @@ pub async fn new_user_get(flash_messages: IncomingFlashMessages) -> Result<HttpR
 <html lang="en">
     <head>
         <meta http-equiv="content-type" content="text/html; charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
         <title>Login</title>
         <script>
             function setTheme() {{
@@ -239,6 +242,7 @@ pub async fn new_user_get(flash_messages: IncomingFlashMessages) -> Result<HttpR
             .dark INPUT {{ background-color:black;color:white;border: 2px solid white;border-radius: 6px; }}
             .dark TABLE {{ border:2px solid white; }}
             .dark BUTTON {{ background-color:black;color:white;border:1px solid white; }}
+            .dark a {{color:#03A5F3;}}
         </style>
     </head>
     <body>

@@ -253,23 +253,24 @@ a {color:blue;}
     </head>
     <body onload="start()">
         <div id="menubar">
-            <button id="refreshbutton" onclick="get_sessions()">refresh</button>
+            <button id="refreshbutton" onclick="get_sessions()" style="display:none;">refresh</button>
             <div style="padding:0px 20px"><a id="loginlink" href="login">login</a>
                 <span id="logoutlink" style="display:none;"><span id="username"></span> (<a href="logout">logout</a>)</span>
             </div>
             <div style="font-weight:bold;">HOPLITE CHALLENGE</div>
         </div>
-        <div id="listouter">
-        <div id="settings">
-            <table cellpadding="4" cellspacing="0">
-                <tr><td colspan="2">New Game</td></tr>
-                <tr><td>Top Unit:</td><td><input id="unitinput" type="text" value="20"/></td></tr>
-                <tr><td>Opponent:</td><td><input id="opponentinput" type="text"/></td></tr>
-                <tr><td align="center" colspan="2"><button id="creategamebutton" onclick="new_game_clicked()">Create Game</button></td></tr>
-            </table>
+        <div id="listouter" style="display:none;">
+            <div id="settings">
+                <table cellpadding="4" cellspacing="0">
+                    <tr><td colspan="2">New Game</td></tr>
+                    <tr><td>Top Unit:</td><td><input id="unitinput" type="text" value="20"/></td></tr>
+                    <tr><td>Opponent:</td><td><input id="opponentinput" type="text"/></td></tr>
+                    <tr><td align="center" colspan="2"><button id="creategamebutton" onclick="new_game_clicked()">Create Game</button></td></tr>
+                </table>
+            </div>
+            <div id="list"></div>
         </div>
-        <div id="list"></div>
-    </div>
+
         <div class="hcform">
         <div class="hbox">
             <button id="mfbutton" class="mfbutton" onclick="mf_clicked()" title="Multiple Forms Button">MF</button>
@@ -580,9 +581,11 @@ a {color:blue;}
         // }
         // else 
         if (data.response_to == "ask" && data.success) {
+            get_sessions();
             uiModeAskResponse(data);
         }
         else if ((data.response_to == "answerresponse" || data.response_to == "answerresponsepractice") && data.success) {
+            get_sessions();
             starting_form = data.starting_form;
             change_desc = data.change_desc;
             uiModeAnswerResponseReceived(data);
@@ -599,7 +602,7 @@ a {color:blue;}
             }
         }
         else if (data.response_to == "newsession" && data.success) {
-            
+            get_sessions();
         }
         else if (data.response_to == "getmoves" && data.success) {
             setUI(data);
@@ -608,9 +611,11 @@ a {color:blue;}
             let rows = "";
             for (var i = 0; i < data.sessions.length; i++) {
                 if (data.sessions[i].move_type != "FirstMoveTheirTurn") {
-                    rows += "<p class='gamerow" + ((data.sessions[i].myturn) ? " myturn" : "") + "' opponent='" + data.sessions[i].opponent_name + "'><a href='#' title='" + data.sessions[i].move_type + "'' onclick='get_move(this,\"" + data.sessions[i].session_id + "\");return false;'>" + ((data.sessions[i].move_type == "Practice") ? "Practice" : "Game") + ((data.sessions[i].opponent_name) ? " vs. " + data.sessions[i].opponent_name : "") + "</a> " + ((data.sessions[i].myturn) ? myturnIcon : "") + "</p>";
+                    rows += "<p class='gamerow" + ((data.sessions[i].myturn) ? " myturn" : "") + "' opponent='" + data.sessions[i].opponent_name + "'><a href='#' title='" + data.sessions[i].move_type + "'' onclick='get_move(this,\"" + data.sessions[i].session_id + "\");return false;'>" + ((data.sessions[i].move_type == "Practice") ? "Practice" : "Game") + ((data.sessions[i].opponent_name) ? " vs. " + data.sessions[i].opponent_name : "") + "</a> " + ((data.sessions[i].myturn && data.sessions[i].move_type != "Practice") ? myturnIcon : "") + "</p>";
                 }
             }
+            document.querySelector("#refreshbutton").style.display = "block";
+            document.querySelector("#listouter").style.display = "block";
             document.querySelector("#list").innerHTML = rows;
 
             if (data.username) {

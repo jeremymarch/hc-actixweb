@@ -68,8 +68,6 @@ impl HcSqliteDb {
 
         Ok(res)
     }
-
-
     
     pub async fn insert_session(
         &self,
@@ -164,11 +162,11 @@ impl HcSqliteDb {
         Ok(res)
     }
 
-    pub async fn get_last_two_moves<'a, 'b>(&self,
+    pub async fn get_last_n_moves<'a, 'b>(&self,
         tx: &'a mut sqlx::Transaction<'b, Postgres>,
         session_id: sqlx::types::Uuid,
+        n:u8,
     ) -> Result<Vec<MoveResult>, sqlx::Error> {
-        
         let query = "SELECT * \
             FROM moves \
             where session_id = $1 \
@@ -178,7 +176,7 @@ impl HcSqliteDb {
         //println!("query: {} {:?}", query, user_id);
         let res: Vec<MoveResult> = sqlx::query_as(query)
             .bind(session_id)
-            .bind(2)
+            .bind(n as i32)
             .fetch_all(&mut *tx)
             .await?;
             
