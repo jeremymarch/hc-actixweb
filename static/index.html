@@ -725,7 +725,7 @@ a {color:blue;}
         console.log("multiple forms clicked");
         if (!mfPressed) { //only allow clicking this once
             document.querySelector("#mfbutton").disabled = true;
-            
+
             add_seconds_to_time(seconds / 2);
             mfPressed = true;
 
@@ -934,6 +934,7 @@ a {color:blue;}
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.disabled = false;
         submitbutton.innerText = "Enter";
+        mfPressed = false;
         document.querySelector("#statusmesg").innerHTML = "Click enter to submit!"
         document.querySelector("#changedesc").innerHTML = loc_change_desc;
         document.querySelector("#answerform").value = "";
