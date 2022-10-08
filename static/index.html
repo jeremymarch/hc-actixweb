@@ -723,14 +723,18 @@ a {color:blue;}
     var timedOut = false;
     function mf_clicked() {
         console.log("multiple forms clicked");
-        add_seconds_to_time(seconds / 2);
-        mfPressed = true;
+        if (!mfPressed) { //only allow clicking this once
+            document.querySelector("#mfbutton").disabled = true;
+            
+            add_seconds_to_time(seconds / 2);
+            mfPressed = true;
 
-        let answer = document.querySelector("#answerform").value.trim();
-        let time = document.querySelector("#mainTime").innerText.trim();
-        console.log("MF clicked: " + answer + ", time: " + time + ", mfPressed: " + mfPressed + ", timedout: " + timedOut);
+            let answer = document.querySelector("#answerform").value.trim();
+            let time = document.querySelector("#mainTime").innerText.trim();
+            console.log("MF clicked: " + answer + ", time: " + time + ", mfPressed: " + mfPressed + ", timedout: " + timedOut);
 
-        send_mf(answer, time, mfPressed, timedOut);
+            send_mf(answer, time, mfPressed, timedOut);
+        }
     }
 
     function timeout() {
