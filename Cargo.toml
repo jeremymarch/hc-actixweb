@@ -32,7 +32,7 @@ uuid = { version = "1.1.2", features = ["v4", "serde"] }
 #polytonic-greek = { path = "../polytonic-greek" }
 #hoplite_verbs_rs = { path = "../hoplite_verbs_rs" }
 polytonic-greek = { git = "https://github.com/jeremymarch/polytonic-greek", version = "0.3.2" }
-hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.3.3" }
+hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.3.4" }
 
 [profile.release]
 opt-level = 3

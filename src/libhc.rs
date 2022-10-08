@@ -161,7 +161,7 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
     //let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
     //let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR).unwrap());
     let idx = if m.verb_id.is_some() && (m.verb_id.unwrap() as usize) < verbs.len() { m.verb_id.unwrap() as usize } else { 0 };
-    let prev_form = HcGreekVerbForm {verb:verbs[idx].clone(), person:HcPerson::from_i32(m.person.unwrap()), number:HcNumber::from_i32(m.number.unwrap()), tense:HcTense::from_i32(m.tense.unwrap()), voice:HcVoice::from_i32(m.voice.unwrap()), mood:HcMood::from_i32(m.mood.unwrap()), gender:None, case:None};
+    let prev_form = HcGreekVerbForm {verb:verbs[idx].clone(), person:HcPerson::from_i16(m.person.unwrap()), number:HcNumber::from_i16(m.number.unwrap()), tense:HcTense::from_i16(m.tense.unwrap()), voice:HcVoice::from_i16(m.voice.unwrap()), mood:HcMood::from_i16(m.mood.unwrap()), gender:None, case:None};
 
     let correct_answer_result = prev_form.get_form(false);
     let correct_answer = match correct_answer_result {
@@ -207,8 +207,8 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
         //be sure this asktimestamp is at least one greater than previous one
         let new_time_stamp = if timestamp > m.asktimestamp { timestamp } else { m.asktimestamp + 1 };
         //ask
-        let _ = db.insert_ask_move_tx(&mut tx, None, info.session_id, pf.person.to_i32(), pf.number.to_i32(), pf.tense.to_i32(), 
-            pf.mood.to_i32(), pf.voice.to_i32(), pf.verb.id as i32, new_time_stamp).await?;
+        let _ = db.insert_ask_move_tx(&mut tx, None, info.session_id, pf.person.to_i16(), pf.number.to_i16(), pf.tense.to_i16(), 
+            pf.mood.to_i16(), pf.voice.to_i16(), pf.verb.id as i32, new_time_stamp).await?;
     }
     
     let mut res = get_session_state_tx(&mut tx, db, user_id, info.session_id).await?;
@@ -263,7 +263,7 @@ pub async fn hc_mf_pressed(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, tim
     //let luw = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
     //let luwverb = Arc::new(HcGreekVerb::from_string(1, luw, REGULAR).unwrap());
     let idx = if m.verb_id.is_some() && (m.verb_id.unwrap() as usize) < verbs.len() { m.verb_id.unwrap() as usize } else { 0 };
-    let prev_form = HcGreekVerbForm {verb:verbs[idx].clone(), person:HcPerson::from_i32(m.person.unwrap()), number:HcNumber::from_i32(m.number.unwrap()), tense:HcTense::from_i32(m.tense.unwrap()), voice:HcVoice::from_i32(m.voice.unwrap()), mood:HcMood::from_i32(m.mood.unwrap()), gender:None, case:None};
+    let prev_form = HcGreekVerbForm {verb:verbs[idx].clone(), person:HcPerson::from_i16(m.person.unwrap()), number:HcNumber::from_i16(m.number.unwrap()), tense:HcTense::from_i16(m.tense.unwrap()), voice:HcVoice::from_i16(m.voice.unwrap()), mood:HcMood::from_i16(m.mood.unwrap()), gender:None, case:None};
 
     let correct_answer = prev_form.get_form(false).unwrap().last().unwrap().form.replace(" /", ",");
 
@@ -319,8 +319,8 @@ pub async fn hc_mf_pressed(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, tim
             //be sure this asktimestamp is at least one greater than previous one
             let new_time_stamp = if timestamp > m.asktimestamp { timestamp } else { m.asktimestamp + 1 };
             //ask
-            let _ = db.insert_ask_move_tx(&mut tx, None, info.session_id, pf.person.to_i32(), pf.number.to_i32(), pf.tense.to_i32(), 
-                pf.mood.to_i32(), pf.voice.to_i32(), pf.verb.id as i32, new_time_stamp).await?;
+            let _ = db.insert_ask_move_tx(&mut tx, None, info.session_id, pf.person.to_i16(), pf.number.to_i16(), pf.tense.to_i16(), 
+                pf.mood.to_i16(), pf.voice.to_i16(), pf.verb.id as i32, new_time_stamp).await?;
         }
 
         let mut res = get_session_state_tx(&mut tx, db, user_id, info.session_id).await?;
@@ -453,7 +453,7 @@ pub async fn hc_insert_session(db: &HcSqliteDb, user_id:Uuid, info:&CreateSessio
         return Err(sqlx::Error::RowNotFound); //todo oops
     }
 
-    let highest_unit = if let Ok(v) = info.unit.parse::<i32>() { Some(v) } else { None };
+    let highest_unit = if let Ok(v) = info.unit.parse::<i16>() { Some(v) } else { None };
     let max_changes = 2;
 
     match db.insert_session(user_id, highest_unit, opponent_user_id, max_changes, info.practice_reps_per_verb, timestamp).await {
@@ -477,8 +477,8 @@ pub async fn hc_insert_session(db: &HcSqliteDb, user_id:Uuid, info:&CreateSessio
                 }
 
                 //ask
-                let _ = db.insert_ask_move(None, session_uuid, prev_form.person.to_i32(), prev_form.number.to_i32(), prev_form.tense.to_i32(), 
-                    prev_form.mood.to_i32(), prev_form.voice.to_i32(), prev_form.verb.id as i32, timestamp + 1).await?;
+                let _ = db.insert_ask_move(None, session_uuid, prev_form.person.to_i16(), prev_form.number.to_i16(), prev_form.tense.to_i16(), 
+                    prev_form.mood.to_i16(), prev_form.voice.to_i16(), prev_form.verb.id as i32, timestamp + 1).await?;
             }
             Ok(session_uuid)
         },
@@ -488,7 +488,7 @@ pub async fn hc_insert_session(db: &HcSqliteDb, user_id:Uuid, info:&CreateSessio
     }
 }
 
-pub async fn hc_get_available_verbs(db: &HcSqliteDb, _user_id:Uuid, session_id:Uuid, top_unit:Option<i32>, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<Vec<HCVerbOption>, sqlx::Error> { 
+pub async fn hc_get_available_verbs(db: &HcSqliteDb, _user_id:Uuid, session_id:Uuid, top_unit:Option<i16>, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<Vec<HCVerbOption>, sqlx::Error> { 
     let mut res_verbs:Vec<HCVerbOption> = vec![];
 
     let used_verbs = db.get_used_verbs(session_id).await?;

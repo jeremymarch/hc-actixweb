@@ -211,7 +211,7 @@ static PPS:&str = r##"παιδεύω, παιδεύσω, ἐπαίδευσα, π�
 //         highest_unit: Option<u32>,
 //         opponent_id: Option<Uuid>,
 //         max_changes: u8,
-//         practice_reps_per_verb: Option<u32>,
+//         practice_reps_per_verb: Option<i16>,
 //         timestamp: i64) -> Result<Uuid, sqlx::Error>;
 // }
 
@@ -257,7 +257,7 @@ pub struct CreateSessionQuery {
     qtype:String,
     unit: String,
     opponent:String,
-    practice_reps_per_verb:Option<i32>,
+    practice_reps_per_verb:Option<i16>,
 }
 
 #[derive(Deserialize,Serialize, FromRow)]
@@ -299,12 +299,12 @@ pub struct SessionResult {
     session_id: Uuid, 
     challenger_user_id: Uuid,
     challenged_user_id: Option<Uuid>,
-    highest_unit: Option<i32>,
+    highest_unit: Option<i16>,
     custom_verbs: Option<String>, 
-    max_changes: i32,
-    challenger_score: Option<i32>,
-    challenged_score: Option<i32>,
-    practice_reps_per_verb: Option<i32>,
+    max_changes: i16,
+    challenger_score: Option<i16>,
+    challenged_score: Option<i16>,
+    practice_reps_per_verb: Option<i16>,
     timestamp: i64,
 }
 
@@ -315,11 +315,11 @@ pub struct MoveResult {
     ask_user_id: Option<sqlx::types::Uuid>,
     answer_user_id: Option<sqlx::types::Uuid>,
     verb_id: Option<i32>,
-    person: Option<i32>,
-    number: Option<i32>,
-    tense: Option<i32>,
-    mood: Option<i32>,
-    voice: Option<i32>,
+    person: Option<i16>,
+    number: Option<i16>,
+    tense: Option<i16>,
+    mood: Option<i16>,
+    voice: Option<i16>,
     answer: Option<String>,
     correct_answer: Option<String>,
     is_correct: Option<bool>,
@@ -333,11 +333,11 @@ pub struct MoveResult {
 #[derive(Deserialize,Serialize)]
 pub struct AskQuery {
     session_id: Uuid,
-    person: i32,
-    number: i32,
-    tense: i32,
-    voice: i32,
-    mood: i32,
+    person: i16,
+    number: i16,
+    tense: i16,
+    voice: i16,
+    mood: i16,
     verb: i32,
 }
 
@@ -351,16 +351,16 @@ pub struct SessionState {
     is_correct: Option<bool>,
     correct_answer:Option<String>,
     verb: Option<i32>,
-    person: Option<i32>,
-    number: Option<i32>,
-    tense: Option<i32>,
-    voice: Option<i32>,
-    mood: Option<i32>,
-    person_prev: Option<i32>,
-    number_prev: Option<i32>,
-    tense_prev: Option<i32>,
-    voice_prev: Option<i32>,
-    mood_prev: Option<i32>,
+    person: Option<i16>,
+    number: Option<i16>,
+    tense: Option<i16>,
+    voice: Option<i16>,
+    mood: Option<i16>,
+    person_prev: Option<i16>,
+    number_prev: Option<i16>,
+    tense_prev: Option<i16>,
+    voice_prev: Option<i16>,
+    mood_prev: Option<i16>,
     time: Option<String>, //time for prev answer
     response_to:String,
     success:bool,
@@ -983,6 +983,9 @@ mod tests {
 
         //a valid ask
         let ask = hc_ask(&db, uuid1, &aq, timestamp, &verbs).await;
+        if ask.is_err() {
+            println!("error {:?}", ask);
+        }
         assert!(ask.is_ok());
 
         //check that we are preventing out-of-sequence asks
