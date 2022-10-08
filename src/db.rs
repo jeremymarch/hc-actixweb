@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use sqlx::sqlite::SqliteRow;
-use sqlx::{Row, SqlitePool};
+//use sqlx::sqlite::SqliteRow;
+use sqlx::{Row};
 use sqlx::types::Uuid;
 use crate::SessionsListQuery;
 use crate::UserResult;
@@ -27,10 +27,10 @@ use crate::SessionResult;
 use crate::MoveType;
 use crate::HcSqliteDb;
 use sqlx::TransactionManager;
-use sqlx::Transaction;
+//use sqlx::Transaction;
 use sqlx::postgres::PgRow;
 use sqlx::Postgres;
-use sqlx::Execute;
+//use sqlx::Execute;
 
 impl HcSqliteDb {
 

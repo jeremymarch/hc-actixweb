@@ -899,7 +899,7 @@ fn config(cfg: &mut web::ServiceConfig) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_web::{test, web, App};
+    use actix_web::{test/*, web, App*/};
     use crate::libhc::*;
     use sqlx::Executor;
 

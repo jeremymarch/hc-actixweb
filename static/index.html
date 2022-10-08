@@ -587,7 +587,7 @@ a {color:blue;}
             change_desc = data.change_desc;
             uiModeAnswerResponseReceived(data);
         }
-        else if (data.response_to == "mfpressedresponse" && data.success) {
+        else if ((data.response_to == "mfpressedresponse" || data.response_to == "mfpressedresponsepractice") && data.success) {
             if (data.is_correct == false) {
                 uiModeClickedEnter();
             
