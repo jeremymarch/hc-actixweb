@@ -191,10 +191,13 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
 
         //a = HcGreekVerbForm { verb: verbs[idx].clone(), person, number, tense, voice, mood, gender: None, case: None};
 
+        let mut pf:HcGreekVerbForm;
         loop {
             //println!("changing verb");
-            prev_form.change_params(2, &persons, &numbers, &tenses, &voices, &moods);
-            if let Ok(_ff) = prev_form.get_form(false) {
+            pf = prev_form.clone();
+
+            pf.change_params(2, &persons, &numbers, &tenses, &voices, &moods);
+            if let Ok(_ff) = pf.get_form(false) {
                 break;
             }
         }
@@ -202,8 +205,8 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
         //be sure this asktimestamp is at least one greater than previous one
         let new_time_stamp = if timestamp > m.asktimestamp { timestamp } else { m.asktimestamp + 1 };
         //ask
-        let _ = db.insert_ask_move_tx(&mut tx, None, info.session_id, prev_form.person.to_i32(), prev_form.number.to_i32(), prev_form.tense.to_i32(), 
-            prev_form.mood.to_i32(), prev_form.voice.to_i32(), prev_form.verb.id as i32, new_time_stamp).await?;
+        let _ = db.insert_ask_move_tx(&mut tx, None, info.session_id, pf.person.to_i32(), pf.number.to_i32(), pf.tense.to_i32(), 
+            pf.mood.to_i32(), pf.voice.to_i32(), pf.verb.id as i32, new_time_stamp).await?;
     }
     
     let mut res = get_session_state_tx(&mut tx, db, user_id, info.session_id).await?;
@@ -298,19 +301,22 @@ pub async fn hc_mf_pressed(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, tim
 
             //a = HcGreekVerbForm { verb: verbs[idx].clone(), person, number, tense, voice, mood, gender: None, case: None};
 
+            let mut pf:HcGreekVerbForm;
             loop {
                 //println!("changing verb");
-                prev_form.change_params(2, &persons, &numbers, &tenses, &voices, &moods);
-                if let Ok(_ff) = prev_form.get_form(false) {
+                pf = prev_form.clone();
+    
+                pf.change_params(2, &persons, &numbers, &tenses, &voices, &moods);
+                if let Ok(_ff) = pf.get_form(false) {
                     break;
                 }
             }
-
+    
             //be sure this asktimestamp is at least one greater than previous one
             let new_time_stamp = if timestamp > m.asktimestamp { timestamp } else { m.asktimestamp + 1 };
             //ask
-            let _ = db.insert_ask_move_tx(&mut tx, None, info.session_id, prev_form.person.to_i32(), prev_form.number.to_i32(), prev_form.tense.to_i32(), 
-                prev_form.mood.to_i32(), prev_form.voice.to_i32(), prev_form.verb.id as i32, new_time_stamp).await?;
+            let _ = db.insert_ask_move_tx(&mut tx, None, info.session_id, pf.person.to_i32(), pf.number.to_i32(), pf.tense.to_i32(), 
+                pf.mood.to_i32(), pf.voice.to_i32(), pf.verb.id as i32, new_time_stamp).await?;
         }
 
         let mut res = get_session_state_tx(&mut tx, db, user_id, info.session_id).await?;
