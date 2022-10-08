@@ -723,6 +723,7 @@ a {color:blue;}
     var timedOut = false;
     function mf_clicked() {
         console.log("multiple forms clicked");
+        add_seconds_to_time(seconds / 2);
         mfPressed = true;
 
         let answer = document.querySelector("#answerform").value.trim();
@@ -1160,6 +1161,9 @@ a {color:blue;}
     var countDownDate = null;
     var timerRunning = false;
     var seconds = 30;
+    function add_seconds_to_time(secs) {
+        countDownDate += (secs * 1000);
+    }
     function startTimer() {
         countDownDate = new Date().getTime() + (seconds * 1000);
         timer = setInterval(interval, 10);
