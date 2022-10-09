@@ -618,7 +618,15 @@ a {color:blue;}
             let rows = "";
             for (var i = 0; i < data.sessions.length; i++) {
                 if (data.sessions[i].move_type != "FirstMoveTheirTurn") {
-                    rows += "<p data-uuid='" + data.sessions[i].session_id +"' class='gamerow" + ((data.sessions[i].myturn) ? " myturn" : "") + "' opponent='" + data.sessions[i].opponent_name + "' title='" + data.sessions[i].move_type + "'' onclick='get_move(this);return false;'>" + ((data.sessions[i].move_type == "Practice") ? "Practice" : "Game") + ((data.sessions[i].opponent_name) ? " vs. " + data.sessions[i].opponent_name : "") + (data.sessions[i].move_type != "Practice" ? (" (" + data.sessions[i].my_score + " - " + data.sessions[i].their_score + ")") : "") + " " + ((data.sessions[i].myturn && data.sessions[i].move_type != "Practice") ? myturnIcon : "") + "</p>";
+                    rows += "<p data-uuid='" + data.sessions[i].session_id +"' ";
+                    rows += "class='gamerow" + ((data.sessions[i].myturn) ? " myturn" : "") + "' ";
+                    rows += (data.sessions[i].opponent_name ? "opponent='" + data.sessions[i].opponent_name + "' " : "");
+                    rows += "title='" + data.sessions[i].move_type + "' ";
+                    rows += "onclick='get_move(this);return false;'>";
+                    rows += ((data.sessions[i].move_type == "Practice") ? "Practice" : "Game");
+                    rows += ((data.sessions[i].opponent_name) ? " vs. " + data.sessions[i].opponent_name : "");
+                    rows += (data.sessions[i].move_type != "Practice" ? (" (" + data.sessions[i].my_score + " - " + data.sessions[i].their_score + ")") : "");
+                    rows += ((data.sessions[i].myturn && data.sessions[i].move_type != "Practice") ? myturnIcon : "") + "</p>";
                 }
             }
             document.querySelector("#refreshbutton").style.display = "block";
@@ -753,19 +761,19 @@ a {color:blue;}
     }
     
     var session_id = null;
-    function get_move(therow, sessionid) {
+    function get_move(thisrow) {
         document.querySelectorAll(".selectedGame").forEach((row) => {
             row.classList.remove("selectedGame");
         });        
-        therow.classList.add("selectedGame");
-        session_id = therow.getAttribute("data-uuid");//sessionid;
+        thisrow.classList.add("selectedGame");
 
-        let send_data = {session_id:session_id};
+        session_id = thisrow.getAttribute("data-uuid");
+        let send_data = { session_id: session_id };
         generic_send_request("getmove", send_data, null);
     }
 
     function get_sessions() {
-        let send_data = {practice:true,game:true};
+        let send_data = { practice: true, game: true };
         generic_send_request("list", send_data, null);
     }
 
