@@ -1080,8 +1080,6 @@ a {color:blue;}
             document.querySelector("#startingform").innerText = "";
             verbchooser.style.display = "inline-block";
             document.querySelector("#statusmesg").innerHTML = "Choose a verb and set all parameters";
-
-            
         }
         else {
             max_changes = 2;
@@ -1090,6 +1088,7 @@ a {color:blue;}
             document.querySelector("#verbchooser").style.display = "none";
             document.querySelector("#statusmesg").innerHTML = "Change up to (2) parameters";
         }
+        document.querySelector("#mainTime").innerHTML = "30:00";
         document.querySelector("#askparamsdiv").style.display = "block";
         document.querySelector("#changedesc").innerHTML = "";//desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
         //document.querySelector("#changedesc").style.display = "none";

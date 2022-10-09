@@ -1416,4 +1416,176 @@ mod tests {
         //println!("2: {:?}", ss_res2);
         assert!(ss2.unwrap() == ss_res2);
     }
+
+    #[test]
+    async fn test_practice() {
+
+        let verbs = load_verbs("pp.txt");
+        
+        // let db_path = "sqlite::memory:";
+        // let options = SqliteConnectOptions::from_str(&db_path)
+        //     .expect("Could not connect to db.")
+        //     .foreign_keys(true)
+        //     .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
+        //     .read_only(false)
+        //     .collation("PolytonicGreek", |l, r| {
+        //         l.to_lowercase().cmp(&r.to_lowercase())
+        //     });
+    
+        // let db = HcSqliteDb { db: SqlitePool::connect_with(options)
+        //         .await
+        //         .expect("Could not connect to db.")
+        //     };
+    
+        // let res = db.create_db().await;
+        // if res.is_err() {
+        //     println!("error: {:?}", res);
+        // }
+
+        let db = HcSqliteDb { db: PgPoolOptions::new()
+            .max_connections(5)
+            .connect("postgres://jwm:1234@localhost/hcpracticetest")
+            .await
+            .expect("Could not connect to db.")
+        };
+    
+        // let hcdb = HcSqliteDb { db: SqlitePool::connect_with(options)
+        //     .await
+        //     .expect("Could not connect to db.")
+        // };
+        let _ = db.db.execute("DROP TABLE IF EXISTS moves;").await;
+        let _ = db.db.execute("DROP TABLE IF EXISTS sessions;").await;
+        let _ = db.db.execute("DROP TABLE IF EXISTS users;").await;
+
+        let res = db.create_db().await;
+        if res.is_err() {
+            println!("error: {:?}", res);
+        }
+
+        let mut timestamp = get_timestamp();
+
+        // let uuid1 = Uuid::from_u128(0x8CD36EFFDF5744FF953B29A473D12347);
+        // let uuid2 = Uuid::from_u128(0xD75B0169E7C343838298136E3D63375C);
+        // let invalid_uuid = Uuid::from_u128(0x00000000000000000000000000000001);
+        let uuid1 = db.create_user("testuser1", "abcdabcd", "user1@blah.com", timestamp).await.unwrap();
+        let uuid2 = db.create_user("testuser2", "abcdabcd", "user2@blah.com", timestamp).await.unwrap();
+        let invalid_uuid = db.create_user("testuser3", "abcdabcd", "user3@blah.com", timestamp).await.unwrap();
+
+        let csq = CreateSessionQuery {
+            qtype:"abc".to_string(),
+            unit: "20".to_string(),
+            opponent: "".to_string(),
+            practice_reps_per_verb: Some(4),
+        };
+
+        let session_uuid = hc_insert_session(&db, uuid1, &csq, &verbs, timestamp).await;
+        assert!(res.is_ok());
+
+        let aq = AskQuery {
+            session_id: *session_uuid.as_ref().unwrap(),
+            person: 0,
+            number: 0,
+            tense: 0,
+            voice: 0,
+            mood: 0,
+            verb: 0,
+        };
+
+        //ask from invalid user should be blocked
+        let ask = hc_ask(&db, invalid_uuid, &aq, timestamp, &verbs).await;
+        assert!(ask.is_ok() == false);
+
+        //a valid ask
+        let ask = hc_ask(&db, uuid1, &aq, timestamp, &verbs).await;
+        assert!(ask.is_ok() == false);
+
+        let s = hc_get_sessions(&db, uuid1).await;
+        // let s_res = Ok([SessionsListQuery { session_id: 75d08792-ea12-40f6-a903-bd4e6aae2aad, 
+        //     challenged: Some(cffd0d33-6aab-45c0-9dc1-279ae4ecaafa), 
+        //     opponent: Some(cffd0d33-6aab-45c0-9dc1-279ae4ecaafa), 
+        //     opponent_name: Some("testuser2"), 
+        //     timestamp: 1665286722, 
+        //     myturn: false, 
+        //     move_type: AnswerTheirTurn, 
+        //     my_score: Some(0), 
+        //     their_score: Some(0) }]);
+
+        //println!("s: {:?}", s);
+        assert_eq!(s.as_ref().unwrap()[0].move_type, MoveType::Practice);
+        assert_eq!(s.as_ref().unwrap()[0].my_score, Some(0));
+        assert_eq!(s.as_ref().unwrap()[0].their_score, Some(0));
+
+        let m = GetMoveQuery {
+            session_id:*session_uuid.as_ref().unwrap(),
+        };
+
+        let ss = hc_get_move(&db, uuid1, &m, &verbs).await;
+
+        assert_eq!(ss.as_ref().unwrap().move_type, MoveType::Practice);
+        assert_eq!(ss.as_ref().unwrap().myturn, true);
+
+        // let ss_res = SessionState { 
+        //     session_id: *session_uuid.as_ref().unwrap(), 
+        //     move_type: MoveType::Practice, 
+        //     myturn: true, 
+        //     starting_form: Some("παιδεύω".to_string()), 
+        //     answer: None, 
+        //     is_correct: None, 
+        //     correct_answer: None, 
+        //     verb: Some(0), 
+        //     person: Some(0), 
+        //     number: Some(0), 
+        //     tense: Some(0), 
+        //     voice: Some(0), 
+        //     mood: Some(0), 
+        //     person_prev: None, 
+        //     number_prev: None, 
+        //     tense_prev: None, 
+        //     voice_prev: None, 
+        //     mood_prev: None, 
+        //     time: None, 
+        //     response_to: "getmoves".to_string(), 
+        //     success: true, 
+        //     mesg: None,
+        //     verbs: None,
+        // };
+
+        let answerq = AnswerQuery {
+            qtype: "abc".to_string(),
+            answer: "παιδεύω".to_string(),
+            time: "25:01".to_string(),
+            mf_pressed: false,
+            timed_out: false,
+            session_id:*session_uuid.as_ref().unwrap(),
+        };
+
+        //answer from invalid user should be blocked
+        let answer = hc_answer(&db, invalid_uuid, &answerq, timestamp, &verbs).await;
+        assert!(answer.is_ok() == false);
+
+        //a valid answer
+        let answer = hc_answer(&db, uuid1, &answerq, timestamp, &verbs).await;
+        assert!(answer.is_ok());
+        // Ok(SessionState { session_id: 1835f2a1-c896-4e7d-b526-b46855b95e23, 
+        //     move_type: Practice, 
+        //     myturn: true, 
+        //     starting_form: Some("παιδεύωμαι"), 
+        //     answer: None, 
+        //     is_correct: Some(false), 
+        //     correct_answer: Some("παιδεύωμαι"), 
+        //     verb: Some(0), 
+        //     person: Some(2), number: Some(0), tense: Some(0), voice: Some(0), mood: Some(1), 
+        //     person_prev: Some(0), number_prev: Some(0), tense_prev: Some(0), voice_prev: Some(2), mood_prev: Some(1), 
+        //     time: None, response_to: "answerresponsepractice", success: true, mesg: None, verbs: None })
+        //println!("{:?}", answer);
+        assert_eq!(answer.as_ref().unwrap().move_type, MoveType::Practice);
+        assert_eq!(answer.as_ref().unwrap().myturn, true);
+
+        let answer = hc_answer(&db, uuid1, &answerq, timestamp, &verbs).await;
+        assert!(answer.is_ok() == true);
+        let answer = hc_answer(&db, uuid1, &answerq, timestamp, &verbs).await;
+        assert!(answer.is_ok() == true);
+
+        //let ss = hc_get_move(&db, uuid1, &m, &verbs).await;
+    }
 }
