@@ -260,6 +260,7 @@ pub struct CreateSessionQuery {
     practice_reps_per_verb:Option<i16>,
 }
 
+#[derive(PartialEq,Debug)]
 #[derive(Deserialize,Serialize, FromRow)]
 pub struct SessionsListQuery {
     session_id: sqlx::types::Uuid,
@@ -990,6 +991,22 @@ mod tests {
         }
         assert!(ask.is_ok());
 
+        let s = hc_get_sessions(&db, uuid1).await;
+        // let s_res = Ok([SessionsListQuery { session_id: 75d08792-ea12-40f6-a903-bd4e6aae2aad, 
+        //     challenged: Some(cffd0d33-6aab-45c0-9dc1-279ae4ecaafa), 
+        //     opponent: Some(cffd0d33-6aab-45c0-9dc1-279ae4ecaafa), 
+        //     opponent_name: Some("testuser2"), 
+        //     timestamp: 1665286722, 
+        //     myturn: false, 
+        //     move_type: AnswerTheirTurn, 
+        //     my_score: Some(0), 
+        //     their_score: Some(0) }]);
+
+        //println!("s: {:?}", s);
+        assert_eq!(s.as_ref().unwrap()[0].move_type, MoveType::AnswerTheirTurn);
+        assert_eq!(s.as_ref().unwrap()[0].my_score, Some(0));
+        assert_eq!(s.as_ref().unwrap()[0].their_score, Some(0));
+
         //check that we are preventing out-of-sequence asks
         let ask = hc_ask(&db, uuid1, &aq, timestamp, &verbs).await;
         assert!(ask.is_ok() == false);
@@ -1234,6 +1251,31 @@ mod tests {
         let answer = hc_answer(&db, uuid1, &answerq, timestamp, &verbs).await;
         assert!(answer.is_ok());
         assert_eq!(answer.unwrap().is_correct.unwrap(), false);
+
+
+        let s = hc_get_sessions(&db, uuid1).await;
+        // let s_res = Ok([SessionsListQuery { 
+            // session_id: c152c43f-d52c-496b-ab34-da44ab61275c, 
+            // challenged: Some(0faa61fe-b89a-4f76-b1f3-1c39da26903f), 
+            // opponent: Some(0faa61fe-b89a-4f76-b1f3-1c39da26903f), 
+            // opponent_name: Some("testuser2"), 
+            // timestamp: 1665287228, 
+            // myturn: true, 
+            // move_type: FirstMoveMyTurn, 
+            // my_score: Some(0), 
+            // their_score: Some(1) }]);
+
+        //println!("s: {:?}", s);
+        assert_eq!(s.as_ref().unwrap()[0].move_type, MoveType::FirstMoveMyTurn);
+        assert_eq!(s.as_ref().unwrap()[0].my_score, Some(0));
+        assert_eq!(s.as_ref().unwrap()[0].their_score, Some(1));
+
+        let s = hc_get_sessions(&db, uuid2).await;
+        //println!("s: {:?}", s);
+        assert_eq!(s.as_ref().unwrap()[0].move_type, MoveType::AskTheirTurn);
+        assert_eq!(s.as_ref().unwrap()[0].my_score, Some(1));
+        assert_eq!(s.as_ref().unwrap()[0].their_score, Some(0));
+
 
         let ss = hc_get_move(&db, uuid1, &m, &verbs).await;
 

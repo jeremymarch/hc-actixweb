@@ -951,34 +951,10 @@ a {color:blue;}
         document.querySelector("#verbchooser").style.display = "none";
     }
 
-    function uiModeClickedContinue(loc_starting_form, loc_change_desc) {
-        let submitbutton = document.querySelector("#submitbutton");
-        mfPressed = false;
-        timedOut = false;
-        submitbutton.innerText = "Enter";
-        //display startform
-        document.querySelector("#startingform").innerText = loc_starting_form;
-        //display change desc
-        document.querySelector("#changedesc").innerHTML = loc_change_desc;
-        
-        //clear and enable text field
-        document.querySelector("#answerform").value = "";
-        document.querySelector("#answerform").disabled = false;
-        document.querySelector("#answerform").focus();
-
-        document.querySelector("#correctanswer").innerHTML = "";
-        document.querySelector("#correctanswer").style.visibility = "hidden";
-        document.querySelector("#mfbutton").disabled = true;
-        document.querySelector("#verbchooser").style.display = "none";
-
-        //start timer
-        startTimer();
-    }
-
     function uiModeWaitingForAnswer(data) {
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.disabled = true;
-        document.querySelector("#statusmesg").innerHTML = "Waiting for (user) to answer.";
+        document.querySelector("#statusmesg").innerHTML = "Waiting for opponent to answer.";
         document.querySelector("#answerform").value = "";
         document.querySelector("#answerform").disabled = true;
         document.querySelector("#correctanswer").innerHTML = "";
@@ -997,7 +973,7 @@ a {color:blue;}
     function uiModeWaitingForAsk(data) {
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.disabled = true;
-        document.querySelector("#statusmesg").innerHTML = "Waiting for (user) to ask.";
+        document.querySelector("#statusmesg").innerHTML = "Waiting for opponent to ask.";
         document.querySelector("#answerform").value = data.answer;
         document.querySelector("#answerform").disabled = true;
         
