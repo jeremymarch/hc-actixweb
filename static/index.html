@@ -256,6 +256,11 @@ a {color:blue;}
 .dark .gamerow {color:#03A5F3;}
 .dark .selectedGame {background-color: white;}
 
+@media only screen and (max-width: 800px) {
+  .hcform {
+    width:90%;
+  }
+}
     </style>
     </head>
     <body onload="start()">
@@ -617,17 +622,20 @@ a {color:blue;}
         else if (data.response_to == "getsessions" && data.success) {
             let rows = "";
             for (var i = 0; i < data.sessions.length; i++) {
-                if (data.sessions[i].move_type != "FirstMoveTheirTurn") {
-                    rows += "<p data-uuid='" + data.sessions[i].session_id +"' ";
-                    rows += "class='gamerow" + ((data.sessions[i].myturn) ? " myturn" : "") + "' ";
-                    rows += (data.sessions[i].opponent_name ? "opponent='" + data.sessions[i].opponent_name + "' " : "");
-                    rows += "title='" + data.sessions[i].move_type + "' ";
-                    rows += "onclick='get_move(this);return false;'>";
-                    rows += ((data.sessions[i].move_type == "Practice") ? "Practice" : "Game");
-                    rows += ((data.sessions[i].opponent_name) ? " vs. " + data.sessions[i].opponent_name : "");
-                    rows += (data.sessions[i].move_type != "Practice" ? (" (" + data.sessions[i].my_score + " - " + data.sessions[i].their_score + ")") : "");
-                    rows += ((data.sessions[i].myturn && data.sessions[i].move_type != "Practice") ? myturnIcon : "") + "</p>";
+                let s = data.sessions[i];
+                if (s.move_type != "FirstMoveTheirTurn") /* do not show if first move not asked yet and I did not start game */ {
+                    rows += "<p data-uuid='" + s.session_id +"' ";
+                    rows += "class='gamerow" + (s.myturn ? " myturn" : "");
+                    rows += (s.session_id == session_id ? " selectedGame" : "") + "' ";
+                    rows += (s.opponent_name ? "opponent='" + s.opponent_name + "' " : "");
+                    rows += "title='" + s.move_type + "' ";
+                    rows += "onclick='get_move(this)'>";
+                    rows += (s.move_type == "Practice" ? "Practice" : "Game");
+                    rows += (s.opponent_name ? " vs. " + s.opponent_name : "");
+                    rows += (s.move_type != "Practice" ? (" (" + s.my_score + " - " + s.their_score + ")") : "");
+                    rows += (s.myturn && s.move_type != "Practice" ? myturnIcon : "") + "</p>";
                 }
+                //document.querySelector(".gamerow[data-uuid='b72df91e-3a4c-4f1b-aeda-c14fea61def6']").style.backgroundColor = "blue";
             }
             document.querySelector("#refreshbutton").style.display = "block";
             document.querySelector("#listouter").style.display = "block";
