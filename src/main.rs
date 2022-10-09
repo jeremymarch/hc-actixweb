@@ -907,7 +907,7 @@ mod tests {
     use sqlx::Executor;
 
     #[test]
-    async fn test_index_post() {
+    async fn test_two_player() {
 
         let verbs = load_verbs("pp.txt");
         

@@ -193,7 +193,6 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
 
         let mut pf:HcGreekVerbForm;
         loop {
-            //println!("changing verb");
             pf = prev_form.clone();
 
             pf.change_params(2, &persons, &numbers, &tenses, &voices, &moods);
@@ -211,6 +210,7 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
             pf.mood.to_i16(), pf.voice.to_i16(), pf.verb.id as i32, new_time_stamp).await?;
     }
     else {
+        //add to other player's score if not practice and not correct
         if !is_correct {
             let user_to_score = if s.challenger_user_id == user_id { "challenged_score" } else { "challenger_score" };
             let points = 1;
@@ -282,7 +282,7 @@ pub async fn hc_mf_pressed(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, tim
         }
         res.response_to = "mfpressedresponse".to_string();
         res.success = true;
-        res.mesg = Some("verb does have multiple forms".to_string());
+        res.mesg = Some("verb *does* have multiple forms".to_string());
         res.verbs = None;
 
         tx.rollback().await?;
@@ -314,7 +314,6 @@ pub async fn hc_mf_pressed(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, tim
 
             let mut pf:HcGreekVerbForm;
             loop {
-                //println!("changing verb");
                 pf = prev_form.clone();
     
                 pf.change_params(2, &persons, &numbers, &tenses, &voices, &moods);
@@ -330,6 +329,7 @@ pub async fn hc_mf_pressed(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, tim
                 pf.mood.to_i16(), pf.voice.to_i16(), pf.verb.id as i32, new_time_stamp).await?;
         }
         else {
+            //add to other player's score if not practice and not correct
             if !is_correct {
                 let user_to_score = if s.challenger_user_id == user_id { "challenged_score" } else { "challenger_score" };
                 let points = 1;
@@ -354,7 +354,6 @@ pub async fn hc_mf_pressed(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, tim
             res.response_to = "mfpressedresponse".to_string();
         }
 
-        
         res.success = true;
         res.mesg = Some("verb does not have multiple forms".to_string());
         res.verbs = if res.move_type == MoveType::FirstMoveMyTurn && !is_correct { Some(hc_get_available_verbs(db, user_id, info.session_id, s.highest_unit, verbs).await.unwrap()) } else { None };

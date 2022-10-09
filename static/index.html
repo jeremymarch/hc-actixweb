@@ -991,7 +991,8 @@ a {color:blue;}
         }
         else {
             document.querySelector("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
-            document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + data.correct_answer;
+            document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || show_correct) ? data.correct_answer : "");
+
         }
         document.querySelector("#verbchooser").style.display = "none";
     }
@@ -1045,7 +1046,7 @@ a {color:blue;}
             document.querySelector("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
             document.querySelector("#answerform").value = data.answer;
             document.querySelector("#correctanswer").style.visibility = "visible";
-            document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + data.correct_answer;
+            document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || show_correct) ? data.correct_answer : "");
         }
         submitbutton.style.display = "block";
         submitbutton.disabled = false;
@@ -1094,7 +1095,8 @@ a {color:blue;}
         //document.querySelector("#changedesc").style.display = "none";
         document.querySelector("#answerform").value = "";
         document.querySelector("#correctanswer").style.visibility = "hidden";
-        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + data.correct_answer;
+        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || show_correct) ? data.correct_answer : "");
+
         //document.querySelector("#statusmesg").innerHTML = "Click Ask to ask the next form."
         // if (max_params_to_change == 5) {
         //     document.querySelector("#statusmesg").innerHTML = "Choose a verb and set all params.";
