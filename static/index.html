@@ -1112,6 +1112,7 @@ a {color:blue;}
         document.querySelector("#answerform").disabled = true;
     }
 
+    var show_correct = false;
     var practice = false;
     function uiModeAnswerResponseReceived(data) {
         let submitbutton = document.querySelector("#submitbutton");
@@ -1133,7 +1134,7 @@ a {color:blue;}
         document.querySelector("#mfbutton").disabled = true;
         //mark (in)correct, show correct answer
         document.querySelector("#correctanswer").style.visibility = "visible";
-        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + data.correct_answer;
+        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || show_correct) ? data.correct_answer : "");
         
     }
 
