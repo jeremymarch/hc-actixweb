@@ -611,7 +611,7 @@ a {color:blue;}
             let rows = "";
             for (var i = 0; i < data.sessions.length; i++) {
                 if (data.sessions[i].move_type != "FirstMoveTheirTurn") {
-                    rows += "<p class='gamerow" + ((data.sessions[i].myturn) ? " myturn" : "") + "' opponent='" + data.sessions[i].opponent_name + "'><a href='#' title='" + data.sessions[i].move_type + "'' onclick='get_move(this,\"" + data.sessions[i].session_id + "\");return false;'>" + ((data.sessions[i].move_type == "Practice") ? "Practice" : "Game") + ((data.sessions[i].opponent_name) ? " vs. " + data.sessions[i].opponent_name : "") + "</a> " + ((data.sessions[i].myturn && data.sessions[i].move_type != "Practice") ? myturnIcon : "") + "</p>";
+                    rows += "<p class='gamerow" + ((data.sessions[i].myturn) ? " myturn" : "") + "' opponent='" + data.sessions[i].opponent_name + "'><a href='#' title='" + data.sessions[i].move_type + "'' onclick='get_move(this,\"" + data.sessions[i].session_id + "\");return false;'>" + ((data.sessions[i].move_type == "Practice") ? "Practice" : "Game") + ((data.sessions[i].opponent_name) ? " vs. " + data.sessions[i].opponent_name : "") + (data.sessions[i].move_type != "Practice" ? (" (" + data.sessions[i].my_score + " - " + data.sessions[i].their_score + ")") : "") + "</a> " + ((data.sessions[i].myturn && data.sessions[i].move_type != "Practice") ? myturnIcon : "") + "</p>";
                 }
             }
             document.querySelector("#refreshbutton").style.display = "block";

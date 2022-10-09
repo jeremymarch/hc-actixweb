@@ -210,6 +210,13 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
         let _ = db.insert_ask_move_tx(&mut tx, None, info.session_id, pf.person.to_i16(), pf.number.to_i16(), pf.tense.to_i16(), 
             pf.mood.to_i16(), pf.voice.to_i16(), pf.verb.id as i32, new_time_stamp).await?;
     }
+    else {
+        if !is_correct {
+            let user_to_score = if s.challenger_user_id == user_id { "challenged_score" } else { "challenger_score" };
+            let points = 1;
+            let _ = db.add_to_score(&mut tx, info.session_id, user_to_score, points).await?;
+        }
+    }
     
     let mut res = get_session_state_tx(&mut tx, db, user_id, info.session_id).await?;
     if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
@@ -321,6 +328,13 @@ pub async fn hc_mf_pressed(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, tim
             //ask
             let _ = db.insert_ask_move_tx(&mut tx, None, info.session_id, pf.person.to_i16(), pf.number.to_i16(), pf.tense.to_i16(), 
                 pf.mood.to_i16(), pf.voice.to_i16(), pf.verb.id as i32, new_time_stamp).await?;
+        }
+        else {
+            if !is_correct {
+                let user_to_score = if s.challenger_user_id == user_id { "challenged_score" } else { "challenger_score" };
+                let points = 1;
+                let _ = db.add_to_score(&mut tx, info.session_id, user_to_score, points).await?;
+            }
         }
 
         let mut res = get_session_state_tx(&mut tx, db, user_id, info.session_id).await?;

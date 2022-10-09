@@ -39,6 +39,18 @@ impl HcSqliteDb {
     //     tx.commit().await
     // }
 
+    pub async fn add_to_score<'a, 'b>(&self,
+        tx: &'a mut sqlx::Transaction<'b, Postgres>, session_id:Uuid, user_to_score:&str, points:i32) -> Result<u32, sqlx::Error> {
+            let query = format!("UPDATE sessions SET {} = {} + $1 WHERE session_id = $2;", user_to_score, user_to_score);
+            let _res = sqlx::query(&query)
+                .bind(points)
+                .bind(session_id)
+                .execute(&mut *tx)
+                .await?;
+    
+        Ok(1)
+    }
+
     pub async fn validate_login_db(
         &self,
         username:&str,
@@ -108,11 +120,11 @@ impl HcSqliteDb {
 
         //strftime('%Y-%m-%d %H:%M:%S', DATETIME(timestamp, 'unixepoch')) as timestamp, 
         //    ORDER BY updated DESC \
-        let query = "SELECT session_id AS session_id, challenged_user_id AS challenged, challenged_user_id AS opponent_user_id, b.user_name AS username, \
+        let query = "SELECT session_id AS session_id, challenged_user_id AS challenged, challenged_user_id AS opponent_user_id, b.user_name AS username, challenger_score as myscore, challenged_score as theirscore, \
         a.timestamp as timestamp \
         FROM sessions a LEFT JOIN users b ON a.challenged_user_id = b.user_id \
         where challenger_user_id = $1 \
-        UNION SELECT session_id AS session_id, challenged_user_id AS challenged, challenged_user_id AS opponent_user_id, b.user_name AS username, \
+        UNION SELECT session_id AS session_id, challenged_user_id AS challenged, challenged_user_id AS opponent_user_id, b.user_name AS username, challenged_score as myscore, challenger_score as theirscore, \
         a.timestamp as timestamp \
         FROM sessions a LEFT JOIN users b ON a.challenger_user_id = b.user_id \
         where challenged_user_id  = $2 \
@@ -124,7 +136,7 @@ impl HcSqliteDb {
             .bind(user_id)
             .bind(user_id)
             .map(|rec: PgRow| {
-                SessionsListQuery { session_id: rec.get("session_id"), challenged:rec.get("challenged"), opponent:rec.get("opponent_user_id"), opponent_name: rec.get("username"),timestamp:rec.get("timestamp"), myturn:false, move_type:MoveType::Practice }
+                SessionsListQuery { session_id: rec.get("session_id"), challenged:rec.get("challenged"), opponent:rec.get("opponent_user_id"), opponent_name: rec.get("username"),timestamp:rec.get("timestamp"), myturn:false, move_type:MoveType::Practice, my_score:rec.get("myscore"), their_score:rec.get("theirscore") }
             })
             .fetch_all(&mut tx)
             .await?;
@@ -415,8 +427,8 @@ impl HcSqliteDb {
     highest_unit SMALLINT,
     custom_verbs TEXT, 
     max_changes SMALLINT,
-    challenger_score SMALLINT,
-    challenged_score SMALLINT,
+    challenger_score INT,
+    challenged_score INT,
     practice_reps_per_verb SMALLINT,
     timestamp BIGINT NOT NULL DEFAULT 0,
     FOREIGN KEY (challenger_user_id) REFERENCES users(user_id), 

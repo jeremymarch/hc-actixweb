@@ -269,6 +269,8 @@ pub struct SessionsListQuery {
     timestamp: i64,
     myturn: bool,
     move_type: MoveType,
+    my_score:Option<i32>,
+    their_score:Option<i32>,
 }
 
 #[derive(Deserialize,Serialize)]
@@ -302,8 +304,8 @@ pub struct SessionResult {
     highest_unit: Option<i16>,
     custom_verbs: Option<String>, 
     max_changes: i16,
-    challenger_score: Option<i16>,
-    challenged_score: Option<i16>,
+    challenger_score: Option<i32>,
+    challenged_score: Option<i32>,
     practice_reps_per_verb: Option<i16>,
     timestamp: i64,
 }
