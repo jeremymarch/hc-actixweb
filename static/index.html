@@ -17,7 +17,7 @@
         crossorigin="anonymous"></script>
 -->
 <script>
-
+    'use strict';
     function setTheme() {
         let mode = localStorage.getItem("mode");
         if ((window.matchMedia( "(prefers-color-scheme: dark)" ).matches || mode == "dark") && mode != "light") {
@@ -352,6 +352,7 @@ a {color:blue;}
 </div>
 
     <script>
+    'use strict';
     let global_username = null;
     let global_timer_intv = null;
     let global_countDownDate = null;
