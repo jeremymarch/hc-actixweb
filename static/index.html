@@ -19,7 +19,7 @@
 <script>
 
     function setTheme() {
-        var mode = localStorage.getItem("mode");
+        let mode = localStorage.getItem("mode");
         if ((window.matchMedia( "(prefers-color-scheme: dark)" ).matches || mode == "dark") && mode != "light") {
             document.querySelector("HTML").classList.add("dark");
         }
@@ -352,24 +352,37 @@ a {color:blue;}
 </div>
 
     <script>
-        var myturnIcon = `<svg class="myturnIcon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="50" /></svg>`;
-        var correctIcon = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" enable-background="new 0 0 64 64"><path d="M32,2C15.431,2,2,15.432,2,32c0,16.568,13.432,30,30,30c16.568,0,30-13.432,30-30C62,15.432,48.568,2,32,2z M25.025,50  l-0.02-0.02L24.988,50L11,35.6l7.029-7.164l6.977,7.184l21-21.619L53,21.199L25.025,50z" fill="#43a047"/></svg>`;
-        var incorrectIcon = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" enable-background="new 0 0 64 64"><path d="m32 2c-16.568 0-30 13.432-30 30s13.432 30 30 30 30-13.432 30-30-13.432-30-30-30m5.513 44.508l-5.514-9.894-5.825 9.894h-7.048l9.331-14.783-8.878-14.232h7.244l5.175 9.449 5.317-9.449h7.008l-8.878 13.996 9.429 15.02h-7.361z" fill="#e53935"/></svg>`;
+    var global_timer_intv = null;
+    var global_countDownDate = null;
+    var global_timerRunning = false;
+    var global_starting_form = null;
+    var global_change_desc = null;
+    var global_max_changes = null;
+    var global_show_correct = false;
+    var global_practice = false;
+    var global_session_state = null;
+    var global_session_id = null;
+    var global_mf_pressed = false;
+    var global_timed_out = false;
+    var global_seconds = 30;
+    var global_timer_ref = null;
+    var myturnIcon = `<svg class="myturnIcon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="50" /></svg>`;
+    var correctIcon = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" enable-background="new 0 0 64 64"><path d="M32,2C15.431,2,2,15.432,2,32c0,16.568,13.432,30,30,30c16.568,0,30-13.432,30-30C62,15.432,48.568,2,32,2z M25.025,50  l-0.02-0.02L24.988,50L11,35.6l7.029-7.164l6.977,7.184l21-21.619L53,21.199L25.025,50z" fill="#43a047"/></svg>`;
+    var incorrectIcon = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" enable-background="new 0 0 64 64"><path d="m32 2c-16.568 0-30 13.432-30 30s13.432 30 30 30 30-13.432 30-30-13.432-30-30-30m5.513 44.508l-5.514-9.894-5.825 9.894h-7.048l9.331-14.783-8.878-14.232h7.244l5.175 9.449 5.317-9.449h7.008l-8.878 13.996 9.429 15.02h-7.361z" fill="#e53935"/></svg>`;
             // Check for wasm support.
 	if (!('WebAssembly' in window)) {
 		alert('you need a browser with wasm support enabled :(');
 	}
 
-    var max_changes = null;
     function select_changed(s) {
         let changed_nodes = document.querySelectorAll(".paramdivchanged");
-        if (changed_nodes && max_changes !== null && changed_nodes.length >= max_changes 
+        if (changed_nodes && global_max_changes !== null && changed_nodes.length >= global_max_changes 
             && s.value != s.getAttribute("orig") 
             && !s.parentNode.classList.contains("paramdivchanged")) {
             s.value = s.getAttribute("orig");
         }
 
-        if (s.value != s.getAttribute("orig") && max_changes !== null) {
+        if (s.value != s.getAttribute("orig") && global_max_changes !== null) {
             s.parentNode.classList.add("paramdivchanged");
         }
         else {
@@ -389,7 +402,6 @@ a {color:blue;}
 	var wasmBuffer0;
 	var accentSyllableWASM;
 	var transliterateWASM;
-	
 	var wasmBufferLength = 256;
 	var memory;
 	loadWebAssembly('hoplitekb.wasm', { js: { mem: memory } })
@@ -410,18 +422,16 @@ a {color:blue;}
 		}
 	);
 	
-	function strToCodePoints(str)
-	{
-		var a = "";
-		for (var i = 0; i < str.length; i++) {
+	function strToCodePoints(str) {
+		let a = "";
+		for (let i = 0; i < str.length; i++) {
 			a += str.codePointAt(i).toString(16).padStart(4,"0").toUpperCase() + " ";
 		}
 		return a.trim();
 	}
 
-    var timerRef = null;
     function start() {
-        timerRef = document.querySelector('#mainTime');
+        global_timer_ref = document.querySelector('#mainTime');
 	    const supported = (() => {
             try {
                 if (typeof WebAssembly === "object"
@@ -447,11 +457,10 @@ a {color:blue;}
         get_sessions();
 	}
 	
-	var forceLowercase = false;
 	function accentSyllable(origChars, key) {
-		var len = origChars.length;
+		let len = origChars.length;
 		//add letter and any combining diacritics to the buffer as code points
-		for (var i = 0; i < len && i < wasmBufferLength; i++) {
+		for (let i = 0; i < len && i < wasmBufferLength; i++) {
 			wasmBuffer0[i] = origChars.codePointAt(i);
 			//console.log("accent1: " + origChars.codePointAt(i));
 		}
@@ -459,13 +468,13 @@ a {color:blue;}
 		len = accentSyllableWASM(wasmBuffer0.byteOffset, len, key, 1, parseInt(unicodeMode) );
 	
 		//transform the returned code points back to a string
-		var newLetter = "";
-		for (var i = 0; i < len && i < wasmBufferLength; i++) {
+		let newLetter = "";
+		for (let i = 0; i < len && i < wasmBufferLength; i++) {
 			newLetter += String.fromCodePoint(wasmBuffer0[i]);
 			//console.log("accent2: " + String.fromCodePoint(wasmBuffer0[i]));
 		}
 		/*
-		for (var i = 0; i < 10; i++) {
+		for (let i = 0; i < 10; i++) {
 			wasmBuffer0[i] = 0;
 		}*/
 		//console.log("ptr2: " + wasmBuffer0.byteOffset + ", " + wasmBuffer0.length);
@@ -475,18 +484,16 @@ a {color:blue;}
 	
 	var unicodeMode = 0;
 	function handleKey(e) {
-	
-		var val = this.value;
-		e = e || event;
+		let val = this.value;
         
+        let charCode = typeof(e.which) == "number" ? e.which : e.keyCode;
 		if (typeof(this.selectionStart) == "number" && typeof(this.selectionEnd) == "number") {
-			var start = this.selectionStart;
-			var end = this.selectionEnd;
-			var newLetter = "";
-			var replacing = 0;
-			var charCode = typeof(e.which) == "number" ? e.which : e.keyCode;
-			//console.log("handlekey1: " + charCode);
-			var key = String.fromCharCode(charCode);
+			let start = this.selectionStart;
+			let end = this.selectionEnd;
+			let newLetter = "";
+			let replacing = 0;
+			
+			let key = String.fromCharCode(charCode);
 	
             if (charCode && charCode == 13) { //enter key
                 submit_clicked();
@@ -502,12 +509,12 @@ a {color:blue;}
 			{ 
                 //console.log("handlekey2: " + charCode + ", " + val.length);
 				//underdot,rough,smooth,acute,grave,circ,macron,breve,iotasub,diaeresis
-				var diacriticKeys = [11,5,6,1,3,2,4,10,7,9];
-				var hckey = diacriticKeys[ parseInt(key) ];
+				const diacriticKeys = [11,5,6,1,3,2,4,10,7,9];
+				let hckey = diacriticKeys[ parseInt(key) ];
 	
-				var combining = [0x0300, 0x0301, 0x0304, 0x0306, 0x0308, 0x0313, 0x0314, 0x0323, 0x0342, 0x0345];
-				var offset = 1;
-				for (var i = start; i > -1; i--) {
+				const combining = [0x0300, 0x0301, 0x0304, 0x0306, 0x0308, 0x0313, 0x0314, 0x0323, 0x0342, 0x0345];
+				let offset = 1;
+				for (let i = start; i > -1; i--) {
 					if (combining.indexOf(val.codePointAt(i - 1)) > -1) {
 						offset++;
 					}
@@ -560,7 +567,7 @@ a {color:blue;}
         options.error = noop;
       }
 
-      var request = new XMLHttpRequest();
+      let request = new XMLHttpRequest();
       request.open(options.method, options.url, true);
       //request.setRequestHeader('Content-type', 'application/json; charset=UTF-8')
       request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded; charset=UTF-8')
@@ -598,16 +605,16 @@ a {color:blue;}
         }
         else if ((data.response_to == "answerresponse" || data.response_to == "answerresponsepractice") && data.success) {
             get_sessions();
-            starting_form = data.starting_form;
-            change_desc = data.change_desc;
+            global_starting_form = data.starting_form;
+            global_change_desc = data.change_desc;
             uiModeAnswerResponseReceived(data);
         }
         else if ((data.response_to == "mfpressedresponse" || data.response_to == "mfpressedresponsepractice") && data.success) {
             if (data.is_correct == false) {
                 uiModeClickedEnter();
             
-                starting_form = data.starting_form;
-                change_desc = data.change_desc;
+                global_starting_form = data.starting_form;
+                global_change_desc = data.change_desc;
                 uiModeAnswerResponseReceived(data);
 
                 reqPending = false;
@@ -621,12 +628,12 @@ a {color:blue;}
         }
         else if (data.response_to == "getsessions" && data.success) {
             let rows = "";
-            for (var i = 0; i < data.sessions.length; i++) {
+            for (let i = 0; i < data.sessions.length; i++) {
                 let s = data.sessions[i];
                 if (s.move_type != "FirstMoveTheirTurn") /* do not show if first move not asked yet and I did not start game */ {
                     rows += "<p data-uuid='" + s.session_id +"' ";
                     rows += "class='gamerow" + (s.myturn ? " myturn" : "");
-                    rows += (s.session_id == session_id ? " selectedGame" : "") + "' ";
+                    rows += (s.session_id == global_session_id ? " selectedGame" : "") + "' ";
                     rows += (s.opponent_name ? "opponent='" + s.opponent_name + "' " : "");
                     rows += "title='" + s.move_type + "' ";
                     rows += "onclick='get_move(this)'>";
@@ -637,9 +644,9 @@ a {color:blue;}
                 }
                 //document.querySelector(".gamerow[data-uuid='b72df91e-3a4c-4f1b-aeda-c14fea61def6']").style.backgroundColor = "blue";
             }
+            document.querySelector("#list").innerHTML = rows;
             document.querySelector("#refreshbutton").style.display = "block";
             document.querySelector("#listouter").style.display = "block";
-            document.querySelector("#list").innerHTML = rows;
 
             if (data.username) {
                 document.querySelector("#loginlink").style.display = "none";
@@ -655,8 +662,8 @@ a {color:blue;}
     }
 
     function serialize(obj) {
-        var str = [];
-        for (var p in obj)
+        let str = [];
+        for (let p in obj)
         if (obj.hasOwnProperty(p)) {
             str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
         }
@@ -693,17 +700,13 @@ a {color:blue;}
         generic_send_request("ask", send_data, null);
     }
 
-    var starting_form = null;
-    var change_desc = null;
-    function send_answer(answer, time, mfPressed, timedOut) {
-
-        let send_data = {qtype:"submit", answer:answer, time:time, mf_pressed:mfPressed, timed_out:timedOut, session_id:session_id};
+    function send_answer(session_id, answer, time, mfPressed, timedOut) {
+        let send_data = {qtype:"submit", answer:answer, time:time, mf_pressed:mfPressed, timed_out:timedOut, session_id: session_id};
         generic_send_request("enter", send_data, null);
     }
 
-    function send_mf(answer, time, mfPressed, timedOut) {
-
-        let send_data = {qtype:"mfpressed", answer:answer, time:time, mf_pressed:mfPressed, timed_out:timedOut, session_id:session_id};
+    function send_mf(session_id, answer, time, mfPressed, timedOut) {
+        let send_data = {qtype:"mfpressed", answer:answer, time:time, mf_pressed:mfPressed, timed_out:timedOut, session_id: session_id};
         generic_send_request("mf", send_data, null);
     }
 
@@ -724,9 +727,9 @@ a {color:blue;}
             reqPending = true;
             let answer = document.querySelector("#answerform").value.trim();
             let time = document.querySelector("#mainTime").innerText.trim();
-            console.log("Enter clicked: " + answer + ", time: " + time + ", mfPressed: " + mfPressed + ", timedout: " + timedOut);
+            console.log("Enter clicked: " + answer + ", time: " + time + ", mfPressed: " + global_mf_pressed + ", timedout: " + global_timed_out);
         
-            send_answer(answer, time, mfPressed, timedOut);
+            send_answer(global_session_id, answer, time, global_mf_pressed, global_timed_out);
         }
         else if (submitbutton.innerText == "Continue" || submitbutton.innerText == "Start") {
             console.log(submitbutton.innerText + " clicked");
@@ -734,49 +737,46 @@ a {color:blue;}
         }
         else if (submitbutton.innerText == "Ask") {
             let vals = get_param_values();
-            send_ask(session_id, vals[0], vals[1], vals[2], vals[3], vals[4], vals[5]);
+            send_ask(global_session_id, vals[0], vals[1], vals[2], vals[3], vals[4], vals[5]);
         }
         else if (submitbutton.innerText == "Go") {
             console.log(submitbutton.innerText + " clicked");
-            uiModeAnwerGoForm(starting_form, change_desc);
+            uiModeAnwerGoForm(global_starting_form, global_change_desc);
         }
     }
 
-    var mfPressed = false;
-    var timedOut = false;
     function mf_clicked() {
         console.log("multiple forms clicked");
-        if (!mfPressed) { //only allow clicking this once
+        if (!global_mf_pressed) { //only allow clicking this once
             document.querySelector("#mfbutton").disabled = true;
 
-            add_seconds_to_time(seconds / 2);
-            mfPressed = true;
+            add_seconds_to_time(global_seconds / 2);
+            global_mf_pressed = true;
 
             let answer = document.querySelector("#answerform").value.trim();
             let time = document.querySelector("#mainTime").innerText.trim();
-            console.log("MF clicked: " + answer + ", time: " + time + ", mfPressed: " + mfPressed + ", timedout: " + timedOut);
+            console.log("MF clicked: " + answer + ", time: " + time + ", mfPressed: " + global_mf_pressed + ", timedout: " + global_timed_out);
 
-            send_mf(answer, time, mfPressed, timedOut);
+            send_mf(global_session_id, answer, time, global_mf_pressed, global_timed_out);
         }
     }
 
     function timeout() {
         console.log("timed out");
-        clearInterval(timer);
-        timedOut = true;
-        timerRef.innerHTML = "<span style=\"color:red;font-weight:bold;\">00:00</span>";
+        clearInterval(global_timer_intv);
+        global_timed_out = true;
+        global_timer_ref.innerHTML = "<span style=\"color:red;font-weight:bold;\">00:00</span>";
         submit_clicked();
     }
     
-    var session_id = null;
     function get_move(thisrow) {
         document.querySelectorAll(".selectedGame").forEach((row) => {
             row.classList.remove("selectedGame");
         });        
         thisrow.classList.add("selectedGame");
 
-        session_id = thisrow.getAttribute("data-uuid");
-        let send_data = { session_id: session_id };
+        global_session_id = thisrow.getAttribute("data-uuid");
+        let send_data = { session_id: global_session_id };
         generic_send_request("getmove", send_data, null);
     }
 
@@ -806,10 +806,10 @@ a {color:blue;}
         let vc = document.querySelector("#verbchooser");
         //if the dropdown doesn't have enough rows to assign value, just add a new row for it. it's ok: we can't see it
         if (verb_id >= vc.options.length && vc.value != verb_id /* so we don't get two of same option */) {
-            var option = document.createElement("option");
-                option.value = verb_id;
-                option.text = "";
-            vc.add(option);
+            let o = document.createElement("option");
+            o.value = verb_id;
+            o.text = "";
+            vc.add(o);
         }
         vc.value = verb_id;
     }
@@ -827,7 +827,7 @@ a {color:blue;}
     }
 
     function setUI(data) {
-        practice = false;
+        global_practice = false;
         document.querySelector(".hcform").style.display = "block";
         switch(data.move_type) {
             case "Practice": 
@@ -916,8 +916,8 @@ a {color:blue;}
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.disabled = false;
         submitbutton.innerText = "Go";
-        starting_form = data.starting_form;
-        change_desc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+        global_starting_form = data.starting_form;
+        global_change_desc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
         //document.querySelector("#statusmesg").innerHTML = "Click Go to answer!"
         document.querySelector("#statusmesg").innerHTML = "Practice Mode";
         document.querySelector("#changedesc").innerHTML = (data.person_prev !== null) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, null, null, null, null, null) : "";
@@ -937,8 +937,8 @@ a {color:blue;}
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.disabled = false;
         submitbutton.innerText = "Go";
-        starting_form = data.starting_form;
-        change_desc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+        global_starting_form = data.starting_form;
+        global_change_desc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
         document.querySelector("#statusmesg").innerHTML = "Click Go to answer!"
         document.querySelector("#changedesc").innerHTML = (data.person_prev !== null) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, null, null, null, null, null) : "";
         document.querySelector("#answerform").value = "";
@@ -957,7 +957,8 @@ a {color:blue;}
         let submitbutton = document.querySelector("#submitbutton");
         submitbutton.disabled = false;
         submitbutton.innerText = "Enter";
-        mfPressed = false;
+        global_mf_pressed = false;
+        
         document.querySelector("#statusmesg").innerHTML = "Click enter to submit!"
         document.querySelector("#changedesc").innerHTML = loc_change_desc;
         document.querySelector("#answerform").value = "";
@@ -1014,7 +1015,7 @@ a {color:blue;}
         }
         else {
             document.querySelector("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
-            document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || show_correct) ? data.correct_answer : "");
+            document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || global_show_correct) ? data.correct_answer : "");
 
         }
         document.querySelector("#verbchooser").style.display = "none";
@@ -1036,7 +1037,6 @@ a {color:blue;}
         document.querySelector("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
     }
 
-    var global_session_state = null;
     function uiModeAskForm(data, max_params_to_change) {
         global_session_state = data;
         set_params_dropdowns(data.person, data.number, data.tense, data.voice, data.mood, data.verb);
@@ -1069,7 +1069,7 @@ a {color:blue;}
             document.querySelector("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
             document.querySelector("#answerform").value = data.answer;
             document.querySelector("#correctanswer").style.visibility = "visible";
-            document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || show_correct) ? data.correct_answer : "");
+            document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || global_show_correct) ? data.correct_answer : "");
         }
         submitbutton.style.display = "block";
         submitbutton.disabled = false;
@@ -1085,7 +1085,7 @@ a {color:blue;}
         submitbutton.disabled = false;
         document.querySelector("#mfbutton").disabled = true;
         if (data.move_type == "FirstMoveMyTurn") {
-            max_changes = null; //can change all
+            global_max_changes = null; //can change all
             set_params_dropdowns(null, null, null, null, null, null);
             let verbchooser = document.querySelector("#verbchooser");
             //remove verb options
@@ -1093,11 +1093,11 @@ a {color:blue;}
                 verbchooser.remove(0);
             }
             //add new verb options
-            for (var v = 0; v < data.verbs.length; v++) {
-                var option = document.createElement("option");
-                option.value = data.verbs[v].id;
-                option.text = data.verbs[v].verb;
-                verbchooser.add(option);
+            for (let v = 0; v < data.verbs.length; v++) {
+                let o = document.createElement("option");
+                o.value = data.verbs[v].id;
+                o.text = data.verbs[v].verb;
+                verbchooser.add(o);
             }
             verbchooser.value = null;
         
@@ -1106,7 +1106,7 @@ a {color:blue;}
             document.querySelector("#statusmesg").innerHTML = "Choose a verb and set all parameters";
         }
         else {
-            max_changes = 2;
+            global_max_changes = 2;
             set_params_dropdowns(data.person, data.number, data.tense, data.voice, data.mood, data.verb);
             document.querySelector("#startingform").innerText = data.correct_answer;
             document.querySelector("#verbchooser").style.display = "none";
@@ -1118,7 +1118,7 @@ a {color:blue;}
         //document.querySelector("#changedesc").style.display = "none";
         document.querySelector("#answerform").value = "";
         document.querySelector("#correctanswer").style.visibility = "hidden";
-        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || show_correct) ? data.correct_answer : "");
+        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || global_show_correct) ? data.correct_answer : "");
 
         //document.querySelector("#statusmesg").innerHTML = "Click Ask to ask the next form."
         // if (max_params_to_change == 5) {
@@ -1137,19 +1137,17 @@ a {color:blue;}
         document.querySelector("#answerform").disabled = true;
     }
 
-    var show_correct = false;
-    var practice = false;
     function uiModeAnswerResponseReceived(data) {
         let submitbutton = document.querySelector("#submitbutton");
         if (data.move_type == "Practice") {
             submitbutton.innerText = "Go";
-            practice = true;
-            starting_form = data.starting_form;
-            change_desc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+            global_practice = true;
+            global_starting_form = data.starting_form;
+            global_change_desc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
             document.querySelector("#statusmesg").innerHTML = "Click Go to answer the next form."
         }
         else {
-            practice = false;
+            global_practice = false;
             submitbutton.innerText = "Continue";
             document.querySelector("#statusmesg").innerHTML = "Click Continue to ask the next form."
         }
@@ -1159,43 +1157,40 @@ a {color:blue;}
         document.querySelector("#mfbutton").disabled = true;
         //mark (in)correct, show correct answer
         document.querySelector("#correctanswer").style.visibility = "visible";
-        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || show_correct) ? data.correct_answer : "");
+        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || global_show_correct) ? data.correct_answer : "");
         
     }
 
-    var timer = null;
-    var countDownDate = null;
-    var timerRunning = false;
-    var seconds = 30;
     function add_seconds_to_time(secs) {
-        countDownDate += (secs * 1000);
+        global_countDownDate += (secs * 1000);
     }
     function startTimer() {
-        countDownDate = new Date().getTime() + (seconds * 1000);
-        timer = setInterval(interval, 10);
-        timerRunning = true;
+        global_timed_out = false;
+        global_countDownDate = new Date().getTime() + (global_seconds * 1000);
+        global_timer_intv = setInterval(interval_func, 10);
+        global_timerRunning = true;
     }
     function stopTimer() {
-        clearInterval(timer);
-        timer = null;
-        timerRunning = false;
+        clearInterval(global_timer_intv);
+        global_timer_intv = null;
+        global_timerRunning = false;
     }
-    function interval() {
-        var now = new Date().getTime();
-        var distance = countDownDate - now;
-
-        //var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        //var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-        var ms = Math.floor((distance % (1000)) / 10);
+    function interval_func() {
+        let now = new Date().getTime();
+        let distance = global_countDownDate - now;
 
         if (distance <= 0) {
             timeout();
             return;
         }
 
-        timerRef.innerHTML = ((minutes > 0) ? ((minutes < 10) ? ("0" + minutes + ":") : minutes + ":") : "") + ((seconds < 10) ? ("0" + seconds + ":") : seconds + ":") + ((ms < 10) ? ("0" + ms) : ms);
+        //let days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        //let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        let ms = Math.floor((distance % (1000)) / 10);
+
+        global_timer_ref.innerHTML = ((minutes > 0) ? ((minutes < 10) ? ("0" + minutes + ":") : minutes + ":") : "") + ((seconds < 10) ? ("0" + seconds + ":") : seconds + ":") + ((ms < 10) ? ("0" + ms) : ms);
     }
     </script>
 </body>
