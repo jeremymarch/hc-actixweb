@@ -225,8 +225,7 @@ dependencies = [
 [[package]]
 name = "actix-web-flash-messages"
 version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05c89d051c33e7044e8a6e811ed06dda6ce65dfb51a1e379146f723116ca362a"
+source = "git+https://github.com/jeremymarch/actix-web-flash-messages?branch=add_additional_builder_for_cookie_settings#62cdb17c019c3dc2a5bef47a45a17d3a2459a9f7"
 dependencies = [
  "actix-web",
  "anyhow",

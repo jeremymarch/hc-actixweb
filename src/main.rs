@@ -25,6 +25,7 @@ use actix_files as fs;
 use actix_session::{SessionMiddleware, storage::CookieSessionStore};
 use actix_web_flash_messages::FlashMessagesFramework;
 use actix_web_flash_messages::storage::CookieMessageStore;
+use actix_web::cookie::{SameSite};
 use actix_web::http::header::ContentType;
 use actix_web::http::header::LOCATION;
 use actix_web::{
@@ -847,11 +848,14 @@ async fn main() -> io::Result<()> {
     let key = hex::decode(string_key_64_bytes).expect("Decoding key failed");
     let secret_key = Key::from(&key);
 
-    //for flash messages on login page
-    let message_store = CookieMessageStore::builder( secret_key.clone() /*Key::from(hmac_secret.expose_secret().as_bytes())*/ ).build();
-    let message_framework = FlashMessagesFramework::builder(message_store).build();
-    
     let cookie_secure = !cfg!(debug_assertions); //cookie is secure for release, not secure for debug builds
+
+    //for flash messages on login page
+    let message_store = CookieMessageStore::builder( secret_key.clone() /*Key::from(hmac_secret.expose_secret().as_bytes())*/ )
+        .secure(cookie_secure)
+        .same_site(SameSite::Strict)
+        .build();
+    let message_framework = FlashMessagesFramework::builder(message_store).build();
 
     HttpServer::new(move || {
 
