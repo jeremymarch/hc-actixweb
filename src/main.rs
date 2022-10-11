@@ -852,8 +852,10 @@ async fn main() -> io::Result<()> {
 
     //for flash messages on login page
     let message_store = CookieMessageStore::builder( secret_key.clone() /*Key::from(hmac_secret.expose_secret().as_bytes())*/ )
+        .path("/".to_string())   
+        .domain("".to_string())
         .secure(cookie_secure)
-        .same_site(SameSite::None)
+        .same_site(SameSite::Strict)
         .build();
     let message_framework = FlashMessagesFramework::builder(message_store).build();
 
@@ -866,7 +868,7 @@ async fn main() -> io::Result<()> {
             .wrap(SessionMiddleware::builder(
                 CookieSessionStore::default(), secret_key.clone())
                     .cookie_secure(cookie_secure) //cookie_secure must be false if testing without https
-                    .cookie_same_site(actix_web::cookie::SameSite::Strict)
+                    .cookie_same_site(SameSite::Strict)
                     .cookie_content_security(actix_session::config::CookieContentSecurity::Private)
                     .session_lifecycle(
                         PersistentSession::default().session_ttl(Duration::seconds(SECS_IN_10_YEARS))
