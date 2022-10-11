@@ -853,7 +853,7 @@ async fn main() -> io::Result<()> {
     //for flash messages on login page
     let message_store = CookieMessageStore::builder( secret_key.clone() /*Key::from(hmac_secret.expose_secret().as_bytes())*/ )
         .secure(cookie_secure)
-        .same_site(SameSite::Strict)
+        .same_site(SameSite::None)
         .build();
     let message_framework = FlashMessagesFramework::builder(message_store).build();
 
