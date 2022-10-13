@@ -31,6 +31,24 @@ use actix_web::http::header::LOCATION;
 use actix_web::{
     middleware, web, App, Error as AWError, HttpRequest, HttpResponse, HttpServer, Result,
 };
+
+
+use std::{
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
+    time::Instant,
+};
+use actix::Actor;
+use actix::Addr;
+use actix_web::Error;
+use actix_web::Handler;
+use actix_web::Responder;
+use actix_web_actors::ws;
+mod server;
+mod session;
+
 use actix_web::cookie::time::Duration;
 use actix_session::config::PersistentSession;
 const SECS_IN_10_YEARS: i64 = 60 * 60 * 24 * 7 * 4 * 12 * 10;
@@ -40,8 +58,6 @@ use std::io::BufReader;
 use std::io::BufRead;
 
 use polytonic_greek::hgk_compare_multiple_forms;
-
-use std::sync::Arc;
 
 use std::io;
 
@@ -370,6 +386,31 @@ pub struct SessionState {
     success:bool,
     mesg:Option<String>,
     verbs:Option<Vec<HCVerbOption>>,
+}
+
+/// Entry point for our websocket route
+async fn chat_route(
+    req: HttpRequest,
+    stream: web::Payload,
+    srv: web::Data<Addr<server::ChatServer>>,
+) -> Result<HttpResponse, Error> {
+    ws::start(
+        session::WsChatSession {
+            id: 0,
+            hb: Instant::now(),
+            room: "main".to_owned(),
+            name: None,
+            addr: srv.get_ref().clone(),
+        },
+        &req,
+        stream,
+    )
+}
+
+/// Displays state
+async fn get_count(count: web::Data<AtomicUsize>) -> impl Responder {
+    let current_count = count.load(Ordering::SeqCst);
+    format!("Visitors: {current_count}")
 }
 
 fn get_user_agent(req: &HttpRequest) -> Option<&str> {
@@ -785,6 +826,12 @@ async fn main() -> io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=info");
     env_logger::init();
 
+    let app_state = Arc::new(AtomicUsize::new(0));
+
+    // start chat server actor
+    let server = server::ChatServer::new(app_state.clone()).start();
+
+
     //e.g. export GKVOCABDB_DB_PATH=sqlite://db.sqlite?mode=rwc
     // let db_path = std::env::var("GKVOCABDB_DB_PATH").unwrap_or_else(|_| {
     //     panic!("Environment variable for sqlite path not set: GKVOCABDB_DB_PATH.")
@@ -864,6 +911,8 @@ async fn main() -> io::Result<()> {
         App::new()
             .app_data(load_verbs("pp.txt"))
             .app_data(hcdb.clone())
+            .app_data(web::Data::from(app_state.clone()))
+            .app_data(web::Data::new(server.clone()))
             .wrap(middleware::Compress::default()) // enable automatic response compression - usually register this first
             .wrap(SessionMiddleware::builder(
                 CookieSessionStore::default(), secret_key.clone())
@@ -879,6 +928,7 @@ async fn main() -> io::Result<()> {
             .wrap(middleware::Logger::default()) // enable logger - always register Actix Web Logger middleware last
             .configure(config)
     })
+    .workers(2)
     .bind("0.0.0.0:8088")?
     .run()
     .await
@@ -890,6 +940,7 @@ fn config(cfg: &mut web::ServiceConfig) {
         .route("/newuser", web::get().to(login::new_user_get))
         .route("/newuser", web::post().to(login::new_user_post))
         .route("/logout", web::get().to(login::logout))
+        .route("/ws", web::get().to(chat_route))
         .service(web::resource("/healthzzz").route(web::get().to(health_check)))
         .service(web::resource("/enter").route(web::post().to(enter)))
         .service(web::resource("/new").route(web::post().to(create_session)))
