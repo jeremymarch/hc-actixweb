@@ -2,7 +2,7 @@ use std::time::{Duration, Instant};
 
 use actix::prelude::*;
 use actix_web_actors::ws;
-
+use sqlx::types::Uuid;
 use crate::server;
 
 /// How often heartbeat pings are sent
@@ -28,6 +28,7 @@ pub struct WsChatSession {
 
     /// Chat server
     pub addr: Addr<server::ChatServer>,
+    pub uuid: Uuid,
 }
 
 impl WsChatSession {

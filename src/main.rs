@@ -393,18 +393,25 @@ async fn chat_route(
     req: HttpRequest,
     stream: web::Payload,
     srv: web::Data<Addr<server::ChatServer>>,
-) -> Result<HttpResponse, Error> {
-    ws::start(
-        session::WsChatSession {
-            id: 0,
-            hb: Instant::now(),
-            room: "main".to_owned(),
-            name: None,
-            addr: srv.get_ref().clone(),
-        },
-        &req,
-        stream,
-    )
+    session: Session,
+    ) -> Result<HttpResponse, Error> {
+    if let Some(uuid) = login::get_user_id(session) {
+        //println!("uuid {:?}", uuid);
+        ws::start(
+            session::WsChatSession {
+                id: 0,
+                hb: Instant::now(),
+                room: "main".to_owned(),
+                name: None,
+                addr: srv.get_ref().clone(),
+                uuid: uuid,
+            },
+            &req,
+            stream,
+        )
+    } else {
+        Ok(HttpResponse::InternalServerError().finish())
+    }
 }
 
 /// Displays state
@@ -940,7 +947,8 @@ fn config(cfg: &mut web::ServiceConfig) {
         .route("/newuser", web::get().to(login::new_user_get))
         .route("/newuser", web::post().to(login::new_user_post))
         .route("/logout", web::get().to(login::logout))
-        .route("/ws", web::get().to(chat_route))
+        //.route("/ws", web::get().to(chat_route))
+        .service(web::resource("/ws").route(web::get().to(chat_route)))
         .service(web::resource("/healthzzz").route(web::get().to(health_check)))
         .service(web::resource("/enter").route(web::post().to(enter)))
         .service(web::resource("/new").route(web::post().to(create_session)))
