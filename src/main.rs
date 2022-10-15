@@ -397,6 +397,7 @@ async fn chat_route(
     ) -> Result<HttpResponse, Error> {
     if let Some(uuid) = login::get_user_id(session) {
         //println!("uuid {:?}", uuid);
+        let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
         ws::start(
             session::WsChatSession {
                 id: 0,
@@ -405,6 +406,7 @@ async fn chat_route(
                 name: None,
                 addr: srv.get_ref().clone(),
                 uuid: uuid,
+                verbs: verbs.clone(),
             },
             &req,
             stream,
@@ -833,12 +835,6 @@ async fn main() -> io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=info");
     env_logger::init();
 
-    let app_state = Arc::new(AtomicUsize::new(0));
-
-    // start chat server actor
-    let server = server::ChatServer::new(app_state.clone()).start();
-
-
     //e.g. export GKVOCABDB_DB_PATH=sqlite://db.sqlite?mode=rwc
     // let db_path = std::env::var("GKVOCABDB_DB_PATH").unwrap_or_else(|_| {
     //     panic!("Environment variable for sqlite path not set: GKVOCABDB_DB_PATH.")
@@ -881,6 +877,11 @@ async fn main() -> io::Result<()> {
     if res.is_err() {
         println!("error: {:?}", res);
     }
+
+    let app_state = Arc::new(AtomicUsize::new(0));
+
+    // start chat server actor
+    let server = server::ChatServer::new(app_state.clone(), hcdb.db.clone()).start();
 
     //1. to make a new key:
     // let secret_key = Key::generate(); // only for testing: should use same key from .env file/variable, else have to login again on each restart

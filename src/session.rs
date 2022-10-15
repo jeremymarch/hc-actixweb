@@ -2,8 +2,13 @@ use std::time::{Duration, Instant};
 
 use actix::prelude::*;
 use actix_web_actors::ws;
-use sqlx::types::Uuid;
 use crate::server;
+
+use crate::GetMoveQuery;
+use sqlx::types::Uuid;
+
+use std::sync::Arc;
+use hoplite_verbs_rs::HcGreekVerb;
 
 /// How often heartbeat pings are sent
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -29,6 +34,7 @@ pub struct WsChatSession {
     /// Chat server
     pub addr: Addr<server::ChatServer>,
     pub uuid: Uuid,
+    pub verbs: Vec<Arc<HcGreekVerb>>,
 }
 
 impl WsChatSession {
@@ -181,6 +187,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                     } else {
                         m.to_owned()
                     };
+                    let gm:GetMoveQuery = serde_json::from_str(&msg).unwrap();
+                    //let res = libhc::hc_get_move(self.addr.db, self.uuid, &gm, self.verbs).await.map_err(map_sqlx_error).unwrap();
+
                     // send message to chat server
                     self.addr.do_send(server::ClientMessage {
                         id: self.id,

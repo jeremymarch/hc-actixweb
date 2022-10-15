@@ -727,15 +727,23 @@ right: 0px;
     }
 
     function generic_send_request(send_url, send_data, handle_response) {
-        send_data = serialize(send_data);
-        microAjax({
-          url: send_url,
-          method: "POST",
-          data: send_data,
-          success: procResponse,
-          warning: procResponseError,
-          error: null
-        });
+        if (socket) {
+            console.log("websocket request");
+            send_data = JSON.stringify(send_data);
+            socket.send(send_data);
+        }
+        else {
+            console.log("http request");
+            send_data = serialize(send_data);
+            microAjax({
+            url: send_url,
+            method: "POST",
+            data: send_data,
+            success: procResponse,
+            warning: procResponseError,
+            error: null
+            });
+        }
 
         // $.ajax({
         //     url: send_url,
@@ -1251,7 +1259,7 @@ right: 0px;
 
 
 
-    const $status = document.querySelector('#status')
+      const $status = document.querySelector('#status')
       const $connectButton = document.querySelector('#connect')
       const $log = document.querySelector('#log')
       const $form = document.querySelector('#chatform')
@@ -1283,6 +1291,8 @@ right: 0px;
 
         socket.onmessage = (ev) => {
           log('Received: ' + ev.data, 'message')
+          console.log("websocket received: " + ev.data);
+          procResponse(JSON.parse(ev.data));
         }
 
         socket.onclose = () => {
