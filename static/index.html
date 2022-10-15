@@ -1290,7 +1290,7 @@ right: 0px;
         }
 
         socket.onmessage = (ev) => {
-          log('Received: ' + ev.data, 'message')
+          //log('Received: ' + ev.data, 'message')
           console.log("websocket received: " + ev.data);
           procResponse(JSON.parse(ev.data));
         }

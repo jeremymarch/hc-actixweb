@@ -9,6 +9,10 @@ use sqlx::types::Uuid;
 
 use std::sync::Arc;
 use hoplite_verbs_rs::HcGreekVerb;
+use crate::HcSqliteDb;
+use crate::map_sqlx_error;
+use crate::libhc;
+// use crate::libhc::hc_get_move;
 
 /// How often heartbeat pings are sent
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -35,6 +39,7 @@ pub struct WsChatSession {
     pub addr: Addr<server::ChatServer>,
     pub uuid: Uuid,
     pub verbs: Vec<Arc<HcGreekVerb>>,
+    pub db: HcSqliteDb,
 }
 
 impl WsChatSession {
@@ -187,15 +192,25 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                     } else {
                         m.to_owned()
                     };
-                    let gm:GetMoveQuery = serde_json::from_str(&msg).unwrap();
-                    //let res = libhc::hc_get_move(self.addr.db, self.uuid, &gm, self.verbs).await.map_err(map_sqlx_error).unwrap();
+                    
 
-                    // send message to chat server
-                    self.addr.do_send(server::ClientMessage {
-                        id: self.id,
-                        msg,
-                        room: self.room.clone(),
-                    })
+
+                    let db = self.db.clone();
+                    let verbs = self.verbs.clone();
+                    let uuid = self.uuid.clone();
+                    //let oid = self.id.clone();
+                    //let room = self.room.clone();
+                    let addr = ctx.address();//self.addr.clone();
+                    let fut = async move {
+                        let gm:GetMoveQuery = serde_json::from_str(&msg).unwrap();
+                        let res = libhc::hc_get_move(&db, uuid, &gm, &verbs).await.map_err(map_sqlx_error).unwrap();
+                        let resjson = serde_json::to_string(&res).unwrap();
+                        //println!("res {:?}", resjson);
+                        // send message to chat server
+                        addr.send(server::Message(resjson)).await.unwrap();
+                    };
+                    let fut = actix::fut::wrap_future::<_, Self>(fut);
+                    ctx.spawn(fut);        
                 }
             }
             ws::Message::Binary(_) => println!("Unexpected binary"),

@@ -1,7 +1,6 @@
 //! `ChatServer` is an actor. It maintains list of connection client session.
 //! And manages available rooms. Peers send messages to other peers in same
 //! room through `ChatServer`.
-use sqlx::PgPool;
 
 use std::{
     collections::{HashMap, HashSet},
@@ -74,11 +73,10 @@ pub struct ChatServer {
     rooms: HashMap<String, HashSet<usize>>,
     rng: ThreadRng,
     visitor_count: Arc<AtomicUsize>,
-    db: PgPool,
 }
 
 impl ChatServer {
-    pub fn new(visitor_count: Arc<AtomicUsize>, db:PgPool) -> ChatServer {
+    pub fn new(visitor_count: Arc<AtomicUsize>) -> ChatServer {
         // default room
         let mut rooms = HashMap::new();
         rooms.insert("main".to_owned(), HashSet::new());
@@ -88,7 +86,6 @@ impl ChatServer {
             rooms,
             rng: rand::thread_rng(),
             visitor_count,
-            db: db,
         }
     }
 }
