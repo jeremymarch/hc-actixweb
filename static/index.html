@@ -838,7 +838,7 @@ right: 0px;
         thisrow.classList.add("selectedGame");
 
         global_session_id = thisrow.getAttribute("data-uuid");
-        let send_data = { session_id: global_session_id };
+        let send_data = { qtype: "getmove", session_id: global_session_id };
         generic_send_request("getmove", send_data, null);
     }
 

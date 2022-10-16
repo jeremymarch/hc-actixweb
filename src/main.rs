@@ -301,6 +301,7 @@ pub struct SessionsListResponse {
 
 #[derive(Deserialize,Serialize)]
 pub struct GetMoveQuery {
+    qtype: String,
     session_id:sqlx::types::Uuid,
 }
 
@@ -1081,6 +1082,7 @@ mod tests {
         assert!(ask.is_ok() == false);
 
         let m = GetMoveQuery {
+            qtype: "getmove".to_string(),
             session_id:*session_uuid.as_ref().unwrap(),
         };
 
@@ -1585,6 +1587,7 @@ mod tests {
         assert_eq!(s.as_ref().unwrap()[0].their_score, Some(0));
 
         let m = GetMoveQuery {
+            qtype: "getmove".to_string(),
             session_id:*session_uuid.as_ref().unwrap(),
         };
 
