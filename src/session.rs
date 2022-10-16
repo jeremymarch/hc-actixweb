@@ -200,41 +200,38 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
 
                     let db = self.db.clone();
                     let verbs = self.verbs.clone();
-                    let user_id = self.uuid.clone();
+                    let user_id = self.uuid;
                     //let oid = self.id.clone();
                     //let room = self.room.clone();
                     let addr = ctx.address();//self.addr.clone();
                     let timestamp = get_timestamp();
                     
                     if msg.contains("getmove") {
-                        let fut = async move {
-                            let info:GetMoveQuery = serde_json::from_str(&msg).unwrap();
-                            let res = libhc::hc_get_move(&db, user_id, &info, &verbs).await.map_err(map_sqlx_error).unwrap();
-                            let resjson = serde_json::to_string(&res).unwrap();
-                            //println!("res {:?}", resjson);
-                            // send message to chat server
-                            addr.send(server::Message(resjson)).await.unwrap();
-                        };
-                        let fut = actix::fut::wrap_future::<_, Self>(fut);
-                        ctx.spawn(fut);    
+                        if let Ok(info) = serde_json::from_str(&msg) {
+                            let fut = async move {
+                                if let Ok(res) = libhc::hc_get_move(&db, user_id, &info, &verbs).await {
+                                    if let Ok(resjson) = serde_json::to_string(&res) {
+                                        addr.send(server::Message(resjson)).await;
+                                    }
+                                }
+                            };
+                            let fut = actix::fut::wrap_future::<_, Self>(fut);
+                            ctx.spawn(fut);   
+                        } 
                     }
                     else if msg.contains("submit") {
-                        
-                        let fut = async move {
-                            let info:AnswerQuery = serde_json::from_str(&msg).unwrap();
-                            let res = libhc::hc_answer(&db, user_id, &info, timestamp, &verbs).await.map_err(map_sqlx_error).unwrap();
-                            let resjson = serde_json::to_string(&res).unwrap();
-                            //println!("res {:?}", resjson);
-                            // send message to chat server
-                            addr.send(server::Message(resjson)).await.unwrap();
-                        };
-                        let fut = actix::fut::wrap_future::<_, Self>(fut);
-                        ctx.spawn(fut);    
-                    }
-                    else {
-                        return;
-                    };
-                        
+                        if let Ok(info) = serde_json::from_str(&msg) {
+                            let fut = async move {
+                                if let Ok(res) = libhc::hc_answer(&db, user_id, &info, timestamp, &verbs).await {
+                                    if let Ok(resjson) = serde_json::to_string(&res) {
+                                        addr.send(server::Message(resjson)).await;
+                                    }
+                                }
+                            };
+                            let fut = actix::fut::wrap_future::<_, Self>(fut);
+                            ctx.spawn(fut);    
+                        }
+                    }   
                 }
             }
             ws::Message::Binary(_) => println!("Unexpected binary"),
