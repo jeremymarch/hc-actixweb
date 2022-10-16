@@ -304,6 +304,13 @@ pub struct GetMoveQuery {
     session_id:sqlx::types::Uuid,
 }
 
+#[derive(Deserialize,Serialize)]
+pub struct GetSessions {
+    qtype: String,
+    practice: bool,
+    game: bool,
+}
+
 #[derive(Deserialize,Serialize, FromRow)]
 pub struct UserResult {
     user_id: sqlx::types::Uuid,
@@ -352,6 +359,7 @@ pub struct MoveResult {
 
 #[derive(Deserialize,Serialize)]
 pub struct AskQuery {
+    qtype: String,
     session_id: Uuid,
     person: i16,
     number: i16,
@@ -438,7 +446,7 @@ fn get_timestamp() -> i64 {
 }
 
 async fn get_sessions(
-    (session, req): (Session, HttpRequest)) -> Result<HttpResponse, AWError> {
+    (_info, session, req): (web::Form<GetSessions>, Session, HttpRequest)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<HcSqliteDb>().unwrap();
 
     if let Some(user_id) = login::get_user_id(session.clone()) {
@@ -1040,6 +1048,7 @@ mod tests {
         assert!(res.is_ok());
 
         let aq = AskQuery {
+            qtype: "ask".to_string(),
             session_id: *session_uuid.as_ref().unwrap(),
             person: 0,
             number: 0,
@@ -1232,6 +1241,7 @@ mod tests {
 
 
         let aq2 = AskQuery {
+            qtype: "ask".to_string(),
             session_id: *session_uuid.as_ref().unwrap(),
             person: 1,
             number: 1,
@@ -1410,6 +1420,7 @@ mod tests {
 
         //ask new verb after incorrect result
         let aq3 = AskQuery {
+            qtype: "ask".to_string(),
             session_id: *session_uuid.as_ref().unwrap(),
             person: 0,
             number: 0,
@@ -1552,6 +1563,7 @@ mod tests {
         assert!(res.is_ok());
 
         let aq = AskQuery {
+            qtype: "ask".to_string(),
             session_id: *session_uuid.as_ref().unwrap(),
             person: 0,
             number: 0,

@@ -760,7 +760,7 @@ right: 0px;
     }
 
     function send_ask(session_id, person, number, tense, mood, voice, verb_id) {
-        let send_data = {session_id: session_id, person: person, number: number, tense: tense, mood: mood, voice: voice, verb: verb_id};
+        let send_data = {qtype:"ask", session_id: session_id, person: parseInt(person), number: parseInt(number), tense: parseInt(tense), mood: parseInt(mood), voice: parseInt(voice), verb: parseInt(verb_id)};
         generic_send_request("ask", send_data, null);
     }
 
@@ -843,7 +843,7 @@ right: 0px;
     }
 
     function get_sessions() {
-        let send_data = { practice: true, game: true };
+        let send_data = { qtype:"getsessions", practice: true, game: true };
         generic_send_request("list", send_data, null);
     }
 

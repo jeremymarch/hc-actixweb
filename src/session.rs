@@ -14,7 +14,9 @@ use crate::map_sqlx_error;
 use crate::libhc;
 use crate::AnswerQuery;
 use crate::get_timestamp;
-// use crate::libhc::hc_get_move;
+use crate::SessionsListResponse;
+use crate::GetSessions;
+use crate::StatusResponse;
 
 /// How often heartbeat pings are sent
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -219,6 +221,46 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                             ctx.spawn(fut);   
                         } 
                     }
+                    else if msg.contains("newsession") {
+                        if let Ok(info) = serde_json::from_str(&msg) {
+                            let fut = async move {
+                                let (mesg, success) = match libhc::hc_insert_session(&db, user_id, &info, &verbs, timestamp).await {
+                                    Ok(_session_uuid) => {
+                                        ("inserted!".to_string(), true) 
+                                    },
+                                    Err(sqlx::Error::RowNotFound) => {
+                                        ("opponent not found!".to_string(), false)
+                                    },
+                                    Err(e) => {
+                                        (format!("error inserting: {:?}", e), false)
+                                    }
+                                };
+                                let res = StatusResponse {
+                                    response_to: "newsession".to_string(),
+                                    mesg,
+                                    success,
+                                };
+                                if let Ok(resjson) = serde_json::to_string(&res) {
+                                    let _ = addr.send(server::Message(resjson)).await;
+                                }
+                            };
+                            let fut = actix::fut::wrap_future::<_, Self>(fut);
+                            ctx.spawn(fut);
+                        }
+                    }
+                    else if msg.contains("ask") {
+                        if let Ok(info) = serde_json::from_str(&msg) {
+                            let fut = async move {
+                                if let Ok(res) = libhc::hc_ask(&db, user_id, &info, timestamp, &verbs).await {
+                                    if let Ok(resjson) = serde_json::to_string(&res) {
+                                        let _ = addr.send(server::Message(resjson)).await;
+                                    }
+                                }
+                            };
+                            let fut = actix::fut::wrap_future::<_, Self>(fut);
+                            ctx.spawn(fut);
+                        }
+                    }
                     else if msg.contains("submit") {
                         if let Ok(info) = serde_json::from_str(&msg) {
                             let fut = async move {
@@ -229,9 +271,46 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                 }
                             };
                             let fut = actix::fut::wrap_future::<_, Self>(fut);
-                            ctx.spawn(fut);    
+                            ctx.spawn(fut);
                         }
-                    }   
+                    }
+                    else if msg.contains("mfpressed") {
+                        if let Ok(info) = serde_json::from_str(&msg) {
+                            let fut = async move {
+                                if let Ok(res) = libhc::hc_mf_pressed(&db, user_id, &info, timestamp, &verbs).await {
+                                    if let Ok(resjson) = serde_json::to_string(&res) {
+                                        let _ = addr.send(server::Message(resjson)).await;
+                                    }
+                                }
+                            };
+                            let fut = actix::fut::wrap_future::<_, Self>(fut);
+                            ctx.spawn(fut);
+                        }
+                    }
+                    else if msg.contains("getsessions") {
+                        if let Ok(info) = serde_json::from_str::<GetSessions>(&msg) {
+                            let fut = async move {
+                                if let Ok(sessions) = libhc::hc_get_sessions(&db, user_id).await {
+                                    let res = SessionsListResponse {
+                                        response_to: "getsessions".to_string(),
+                                        sessions,
+                                        success: true,
+                                        username: Some("testing".to_string()),
+                                    };
+
+                                    if let Ok(resjson) = serde_json::to_string(&res) {
+                                        let _ = addr.send(server::Message(resjson)).await;
+                                    }
+                                }
+                            };
+                            let fut = actix::fut::wrap_future::<_, Self>(fut);
+                            ctx.spawn(fut);
+                        }
+                    }
+
+
+
+                    
                 }
             }
             ws::Message::Binary(_) => println!("Unexpected binary"),
