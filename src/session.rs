@@ -44,6 +44,7 @@ pub struct WsChatSession {
     pub uuid: Uuid,
     pub verbs: Vec<Arc<HcGreekVerb>>,
     pub db: HcSqliteDb,
+    pub username: Option<String>,
 }
 
 impl WsChatSession {
@@ -207,7 +208,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                     //let room = self.room.clone();
                     let addr = ctx.address();//self.addr.clone();
                     let timestamp = get_timestamp();
-                    
+                    let username = self.username.clone();
                     if msg.contains("getmove") {
                         if let Ok(info) = serde_json::from_str(&msg) {
                             let fut = async move {
@@ -295,9 +296,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                         response_to: "getsessions".to_string(),
                                         sessions,
                                         success: true,
-                                        username: Some("testing".to_string()),
+                                        username,
                                     };
-
                                     if let Ok(resjson) = serde_json::to_string(&res) {
                                         let _ = addr.send(server::Message(resjson)).await;
                                     }
@@ -307,10 +307,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                             ctx.spawn(fut);
                         }
                     }
-
-
-
-                    
                 }
             }
             ws::Message::Binary(_) => println!("Unexpected binary"),

@@ -511,7 +511,8 @@ right: 0px;
         answerform.addEventListener('keypress', handleKey, false);
         //$(".gkinput").keypress(handleKey);
 
-        get_sessions();
+        wsconnect();
+        //get_sessions();
 	}
 	
 	function accentSyllable(origChars, key) {
@@ -736,12 +737,12 @@ right: 0px;
             console.log("http request");
             send_data = serialize(send_data);
             microAjax({
-            url: send_url,
-            method: "POST",
-            data: send_data,
-            success: procResponse,
-            warning: procResponseError,
-            error: null
+                url: send_url,
+                method: "POST",
+                data: send_data,
+                success: procResponse,
+                warning: procResponseError,
+                error: null
             });
         }
 
@@ -1273,8 +1274,8 @@ right: 0px;
         $log.scrollTop += 1000
       }
 
-      function connect() {
-        disconnect()
+      function wsconnect() {
+        wsdisconnect()
 
         const { location } = window
 
@@ -1292,7 +1293,11 @@ right: 0px;
         socket.onmessage = (ev) => {
           //log('Received: ' + ev.data, 'message')
           console.log("websocket received: " + ev.data);
-          procResponse(JSON.parse(ev.data));
+          try {
+            let json = JSON.parse(ev.data);
+            procResponse(json);
+          }
+          catch(e) { console.log(e.message)}
         }
 
         socket.onclose = () => {
@@ -1302,7 +1307,7 @@ right: 0px;
         }
       }
 
-      function disconnect() {
+      function wsdisconnect() {
         if (socket) {
           log('Disconnecting...')
           socket.close()
@@ -1319,19 +1324,21 @@ right: 0px;
           $status.textContent = `connected`
           $connectButton.innerHTML = 'Disconnect'
           $input.focus()
+          get_sessions();
         } else {
           $status.style.backgroundColor = 'red'
           $status.style.color = 'white'
           $status.textContent = 'disconnected'
           $connectButton.textContent = 'Connect'
         }
+        
       }
 
       $connectButton.addEventListener('click', () => {
         if (socket) {
-          disconnect()
+          wsdisconnect()
         } else {
-          connect()
+            wsconnect()
         }
 
         updateConnectionStatus()

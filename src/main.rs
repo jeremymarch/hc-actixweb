@@ -403,10 +403,11 @@ async fn chat_route(
     srv: web::Data<Addr<server::ChatServer>>,
     session: Session,
     ) -> Result<HttpResponse, Error> {
-    if let Some(uuid) = login::get_user_id(session) {
+    if let Some(uuid) = login::get_user_id(session.clone()) {
         //println!("uuid {:?}", uuid);
         let db = req.app_data::<HcSqliteDb>().unwrap();
         let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
+        let username = login::get_username(session);
         ws::start(
             session::WsChatSession {
                 id: 0,
@@ -417,6 +418,7 @@ async fn chat_route(
                 uuid,
                 verbs: verbs.clone(),
                 db: db.clone(),
+                username,
             },
             &req,
             stream,
