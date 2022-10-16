@@ -404,7 +404,7 @@ fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>
                 if s.answer_user_id.is_some() { //xxxanswered, their turn to ask | they asked, I answered, my turn to ask
                     myturn = true;
                     
-                    if change_verb_on_incorrect && s.is_correct.is_some() && s.is_correct.unwrap() == false {
+                    if change_verb_on_incorrect && s.is_correct.is_some() && !s.is_correct.unwrap() {
                         move_type = MoveType::FirstMoveMyTurn; //user must ask a new verb because answered incorrectly
                     }
                     else {

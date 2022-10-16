@@ -277,8 +277,7 @@ pub struct CreateSessionQuery {
     practice_reps_per_verb:Option<i16>,
 }
 
-#[derive(PartialEq,Debug)]
-#[derive(Deserialize,Serialize, FromRow)]
+#[derive(PartialEq,Debug,Eq,Deserialize,Serialize, FromRow)]
 pub struct SessionsListQuery {
     session_id: sqlx::types::Uuid,
     challenged: Option<sqlx::types::Uuid>, //the one who didn't start the game, or null for practice
@@ -407,7 +406,7 @@ async fn chat_route(
                 room: "main".to_owned(),
                 name: None,
                 addr: srv.get_ref().clone(),
-                uuid: uuid,
+                uuid,
                 verbs: verbs.clone(),
                 db: db.clone(),
             },
@@ -820,12 +819,12 @@ fn load_verbs(_path:&str) -> Vec<Arc<HcGreekVerb>> {
     //         }
     //     }
     // }
-    let pp_lines = PPS.split("\n");
+    let pp_lines = PPS.split('\n');
     for (idx, line) in pp_lines.enumerate() {
         
-            if !line.starts_with('#') && line.len() > 0 { //skip commented lines
+            if !line.starts_with('#') && !line.is_empty() { //skip commented lines
                 //println!("line: {}", line);
-                verbs.push(Arc::new(HcGreekVerb::from_string_with_properties(idx as u32, &line).unwrap()));
+                verbs.push(Arc::new(HcGreekVerb::from_string_with_properties(idx as u32, line).unwrap()));
             }
         
     }

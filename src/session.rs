@@ -211,7 +211,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                             let fut = async move {
                                 if let Ok(res) = libhc::hc_get_move(&db, user_id, &info, &verbs).await {
                                     if let Ok(resjson) = serde_json::to_string(&res) {
-                                        addr.send(server::Message(resjson)).await;
+                                        let _ = addr.send(server::Message(resjson)).await;
                                     }
                                 }
                             };
@@ -224,7 +224,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                             let fut = async move {
                                 if let Ok(res) = libhc::hc_answer(&db, user_id, &info, timestamp, &verbs).await {
                                     if let Ok(resjson) = serde_json::to_string(&res) {
-                                        addr.send(server::Message(resjson)).await;
+                                        let _ = addr.send(server::Message(resjson)).await;
                                     }
                                 }
                             };
