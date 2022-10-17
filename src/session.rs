@@ -217,7 +217,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                 name: info.session_id,
                             });
                             let fut = async move {
-                                if let Ok(res) = libhc::hc_get_move(&db, user_id, &info, &verbs).await {
+                                if let Ok(res) = libhc::hc_get_move(&db, user_id, false, &info, &verbs).await {
                                     if let Ok(resjson) = serde_json::to_string(&res) {
                                         let _ = addr.send(server::Message(resjson)).await;
                                     }
@@ -260,14 +260,22 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                             let addr2 = self.addr.clone();
                             let fut = async move {
                                 if let Ok(res) = libhc::hc_ask(&db, user_id, &info, timestamp, &verbs).await {
-                                    
+
+                                    let gm = GetMoveQuery {
+                                        qtype: "getmove".to_string(),
+                                        session_id: info.session_id,
+                                    };
+                                    if let Ok(gm_res) = libhc::hc_get_move(&db, user_id, true, &gm, &verbs).await {
+                                        if let Ok(gm_resjson) = serde_json::to_string(&gm_res) {
+                                            //println!("send to room {:?}", info.session_id);
+                                            addr2.do_send(server::ClientMessage {
+                                                id: user_id,
+                                                msg: gm_resjson.clone(),
+                                                room: info.session_id,
+                                            });
+                                        }
+                                    }
                                     if let Ok(resjson) = serde_json::to_string(&res) {
-                                        addr2.do_send(server::ClientMessage {
-                                            id: user_id,
-                                            msg: resjson.clone(),
-                                            room: info.session_id,
-                                        });
-                                        println!("send to room {:?}", info.session_id);
                                         let _ = addr.send(server::Message(resjson)).await;
                                     }
                                 }

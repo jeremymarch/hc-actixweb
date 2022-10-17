@@ -525,7 +525,7 @@ async fn get_move(
 
     if let Some(user_id) = login::get_user_id(session) {
         
-        let res = libhc::hc_get_move(db, user_id, &info, verbs).await.map_err(map_sqlx_error)?;
+        let res = libhc::hc_get_move(db, user_id, false, &info, verbs).await.map_err(map_sqlx_error)?;
 
         Ok(HttpResponse::Ok().json(res))
     }
@@ -1095,7 +1095,7 @@ mod tests {
             session_id:*session_uuid.as_ref().unwrap(),
         };
 
-        let ss = hc_get_move(&db, uuid1, &m, &verbs).await;
+        let ss = hc_get_move(&db, uuid1, false, &m, &verbs).await;
 
         let ss_res = SessionState { 
             session_id: *session_uuid.as_ref().unwrap(), 
@@ -1126,7 +1126,7 @@ mod tests {
         //println!("{:?}", ss.as_ref().unwrap());
         assert!(ss.unwrap() == ss_res);
 
-        let ss2 = hc_get_move(&db, uuid2, &m, &verbs).await;
+        let ss2 = hc_get_move(&db, uuid2, false, &m, &verbs).await;
 
         let ss_res2 = SessionState { 
             session_id: *session_uuid.as_ref().unwrap(), 
@@ -1179,7 +1179,7 @@ mod tests {
         let answer = hc_answer(&db, uuid2, &answerq, timestamp, &verbs).await;
         assert!(answer.is_ok() == false);
 
-        let ss = hc_get_move(&db, uuid1, &m, &verbs).await;
+        let ss = hc_get_move(&db, uuid1, false, &m, &verbs).await;
 
         let ss_res = SessionState { 
             session_id: *session_uuid.as_ref().unwrap(), 
@@ -1209,7 +1209,7 @@ mod tests {
         //println!("{:?}", ss.as_ref().unwrap());
         assert!(ss.unwrap() == ss_res);
 
-        let ss2 = hc_get_move(&db, uuid2, &m, &verbs).await;
+        let ss2 = hc_get_move(&db, uuid2, false, &m, &verbs).await;
 
         let ss_res2 = SessionState { 
             session_id: *session_uuid.as_ref().unwrap(), 
@@ -1257,7 +1257,7 @@ mod tests {
         let ask = hc_ask(&db, uuid2, &aq2, timestamp, &verbs).await;
         assert!(ask.is_ok());
 
-        let ss = hc_get_move(&db, uuid1, &m, &verbs).await;
+        let ss = hc_get_move(&db, uuid1, false, &m, &verbs).await;
         assert!(ss.is_ok());
         let ss_res = SessionState { 
             session_id: *session_uuid.as_ref().unwrap(), 
@@ -1288,7 +1288,7 @@ mod tests {
         //println!("2: {:?}", ss_res);
         assert!(ss.unwrap() == ss_res);
 
-        let ss2 = hc_get_move(&db, uuid2, &m, &verbs).await;
+        let ss2 = hc_get_move(&db, uuid2, false, &m, &verbs).await;
 
         let ss_res2 = SessionState { 
             session_id: *session_uuid.as_ref().unwrap(), 
@@ -1358,7 +1358,7 @@ mod tests {
         assert_eq!(s.as_ref().unwrap()[0].their_score, Some(0));
 
 
-        let ss = hc_get_move(&db, uuid1, &m, &verbs).await;
+        let ss = hc_get_move(&db, uuid1, false, &m, &verbs).await;
 
         let ss_res = SessionState { 
             session_id: *session_uuid.as_ref().unwrap(), 
@@ -1388,7 +1388,7 @@ mod tests {
         //println!("{:?}\n\n{:?}", ss_res, ss.as_ref().unwrap());
         assert!(ss.unwrap() == ss_res);
 
-        let ss2 = hc_get_move(&db, uuid2, &m, &verbs).await;
+        let ss2 = hc_get_move(&db, uuid2, false, &m, &verbs).await;
 
         let ss_res2 = SessionState { 
             session_id: *session_uuid.as_ref().unwrap(), 
@@ -1436,7 +1436,7 @@ mod tests {
         let ask = hc_ask(&db, uuid1, &aq3, timestamp, &verbs).await;
         assert!(ask.is_ok());
 
-        let ss = hc_get_move(&db, uuid1, &m, &verbs).await;
+        let ss = hc_get_move(&db, uuid1, false, &m, &verbs).await;
         assert!(ss.is_ok());
         let ss_res = SessionState { 
             session_id: *session_uuid.as_ref().unwrap(), 
@@ -1467,7 +1467,7 @@ mod tests {
         //println!("2: {:?}", ss_res);
         assert!(ss.unwrap() == ss_res);
 
-        let ss2 = hc_get_move(&db, uuid2, &m, &verbs).await;
+        let ss2 = hc_get_move(&db, uuid2, false, &m, &verbs).await;
 
         let ss_res2 = SessionState { 
             session_id: *session_uuid.as_ref().unwrap(), 
@@ -1603,7 +1603,7 @@ mod tests {
             session_id:*session_uuid.as_ref().unwrap(),
         };
 
-        let ss = hc_get_move(&db, uuid1, &m, &verbs).await;
+        let ss = hc_get_move(&db, uuid1, false, &m, &verbs).await;
 
         assert_eq!(ss.as_ref().unwrap().move_type, MoveType::Practice);
         assert_eq!(ss.as_ref().unwrap().myturn, true);
@@ -1670,6 +1670,6 @@ mod tests {
         let answer = hc_answer(&db, uuid1, &answerq, timestamp, &verbs).await;
         assert!(answer.is_ok() == true);
 
-        //let ss = hc_get_move(&db, uuid1, &m, &verbs).await;
+        //let ss = hc_get_move(&db, uuid1, false, &m, &verbs).await;
     }
 }

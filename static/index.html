@@ -237,6 +237,20 @@ a {color:blue;}
     top: 3px;
 }
 
+@media only screen and (max-width: 800px) {
+  .hcform {
+    width:90%;
+  }
+}
+#chat {
+    position: absolute;
+    top: 21px;
+    right: 0px;
+    display:none;
+}
+.myturnIcon { display:none; }
+.myturn .myturnIcon { display:block; }
+
 .startingform {border: 1px solid black;background-color:white}
 #answerform {border: 1px solid black;background-color:white}
 
@@ -255,17 +269,6 @@ a {color:blue;}
 .dark a {color:#03A5F3;}
 .dark .gamerow {color:#03A5F3;}
 .dark .selectedGame {background-color: white;}
-
-@media only screen and (max-width: 800px) {
-  .hcform {
-    width:90%;
-  }
-}
-#chat {
-    position: absolute;
-top: 21px;
-right: 0px;
-}
     </style>
     </head>
     <body onload="start()">
@@ -487,6 +490,7 @@ right: 0px;
 		return a.trim();
 	}
 
+    const supportsWebSockets = 'WebSocket' in window || 'MozWebSocket' in window;
     function start() {
         global_timer_ref = document.querySelector('#mainTime');
 	    const supported = (() => {
@@ -511,8 +515,13 @@ right: 0px;
         answerform.addEventListener('keypress', handleKey, false);
         //$(".gkinput").keypress(handleKey);
 
-        wsconnect();
-        //get_sessions();
+        
+        if (supportsWebSockets) {
+            wsconnect();
+        }
+        else {
+            get_sessions();
+        }
 	}
 	
 	function accentSyllable(origChars, key) {
@@ -679,6 +688,12 @@ right: 0px;
             get_sessions();
         }
         else if (data.response_to == "getmoves" && data.success) {
+            if (data.myturn && data.move_type != "Practice") {
+                document.querySelector(".gamerow[data-uuid='" + data.session_id + "']").classList.add("myturn");
+            }
+            else {
+                document.querySelector(".gamerow[data-uuid='" + data.session_id + "']").classList.remove("myturn");
+            }
             setUI(data);
         }
         else if (data.response_to == "getsessions" && data.success) {
@@ -699,8 +714,8 @@ right: 0px;
             for (let i = 0; i < data.sessions.length; i++) {
                 let s = data.sessions[i];
                 if (s.move_type != "FirstMoveTheirTurn") /* do not show if first move not asked yet and I did not start game */ {
-                    rows += "<p data-uuid='" + s.session_id +"' ";
-                    rows += "class='gamerow" + (s.myturn ? " myturn" : "");
+                    rows += "<div data-uuid='" + s.session_id +"' ";
+                    rows += "class='gamerow" + (s.myturn && s.move_type != "Practice" ? " myturn" : "");
                     rows += (s.session_id == global_session_id ? " selectedGame" : "") + "' ";
                     rows += (s.opponent_name ? "opponent='" + s.opponent_name + "' " : "");
                     rows += "title='" + s.move_type + "' ";
@@ -708,7 +723,7 @@ right: 0px;
                     rows += (s.move_type == "Practice" ? "Practice" : (global_username ? global_username : "Game"));
                     rows += (s.opponent_name ? " vs. " + s.opponent_name : "");
                     rows += (s.move_type != "Practice" ? (" (" + s.my_score + " - " + s.their_score + ")") : "");
-                    rows += (s.myturn && s.move_type != "Practice" ? myturnIcon : "") + "</p>";
+                    rows += myturnIcon + "</div>";
                 }
                 //document.querySelector(".gamerow[data-uuid='b72df91e-3a4c-4f1b-aeda-c14fea61def6']").style.backgroundColor = "blue";
             }
@@ -1085,7 +1100,6 @@ right: 0px;
     }
 
     function uiModeAskResponse(data) {
-        
         console.log("ask successfully submitted");
         document.querySelector("#mfbutton").disabled = true;
         let submitbutton = document.querySelector("#submitbutton");

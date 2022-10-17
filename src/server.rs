@@ -96,15 +96,15 @@ impl ChatServer {
 impl ChatServer {
     /// Send message to all users in the room
     fn send_message(&self, room: Uuid, message: &str, skip_id: Uuid) {
-        println!("send message1 room: {:?}", room);
+        //println!("send message1 room: {:?}", room);
         if let Some(sessions) = self.rooms.get(&room) {
-            println!("send message2 room: {:?}", room);
+            //println!("send message2 room: {:?}", room);
             for id in sessions {
-                println!("send message3 room: {:?}, id: {:?}", room, id);
+                //println!("send message3 room: {:?}, id: {:?}", room, id);
                 if *id != skip_id {
-                    println!("send message4 room: {:?}", room);
+                    //println!("send message4 room: {:?}", room);
                     if let Some(addr) = self.sessions.get(id) {
-                        println!("send message5");
+                        //println!("send message5 room: {:?}, id: {:?}", room, id);
                         addr.do_send(Message(message.to_owned()));
                     }
                 }
@@ -127,14 +127,14 @@ impl Handler<Connect> for ChatServer {
     type Result = usize;
 
     fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
-        println!("Someone joined");
+        //println!("Someone joined");
 
         // notify all users in same room
         //self.send_message(MAIN_ROOM, "Someone joined", 0);
 
         // register session with random id
         //let id = self.rng.gen::<usize>();
-        println!("connect id: {:?}, addr: {:?}", msg.id, msg.addr);
+        //println!("connect id: {:?}, addr: {:?}", msg.id, msg.addr);
         self.sessions.insert(msg.id, msg.addr);
 
         // auto join session to main room
@@ -157,7 +157,7 @@ impl Handler<Disconnect> for ChatServer {
     type Result = ();
 
     fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
-        println!("Someone disconnected");
+        //println!("Someone disconnected");
 
         let mut rooms: Vec<Uuid> = Vec::new();
 
@@ -221,7 +221,7 @@ impl Handler<Join> for ChatServer {
         //     self.send_message(&room, "Someone disconnected", 0);
         // }
 
-        println!("joined room: {:?}, id: {:?}", name, id);
+        //println!("joined room: {:?}, id: {:?}", name, id);
 
         self.rooms
             .entry(name.clone())
