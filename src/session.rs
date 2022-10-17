@@ -27,21 +27,20 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 #[derive(Debug)]
 pub struct WsChatSession {
     /// unique session id
-    pub id: usize,
+    pub id: Uuid,
 
     /// Client must send ping at least once per 10 seconds (CLIENT_TIMEOUT),
     /// otherwise we drop connection.
     pub hb: Instant,
 
     /// joined room
-    pub room: String,
+    pub room: Uuid,
 
     /// peer name
     pub name: Option<String>,
 
     /// Chat server
     pub addr: Addr<server::ChatServer>,
-    pub uuid: Uuid,
     pub verbs: Vec<Arc<HcGreekVerb>>,
     pub db: HcSqliteDb,
     pub username: Option<String>,
@@ -90,15 +89,16 @@ impl Actor for WsChatSession {
         let addr = ctx.address();
         self.addr
             .send(server::Connect {
+                id: self.id,
                 addr: addr.recipient(),
             })
             .into_actor(self)
             .then(|res, act, ctx| {
-                match res {
-                    Ok(res) => act.id = res,
-                    // something is wrong with chat server
-                    _ => ctx.stop(),
-                }
+                // match res {
+                //     Ok(res) => act.id = res,
+                //     // something is wrong with chat server
+                //     _ => ctx.stop(),
+                // }
                 fut::ready(())
             })
             .wait(ctx);
@@ -144,53 +144,53 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                 let m = text.trim();
                 // we check for /sss type of messages
                 if m.starts_with('/') {
-                    let v: Vec<&str> = m.splitn(2, ' ').collect();
-                    match v[0] {
-                        "/list" => {
-                            // Send ListRooms message to chat server and wait for
-                            // response
-                            println!("List rooms");
-                            self.addr
-                                .send(server::ListRooms)
-                                .into_actor(self)
-                                .then(|res, _, ctx| {
-                                    match res {
-                                        Ok(rooms) => {
-                                            for room in rooms {
-                                                ctx.text(room);
-                                            }
-                                        }
-                                        _ => println!("Something is wrong"),
-                                    }
-                                    fut::ready(())
-                                })
-                                .wait(ctx)
-                            // .wait(ctx) pauses all events in context,
-                            // so actor wont receive any new messages until it get list
-                            // of rooms back
-                        }
-                        "/join" => {
-                            if v.len() == 2 {
-                                self.room = v[1].to_owned();
-                                self.addr.do_send(server::Join {
-                                    id: self.id,
-                                    name: self.room.clone(),
-                                });
+                    // let v: Vec<&str> = m.splitn(2, ' ').collect();
+                    // match v[0] {
+                        // "/list" => {
+                        //     // Send ListRooms message to chat server and wait for
+                        //     // response
+                        //     println!("List rooms");
+                        //     self.addr
+                        //         .send(server::ListRooms)
+                        //         .into_actor(self)
+                        //         .then(|res, _, ctx| {
+                        //             match res {
+                        //                 Ok(rooms) => {
+                        //                     for room in rooms {
+                        //                         ctx.text(room);
+                        //                     }
+                        //                 }
+                        //                 _ => println!("Something is wrong"),
+                        //             }
+                        //             fut::ready(())
+                        //         })
+                        //         .wait(ctx)
+                        //     // .wait(ctx) pauses all events in context,
+                        //     // so actor wont receive any new messages until it get list
+                        //     // of rooms back
+                        // }
+                    //     "/join" => {
+                    //         if v.len() == 2 {
+                    //             self.room = v[1].to_owned();
+                    //             self.addr.do_send(server::Join {
+                    //                 id: self.id,
+                    //                 name: self.room.clone(),
+                    //             });
 
-                                ctx.text("joined");
-                            } else {
-                                ctx.text("!!! room name is required");
-                            }
-                        }
-                        "/name" => {
-                            if v.len() == 2 {
-                                self.name = Some(v[1].to_owned());
-                            } else {
-                                ctx.text("!!! name is required");
-                            }
-                        }
-                        _ => ctx.text(format!("!!! unknown command: {m:?}")),
-                    }
+                    //             ctx.text("joined");
+                    //         } else {
+                    //             ctx.text("!!! room name is required");
+                    //         }
+                    //     }
+                    //     "/name" => {
+                    //         if v.len() == 2 {
+                    //             self.name = Some(v[1].to_owned());
+                    //         } else {
+                    //             ctx.text("!!! name is required");
+                    //         }
+                    //     }
+                    //     _ => ctx.text(format!("!!! unknown command: {m:?}")),
+                    // }
                 } else {
                     let msg = if let Some(ref name) = self.name {
                         format!("{name}: {m}")
@@ -203,14 +203,19 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
 
                     let db = self.db.clone();
                     let verbs = self.verbs.clone();
-                    let user_id = self.uuid;
+                    let user_id = self.id;
                     //let oid = self.id.clone();
                     //let room = self.room.clone();
                     let addr = ctx.address();//self.addr.clone();
                     let timestamp = get_timestamp();
                     let username = self.username.clone();
                     if msg.contains("getmove") {
-                        if let Ok(info) = serde_json::from_str(&msg) {
+                        if let Ok(info) = serde_json::from_str::<GetMoveQuery>(&msg) {
+                            //join game room
+                            self.addr.do_send(server::Join {
+                                id: user_id,
+                                name: info.session_id,
+                            });
                             let fut = async move {
                                 if let Ok(res) = libhc::hc_get_move(&db, user_id, &info, &verbs).await {
                                     if let Ok(resjson) = serde_json::to_string(&res) {
@@ -220,6 +225,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                             };
                             let fut = actix::fut::wrap_future::<_, Self>(fut);
                             ctx.spawn(fut);   
+
                         } 
                     }
                     else if msg.contains("newsession") {
@@ -251,9 +257,17 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                     }
                     else if msg.contains("ask") {
                         if let Ok(info) = serde_json::from_str(&msg) {
+                            let addr2 = self.addr.clone();
                             let fut = async move {
                                 if let Ok(res) = libhc::hc_ask(&db, user_id, &info, timestamp, &verbs).await {
+                                    
                                     if let Ok(resjson) = serde_json::to_string(&res) {
+                                        addr2.do_send(server::ClientMessage {
+                                            id: user_id,
+                                            msg: resjson.clone(),
+                                            room: info.session_id,
+                                        });
+                                        println!("send to room {:?}", info.session_id);
                                         let _ = addr.send(server::Message(resjson)).await;
                                     }
                                 }

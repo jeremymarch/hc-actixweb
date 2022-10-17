@@ -410,12 +410,11 @@ async fn chat_route(
         let username = login::get_username(session);
         ws::start(
             session::WsChatSession {
-                id: 0,
+                id: uuid,
                 hb: Instant::now(),
-                room: "main".to_owned(),
+                room: server::MAIN_ROOM,
                 name: None,
                 addr: srv.get_ref().clone(),
-                uuid,
                 verbs: verbs.clone(),
                 db: db.clone(),
                 username,
