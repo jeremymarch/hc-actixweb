@@ -17,6 +17,7 @@ use crate::get_timestamp;
 use crate::SessionsListResponse;
 use crate::GetSessions;
 use crate::StatusResponse;
+use crate::MoveType;
 
 /// How often heartbeat pings are sent
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -225,7 +226,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                             };
                             let fut = actix::fut::wrap_future::<_, Self>(fut);
                             ctx.spawn(fut);   
-
                         } 
                     }
                     else if msg.contains("newsession") {
@@ -261,18 +261,20 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                             let fut = async move {
                                 if let Ok(res) = libhc::hc_ask(&db, user_id, &info, timestamp, &verbs).await {
 
-                                    let gm = GetMoveQuery {
-                                        qtype: "getmove".to_string(),
-                                        session_id: info.session_id,
-                                    };
-                                    if let Ok(gm_res) = libhc::hc_get_move(&db, user_id, true, &gm, &verbs).await {
-                                        if let Ok(gm_resjson) = serde_json::to_string(&gm_res) {
-                                            //println!("send to room {:?}", info.session_id);
-                                            addr2.do_send(server::ClientMessage {
-                                                id: user_id,
-                                                msg: gm_resjson.clone(),
-                                                room: info.session_id,
-                                            });
+                                    if res.move_type != MoveType::Practice {
+                                        let gm = GetMoveQuery {
+                                            qtype: "getmove".to_string(),
+                                            session_id: info.session_id,
+                                        };
+                                        if let Ok(gm_res) = libhc::hc_get_move(&db, user_id, true, &gm, &verbs).await {
+                                            if let Ok(gm_resjson) = serde_json::to_string(&gm_res) {
+                                                //println!("send to room {:?}", info.session_id);
+                                                addr2.do_send(server::ClientMessage {
+                                                    id: user_id,
+                                                    msg: gm_resjson.clone(),
+                                                    room: info.session_id,
+                                                });
+                                            }
                                         }
                                     }
                                     if let Ok(resjson) = serde_json::to_string(&res) {
@@ -286,8 +288,27 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                     }
                     else if msg.contains("submit") {
                         if let Ok(info) = serde_json::from_str(&msg) {
+                            let addr2 = self.addr.clone();
                             let fut = async move {
                                 if let Ok(res) = libhc::hc_answer(&db, user_id, &info, timestamp, &verbs).await {
+
+                                    if res.move_type != MoveType::Practice {
+                                        let gm = GetMoveQuery {
+                                            qtype: "getmove".to_string(),
+                                            session_id: info.session_id,
+                                        };
+                                        if let Ok(gm_res) = libhc::hc_get_move(&db, user_id, true, &gm, &verbs).await {
+                                            if let Ok(gm_resjson) = serde_json::to_string(&gm_res) {
+                                                //println!("send to room {:?}", info.session_id);
+                                                addr2.do_send(server::ClientMessage {
+                                                    id: user_id,
+                                                    msg: gm_resjson.clone(),
+                                                    room: info.session_id,
+                                                });
+                                            }
+                                        }
+                                    }
+
                                     if let Ok(resjson) = serde_json::to_string(&res) {
                                         let _ = addr.send(server::Message(resjson)).await;
                                     }
@@ -299,8 +320,27 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                     }
                     else if msg.contains("mfpressed") {
                         if let Ok(info) = serde_json::from_str(&msg) {
+                            let addr2 = self.addr.clone();
                             let fut = async move {
                                 if let Ok(res) = libhc::hc_mf_pressed(&db, user_id, &info, timestamp, &verbs).await {
+
+                                    if res.move_type != MoveType::Practice && res.is_correct == Some(false) {
+                                        let gm = GetMoveQuery {
+                                            qtype: "getmove".to_string(),
+                                            session_id: info.session_id,
+                                        };
+                                        if let Ok(gm_res) = libhc::hc_get_move(&db, user_id, true, &gm, &verbs).await {
+                                            if let Ok(gm_resjson) = serde_json::to_string(&gm_res) {
+                                                //println!("send to room {:?}", info.session_id);
+                                                addr2.do_send(server::ClientMessage {
+                                                    id: user_id,
+                                                    msg: gm_resjson.clone(),
+                                                    room: info.session_id,
+                                                });
+                                            }
+                                        }
+                                    }
+
                                     if let Ok(resjson) = serde_json::to_string(&res) {
                                         let _ = addr.send(server::Message(resjson)).await;
                                     }
