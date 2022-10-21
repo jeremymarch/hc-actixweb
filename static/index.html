@@ -745,6 +745,11 @@ a {color:blue;}
     }
 
     function generic_send_request(send_url, send_data, handle_response) {
+        // if (supportsWebSockets && !socket) {
+        //     wsconnect(send_url, send_data);
+        //     return;
+        // }
+ 
         if (socket) {
             console.log("websocket request");
             send_data = JSON.stringify(send_data);
@@ -1302,6 +1307,7 @@ a {color:blue;}
         socket = new WebSocket(wsUri)
 
         socket.onopen = () => {
+            console.log("ws connected");
           log('Connected')
           updateConnectionStatus()
         }
@@ -1318,8 +1324,19 @@ a {color:blue;}
 
         socket.onclose = () => {
           log('Disconnected')
+          console.log("ws disconnected");
           socket = null
+          setTimeout(try_ws_reconnect, 3000);
           updateConnectionStatus()
+        }
+      }
+
+      function try_ws_reconnect() {
+        if (!socket) {
+            wsconnect();
+        }
+        else {
+            setTimeout(try_ws_reconnect, 3000);
         }
       }
 

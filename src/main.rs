@@ -919,8 +919,6 @@ async fn main() -> io::Result<()> {
 
     //for flash messages on login page
     let message_store = CookieMessageStore::builder( secret_key.clone() /*Key::from(hmac_secret.expose_secret().as_bytes())*/ )
-        .path("/".to_string())   
-        .domain("".to_string())
         .secure(cookie_secure)
         .same_site(SameSite::Strict)
         .build();

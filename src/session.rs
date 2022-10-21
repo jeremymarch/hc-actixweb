@@ -67,7 +67,6 @@ impl WsChatSession {
                 // don't try to send a ping
                 return;
             }
-
             ctx.ping(b"");
         });
     }
