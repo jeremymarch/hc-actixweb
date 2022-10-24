@@ -200,7 +200,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                     
 //https://stackoverflow.com/questions/64434912/how-to-correctly-call-async-functions-in-a-websocket-handler-in-actix-web
 //https://stackoverflow.com/questions/72068485/how-use-postgres-deadpool-postgres-with-websocket-actix-actix-web-actors
-
+//https://github.com/agmcleod/sc-predictions-server/blob/dev/server/src/websocket/client_messages.rs
                     let db = self.db.clone();
                     let verbs = self.verbs.clone();
                     let user_id = self.id;

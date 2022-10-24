@@ -397,7 +397,7 @@ pub struct SessionState {
 }
 
 /// Entry point for our websocket route
-async fn chat_route(
+async fn ws_route(
     req: HttpRequest,
     stream: web::Payload,
     srv: web::Data<Addr<server::ChatServer>>,
@@ -958,8 +958,8 @@ fn config(cfg: &mut web::ServiceConfig) {
         .route("/newuser", web::get().to(login::new_user_get))
         .route("/newuser", web::post().to(login::new_user_post))
         .route("/logout", web::get().to(login::logout))
-        //.route("/ws", web::get().to(chat_route))
-        .service(web::resource("/ws").route(web::get().to(chat_route)))
+        //.route("/ws", web::get().to(ws_route))
+        .service(web::resource("/ws").route(web::get().to(ws_route)))
         .service(web::resource("/healthzzz").route(web::get().to(health_check)))
         .service(web::resource("/enter").route(web::post().to(enter)))
         .service(web::resource("/new").route(web::post().to(create_session)))

@@ -38,7 +38,7 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
 .gkinput, .gkinputnontyping {
     font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
 }
-
+#mainTime { font-size:14pt;}
 .sym {
     font-family: "AppleColorEmoji","Apple Color Emoji","Segoe UI Emoji",'Noto Color Emoji',"NotoColorEmoji","Segoe UI Symbol","EmojiSymbols",Symbola,"Android Emoji","AndroidEmoji","Arial Unicode MS","Zapf Dingbats","AppleSDGothicNeo-Regular","lucida grande",tahoma,verdana,arial,sans-serif;
     text-rendering: optimizeLegibility;
@@ -54,20 +54,20 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
     margin:6px 0px;
     resize: none;
 }
-
 /*.gkinput:focus, .gkinputcodes:focus, .gkinputnontyping:focus{
     outline:2px solid #6677dd;
 }*/
 
 .startingform {
     width:100%;
-    display:block;
+    display:flex;
+    justify-content: center;
+    align-items: center;
     margin:0px auto;
-    height:40px;
+    height:90px;
     font-size:24pt;
     border:1px solid black;
     text-align: center;
-    padding-top:20px;
     border-radius:6px;
     font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
 }
@@ -75,7 +75,7 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
     width:100%;
     display:block;
     margin:0px auto;
-    height:60px;
+    height:90px;
     font-size:24pt;
     border:1px solid black;
     text-align: center;
@@ -111,6 +111,7 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
 #submitbutton {
     margin:10px auto;
     width:100px;
+    height:26px;
     display: block;
     margin-bottom: 20px;
 }
@@ -135,8 +136,9 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
     display:flex;
 }
 .mfbutton {
-    float:left;
-    width:50px;
+    float: left;
+    width: 55px;
+    height: 26px;
 }
 
 #settings {
@@ -228,7 +230,7 @@ SELECT, OPTION {
     border-bottom: 4px solid red;
 }
 
-BUTTON {border-radius: 3px;}
+BUTTON {border-radius: 7px;}
 a {color:blue;}
 
 #refreshbutton {
@@ -265,6 +267,7 @@ a {color:blue;}
 .dark #menubar { background-color: black;color:white;border-bottom: 1px solid white; }
 .dark #answerform {background-color: black;color:white;border: 1px solid white;}
 .dark #mfbutton {background-color: black;color:white;border: 1px solid white;}
+.dark #mfbutton:disabled {background-color: black;color:#666;border: 1px solid white;}
 .dark #submitbutton {background-color: black;color:white;border: 1px solid white;}
 .dark .paramdiv {border-bottom: 4px solid transparent;}
 .dark .paramdivchanged { border-bottom: 4px solid red;}
@@ -305,9 +308,6 @@ a {color:blue;}
     <div id="startingformouter" class="startingform">
         <div id="startingform" class=""></div>
         <select id="verbchooser">
-            <option value="0">παιδεύω</option>
-            <option value="1">πέμπω</option>
-            <option value="2">κελεύω</option>
         </select>
     </div>
     
@@ -360,56 +360,6 @@ a {color:blue;}
     <button id="submitbutton" onclick="submit_clicked()">Start</button>
     <div id="statusmesg">press start to begin</div>
 </div>
-
-
-<div id="chat">
-<h1>Chat!</h1>
-
-<div>
-  <button id="connect">Connect</button>
-  <span>Status:</span>
-  <span id="status">disconnected</span>
-</div>
-
-<div id="log"></div>
-
-<form id="chatform">
-  <input type="text" id="text" />
-  <input type="submit" id="send" />
-</form>
-
-<hr />
-
-<section>
-  <h2>Commands</h2>
-  <table style="border-spacing: 0.5em">
-    <tr>
-      <td>
-        <code>/list</code>
-      </td>
-      <td>list all available rooms</td>
-    </tr>
-    <tr>
-      <td>
-        <code>/join name</code>
-      </td>
-      <td>join room, if room does not exist, create new one</td>
-    </tr>
-    <tr>
-      <td>
-        <code>/name name</code>
-      </td>
-      <td>set session name</td>
-    </tr>
-    <tr>
-      <td>
-        <code>some message</code>
-      </td>
-      <td>just string, send message to all peers in same room</td>
-    </tr>
-  </table>
-</section>
-</div>
     <script>
     'use strict';
     let global_username = null;
@@ -431,7 +381,7 @@ a {color:blue;}
     let myturnIcon = `<svg class="myturnIcon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="50" /></svg>`;
     let correctIcon = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" enable-background="new 0 0 64 64"><path d="M32,2C15.431,2,2,15.432,2,32c0,16.568,13.432,30,30,30c16.568,0,30-13.432,30-30C62,15.432,48.568,2,32,2z M25.025,50  l-0.02-0.02L24.988,50L11,35.6l7.029-7.164l6.977,7.184l21-21.619L53,21.199L25.025,50z" fill="#43a047"/></svg>`;
     let incorrectIcon = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" enable-background="new 0 0 64 64"><path d="m32 2c-16.568 0-30 13.432-30 30s13.432 30 30 30 30-13.432 30-30-13.432-30-30-30m5.513 44.508l-5.514-9.894-5.825 9.894h-7.048l9.331-14.783-8.878-14.232h7.244l5.175 9.449 5.317-9.449h7.008l-8.878 13.996 9.429 15.02h-7.361z" fill="#e53935"/></svg>`;
-            // Check for wasm support.
+    // Check for wasm support.
 	if (!('WebAssembly' in window)) {
 		alert('you need a browser with wasm support enabled :(');
 	}
@@ -524,7 +474,31 @@ a {color:blue;}
         else {
             get_sessions();
         }
+        console.log(getTextWidth("παιδεύσητε", "normal 24pt WebNewAthenaUnicode"));  // close to 86
 	}
+
+function getTextWidth(text, font) {
+  // re-use canvas object for better performance
+  const canvas = getTextWidth.canvas || (getTextWidth.canvas = document.createElement("canvas"));
+  const context = canvas.getContext("2d");
+  context.font = font;
+  const metrics = context.measureText(text);
+  return metrics.width;
+}
+
+// function getCssStyle(element, prop) {
+//     return window.getComputedStyle(element, null).getPropertyValue(prop);
+// }
+
+// function getCanvasFont(el = document.body) {
+//   const fontWeight = getCssStyle(el, 'font-weight') || 'normal';
+//   const fontSize = getCssStyle(el, 'font-size') || '16px';
+//   const fontFamily = getCssStyle(el, 'font-family') || 'Times New Roman';
+  
+//   return `${fontWeight} ${fontSize} ${fontFamily}`;
+// }
+
+
 	
 	function accentSyllable(origChars, key) {
 		let len = origChars.length;
@@ -1242,7 +1216,6 @@ a {color:blue;}
         //mark (in)correct, show correct answer
         document.querySelector("#correctanswer").style.visibility = "visible";
         document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || global_show_correct) ? data.correct_answer : "");
-        
     }
 
     function add_seconds_to_time(secs) {
@@ -1277,44 +1250,40 @@ a {color:blue;}
         global_timer_ref.innerHTML = ((minutes > 0) ? ((minutes < 10) ? ("0" + minutes + ":") : minutes + ":") : "") + ((seconds < 10) ? ("0" + seconds + ":") : seconds + ":") + ((ms < 10) ? ("0" + ms) : ms);
     }
 
-
-
-
-
-      const $status = document.querySelector('#status')
-      const $connectButton = document.querySelector('#connect')
-      const $log = document.querySelector('#log')
-      const $form = document.querySelector('#chatform')
-      const $input = document.querySelector('#text')
+    //   const $status = document.querySelector('#status')
+    //   const $connectButton = document.querySelector('#connect')
+    //   const $log = document.querySelector('#log')
+    //   const $form = document.querySelector('#chatform')
+    //   const $input = document.querySelector('#text')
 
       /** @type {WebSocket | null} */
       var socket = null
 
-      function log(msg, type = 'status') {
-        $log.innerHTML += `<p class="msg msg--${type}">${msg}</p>`
-        $log.scrollTop += 1000
-      }
+    //   function log(msg, type = 'status') {
+    //     $log.innerHTML += `<p class="msg msg--${type}">${msg}</p>`
+    //     $log.scrollTop += 1000
+    //   }
 
       function wsconnect() {
         wsdisconnect()
 
-        const { location } = window
+        const { location } = window;
 
-        const proto = location.protocol.startsWith('https') ? 'wss' : 'ws'
-        const wsUri = `${proto}://${location.host}/ws`
+        const proto = location.protocol.startsWith('https') ? 'wss' : 'ws';
+        const wsUri = `${proto}://${location.host}/ws`;
 
-        log('Connecting...')
-        socket = new WebSocket(wsUri)
+        //log('Connecting...')
+        socket = new WebSocket(wsUri);
 
         socket.onopen = () => {
             console.log("ws connected");
-          log('Connected')
-          updateConnectionStatus()
+            //log('Connected')
+            updateConnectionStatus()
         }
 
         socket.onmessage = (ev) => {
           //log('Received: ' + ev.data, 'message')
-          console.log("websocket received: " + ev.data);
+          console.log("websocket data received");// + ev.data);
           try {
             let json = JSON.parse(ev.data);
             procResponse(json);
@@ -1323,7 +1292,7 @@ a {color:blue;}
         }
 
         socket.onclose = () => {
-          log('Disconnected')
+          //log('Disconnected')
           console.log("ws disconnected");
           socket = null
           setTimeout(try_ws_reconnect, 3000);
@@ -1334,15 +1303,13 @@ a {color:blue;}
       function try_ws_reconnect() {
         if (!socket) {
             wsconnect();
-        }
-        else {
-            setTimeout(try_ws_reconnect, 3000);
+            //setTimeout(try_ws_reconnect, 4000);
         }
       }
 
       function wsdisconnect() {
         if (socket) {
-          log('Disconnecting...')
+          //log('Disconnecting...')
           socket.close()
           socket = null
 
@@ -1352,42 +1319,48 @@ a {color:blue;}
 
       function updateConnectionStatus() {
         if (socket) {
-          $status.style.backgroundColor = 'transparent'
-          $status.style.color = 'green'
-          $status.textContent = `connected`
-          $connectButton.innerHTML = 'Disconnect'
-          $input.focus()
+        //   $status.style.backgroundColor = 'transparent'
+        //   $status.style.color = 'green'
+        //   $status.textContent = `connected`
+        //   $connectButton.innerHTML = 'Disconnect'
+          //$input.focus()
           get_sessions();
         } else {
-          $status.style.backgroundColor = 'red'
-          $status.style.color = 'white'
-          $status.textContent = 'disconnected'
-          $connectButton.textContent = 'Connect'
+        //   $status.style.backgroundColor = 'red'
+        //   $status.style.color = 'white'
+        //   $status.textContent = 'disconnected'
+        //   $connectButton.textContent = 'Connect'
         }
         
       }
 
-      $connectButton.addEventListener('click', () => {
-        if (socket) {
-          wsdisconnect()
-        } else {
-            wsconnect()
-        }
+    // document.addEventListener("visibilitychange", () => {
+    //     console.log(document.hidden);
+    //     try_ws_reconnect();
+    //     // Modify behavior…
+    // });
 
-        updateConnectionStatus()
-      })
+    //   $connectButton.addEventListener('click', () => {
+    //     if (socket) {
+    //       wsdisconnect()
+    //     } else {
+    //         wsconnect()
+    //     }
 
-      $form.addEventListener('submit', (ev) => {
-        ev.preventDefault()
+    //     updateConnectionStatus()
+    //   })
 
-        const text = $input.value
+    //   $form.addEventListener('submit', (ev) => {
+    //     ev.preventDefault()
 
-        log('Sending: ' + text)
-        socket.send(text)
+    //     const text = $input.value
 
-        $input.value = ''
-        $input.focus()
-      })
+    //     //log('Sending: ' + text)
+    //     socket.send(text)
+
+    //     $input.value = ''
+    //     $input.focus()
+    //   })
 
       updateConnectionStatus()
     </script>
