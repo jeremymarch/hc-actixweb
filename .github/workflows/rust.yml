@@ -8,7 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-
+  HCKEY: 56d520157194bdab7aec18755508bf6d063be7a203ddb61ebaa203eb1335c2ab3c13ecba7fc548f4563ac1d6af0b94e6720377228230f210ac51707389bf3285
 jobs:
   build:
 
@@ -19,7 +19,7 @@ jobs:
         env:
           POSTGRES_USER: jwm
           POSTGRES_PASSWORD: 1234
-          POSTGRES_DB: hcpracticetest
+          POSTGRES_MULTIPLE_DATABASES: hctest,hcpracticetest
         ports:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
