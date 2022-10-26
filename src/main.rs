@@ -1521,6 +1521,19 @@ mod tests {
         // if res.is_err() {
         //     println!("error: {:?}", res);
         // }
+        let db = HcSqliteDb { db: PgPoolOptions::new()
+            .max_connections(5)
+            .connect("postgres://jwm:1234@localhost/hctest")
+            .await
+            .expect("Could not connect to db.")
+        };
+    
+        // let hcdb = HcSqliteDb { db: SqlitePool::connect_with(options)
+        //     .await
+        //     .expect("Could not connect to db.")
+        // };
+        let _ = db.db.execute("CREATE DATABASE IF NOT EXISTS hcpracticetest;").await;
+        db.db.close();
 
         let db = HcSqliteDb { db: PgPoolOptions::new()
             .max_connections(5)
