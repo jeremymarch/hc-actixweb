@@ -1532,7 +1532,7 @@ mod tests {
         //     .await
         //     .expect("Could not connect to db.")
         // };
-        let _ = db.db.execute("CREATE DATABASE IF NOT EXISTS hcpracticetest;").await;
+        let _ = db.db.execute("CREATE DATABASE hcpracticetest;").await;
         db.db.close();
 
         let db = HcSqliteDb { db: PgPoolOptions::new()
