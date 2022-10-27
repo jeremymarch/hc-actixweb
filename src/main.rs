@@ -32,19 +32,13 @@ use actix_web::{
     middleware, web, App, Error as AWError, HttpRequest, HttpResponse, HttpServer, Result,
 };
 
-
 use std::{
-    sync::{
-        atomic::{AtomicUsize, Ordering},
-        Arc,
-    },
+    sync::{Arc,},
     time::Instant,
 };
 use actix::Actor;
 use actix::Addr;
 use actix_web::Error;
-use actix_web::Handler;
-use actix_web::Responder;
 use actix_web_actors::ws;
 mod server;
 mod session;
@@ -53,9 +47,9 @@ use actix_web::cookie::time::Duration;
 use actix_session::config::PersistentSession;
 const SECS_IN_10_YEARS: i64 = 60 * 60 * 24 * 7 * 4 * 12 * 10;
 
-use std::fs::File;
-use std::io::BufReader;
-use std::io::BufRead;
+//use std::fs::File;
+//use std::io::BufReader;
+//use std::io::BufRead;
 
 use polytonic_greek::hgk_compare_multiple_forms;
 
@@ -65,15 +59,9 @@ use std::io;
 
 use chrono::prelude::*;
 
-//use mime;
-
-use sqlx::sqlite::SqliteConnectOptions;
-use sqlx::SqlitePool;
-use sqlx::postgres::PgPool;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::FromRow;
 use sqlx::types::Uuid;
-use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 
 use hoplite_verbs_rs::*;
@@ -254,6 +242,7 @@ pub struct HCVerbOption {
 
 #[derive(Deserialize)]
 pub struct AnswerQuery {
+    #[allow(dead_code)]
     qtype: String,
     answer: String,
     time: String,
@@ -400,7 +389,7 @@ pub struct SessionState {
 async fn ws_route(
     req: HttpRequest,
     stream: web::Payload,
-    srv: web::Data<Addr<server::ChatServer>>,
+    srv: web::Data<Addr<server::HcGameServer>>,
     session: Session,
     ) -> Result<HttpResponse, Error> {
     if let Some(uuid) = login::get_user_id(session.clone()) {
@@ -409,7 +398,7 @@ async fn ws_route(
         let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
         let username = login::get_username(session);
         ws::start(
-            session::WsChatSession {
+            session::WsHcGameSession {
                 id: uuid,
                 hb: Instant::now(),
                 room: server::MAIN_ROOM,
@@ -427,17 +416,11 @@ async fn ws_route(
     }
 }
 
-/// Displays state
-async fn get_count(count: web::Data<AtomicUsize>) -> impl Responder {
-    let current_count = count.load(Ordering::SeqCst);
-    format!("Visitors: {current_count}")
-}
-
-fn get_user_agent(req: &HttpRequest) -> Option<&str> {
+fn _get_user_agent(req: &HttpRequest) -> Option<&str> {
     req.headers().get("user-agent")?.to_str().ok()
 }
 
-fn get_ip(req: &HttpRequest) -> Option<String> {
+fn _get_ip(req: &HttpRequest) -> Option<String> {
     req.peer_addr().map(|addr| addr.ip().to_string())
 }
 
@@ -846,10 +829,8 @@ async fn main() -> io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=info");
     env_logger::init();
 
-    let app_state = Arc::new(AtomicUsize::new(0));
-
-    // start chat server actor
-    let server = server::ChatServer::new(app_state.clone()).start();
+    // start ws server actor
+    let server = server::HcGameServer::new().start();
 
 
     //e.g. export GKVOCABDB_DB_PATH=sqlite://db.sqlite?mode=rwc
@@ -929,7 +910,6 @@ async fn main() -> io::Result<()> {
         App::new()
             .app_data(load_verbs("pp.txt"))
             .app_data(hcdb.clone())
-            .app_data(web::Data::from(app_state.clone()))
             .app_data(web::Data::new(server.clone()))
             .wrap(middleware::Compress::default()) // enable automatic response compression - usually register this first
             .wrap(SessionMiddleware::builder(
@@ -1024,28 +1004,6 @@ mod tests {
         };
 
         let verbs = load_verbs("pp.txt");
-        
-        // let db_path = "sqlite::memory:";
-        // let options = SqliteConnectOptions::from_str(&db_path)
-        //     .expect("Could not connect to db.")
-        //     .foreign_keys(true)
-        //     .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
-        //     .read_only(false)
-        //     .collation("PolytonicGreek", |l, r| {
-        //         l.to_lowercase().cmp(&r.to_lowercase())
-        //     });
-    
-        // let db = HcSqliteDb { db: SqlitePool::connect_with(options)
-        //         .await
-        //         .expect("Could not connect to db.")
-        //     };
-    
-        // let res = db.create_db().await;
-        // if res.is_err() {
-        //     println!("error: {:?}", res);
-        // }
-
-        
 
         let mut timestamp = get_timestamp();
 
@@ -1519,45 +1477,9 @@ mod tests {
 
     #[test]
     async fn test_practice() {
-
+        initialize_db_once().await;
         let verbs = load_verbs("pp.txt");
         
-        // let db_path = "sqlite::memory:";
-        // let options = SqliteConnectOptions::from_str(&db_path)
-        //     .expect("Could not connect to db.")
-        //     .foreign_keys(true)
-        //     .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
-        //     .read_only(false)
-        //     .collation("PolytonicGreek", |l, r| {
-        //         l.to_lowercase().cmp(&r.to_lowercase())
-        //     });
-    
-        // let db = HcSqliteDb { db: SqlitePool::connect_with(options)
-        //         .await
-        //         .expect("Could not connect to db.")
-        //     };
-    
-        // let res = db.create_db().await;
-        // if res.is_err() {
-        //     println!("error: {:?}", res);
-        // }
-/*
-        let db = HcSqliteDb { db: PgPoolOptions::new()
-            .max_connections(5)
-            .connect("postgres://jwm:1234@localhost/hctest")
-            .await
-            .expect("Could not connect to db.")
-        };
-    
-        // let hcdb = HcSqliteDb { db: SqlitePool::connect_with(options)
-        //     .await
-        //     .expect("Could not connect to db.")
-        // };
-        let _ = db.db.execute("CREATE DATABASE hcpracticetest;").await;
-        db.db.close();
-            */
-        initialize_db_once().await;
-
         let db = HcSqliteDb { db: PgPoolOptions::new()
             .max_connections(5)
             .connect("postgres://jwm:1234@localhost/hctest")
@@ -1565,10 +1487,10 @@ mod tests {
             .expect("Could not connect to db.")
         };
 
-        let mut timestamp = get_timestamp();
+        let timestamp = get_timestamp();
 
         let uuid1 = db.create_user("testuser4", "abcdabcd", "user1@blah.com", timestamp).await.unwrap();
-        let uuid2 = db.create_user("testuser5", "abcdabcd", "user2@blah.com", timestamp).await.unwrap();
+        //let uuid2 = db.create_user("testuser5", "abcdabcd", "user2@blah.com", timestamp).await.unwrap();
         let invalid_uuid = db.create_user("testuser6", "abcdabcd", "user3@blah.com", timestamp).await.unwrap();
 
         let csq = CreateSessionQuery {

@@ -1,28 +1,23 @@
-//! `ChatServer` is an actor. It maintains list of connection client session.
+//! `HcGameServer` is an actor. It maintains list of connection client session.
 //! And manages available rooms. Peers send messages to other peers in same
-//! room through `ChatServer`.
+//! room through `HcGameServer`.
 
 use std::{
     collections::{HashMap, HashSet},
-    sync::{
-        atomic::{AtomicUsize, Ordering},
-        Arc,
-    },
 };
 use sqlx::types::Uuid;
 use actix::prelude::*;
-use rand::{self, rngs::ThreadRng, Rng};
 
 pub static MAIN_ROOM:Uuid = Uuid::from_u128(0x00000000000000000000000000000001);
 
-/// Chat server sends this messages to session
+/// game server sends this messages to session
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct Message(pub String);
 
-/// Message for chat server communications
+/// Message for game server communications
 
-/// New chat session is created
+/// New game session is created
 #[derive(Message)]
 #[rtype(usize)]
 pub struct Connect {
@@ -67,33 +62,29 @@ pub struct Join {
     pub name: Uuid,
 }
 
-/// `ChatServer` manages chat rooms and responsible for coordinating chat session.
+/// `HcGameServer` manages game rooms and responsible for coordinating game session.
 ///
 /// Implementation is very naïve.
 #[derive(Debug)]
-pub struct ChatServer {
+pub struct HcGameServer {
     sessions: HashMap<Uuid, Recipient<Message>>,
     rooms: HashMap<Uuid, HashSet<Uuid>>,
-    rng: ThreadRng,
-    visitor_count: Arc<AtomicUsize>,
 }
 
-impl ChatServer {
-    pub fn new(visitor_count: Arc<AtomicUsize>) -> ChatServer {
+impl HcGameServer {
+    pub fn new() -> HcGameServer {
         // default room
-        let mut rooms = HashMap::new();
+        let rooms = HashMap::new();
         //rooms.insert("main".to_owned(), HashSet::new());
 
-        ChatServer {
+        HcGameServer {
             sessions: HashMap::new(),
             rooms,
-            rng: rand::thread_rng(),
-            visitor_count,
         }
     }
 }
 
-impl ChatServer {
+impl HcGameServer {
     /// Send message to all users in the room
     fn send_message(&self, room: Uuid, message: &str, skip_id: Uuid) {
         //println!("send message1 room: {:?}", room);
@@ -113,8 +104,8 @@ impl ChatServer {
     }
 }
 
-/// Make actor from `ChatServer`
-impl Actor for ChatServer {
+/// Make actor from `HcGameServer`
+impl Actor for HcGameServer {
     /// We are going to use simple Context, we just need ability to communicate
     /// with other actors.
     type Context = Context<Self>;
@@ -123,7 +114,7 @@ impl Actor for ChatServer {
 /// Handler for Connect message.
 ///
 /// Register new session and assign unique id to this session
-impl Handler<Connect> for ChatServer {
+impl Handler<Connect> for HcGameServer {
     type Result = usize;
 
     fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
@@ -143,7 +134,7 @@ impl Handler<Connect> for ChatServer {
             .or_insert_with(HashSet::new)
             .insert(msg.id);
 
-        let count = self.visitor_count.fetch_add(1, Ordering::SeqCst);
+        //let count = self.visitor_count.fetch_add(1, Ordering::SeqCst);
         //self.send_message(MAIN_ROOM, &format!("Total visitors {count}"), 0);
 
         // send id back
@@ -153,7 +144,7 @@ impl Handler<Connect> for ChatServer {
 }
 
 /// Handler for Disconnect message.
-impl Handler<Disconnect> for ChatServer {
+impl Handler<Disconnect> for HcGameServer {
     type Result = ();
 
     fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
@@ -178,7 +169,7 @@ impl Handler<Disconnect> for ChatServer {
 }
 
 /// Handler for Message message.
-impl Handler<ClientMessage> for ChatServer {
+impl Handler<ClientMessage> for HcGameServer {
     type Result = ();
 
     fn handle(&mut self, msg: ClientMessage, _: &mut Context<Self>) {
@@ -187,7 +178,7 @@ impl Handler<ClientMessage> for ChatServer {
 }
 
 /// Handler for `ListRooms` message.
-impl Handler<ListRooms> for ChatServer {
+impl Handler<ListRooms> for HcGameServer {
     type Result = MessageResult<ListRooms>;
 
     fn handle(&mut self, _: ListRooms, _: &mut Context<Self>) -> Self::Result {
@@ -203,7 +194,7 @@ impl Handler<ListRooms> for ChatServer {
 
 /// Join room, send disconnect message to old room
 /// send join message to new room
-impl Handler<Join> for ChatServer {
+impl Handler<Join> for HcGameServer {
     type Result = ();
 
     fn handle(&mut self, msg: Join, _: &mut Context<Self>) {
