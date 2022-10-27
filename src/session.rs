@@ -160,8 +160,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                     if let Ok(info) = serde_json::from_str::<GetMoveQuery>(&msg) {
                         //join game room
                         self.addr.do_send(server::Join {
-                            id: user_id,
-                            name: info.session_id,
+                            user_uuid: user_id,
+                            game_uuid: info.session_id,
                         });
                         let fut = async move {
                             if let Ok(res) = libhc::hc_get_move(&db, user_id, false, &info, &verbs).await {

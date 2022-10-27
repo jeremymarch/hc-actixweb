@@ -56,10 +56,10 @@ impl actix::Message for ListRooms {
 #[rtype(result = "()")]
 pub struct Join {
     /// Client ID
-    pub id: Uuid,
+    pub user_uuid: Uuid,
 
     /// Room name
-    pub name: Uuid,
+    pub game_uuid: Uuid,
 }
 
 /// `HcGameServer` manages game rooms and responsible for coordinating game session.
@@ -198,12 +198,12 @@ impl Handler<Join> for HcGameServer {
     type Result = ();
 
     fn handle(&mut self, msg: Join, _: &mut Context<Self>) {
-        let Join { id, name } = msg;
+        let Join { user_uuid, game_uuid } = msg;
         let mut rooms = Vec::new();
 
         // remove session from all rooms
         for (n, sessions) in &mut self.rooms {
-            if sessions.remove(&id) {
+            if sessions.remove(&user_uuid) {
                 rooms.push(n.to_owned());
             }
         }
@@ -215,9 +215,9 @@ impl Handler<Join> for HcGameServer {
         //println!("joined room: {:?}, id: {:?}", name, id);
 
         self.rooms
-            .entry(name.clone())
+            .entry(game_uuid)
             .or_insert_with(HashSet::new)
-            .insert(id);
+            .insert(user_uuid);
 
         //self.send_message(&name, "Someone connected", id);
     }

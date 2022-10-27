@@ -963,9 +963,9 @@ mod tests {
     use sqlx::Executor;
 
     use tokio::sync::OnceCell;
-    static ONCE: OnceCell<u32> = OnceCell::const_new();
+    static ONCE: OnceCell<()> = OnceCell::const_new();
 
-    async fn setup_test_db() -> u32 {
+    async fn setup_test_db() {
         let db = HcSqliteDb { db: PgPoolOptions::new()
             .max_connections(5)
             .connect("postgres://jwm:1234@localhost/hctest")
@@ -973,10 +973,6 @@ mod tests {
             .expect("Could not connect to db.")
         };
     
-        // let hcdb = HcSqliteDb { db: SqlitePool::connect_with(options)
-        //     .await
-        //     .expect("Could not connect to db.")
-        // };
         let _ = db.db.execute("DROP TABLE IF EXISTS moves;").await;
         let _ = db.db.execute("DROP TABLE IF EXISTS sessions;").await;
         let _ = db.db.execute("DROP TABLE IF EXISTS users;").await;
@@ -985,11 +981,10 @@ mod tests {
         if res.is_err() {
             println!("error: {:?}", res);
         }
-        1
     }
 
     pub async fn initialize_db_once() {
-        let _ = ONCE.get_or_init(setup_test_db).await;
+        ONCE.get_or_init(setup_test_db).await;
     }
 
     #[test]
