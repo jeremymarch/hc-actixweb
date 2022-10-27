@@ -470,38 +470,6 @@ impl HcSqliteDb {
             .execute(&mut tx)
             .await?;
 
-        let query = "INSERT INTO users VALUES ($1,$2,$3,$4,0,$5) ON CONFLICT DO NOTHING;";
-        let uuid = Uuid::from_u128(0x8CD36EFFDF5744FF953B29A473D12347);//sqlx::types::Uuid::new_v4();
-        let _res = sqlx::query(query)
-            .bind(uuid)
-            .bind("user1")
-            .bind("1234")
-            .bind("user1@email.com")
-            .bind(0)
-            .execute(&mut tx)
-            .await?;
-
-        let uuid = Uuid::from_u128(0xD75B0169E7C343838298136E3D63375C);//sqlx::types::Uuid::new_v4();
-        let _res = sqlx::query(query)
-            .bind(uuid)
-            .bind("user2")
-            .bind("1234")
-            .bind("user2@email.com")
-            .bind(0)
-            .execute(&mut tx)
-            .await?;
-
-        //to test invalid user
-        let uuid = Uuid::from_u128(0x00000000000000000000000000000001);//sqlx::types::Uuid::new_v4();
-        let _res = sqlx::query(query)
-            .bind(uuid)
-            .bind("user3")
-            .bind("1234")
-            .bind("user2@email.com")
-            .bind(0)
-            .execute(&mut tx)
-            .await?;
-
         tx.commit().await?;
 
         Ok(1)

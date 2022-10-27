@@ -982,8 +982,46 @@ mod tests {
     use crate::libhc::*;
     use sqlx::Executor;
 
+    use tokio::sync::OnceCell;
+    static ONCE: OnceCell<u32> = OnceCell::const_new();
+
+    async fn setup_test_db() -> u32 {
+        let db = HcSqliteDb { db: PgPoolOptions::new()
+            .max_connections(5)
+            .connect("postgres://jwm:1234@localhost/hctest")
+            .await
+            .expect("Could not connect to db.")
+        };
+    
+        // let hcdb = HcSqliteDb { db: SqlitePool::connect_with(options)
+        //     .await
+        //     .expect("Could not connect to db.")
+        // };
+        let _ = db.db.execute("DROP TABLE IF EXISTS moves;").await;
+        let _ = db.db.execute("DROP TABLE IF EXISTS sessions;").await;
+        let _ = db.db.execute("DROP TABLE IF EXISTS users;").await;
+
+        let res = db.create_db().await;
+        if res.is_err() {
+            println!("error: {:?}", res);
+        }
+        1
+    }
+
+    pub async fn initialize_db_once() {
+        let _ = ONCE.get_or_init(setup_test_db).await;
+    }
+
     #[test]
     async fn test_two_player() {
+        initialize_db_once().await;
+
+        let db = HcSqliteDb { db: PgPoolOptions::new()
+            .max_connections(5)
+            .connect("postgres://jwm:1234@localhost/hctest")
+            .await
+            .expect("Could not connect to db.")
+        };
 
         let verbs = load_verbs("pp.txt");
         
@@ -1007,25 +1045,7 @@ mod tests {
         //     println!("error: {:?}", res);
         // }
 
-        let db = HcSqliteDb { db: PgPoolOptions::new()
-            .max_connections(5)
-            .connect("postgres://jwm:1234@localhost/hctest")
-            .await
-            .expect("Could not connect to db.")
-        };
-    
-        // let hcdb = HcSqliteDb { db: SqlitePool::connect_with(options)
-        //     .await
-        //     .expect("Could not connect to db.")
-        // };
-        let _ = db.db.execute("DROP TABLE IF EXISTS moves;").await;
-        let _ = db.db.execute("DROP TABLE IF EXISTS sessions;").await;
-        let _ = db.db.execute("DROP TABLE IF EXISTS users;").await;
-
-        let res = db.create_db().await;
-        if res.is_err() {
-            println!("error: {:?}", res);
-        }
+        
 
         let mut timestamp = get_timestamp();
 
@@ -1044,7 +1064,7 @@ mod tests {
         };
 
         let session_uuid = hc_insert_session(&db, uuid1, &csq, &verbs, timestamp).await;
-        assert!(res.is_ok());
+        //assert!(res.is_ok());
 
         let aq = AskQuery {
             qtype: "ask".to_string(),
@@ -1521,6 +1541,7 @@ mod tests {
         // if res.is_err() {
         //     println!("error: {:?}", res);
         // }
+/*
         let db = HcSqliteDb { db: PgPoolOptions::new()
             .max_connections(5)
             .connect("postgres://jwm:1234@localhost/hctest")
@@ -1534,35 +1555,21 @@ mod tests {
         // };
         let _ = db.db.execute("CREATE DATABASE hcpracticetest;").await;
         db.db.close();
+            */
+        initialize_db_once().await;
 
         let db = HcSqliteDb { db: PgPoolOptions::new()
             .max_connections(5)
-            .connect("postgres://jwm:1234@localhost/hcpracticetest")
+            .connect("postgres://jwm:1234@localhost/hctest")
             .await
             .expect("Could not connect to db.")
         };
-    
-        // let hcdb = HcSqliteDb { db: SqlitePool::connect_with(options)
-        //     .await
-        //     .expect("Could not connect to db.")
-        // };
-        let _ = db.db.execute("DROP TABLE IF EXISTS moves;").await;
-        let _ = db.db.execute("DROP TABLE IF EXISTS sessions;").await;
-        let _ = db.db.execute("DROP TABLE IF EXISTS users;").await;
-
-        let res = db.create_db().await;
-        if res.is_err() {
-            println!("error: {:?}", res);
-        }
 
         let mut timestamp = get_timestamp();
 
-        // let uuid1 = Uuid::from_u128(0x8CD36EFFDF5744FF953B29A473D12347);
-        // let uuid2 = Uuid::from_u128(0xD75B0169E7C343838298136E3D63375C);
-        // let invalid_uuid = Uuid::from_u128(0x00000000000000000000000000000001);
-        let uuid1 = db.create_user("testuser1", "abcdabcd", "user1@blah.com", timestamp).await.unwrap();
-        let uuid2 = db.create_user("testuser2", "abcdabcd", "user2@blah.com", timestamp).await.unwrap();
-        let invalid_uuid = db.create_user("testuser3", "abcdabcd", "user3@blah.com", timestamp).await.unwrap();
+        let uuid1 = db.create_user("testuser4", "abcdabcd", "user1@blah.com", timestamp).await.unwrap();
+        let uuid2 = db.create_user("testuser5", "abcdabcd", "user2@blah.com", timestamp).await.unwrap();
+        let invalid_uuid = db.create_user("testuser6", "abcdabcd", "user3@blah.com", timestamp).await.unwrap();
 
         let csq = CreateSessionQuery {
             qtype:"abc".to_string(),
@@ -1572,7 +1579,7 @@ mod tests {
         };
 
         let session_uuid = hc_insert_session(&db, uuid1, &csq, &verbs, timestamp).await;
-        assert!(res.is_ok());
+        //assert!(res.is_ok());
 
         let aq = AskQuery {
             qtype: "ask".to_string(),
