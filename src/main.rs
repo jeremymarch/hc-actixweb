@@ -1002,9 +1002,6 @@ mod tests {
 
         let mut timestamp = get_timestamp();
 
-        // let uuid1 = Uuid::from_u128(0x8CD36EFFDF5744FF953B29A473D12347);
-        // let uuid2 = Uuid::from_u128(0xD75B0169E7C343838298136E3D63375C);
-        // let invalid_uuid = Uuid::from_u128(0x00000000000000000000000000000001);
         let uuid1 = db.create_user("testuser1", "abcdabcd", "user1@blah.com", timestamp).await.unwrap();
         let uuid2 = db.create_user("testuser2", "abcdabcd", "user2@blah.com", timestamp).await.unwrap();
         let invalid_uuid = db.create_user("testuser3", "abcdabcd", "user3@blah.com", timestamp).await.unwrap();
@@ -1485,7 +1482,6 @@ mod tests {
         let timestamp = get_timestamp();
 
         let uuid1 = db.create_user("testuser4", "abcdabcd", "user1@blah.com", timestamp).await.unwrap();
-        //let uuid2 = db.create_user("testuser5", "abcdabcd", "user2@blah.com", timestamp).await.unwrap();
         let invalid_uuid = db.create_user("testuser6", "abcdabcd", "user3@blah.com", timestamp).await.unwrap();
 
         let csq = CreateSessionQuery {
