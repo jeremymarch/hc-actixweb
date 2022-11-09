@@ -217,7 +217,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                                             //println!("send to room {:?}", info.session_id);
                                             addr2.do_send(server::ClientMessage {
                                                 id: user_id,
-                                                msg: gm_resjson.clone(),
+                                                msg: gm_resjson,
                                                 room: info.session_id,
                                             });
                                         }
@@ -248,7 +248,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                                             //println!("send to room {:?}", info.session_id);
                                             addr2.do_send(server::ClientMessage {
                                                 id: user_id,
-                                                msg: gm_resjson.clone(),
+                                                msg: gm_resjson,
                                                 room: info.session_id,
                                             });
                                         }
@@ -280,7 +280,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                                             //println!("send to room {:?}", info.session_id);
                                             addr2.do_send(server::ClientMessage {
                                                 id: user_id,
-                                                msg: gm_resjson.clone(),
+                                                msg: gm_resjson,
                                                 room: info.session_id,
                                             });
                                         }

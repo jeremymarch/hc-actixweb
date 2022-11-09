@@ -34,7 +34,7 @@ use actix_web::{
 
 use std::{
     sync::{
-        atomic::{AtomicUsize, Ordering},
+        atomic::{AtomicUsize},
         Arc,
     },
     time::Instant,

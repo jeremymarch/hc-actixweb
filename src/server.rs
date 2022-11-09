@@ -5,7 +5,7 @@
 use std::{
     collections::{HashMap, HashSet},
     sync::{
-        atomic::{AtomicUsize, Ordering},
+        atomic::{AtomicUsize},
         Arc,
     },
 };
@@ -73,6 +73,7 @@ pub struct Join {
 pub struct HcGameServer {
     sessions: HashMap<Uuid, Recipient<Message>>,
     rooms: HashMap<Uuid, HashSet<Uuid>>,
+    #[allow(dead_code)]
     visitor_count: Arc<AtomicUsize>,
 }
 
