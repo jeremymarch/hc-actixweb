@@ -4,6 +4,10 @@
 
 use std::{
     collections::{HashMap, HashSet},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
 };
 use sqlx::types::Uuid;
 use actix::prelude::*;
@@ -69,10 +73,11 @@ pub struct Join {
 pub struct HcGameServer {
     sessions: HashMap<Uuid, Recipient<Message>>,
     rooms: HashMap<Uuid, HashSet<Uuid>>,
+    visitor_count: Arc<AtomicUsize>,
 }
 
 impl HcGameServer {
-    pub fn new() -> HcGameServer {
+    pub fn new(visitor_count: Arc<AtomicUsize>) -> HcGameServer {
         // default room
         let rooms = HashMap::new();
         //rooms.insert("main".to_owned(), HashSet::new());
@@ -80,6 +85,7 @@ impl HcGameServer {
         HcGameServer {
             sessions: HashMap::new(),
             rooms,
+            visitor_count,
         }
     }
 }

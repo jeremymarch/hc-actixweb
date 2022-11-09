@@ -33,7 +33,10 @@ use actix_web::{
 };
 
 use std::{
-    sync::{Arc,},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
     time::Instant,
 };
 use actix::Actor;
@@ -830,8 +833,8 @@ async fn main() -> io::Result<()> {
     env_logger::init();
 
     // start ws server actor
-    let server = server::HcGameServer::new().start();
-
+    let app_state = Arc::new(AtomicUsize::new(0));
+    let server = server::HcGameServer::new(app_state.clone()).start();
 
     //e.g. export GKVOCABDB_DB_PATH=sqlite://db.sqlite?mode=rwc
     // let db_path = std::env::var("GKVOCABDB_DB_PATH").unwrap_or_else(|_| {
@@ -910,6 +913,7 @@ async fn main() -> io::Result<()> {
         App::new()
             .app_data(load_verbs("pp.txt"))
             .app_data(hcdb.clone())
+            .app_data(web::Data::from(app_state.clone()))
             .app_data(web::Data::new(server.clone()))
             .wrap(middleware::Compress::default()) // enable automatic response compression - usually register this first
             .wrap(SessionMiddleware::builder(
