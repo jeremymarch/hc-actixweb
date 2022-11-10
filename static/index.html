@@ -1278,6 +1278,7 @@ function getTextWidth(text, font) {
     //     $log.scrollTop += 1000
     //   }
 
+    let visibilityCheck = false;
       function wsconnect() {
         //wsdisconnect()
 
@@ -1299,10 +1300,25 @@ function getTextWidth(text, font) {
                 generic_send_request(null, pending_send_data, null);
                 pending_send_data = null;
             }
+            if (!visibilityCheck) {
+                //https://stackoverflow.com/questions/1060008/is-there-a-way-to-detect-if-a-browser-window-is-not-currently-active
+                document.addEventListener("visibilitychange", onchange);
+                function onchange (evt) {
+                    if (document.hidden) {
+                        console.log("document hidden");
+                    }
+                    else {
+                        console.log("document visible");
+                        if (!socket) {
+                            wsconnect();
+                        }
+                    }
+                }
+                visibilityCheck = true;
+            }
         }
 
         socket.onmessage = (ev) => {
-          //log('Received: ' + ev.data, 'message')
           console.log("websocket data received");// + ev.data);
           try {
             let json = JSON.parse(ev.data);
@@ -1312,10 +1328,8 @@ function getTextWidth(text, font) {
         }
 
         socket.onclose = () => {
-          //log('Disconnected')
           console.log("ws disconnected");
           socket = null
-          //setTimeout(try_ws_reconnect, 3000);
           updateConnectionStatus()
         }
       }
@@ -1351,7 +1365,6 @@ function getTextWidth(text, font) {
         //   $status.textContent = 'disconnected'
         //   $connectButton.textContent = 'Connect'
         }
-        
       }
 
     // document.addEventListener("visibilitychange", () => {
@@ -1382,7 +1395,7 @@ function getTextWidth(text, font) {
     //     $input.focus()
     //   })
 
-      updateConnectionStatus()
+      updateConnectionStatus();
     </script>
 </body>
 </html>
