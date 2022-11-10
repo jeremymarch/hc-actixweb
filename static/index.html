@@ -18,13 +18,14 @@
 -->
 <script>
     'use strict';
+    function q(i) {return document.querySelector(i)}
     function setTheme() {
         let mode = localStorage.getItem("mode");
         if ((window.matchMedia( "(prefers-color-scheme: dark)" ).matches || mode == "dark") && mode != "light") {
-            document.querySelector("HTML").classList.add("dark");
+            q("HTML").classList.add("dark");
         }
         else {
-            document.querySelector("HTML").classList.remove("dark");
+            q("HTML").classList.remove("dark");
         }
     }
     setTheme();    
@@ -446,7 +447,7 @@ a {color:blue;}
 
     const supportsWebSockets = 'WebSocket' in window || 'MozWebSocket' in window;
     function start() {
-        global_timer_ref = document.querySelector('#mainTime');
+        global_timer_ref = q('#mainTime');
 	    const supported = (() => {
             try {
                 if (typeof WebAssembly === "object"
@@ -461,7 +462,7 @@ a {color:blue;}
 	    //console.log(supported ? "WebAssembly is supported" : "WebAssembly is not supported");
 	
         //block pasting
-        let answerform = document.querySelector("#answerform");
+        let answerform = q("#answerform");
         answerform.addEventListener('paste', (event) => {
             event.preventDefault();
         });
@@ -667,24 +668,24 @@ function getTextWidth(text, font) {
         }
         else if (data.response_to == "getmoves" && data.success) {
             if (data.myturn && data.move_type != "Practice") {
-                document.querySelector(".gamerow[data-uuid='" + data.session_id + "']").classList.add("myturn");
+                q(".gamerow[data-uuid='" + data.session_id + "']").classList.add("myturn");
             }
             else {
-                document.querySelector(".gamerow[data-uuid='" + data.session_id + "']").classList.remove("myturn");
+                q(".gamerow[data-uuid='" + data.session_id + "']").classList.remove("myturn");
             }
             setUI(data);
         }
         else if (data.response_to == "getsessions" && data.success) {
             if (data.username) {
-                document.querySelector("#loginlink").style.display = "none";
-                document.querySelector("#logoutlink").style.display = "inline";
-                document.querySelector("#username").innerText = data.username;
+                q("#loginlink").style.display = "none";
+                q("#logoutlink").style.display = "inline";
+                q("#username").innerText = data.username;
                 global_username = data.username;
             }
             else {
-                document.querySelector("#loginlink").style.display = "inline";
-                document.querySelector("#logoutlink").style.display = "none";
-                document.querySelector("#username").innerText = "";
+                q("#loginlink").style.display = "inline";
+                q("#logoutlink").style.display = "none";
+                q("#username").innerText = "";
                 global_username = null;
             }
 
@@ -703,11 +704,11 @@ function getTextWidth(text, font) {
                     rows += (s.move_type != "Practice" ? (" (" + s.my_score + " - " + s.their_score + ")") : "");
                     rows += myturnIcon + "</div>";
                 }
-                //document.querySelector(".gamerow[data-uuid='b72df91e-3a4c-4f1b-aeda-c14fea61def6']").style.backgroundColor = "blue";
+                //q(".gamerow[data-uuid='b72df91e-3a4c-4f1b-aeda-c14fea61def6']").style.backgroundColor = "blue";
             }
-            document.querySelector("#list").innerHTML = rows;
-            document.querySelector("#refreshbutton").style.display = "block";
-            document.querySelector("#listouter").style.display = "block";
+            q("#list").innerHTML = rows;
+            q("#refreshbutton").style.display = "block";
+            q("#listouter").style.display = "block";
         }
     }
 
@@ -720,6 +721,7 @@ function getTextWidth(text, font) {
         return str.join("&");
     }
 
+    let pending_send_data = null;
     function generic_send_request(send_url, send_data, handle_response) {
         // if (supportsWebSockets && !socket) {
         //     wsconnect(send_url, send_data);
@@ -733,7 +735,9 @@ function getTextWidth(text, font) {
         }
         else {
             console.log("ws disconnected");
-            //wsconnect();
+            pending_send_data = send_data;
+
+            wsconnect();
             // console.log("http request");
             // send_data = serialize(send_data);
             // microAjax({
@@ -776,20 +780,20 @@ function getTextWidth(text, font) {
     }
 
     function new_game_clicked() {
-        let unitv = document.querySelector("#unitinput").value.trim();
-        let opponentv = document.querySelector("#opponentinput").value.trim();
+        let unitv = q("#unitinput").value.trim();
+        let opponentv = q("#opponentinput").value.trim();
 
         let send_data = {qtype:"newsession", unit:unitv, opponent:opponentv,practice_reps_per_verb:4};
         generic_send_request("new", send_data, null);
     }
 
     function submit_clicked() {
-        let submitbutton = document.querySelector("#submitbutton");
+        let submitbutton = q("#submitbutton");
         if (submitbutton.innerText == "Enter") {
             uiModeClickedEnter();
 
-            let answer = document.querySelector("#answerform").value.trim();
-            let time = document.querySelector("#mainTime").innerText.trim();
+            let answer = q("#answerform").value.trim();
+            let time = q("#mainTime").innerText.trim();
             console.log("Enter clicked: " + answer + ", time: " + time + ", mfPressed: " + global_mf_pressed + ", timedout: " + global_timed_out);
         
             send_answer(global_session_id, answer, time, global_mf_pressed, global_timed_out);
@@ -801,7 +805,7 @@ function getTextWidth(text, font) {
         else if (submitbutton.innerText == "Ask") {
             let vals = get_param_values();
             if (document.querySelectorAll(".paramdivchanged").length > 0 || 
-                document.querySelector("#verbchooser").style.display != "none") {
+                q("#verbchooser").style.display != "none") {
                 send_ask(global_session_id, vals[0], vals[1], vals[2], vals[3], vals[4], vals[5]);
             }
             else {
@@ -817,13 +821,13 @@ function getTextWidth(text, font) {
     function mf_clicked() {
         console.log("multiple forms clicked");
         if (!global_mf_pressed) { //only allow clicking this once
-            document.querySelector("#mfbutton").disabled = true;
+            q("#mfbutton").disabled = true;
 
             add_seconds_to_time(global_seconds / 2);
             global_mf_pressed = true;
 
-            let answer = document.querySelector("#answerform").value.trim();
-            let time = document.querySelector("#mainTime").innerText.trim();
+            let answer = q("#answerform").value.trim();
+            let time = q("#mainTime").innerText.trim();
             console.log("MF clicked: " + answer + ", time: " + time + ", mfPressed: " + global_mf_pressed + ", timedout: " + global_timed_out);
 
             send_mf(global_session_id, answer, time, global_mf_pressed, global_timed_out);
@@ -850,29 +854,29 @@ function getTextWidth(text, font) {
     }
 
     function get_sessions() {
-        let send_data = { qtype:"getsessions", practice: true, game: true };
+        let send_data = { qtype:"getsessions", current_session: global_session_id };
         generic_send_request("list", send_data, null);
     }
 
     function set_params_dropdowns(person, number, tense, voice, mood, verb_id) {
         let a = document.querySelectorAll(".paramdivchanged").forEach(e => e.classList.remove("paramdivchanged"));
 
-        let p = document.querySelector("#personparam");
+        let p = q("#personparam");
         p.value = person;
         p.setAttribute("orig", person);
-        let n = document.querySelector("#numberparam");
+        let n = q("#numberparam");
         n.value = number;
         n.setAttribute("orig", number);
-        let t = document.querySelector("#tenseparam");
+        let t = q("#tenseparam");
         t.value = tense;
         t.setAttribute("orig", tense);
-        let m = document.querySelector("#moodparam");
+        let m = q("#moodparam");
         m.value = mood;
         m.setAttribute("orig", mood);
-        let v = document.querySelector("#voiceparam");
+        let v = q("#voiceparam");
         v.value = voice;
         v.setAttribute("orig", voice);
-        let vc = document.querySelector("#verbchooser");
+        let vc = q("#verbchooser");
         //if the dropdown doesn't have enough rows to assign value, just add a new row for it. it's ok: we can't see it
         if (verb_id >= vc.options.length && vc.value != verb_id /* so we don't get two of same option */) {
             let o = document.createElement("option");
@@ -884,12 +888,12 @@ function getTextWidth(text, font) {
     }
 
     function get_param_values() {
-        let p = document.querySelector("#personparam").value;
-        let n = document.querySelector("#numberparam").value;
-        let t = document.querySelector("#tenseparam").value;
-        let m = document.querySelector("#moodparam").value;
-        let v = document.querySelector("#voiceparam").value;
-        let verb_id = document.querySelector("#verbchooser").value;
+        let p = q("#personparam").value;
+        let n = q("#numberparam").value;
+        let t = q("#tenseparam").value;
+        let m = q("#moodparam").value;
+        let v = q("#voiceparam").value;
+        let verb_id = q("#verbchooser").value;
 
         //console.log("vals: " + p + n + t + m + v + verb_id);
         return [p,n,t,m,v,verb_id];
@@ -897,7 +901,7 @@ function getTextWidth(text, font) {
 
     function setUI(data) {
         global_practice = false;
-        document.querySelector(".hcform").style.display = "block";
+        q(".hcform").style.display = "block";
         switch(data.move_type) {
             case "Practice": 
                 uiModePractice(data); //practice
@@ -968,141 +972,141 @@ function getTextWidth(text, font) {
     }
 
     function uiModeGameIsOver() {
-        let submitbutton = document.querySelector("#submitbutton");
+        let submitbutton = q("#submitbutton");
         submitbutton.disabled = true;
-        document.querySelector("#statusmesg").innerHTML = "Game is over.";
-        document.querySelector("#answerform").value = "";
-        document.querySelector("#answerform").disabled = true;
-        document.querySelector("#correctanswer").innerHTML = "";
-        document.querySelector("#correctanswer").style.visibility = "hidden";
-        document.querySelector("#startingform").innerText = "";
-        document.querySelector("#mfbutton").disabled = true;
-        document.querySelector("#verbchooser").style.display = "none";
+        q("#statusmesg").innerHTML = "Game is over.";
+        q("#answerform").value = "";
+        q("#answerform").disabled = true;
+        q("#correctanswer").innerHTML = "";
+        q("#correctanswer").style.visibility = "hidden";
+        q("#startingform").innerText = "";
+        q("#mfbutton").disabled = true;
+        q("#verbchooser").style.display = "none";
     }
 
     //need to set prev params for first form
     function uiModePractice(data) {
-        let submitbutton = document.querySelector("#submitbutton");
+        let submitbutton = q("#submitbutton");
         submitbutton.disabled = false;
         submitbutton.innerText = "Go";
         global_starting_form = data.starting_form;
         global_change_desc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
-        //document.querySelector("#statusmesg").innerHTML = "Click Go to answer!"
-        document.querySelector("#statusmesg").innerHTML = "Practice Mode";
-        document.querySelector("#changedesc").innerHTML = (data.person_prev !== null) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, null, null, null, null, null) : "";
-        document.querySelector("#answerform").value = "";
-        document.querySelector("#answerform").disabled = true;
-        document.querySelector("#mfbutton").disabled = true;
-        document.querySelector("#correctanswer").innerHTML = "";
-        document.querySelector("#correctanswer").style.visibility = "hidden";
-        document.querySelector("#startingform").innerText = (data.starting_form) ? data.starting_form : "";
+        //q("#statusmesg").innerHTML = "Click Go to answer!"
+        q("#statusmesg").innerHTML = "Practice Mode";
+        q("#changedesc").innerHTML = (data.person_prev !== null) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, null, null, null, null, null) : "";
+        q("#answerform").value = "";
+        q("#answerform").disabled = true;
+        q("#mfbutton").disabled = true;
+        q("#correctanswer").innerHTML = "";
+        q("#correctanswer").style.visibility = "hidden";
+        q("#startingform").innerText = (data.starting_form) ? data.starting_form : "";
 
-        document.querySelector("#askparamsdiv").style.display = "none";
-        document.querySelector("#submitbutton").style.display = "block";
-        document.querySelector("#verbchooser").style.display = "none";
+        q("#askparamsdiv").style.display = "none";
+        q("#submitbutton").style.display = "block";
+        q("#verbchooser").style.display = "none";
     }
 
     function uiModeAnwerForm(data) {
-        let submitbutton = document.querySelector("#submitbutton");
+        let submitbutton = q("#submitbutton");
         submitbutton.disabled = false;
         submitbutton.innerText = "Go";
         global_starting_form = data.starting_form;
         global_change_desc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
-        document.querySelector("#statusmesg").innerHTML = "Click Go to answer!"
-        document.querySelector("#changedesc").innerHTML = (data.person_prev !== null) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, null, null, null, null, null) : "";
-        document.querySelector("#answerform").value = "";
-        document.querySelector("#answerform").disabled = true;
-        document.querySelector("#mfbutton").disabled = true;
-        document.querySelector("#correctanswer").innerHTML = "";
-        document.querySelector("#correctanswer").style.visibility = "hidden";
-        document.querySelector("#startingform").innerText = (data.starting_form) ? data.starting_form : "";
+        q("#statusmesg").innerHTML = "Click Go to answer!"
+        q("#changedesc").innerHTML = (data.person_prev !== null) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, null, null, null, null, null) : "";
+        q("#answerform").value = "";
+        q("#answerform").disabled = true;
+        q("#mfbutton").disabled = true;
+        q("#correctanswer").innerHTML = "";
+        q("#correctanswer").style.visibility = "hidden";
+        q("#startingform").innerText = (data.starting_form) ? data.starting_form : "";
 
-        document.querySelector("#askparamsdiv").style.display = "none";
-        document.querySelector("#submitbutton").style.display = "block";
-        document.querySelector("#verbchooser").style.display = "none";
+        q("#askparamsdiv").style.display = "none";
+        q("#submitbutton").style.display = "block";
+        q("#verbchooser").style.display = "none";
     }
 
     function uiModeAnwerGoForm(loc_starting_form, loc_change_desc) {
-        let submitbutton = document.querySelector("#submitbutton");
+        let submitbutton = q("#submitbutton");
         submitbutton.disabled = false;
         submitbutton.innerText = "Enter";
         global_mf_pressed = false;
         
-        document.querySelector("#statusmesg").innerHTML = "Click enter to submit!"
-        document.querySelector("#changedesc").innerHTML = loc_change_desc;
-        document.querySelector("#answerform").value = "";
-        document.querySelector("#answerform").disabled = false;
-        document.querySelector("#mfbutton").disabled = false;
-        document.querySelector("#answerform").focus();
-        document.querySelector("#correctanswer").innerHTML = "";
-        document.querySelector("#correctanswer").style.visibility = "hidden";
-        document.querySelector("#startingform").innerText = loc_starting_form;
+        q("#statusmesg").innerHTML = "Click enter to submit!"
+        q("#changedesc").innerHTML = loc_change_desc;
+        q("#answerform").value = "";
+        q("#answerform").disabled = false;
+        q("#mfbutton").disabled = false;
+        q("#answerform").focus();
+        q("#correctanswer").innerHTML = "";
+        q("#correctanswer").style.visibility = "hidden";
+        q("#startingform").innerText = loc_starting_form;
 
-        document.querySelector("#askparamsdiv").style.display = "none";
+        q("#askparamsdiv").style.display = "none";
         startTimer();
-        document.querySelector("#submitbutton").style.display = "block";
-        document.querySelector("#verbchooser").style.display = "none";
+        q("#submitbutton").style.display = "block";
+        q("#verbchooser").style.display = "none";
     }
 
     function uiModeWaitingForAnswer(data) {
-        let submitbutton = document.querySelector("#submitbutton");
+        let submitbutton = q("#submitbutton");
         submitbutton.disabled = true;
-        document.querySelector("#statusmesg").innerHTML = "Waiting for opponent to answer.";
-        document.querySelector("#answerform").value = "";
-        document.querySelector("#answerform").disabled = true;
-        document.querySelector("#correctanswer").innerHTML = "";
-        document.querySelector("#correctanswer").style.visibility = "hidden";
-        document.querySelector("#startingform").innerText = data.starting_form;
+        q("#statusmesg").innerHTML = "Waiting for opponent to answer.";
+        q("#answerform").value = "";
+        q("#answerform").disabled = true;
+        q("#correctanswer").innerHTML = "";
+        q("#correctanswer").style.visibility = "hidden";
+        q("#startingform").innerText = data.starting_form;
 
-        document.querySelector("#askparamsdiv").style.display = "none";
+        q("#askparamsdiv").style.display = "none";
 
-        document.querySelector("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
-        document.querySelector("#submitbutton").style.display = "none";
-        document.querySelector("#mfbutton").disabled = true;
-        document.querySelector("#mainTime").innerText = "30:00";
-        document.querySelector("#verbchooser").style.display = "none";
+        q("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+        q("#submitbutton").style.display = "none";
+        q("#mfbutton").disabled = true;
+        q("#mainTime").innerText = "30:00";
+        q("#verbchooser").style.display = "none";
     }
 
     function uiModeWaitingForAsk(data) {
-        let submitbutton = document.querySelector("#submitbutton");
+        let submitbutton = q("#submitbutton");
         submitbutton.disabled = true;
-        document.querySelector("#statusmesg").innerHTML = "Waiting for opponent to ask.";
-        document.querySelector("#answerform").value = data.answer;
-        document.querySelector("#answerform").disabled = true;
+        q("#statusmesg").innerHTML = "Waiting for opponent to ask.";
+        q("#answerform").value = data.answer;
+        q("#answerform").disabled = true;
         
-        document.querySelector("#correctanswer").style.visibility = "visible";
-        document.querySelector("#startingform").innerText = data.starting_form;
+        q("#correctanswer").style.visibility = "visible";
+        q("#startingform").innerText = data.starting_form;
         
-        document.querySelector("#mainTime").innerText = data.time;
-        document.querySelector("#askparamsdiv").style.display = "none";
-        document.querySelector("#submitbutton").style.display = "none";
-        document.querySelector("#mfbutton").disabled = true;
+        q("#mainTime").innerText = data.time;
+        q("#askparamsdiv").style.display = "none";
+        q("#submitbutton").style.display = "none";
+        q("#mfbutton").disabled = true;
 
         if (data.move_type == "FirstMoveTheirTurn") {
-            document.querySelector("#changedesc").innerHTML = "";
-            document.querySelector("#correctanswer").innerHTML = "";
+            q("#changedesc").innerHTML = "";
+            q("#correctanswer").innerHTML = "";
         }
         else {
-            document.querySelector("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
-            document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || global_show_correct) ? data.correct_answer : "");
+            q("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+            q("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || global_show_correct) ? data.correct_answer : "");
 
         }
-        document.querySelector("#verbchooser").style.display = "none";
+        q("#verbchooser").style.display = "none";
     }
 
     function uiModeAskResponse(data) {
         console.log("ask successfully submitted");
-        document.querySelector("#mfbutton").disabled = true;
-        let submitbutton = document.querySelector("#submitbutton");
+        q("#mfbutton").disabled = true;
+        let submitbutton = q("#submitbutton");
         submitbutton.innerText = "Sent!";
-        document.querySelector("#statusmesg").innerHTML = "Sent!";
+        q("#statusmesg").innerHTML = "Sent!";
         submitbutton.disabled = true;
-        document.querySelector("#askparamsdiv").style.display = "none";
-        document.querySelector("#verbchooser").style.display = "none";
+        q("#askparamsdiv").style.display = "none";
+        q("#verbchooser").style.display = "none";
         if (data.starting_form) {
-            document.querySelector("#startingform").innerText = data.starting_form;
+            q("#startingform").innerText = data.starting_form;
         }
-        document.querySelector("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+        q("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
     }
 
     function uiModeAskForm(data, max_params_to_change) {
@@ -1114,30 +1118,30 @@ function getTextWidth(text, font) {
             return;
         }
 
-        document.querySelector("#mfbutton").disabled = true;
-        let submitbutton = document.querySelector("#submitbutton");
+        q("#mfbutton").disabled = true;
+        let submitbutton = q("#submitbutton");
         if (data.move_type == "Practice") {
             submitbutton.innerText = "Ask";
-            document.querySelector("#verbchooser").style.display = "none";
-            document.querySelector("#askparamsdiv").style.display = "block";
-            document.querySelector("#statusmesg").innerHTML = "Click ask to ask this form."
-            document.querySelector("#startingform").innerText = "";
-            document.querySelector("#changedesc").innerHTML = "";
-            document.querySelector("#answerform").value = "";
-            document.querySelector("#correctanswer").style.visibility = "hidden";
-            document.querySelector("#correctanswer").innerHTML = "";
+            q("#verbchooser").style.display = "none";
+            q("#askparamsdiv").style.display = "block";
+            q("#statusmesg").innerHTML = "Click ask to ask this form."
+            q("#startingform").innerText = "";
+            q("#changedesc").innerHTML = "";
+            q("#answerform").value = "";
+            q("#correctanswer").style.visibility = "hidden";
+            q("#correctanswer").innerHTML = "";
         }
         else {
             submitbutton.innerText = "Continue";
-            document.querySelector("#verbchooser").style.display = "none";
-            document.querySelector("#mainTime").innerText = data.time;
-            document.querySelector("#askparamsdiv").style.display = "none";
-            document.querySelector("#statusmesg").innerHTML = "Click Continue to ask the next form."
-            document.querySelector("#startingform").innerText = data.starting_form;
-            document.querySelector("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
-            document.querySelector("#answerform").value = data.answer;
-            document.querySelector("#correctanswer").style.visibility = "visible";
-            document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || global_show_correct) ? data.correct_answer : "");
+            q("#verbchooser").style.display = "none";
+            q("#mainTime").innerText = data.time;
+            q("#askparamsdiv").style.display = "none";
+            q("#statusmesg").innerHTML = "Click Continue to ask the next form."
+            q("#startingform").innerText = data.starting_form;
+            q("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+            q("#answerform").value = data.answer;
+            q("#correctanswer").style.visibility = "visible";
+            q("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || global_show_correct) ? data.correct_answer : "");
         }
         submitbutton.style.display = "block";
         submitbutton.disabled = false;
@@ -1147,15 +1151,15 @@ function getTextWidth(text, font) {
         let data = global_session_state;
         global_session_state = null;
         
-        let submitbutton = document.querySelector("#submitbutton");
+        let submitbutton = q("#submitbutton");
         submitbutton.innerText = "Ask";
         submitbutton.style.display = "block";
         submitbutton.disabled = false;
-        document.querySelector("#mfbutton").disabled = true;
+        q("#mfbutton").disabled = true;
         if (data.move_type == "FirstMoveMyTurn") {
             global_max_changes = null; //can change all
             set_params_dropdowns(null, null, null, null, null, null);
-            let verbchooser = document.querySelector("#verbchooser");
+            let verbchooser = q("#verbchooser");
             //remove verb options
             while (verbchooser.options.length > 0) {                
                 verbchooser.remove(0);
@@ -1169,63 +1173,63 @@ function getTextWidth(text, font) {
             }
             verbchooser.value = null;
         
-            document.querySelector("#startingform").innerText = "";
+            q("#startingform").innerText = "";
             verbchooser.style.display = "inline-block";
-            document.querySelector("#statusmesg").innerHTML = "Choose a verb and set all parameters";
+            q("#statusmesg").innerHTML = "Choose a verb and set all parameters";
         }
         else {
             global_max_changes = 2;
             set_params_dropdowns(data.person, data.number, data.tense, data.voice, data.mood, data.verb);
-            document.querySelector("#startingform").innerText = data.correct_answer;
-            document.querySelector("#verbchooser").style.display = "none";
-            document.querySelector("#statusmesg").innerHTML = "Change up to (2) parameters";
+            q("#startingform").innerText = data.correct_answer;
+            q("#verbchooser").style.display = "none";
+            q("#statusmesg").innerHTML = "Change up to (2) parameters";
         }
-        document.querySelector("#mainTime").innerHTML = "30:00";
-        document.querySelector("#askparamsdiv").style.display = "block";
-        document.querySelector("#changedesc").innerHTML = "";//desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
-        //document.querySelector("#changedesc").style.display = "none";
-        document.querySelector("#answerform").value = "";
-        document.querySelector("#correctanswer").style.visibility = "hidden";
-        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || global_show_correct) ? data.correct_answer : "");
+        q("#mainTime").innerHTML = "30:00";
+        q("#askparamsdiv").style.display = "block";
+        q("#changedesc").innerHTML = "";//desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+        //q("#changedesc").style.display = "none";
+        q("#answerform").value = "";
+        q("#correctanswer").style.visibility = "hidden";
+        q("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || global_show_correct) ? data.correct_answer : "");
 
-        //document.querySelector("#statusmesg").innerHTML = "Click Ask to ask the next form."
+        //q("#statusmesg").innerHTML = "Click Ask to ask the next form."
         // if (max_params_to_change == 5) {
-        //     document.querySelector("#statusmesg").innerHTML = "Choose a verb and set all params.";
+        //     q("#statusmesg").innerHTML = "Choose a verb and set all params.";
         // }
         // else {
-        //     document.querySelector("#statusmesg").innerHTML = "Change up to (" + max_params_to_change + ") params.";
+        //     q("#statusmesg").innerHTML = "Change up to (" + max_params_to_change + ") params.";
         // }
 
     }
     function uiModeClickedEnter() {
-        let submitbutton = document.querySelector("#submitbutton");
+        let submitbutton = q("#submitbutton");
         submitbutton.innerText = "Loading...";
         submitbutton.disabled = true;
         stopTimer();
-        document.querySelector("#answerform").disabled = true;
+        q("#answerform").disabled = true;
     }
 
     function uiModeAnswerResponseReceived(data) {
-        let submitbutton = document.querySelector("#submitbutton");
+        let submitbutton = q("#submitbutton");
         if (data.move_type == "Practice") {
             submitbutton.innerText = "Go";
             global_practice = true;
             global_starting_form = data.starting_form;
             global_change_desc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
-            document.querySelector("#statusmesg").innerHTML = "Click Go to answer the next form."
+            q("#statusmesg").innerHTML = "Click Go to answer the next form."
         }
         else {
             global_practice = false;
             submitbutton.innerText = "Continue";
-            document.querySelector("#statusmesg").innerHTML = "Click Continue to ask the next form."
+            q("#statusmesg").innerHTML = "Click Continue to ask the next form."
         }
         global_session_state = data;
         submitbutton.disabled = false;
         submitbutton.focus();
-        document.querySelector("#mfbutton").disabled = true;
+        q("#mfbutton").disabled = true;
         //mark (in)correct, show correct answer
-        document.querySelector("#correctanswer").style.visibility = "visible";
-        document.querySelector("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || global_show_correct) ? data.correct_answer : "");
+        q("#correctanswer").style.visibility = "visible";
+        q("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || global_show_correct) ? data.correct_answer : "");
     }
 
     function add_seconds_to_time(secs) {
@@ -1260,11 +1264,11 @@ function getTextWidth(text, font) {
         global_timer_ref.innerHTML = ((minutes > 0) ? ((minutes < 10) ? ("0" + minutes + ":") : minutes + ":") : "") + ((seconds < 10) ? ("0" + seconds + ":") : seconds + ":") + ((ms < 10) ? ("0" + ms) : ms);
     }
 
-    //   const $status = document.querySelector('#status')
-    //   const $connectButton = document.querySelector('#connect')
-    //   const $log = document.querySelector('#log')
-    //   const $form = document.querySelector('#chatform')
-    //   const $input = document.querySelector('#text')
+    //   const $status = q('#status')
+    //   const $connectButton = q('#connect')
+    //   const $log = q('#log')
+    //   const $form = q('#chatform')
+    //   const $input = q('#text')
 
       /** @type {WebSocket | null} */
       var socket = null
@@ -1284,12 +1288,17 @@ function getTextWidth(text, font) {
 
         //log('Connecting...')
         //socket = new WebSocket(wsUri);
+        socket = null;
         socket = new ReconnectingWebSocket(wsUri, null, {debug: true});
 
         socket.onopen = () => {
             console.log("ws connected");
             //log('Connected')
-            updateConnectionStatus()
+            updateConnectionStatus();
+            if (pending_send_data) {
+                generic_send_request(null, pending_send_data, null);
+                pending_send_data = null;
+            }
         }
 
         socket.onmessage = (ev) => {

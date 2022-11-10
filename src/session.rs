@@ -164,7 +164,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                             game_uuid: info.session_id,
                         });
                         let fut = async move {
-                            if let Ok(res) = libhc::hc_get_move(&db, user_id, false, &info, &verbs).await {
+                            if let Ok(res) = libhc::hc_get_move(&db, user_id, false, info.session_id, &verbs).await {
                                 if let Ok(resjson) = serde_json::to_string(&res) {
                                     let _ = addr.send(server::Message(resjson)).await;
                                 }
@@ -212,7 +212,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                                         qtype: "getmove".to_string(),
                                         session_id: info.session_id,
                                     };
-                                    if let Ok(gm_res) = libhc::hc_get_move(&db, user_id, true, &gm, &verbs).await {
+                                    if let Ok(gm_res) = libhc::hc_get_move(&db, user_id, true, gm.session_id, &verbs).await {
                                         if let Ok(gm_resjson) = serde_json::to_string(&gm_res) {
                                             //println!("send to room {:?}", info.session_id);
                                             addr2.do_send(server::ClientMessage {
@@ -243,7 +243,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                                         qtype: "getmove".to_string(),
                                         session_id: info.session_id,
                                     };
-                                    if let Ok(gm_res) = libhc::hc_get_move(&db, user_id, true, &gm, &verbs).await {
+                                    if let Ok(gm_res) = libhc::hc_get_move(&db, user_id, true, gm.session_id, &verbs).await {
                                         if let Ok(gm_resjson) = serde_json::to_string(&gm_res) {
                                             //println!("send to room {:?}", info.session_id);
                                             addr2.do_send(server::ClientMessage {
@@ -275,7 +275,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                                         qtype: "getmove".to_string(),
                                         session_id: info.session_id,
                                     };
-                                    if let Ok(gm_res) = libhc::hc_get_move(&db, user_id, true, &gm, &verbs).await {
+                                    if let Ok(gm_res) = libhc::hc_get_move(&db, user_id, true, gm.session_id, &verbs).await {
                                         if let Ok(gm_resjson) = serde_json::to_string(&gm_res) {
                                             //println!("send to room {:?}", info.session_id);
                                             addr2.do_send(server::ClientMessage {
@@ -297,14 +297,30 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                     }
                 }
                 else if msg.contains("getsessions") {
-                    if let Ok(_info) = serde_json::from_str::<GetSessions>(&msg) {
+                    if let Ok(info) = serde_json::from_str::<GetSessions>(&msg) {
+                        if let Some(session_id) = info.current_session {
+                            //join game room
+                            self.addr.do_send(server::Join {
+                                user_uuid: user_id,
+                                game_uuid: session_id,
+                            });
+                        }
                         let fut = async move {
+                            let current_session = match info.current_session {
+                                Some(r) => match libhc::hc_get_move(&db, user_id, false, r, &verbs).await {
+                                    Ok(res) => Some(res),
+                                    Err(_) => None,
+                                },
+                                _ => None,
+                            };
+                            
                             if let Ok(sessions) = libhc::hc_get_sessions(&db, user_id).await {
                                 let res = SessionsListResponse {
                                     response_to: "getsessions".to_string(),
                                     sessions,
                                     success: true,
                                     username,
+                                    current_session,
                                 };
                                 if let Ok(resjson) = serde_json::to_string(&res) {
                                     let _ = addr.send(server::Message(resjson)).await;

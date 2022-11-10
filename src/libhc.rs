@@ -364,12 +364,12 @@ pub async fn hc_mf_pressed(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, tim
 
 //opponent_id gets move status for opponent rather than user_id when true:
 //we handle the case of s.challenged_user_id.is_none() here, but opponent_id should always be false for practice games
-pub async fn hc_get_move(db: &HcSqliteDb, user_id:Uuid, opponent_id:bool, info:&GetMoveQuery, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> { 
-    let s = db.get_session(info.session_id).await?;
+pub async fn hc_get_move(db: &HcSqliteDb, user_id:Uuid, opponent_id:bool, session_id:Uuid, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> { 
+    let s = db.get_session(session_id).await?;
 
     let real_user_id = if !opponent_id || s.challenged_user_id.is_none() { user_id } else { if user_id == s.challenger_user_id { s.challenged_user_id.unwrap() } else { s.challenger_user_id } };
 
-    let mut res = get_session_state(db, real_user_id, info.session_id).await?;
+    let mut res = get_session_state(db, real_user_id, session_id).await?;
 
     //set starting_form to 1st pp of verb if verb is set, but starting form is None (i.e. we just changed verbs)
     if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
@@ -379,7 +379,7 @@ pub async fn hc_get_move(db: &HcSqliteDb, user_id:Uuid, opponent_id:bool, info:&
     res.response_to = "getmoves".to_string();
     res.success = true;
     res.mesg = None;
-    res.verbs = if res.move_type == MoveType::FirstMoveMyTurn { Some(hc_get_available_verbs(db, real_user_id, info.session_id, s.highest_unit, verbs).await.unwrap()) } else {None};
+    res.verbs = if res.move_type == MoveType::FirstMoveMyTurn { Some(hc_get_available_verbs(db, real_user_id, session_id, s.highest_unit, verbs).await.unwrap()) } else {None};
 
     Ok(res)
 }
