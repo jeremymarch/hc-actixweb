@@ -1039,7 +1039,7 @@ mod tests {
 
         //ask from invalid user should be blocked
         let ask = hc_ask(&db, invalid_uuid, &aq, timestamp, &verbs).await;
-        assert!(ask.is_ok() == false);
+        assert!(!ask.is_ok());
 
         //a valid ask
         let ask = hc_ask(&db, uuid1, &aq, timestamp, &verbs).await;
@@ -1066,7 +1066,7 @@ mod tests {
 
         //check that we are preventing out-of-sequence asks
         let ask = hc_ask(&db, uuid1, &aq, timestamp, &verbs).await;
-        assert!(ask.is_ok() == false);
+        assert!(!ask.is_ok());
 
         let m = GetMoveQuery {
             qtype: "getmove".to_string(),
@@ -1146,16 +1146,16 @@ mod tests {
 
         //answer from invalid user should be blocked
         let answer = hc_answer(&db, invalid_uuid, &answerq, timestamp, &verbs).await;
-        assert!(answer.is_ok() == false);
+        assert!(!answer.is_ok());
 
         //a valid answer
         let answer = hc_answer(&db, uuid2, &answerq, timestamp, &verbs).await;
         assert!(answer.is_ok());
-        assert_eq!(answer.unwrap().is_correct.unwrap(), true);
+        assert!(answer.unwrap().is_correct.unwrap());
 
         //check that we are preventing out-of-sequence answers
         let answer = hc_answer(&db, uuid2, &answerq, timestamp, &verbs).await;
-        assert!(answer.is_ok() == false);
+        assert!(!answer.is_ok());
 
         let ss = hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
 
@@ -1309,7 +1309,7 @@ mod tests {
         //a valid answer
         let answer = hc_answer(&db, uuid1, &answerq, timestamp, &verbs).await;
         assert!(answer.is_ok());
-        assert_eq!(answer.unwrap().is_correct.unwrap(), false);
+        assert!(!answer.unwrap().is_correct.unwrap());
 
 
         let s = hc_get_sessions(&db, uuid1).await;
@@ -1517,11 +1517,11 @@ mod tests {
 
         //ask from invalid user should be blocked
         let ask = hc_ask(&db, invalid_uuid, &aq, timestamp, &verbs).await;
-        assert!(ask.is_ok() == false);
+        assert!(!ask.is_ok());
 
         //a valid ask
         let ask = hc_ask(&db, uuid1, &aq, timestamp, &verbs).await;
-        assert!(ask.is_ok() == false);
+        assert!(!ask.is_ok());
 
         let s = hc_get_sessions(&db, uuid1).await;
         // let s_res = Ok([SessionsListQuery { session_id: 75d08792-ea12-40f6-a903-bd4e6aae2aad, 
@@ -1547,7 +1547,7 @@ mod tests {
         let ss = hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
 
         assert_eq!(ss.as_ref().unwrap().move_type, MoveType::Practice);
-        assert_eq!(ss.as_ref().unwrap().myturn, true);
+        assert!(ss.as_ref().unwrap().myturn);
 
         // let ss_res = SessionState { 
         //     session_id: *session_uuid.as_ref().unwrap(), 
@@ -1586,7 +1586,7 @@ mod tests {
 
         //answer from invalid user should be blocked
         let answer = hc_answer(&db, invalid_uuid, &answerq, timestamp, &verbs).await;
-        assert!(answer.is_ok() == false);
+        assert!(!answer.is_ok());
 
         //a valid answer
         let answer = hc_answer(&db, uuid1, &answerq, timestamp, &verbs).await;
@@ -1604,12 +1604,12 @@ mod tests {
         //     time: None, response_to: "answerresponsepractice", success: true, mesg: None, verbs: None })
         //println!("{:?}", answer);
         assert_eq!(answer.as_ref().unwrap().move_type, MoveType::Practice);
-        assert_eq!(answer.as_ref().unwrap().myturn, true);
+        assert!(answer.as_ref().unwrap().myturn);
 
         let answer = hc_answer(&db, uuid1, &answerq, timestamp, &verbs).await;
-        assert!(answer.is_ok() == true);
+        assert!(answer.is_ok());
         let answer = hc_answer(&db, uuid1, &answerq, timestamp, &verbs).await;
-        assert!(answer.is_ok() == true);
+        assert!(answer.is_ok());
 
         //let ss = hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
     }
