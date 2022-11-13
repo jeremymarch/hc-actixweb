@@ -1039,7 +1039,7 @@ mod tests {
 
         //ask from invalid user should be blocked
         let ask = hc_ask(&db, invalid_uuid, &aq, timestamp, &verbs).await;
-        assert!(!ask.is_ok());
+        assert!(ask.is_err());
 
         //a valid ask
         let ask = hc_ask(&db, uuid1, &aq, timestamp, &verbs).await;
@@ -1066,7 +1066,7 @@ mod tests {
 
         //check that we are preventing out-of-sequence asks
         let ask = hc_ask(&db, uuid1, &aq, timestamp, &verbs).await;
-        assert!(!ask.is_ok());
+        assert!(ask.is_err());
 
         let m = GetMoveQuery {
             qtype: "getmove".to_string(),
@@ -1146,7 +1146,7 @@ mod tests {
 
         //answer from invalid user should be blocked
         let answer = hc_answer(&db, invalid_uuid, &answerq, timestamp, &verbs).await;
-        assert!(!answer.is_ok());
+        assert!(answer.is_err());
 
         //a valid answer
         let answer = hc_answer(&db, uuid2, &answerq, timestamp, &verbs).await;
@@ -1155,7 +1155,7 @@ mod tests {
 
         //check that we are preventing out-of-sequence answers
         let answer = hc_answer(&db, uuid2, &answerq, timestamp, &verbs).await;
-        assert!(!answer.is_ok());
+        assert!(answer.is_err());
 
         let ss = hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
 
@@ -1517,11 +1517,11 @@ mod tests {
 
         //ask from invalid user should be blocked
         let ask = hc_ask(&db, invalid_uuid, &aq, timestamp, &verbs).await;
-        assert!(!ask.is_ok());
+        assert!(ask.is_err());
 
         //a valid ask
         let ask = hc_ask(&db, uuid1, &aq, timestamp, &verbs).await;
-        assert!(!ask.is_ok());
+        assert!(ask.is_err());
 
         let s = hc_get_sessions(&db, uuid1).await;
         // let s_res = Ok([SessionsListQuery { session_id: 75d08792-ea12-40f6-a903-bd4e6aae2aad, 
@@ -1586,7 +1586,7 @@ mod tests {
 
         //answer from invalid user should be blocked
         let answer = hc_answer(&db, invalid_uuid, &answerq, timestamp, &verbs).await;
-        assert!(!answer.is_ok());
+        assert!(answer.is_err());
 
         //a valid answer
         let answer = hc_answer(&db, uuid1, &answerq, timestamp, &verbs).await;
