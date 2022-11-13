@@ -26,6 +26,9 @@ use crate::MoveResult;
 use crate::SessionResult;
 use crate::MoveType;
 use crate::HcSqliteDb;
+use crate::AskQuery;
+use crate::AnswerQuery;
+
 use sqlx::postgres::PgRow;
 use sqlx::Postgres;
 
@@ -254,13 +257,7 @@ impl HcSqliteDb {
     pub async fn insert_ask_move(
         &self,
         user_id: Option<Uuid>,
-        session_id: Uuid,
-        person: i16,
-        number: i16,
-        tense: i16,
-        mood: i16,
-        voice: i16,
-        verb_id: i32,
+        info:&AskQuery,
         timestamp:i64,
     ) -> Result<Uuid, sqlx::Error> {
         let mut tx = self.db.begin().await?;
@@ -268,13 +265,7 @@ impl HcSqliteDb {
         let uuid = self.insert_ask_move_tx(
             &mut tx,
             user_id,
-            session_id,
-            person,
-            number,
-            tense,
-            mood,
-            voice,
-            verb_id,
+            info,
             timestamp,
         ).await?;
 
@@ -287,13 +278,7 @@ impl HcSqliteDb {
         &self,
         tx: &'a mut sqlx::Transaction<'b, Postgres>,
         user_id: Option<Uuid>,
-        session_id: Uuid,
-        person: i16,
-        number: i16,
-        tense: i16,
-        mood: i16,
-        voice: i16,
-        verb_id: i32,
+        info:&AskQuery,
         timestamp:i64,
     ) -> Result<Uuid, sqlx::Error> {
 
@@ -302,14 +287,14 @@ impl HcSqliteDb {
         let query = "INSERT INTO moves VALUES ($1,$2,$3,NULL,$4,$5,$6,$7,$8,$9,NULL,NULL,NULL,NULL,NULL,NULL,$10, NULL);";
         let _res = sqlx::query(query)
             .bind(uuid)
-            .bind(session_id)
+            .bind(info.session_id)
             .bind(user_id)
-            .bind(verb_id)
-            .bind(person)
-            .bind(number)
-            .bind(tense)
-            .bind(mood)
-            .bind(voice)
+            .bind(info.verb)
+            .bind(info.person)
+            .bind(info.number)
+            .bind(info.tense)
+            .bind(info.mood)
+            .bind(info.voice)
             .bind(timestamp)
             //answer timestamp
             .execute(&mut *tx)
@@ -320,28 +305,22 @@ impl HcSqliteDb {
 
     pub async fn update_answer_move(
         &self,
-        session_id: Uuid,
+        info:&AnswerQuery,
         user_id: Uuid,
-        answer: &str,
         correct_answer:&str,
         is_correct:bool,
-        time: &str,
         mf_pressed:bool,
-        timed_out:bool,
         timestamp:i64,
     ) -> Result<u32, sqlx::Error> {
         let mut tx = self.db.begin().await?;
 
         let a = self.update_answer_move_tx(
             &mut tx,
-            session_id,
+            info,
             user_id,
-            answer,
             correct_answer,
             is_correct,
-            time,
             mf_pressed,
-            timed_out,
             timestamp,
         ).await?;
 
@@ -350,31 +329,29 @@ impl HcSqliteDb {
         Ok(a)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn update_answer_move_tx<'a, 'b>(
         &self,
         tx: &'a mut sqlx::Transaction<'b, Postgres>,
-        session_id: Uuid,
+        info: &AnswerQuery,
         user_id: Uuid,
-        answer: &str,
-        correct_answer:&str,
-        is_correct:bool,
-        time: &str,
-        mf_pressed:bool,
-        timed_out:bool,
-        timestamp:i64,
+        correct_answer: &str,
+        is_correct: bool,
+        mf_pressed: bool,
+        timestamp: i64,
     ) -> Result<u32, sqlx::Error> {
 
-        let m = self.get_last_move_tx(&mut *tx, session_id).await?;
+        let m = self.get_last_move_tx(&mut *tx, info.session_id).await?;
 
         let query = "UPDATE moves SET answer_user_id=$1, answer=$2, correct_answer=$3, is_correct=$4, time=$5, mf_pressed=$6, timed_out=$7, answeredtimestamp=$8 WHERE move_id=$9;";
         let _res = sqlx::query(query)
             .bind(user_id)
-            .bind(answer)
+            .bind(info.answer.clone())
             .bind(correct_answer)
             .bind(is_correct)
-            .bind(time)
+            .bind(info.time.clone())
             .bind(mf_pressed)
-            .bind(timed_out)
+            .bind(info.timed_out)
             .bind(timestamp)
             .bind(m.move_id)
             .execute(&mut *tx)

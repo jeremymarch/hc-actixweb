@@ -96,14 +96,8 @@ pub async fn hc_ask(db: &HcSqliteDb, user_id:Uuid, info:&AskQuery, timestamp:i64
     //prevent out-of-sequence asks
     let m = match db.get_last_move(info.session_id).await {
         Ok(m) => {
-            if m.ask_user_id == Some(user_id) {
-                return Err(sqlx::Error::RowNotFound);//same user cannot ask twice in a row
-            }
-            else if m.answer_user_id != Some(user_id) {
-                return Err(sqlx::Error::RowNotFound);//ask user must be same as previous answer user
-            }
-            else if m.is_correct.is_none() {
-                return Err(sqlx::Error::RowNotFound);//previous answer must be marked correct or incorrect
+            if m.ask_user_id == Some(user_id) || m.answer_user_id != Some(user_id) || m.is_correct.is_none(){
+                return Err(sqlx::Error::RowNotFound);//same user cannot ask twice in a row and ask user must be same as previous answer user and previous answer must be marked correct or incorrect
             }
             else {
                 Ok(m)
@@ -117,7 +111,7 @@ pub async fn hc_ask(db: &HcSqliteDb, user_id:Uuid, info:&AskQuery, timestamp:i64
 
     //get move seq and add one?
     
-    let _ = db.insert_ask_move(Some(user_id), info.session_id, info.person, info.number, info.tense, info.mood, info.voice, info.verb, new_time_stamp).await?;
+    let _ = db.insert_ask_move(Some(user_id), info, new_time_stamp).await?;
 
     let mut res = get_session_state(db, user_id, info.session_id).await?;
 
@@ -144,11 +138,8 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
     //pull prev move from db to get verb and params and to prevent out-of-sequence answers
     let m = match db.get_last_move_tx(&mut tx, info.session_id).await {
         Ok(m) => {
-            if m.ask_user_id == Some(user_id) {
-                return Err(sqlx::Error::RowNotFound);//same user cannot answer question they asked
-            }
-            else if m.is_correct.is_some() {
-                return Err(sqlx::Error::RowNotFound);//previous question must not already be answered
+            if m.ask_user_id == Some(user_id) || m.is_correct.is_some() {
+                return Err(sqlx::Error::RowNotFound); //same user cannot answer question they asked and previous question must not already be answered
             }
             else {
                 m
@@ -171,14 +162,11 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
     let is_correct = hgk_compare_multiple_forms(&correct_answer, &info.answer.replace("---", "—"));
 
     let _res = db.update_answer_move_tx(&mut tx, 
-        info.session_id,
+        info,
         user_id,
-        &info.answer,
         &correct_answer,
         is_correct,
-        &info.time,
         info.mf_pressed,
-        info.timed_out,
         timestamp).await?;
 
     //if practice session, ask the next here
@@ -206,8 +194,17 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
         //be sure this asktimestamp is at least one greater than previous one
         let new_time_stamp = if timestamp > m.asktimestamp { timestamp } else { m.asktimestamp + 1 };
         //ask
-        let _ = db.insert_ask_move_tx(&mut tx, None, info.session_id, pf.person.to_i16(), pf.number.to_i16(), pf.tense.to_i16(), 
-            pf.mood.to_i16(), pf.voice.to_i16(), pf.verb.id as i32, new_time_stamp).await?;
+        let aq = AskQuery {
+            qtype: "ask".to_string(),
+            session_id: info.session_id,
+            person: pf.person.to_i16(),
+            number: pf.number.to_i16(),
+            tense: pf.tense.to_i16(),
+            voice: pf.voice.to_i16(),
+            mood: pf.mood.to_i16(),
+            verb: pf.verb.id as i32,
+        };
+        let _ = db.insert_ask_move_tx(&mut tx, None, &aq, new_time_stamp).await?;
     }
     else {
         //add to other player's score if not practice and not correct
@@ -253,11 +250,8 @@ pub async fn hc_mf_pressed(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, tim
     //pull prev move from db to get verb and params and to prevent out-of-sequence answers
     let m = match db.get_last_move_tx(&mut tx, info.session_id).await {
         Ok(m) => {
-            if m.ask_user_id == Some(user_id) {
-                return Err(sqlx::Error::RowNotFound);//same user cannot answer question they asked
-            }
-            else if m.is_correct.is_some() {
-                return Err(sqlx::Error::RowNotFound);//previous question must not already be answered
+            if m.ask_user_id == Some(user_id) || m.is_correct.is_some(){
+                return Err(sqlx::Error::RowNotFound); //same user cannot answer question they asked and previous question must not already be answered
             }
             else {
                 m
@@ -292,14 +286,11 @@ pub async fn hc_mf_pressed(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, tim
     else {
         let is_correct = false;
         let _res = db.update_answer_move(
-            info.session_id,
+            info,
             user_id,
-            &info.answer,
             &correct_answer,
             is_correct,
-            &info.time,
             true,
-            info.timed_out,
             timestamp).await?;
 
         //if practice session, ask the next here
@@ -325,8 +316,17 @@ pub async fn hc_mf_pressed(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, tim
             //be sure this asktimestamp is at least one greater than previous one
             let new_time_stamp = if timestamp > m.asktimestamp { timestamp } else { m.asktimestamp + 1 };
             //ask
-            let _ = db.insert_ask_move_tx(&mut tx, None, info.session_id, pf.person.to_i16(), pf.number.to_i16(), pf.tense.to_i16(), 
-                pf.mood.to_i16(), pf.voice.to_i16(), pf.verb.id as i32, new_time_stamp).await?;
+            let aq = AskQuery {
+                qtype: "ask".to_string(),
+                session_id: info.session_id,
+                person: pf.person.to_i16(),
+                number: pf.number.to_i16(),
+                tense: pf.tense.to_i16(),
+                voice: pf.voice.to_i16(),
+                mood: pf.mood.to_i16(),
+                verb: pf.verb.id as i32,
+            };
+            let _ = db.insert_ask_move_tx(&mut tx, None, &aq, new_time_stamp).await?;
         }
         else {
             //add to other player's score if not practice and not correct
@@ -367,7 +367,7 @@ pub async fn hc_mf_pressed(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, tim
 pub async fn hc_get_move(db: &HcSqliteDb, user_id:Uuid, opponent_id:bool, session_id:Uuid, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> { 
     let s = db.get_session(session_id).await?;
 
-    let real_user_id = if !opponent_id || s.challenged_user_id.is_none() { user_id } else { if user_id == s.challenger_user_id { s.challenged_user_id.unwrap() } else { s.challenger_user_id } };
+    let real_user_id = if !opponent_id || s.challenged_user_id.is_none() { user_id } else if user_id == s.challenger_user_id { s.challenged_user_id.unwrap() } else { s.challenger_user_id };
 
     let mut res = get_session_state(db, real_user_id, session_id).await?;
 
@@ -392,6 +392,7 @@ fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>
 
     match s {
         Some(s) => { 
+            #[allow(clippy::collapsible_else_if)]
             if challenged_id.is_none() {
                 myturn = true;
                 move_type = MoveType::Practice; //practice, my turn always
@@ -405,7 +406,8 @@ fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>
                     myturn = false; //unanswered, their turn to answer
                     move_type = MoveType::AnswerTheirTurn;
                 }
-            } else { 
+            }
+            else { 
                 if s.answer_user_id.is_some() { //xxxanswered, their turn to ask | they asked, I answered, my turn to ask
                     myturn = true;
                     
@@ -498,8 +500,17 @@ pub async fn hc_insert_session(db: &HcSqliteDb, user_id:Uuid, info:&CreateSessio
                 }
 
                 //ask
-                let _ = db.insert_ask_move(None, session_uuid, prev_form.person.to_i16(), prev_form.number.to_i16(), prev_form.tense.to_i16(), 
-                    prev_form.mood.to_i16(), prev_form.voice.to_i16(), prev_form.verb.id as i32, timestamp + 1).await?;
+                let aq = AskQuery {
+                    qtype: "ask".to_string(),
+                    session_id: session_uuid,
+                    person: prev_form.person.to_i16(),
+                    number: prev_form.number.to_i16(),
+                    tense: prev_form.tense.to_i16(),
+                    voice: prev_form.voice.to_i16(),
+                    mood: prev_form.mood.to_i16(),
+                    verb: prev_form.verb.id as i32,
+                };
+                let _ = db.insert_ask_move(None, &aq, timestamp + 1).await?;
             }
             Ok(session_uuid)
         },

@@ -920,7 +920,11 @@ function getTextWidth(text, font) {
             uiModeAskResponse(data);
         }
         else if ((data.response_to == "answerresponse" || data.response_to == "answerresponsepractice") && data.success) {
+            let temp = global_session_id; //so we don't overwrite answer
+            global_session_id = null;
             get_sessions();
+            global_session_id = temp;
+
             global_starting_form = data.starting_form;
             global_change_desc = data.change_desc;
             uiModeAnswerResponseReceived(data);
