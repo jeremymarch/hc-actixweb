@@ -1,17 +1,16 @@
 name: Rust
-
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-
 env:
   CARGO_TERM_COLOR: always
   HCKEY: 56d520157194bdab7aec18755508bf6d063be7a203ddb61ebaa203eb1335c2ab3c13ecba7fc548f4563ac1d6af0b94e6720377228230f210ac51707389bf3285
-jobs:
-  build:
 
+jobs:
+  tests:
+    name: Tests
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -23,7 +22,6 @@ jobs:
         ports:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-
     steps:
     - uses: actions/checkout@v3
     - name: Build
