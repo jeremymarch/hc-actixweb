@@ -741,7 +741,7 @@ a {color:blue;}
         answerform.addEventListener('keypress', handleKey, false);
         //$(".gkinput").keypress(handleKey);
 
-        
+        global_session_id = localStorage.getItem("selected_session_id");
         if (supportsWebSockets) {
             wsconnect();
         }
@@ -980,6 +980,10 @@ function getTextWidth(text, font) {
             q("#list").innerHTML = rows;
             q("#refreshbutton").style.display = "block";
             q("#listouter").style.display = "block";
+
+            if (data.current_session) {
+                setUI(data.current_session);
+            }
         }
     }
 
@@ -1122,6 +1126,8 @@ function getTextWidth(text, font) {
         thisrow.classList.add("selectedGame");
 
         global_session_id = thisrow.getAttribute("data-uuid");
+        localStorage.setItem("selected_session_id", global_session_id);
+
         let send_data = { qtype: "getmove", session_id: global_session_id };
         generic_send_request("getmove", send_data, null);
     }
@@ -1598,7 +1604,7 @@ function getTextWidth(text, font) {
             let json = JSON.parse(ev.data);
             procResponse(json);
           }
-          catch(e) { console.log(e.message)}
+          catch(e) { console.log(e.message) }
         }
 
         socket.onclose = () => {
