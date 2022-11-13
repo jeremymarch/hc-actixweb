@@ -273,7 +273,7 @@ pub struct CreateSessionQuery {
 pub struct SessionsListQuery {
     session_id: sqlx::types::Uuid,
     challenged: Option<sqlx::types::Uuid>, //the one who didn't start the game, or null for practice
-    opponent: Option<sqlx::types::Uuid>,
+    //opponent: Option<sqlx::types::Uuid>,
     opponent_name: Option<String>,
     timestamp: i64,
     myturn: bool,

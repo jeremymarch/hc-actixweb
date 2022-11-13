@@ -452,6 +452,9 @@ pub async fn hc_get_sessions(db: &HcSqliteDb, user_id:Uuid) -> Result<Vec<Sessio
         else {
             (r.myturn, r.move_type) = move_get_type(None, user_id, r.challenged);
         }
+        //these were needed to tell whose turn, but no need to send these out to client
+        r.challenged = None;
+        //r.opponent = None;
     }
     Ok(res) 
 }

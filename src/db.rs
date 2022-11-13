@@ -120,11 +120,11 @@ impl HcSqliteDb {
 
         //strftime('%Y-%m-%d %H:%M:%S', DATETIME(timestamp, 'unixepoch')) as timestamp, 
         //    ORDER BY updated DESC \
-        let query = "SELECT session_id AS session_id, challenged_user_id AS challenged, challenged_user_id AS opponent_user_id, b.user_name AS username, challenger_score as myscore, challenged_score as theirscore, \
+        let query = "SELECT session_id AS session_id, challenged_user_id AS challenged, b.user_name AS username, challenger_score as myscore, challenged_score as theirscore, \
         a.timestamp as timestamp \
         FROM sessions a LEFT JOIN users b ON a.challenged_user_id = b.user_id \
         where challenger_user_id = $1 \
-        UNION SELECT session_id AS session_id, challenged_user_id AS challenged, challenged_user_id AS opponent_user_id, b.user_name AS username, challenged_score as myscore, challenger_score as theirscore, \
+        UNION SELECT session_id AS session_id, challenged_user_id AS challenged, b.user_name AS username, challenged_score as myscore, challenger_score as theirscore, \
         a.timestamp as timestamp \
         FROM sessions a LEFT JOIN users b ON a.challenger_user_id = b.user_id \
         where challenged_user_id  = $2 \
@@ -136,7 +136,7 @@ impl HcSqliteDb {
             .bind(user_id)
             .bind(user_id)
             .map(|rec: PgRow| {
-                SessionsListQuery { session_id: rec.get("session_id"), challenged:rec.get("challenged"), opponent:rec.get("opponent_user_id"), opponent_name: rec.get("username"),timestamp:rec.get("timestamp"), myturn:false, move_type:MoveType::Practice, my_score:rec.get("myscore"), their_score:rec.get("theirscore") }
+                SessionsListQuery { session_id: rec.get("session_id"), challenged:rec.get("challenged"), /*opponent:rec.get("opponent_user_id"),*/ opponent_name: rec.get("username"),timestamp:rec.get("timestamp"), myturn:false, move_type:MoveType::Practice, my_score:rec.get("myscore"), their_score:rec.get("theirscore") }
             })
             .fetch_all(&mut tx)
             .await?;
