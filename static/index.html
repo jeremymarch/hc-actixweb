@@ -279,7 +279,7 @@ a {color:blue;}
     </head>
     <body onload="start()">
         <div id="menubar">
-            <button id="refreshbutton" onclick="get_sessions()" style="display:none;">refresh</button>
+            <button id="refreshbutton" onclick="get_sessions(true)" style="display:none;">refresh</button>
             <div style="padding:0px 20px"><a id="loginlink" href="login">login</a>
                 <span id="logoutlink" style="display:none;"><span id="username"></span> (<a href="logout">logout</a>)</span>
             </div>
@@ -746,7 +746,7 @@ a {color:blue;}
             wsconnect();
         }
         // else {
-        //     get_sessions();
+        //     get_sessions(true);
         // }
         console.log(getTextWidth("παιδεύσητε", "normal 24pt WebNewAthenaUnicode"));  // close to 86
 	}
@@ -916,14 +916,11 @@ function getTextWidth(text, font) {
         // }
         // else 
         if (data.response_to == "ask" && data.success) {
-            get_sessions();
+            get_sessions(false);
             uiModeAskResponse(data);
         }
         else if ((data.response_to == "answerresponse" || data.response_to == "answerresponsepractice") && data.success) {
-            let temp = global_session_id; //so we don't overwrite answer
-            global_session_id = null;
-            get_sessions();
-            global_session_id = temp;
+            get_sessions(false);
 
             global_starting_form = data.starting_form;
             global_change_desc = data.change_desc;
@@ -939,7 +936,7 @@ function getTextWidth(text, font) {
             }
         }
         else if (data.response_to == "newsession" && data.success) {
-            get_sessions();
+            get_sessions(true);
         }
         else if (data.response_to == "getmoves" && data.success) {
             if (data.myturn && data.move_type != "Practice") {
@@ -1136,8 +1133,8 @@ function getTextWidth(text, font) {
         generic_send_request("getmove", send_data, null);
     }
 
-    function get_sessions() {
-        let send_data = { qtype:"getsessions", current_session: global_session_id };
+    function get_sessions(with_current_game) {
+        let send_data = { qtype:"getsessions", current_session: ((with_current_game) ? global_session_id : null) };
         generic_send_request("list", send_data, null);
     }
 
@@ -1642,7 +1639,7 @@ function getTextWidth(text, font) {
         //   $status.textContent = `connected`
         //   $connectButton.innerHTML = 'Disconnect'
           //$input.focus()
-          get_sessions();
+          get_sessions(true);
         } else {
         //   $status.style.backgroundColor = 'red'
         //   $status.style.color = 'white'
