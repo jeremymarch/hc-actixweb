@@ -770,14 +770,13 @@ function getTextWidth(text, font) {
         return { str: str.slice(0, pos - replace_len) + res + str.slice(pos), pos: new_pos };
     }
 
-    //let forceLowercase = true;
     function handleKey(e) {
         if (typeof(this.selectionStart) == "number" && typeof(this.selectionEnd) == "number") {
             let text = this.value;
             let start = this.selectionStart;
-            let key = e.key;
+            let key = e.key.toLowerCase(); //force lower case
             
-            if (key == "Enter") { //enter key
+            if (key == "enter") { //enter key
                 submit_clicked();
                 return false;
             }

@@ -171,40 +171,7 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
 
     //if practice session, ask the next here
     if s.challenged_user_id.is_none() {
-        let persons = vec![HcPerson::First, HcPerson::Second, HcPerson::Third];
-        let numbers = vec![HcNumber::Singular, HcNumber::Plural];
-        let tenses = vec![HcTense::Present, HcTense::Imperfect, HcTense::Future, HcTense::Aorist, HcTense::Perfect, HcTense::Pluperfect];
-        let moods = vec![HcMood::Indicative, HcMood::Subjunctive, HcMood::Optative, HcMood::Imperative];
-        let voices = vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive];
-
-        //a = HcGreekVerbForm { verb: verbs[idx].clone(), person, number, tense, voice, mood, gender: None, case: None};
-
-        let mut pf:HcGreekVerbForm;
-        loop {
-            pf = prev_form.clone();
-
-            pf.change_params(2, &persons, &numbers, &tenses, &voices, &moods);
-            if let Ok(_ff) = pf.get_form(false) {
-                break;
-            }
-        }
-
-        //pf = HcGreekVerbForm { verb: verbs[idx].clone(), person:HcPerson::Second, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Middle, mood:HcMood::Indicative, gender: None, case: None};
-
-        //be sure this asktimestamp is at least one greater than previous one
-        let new_time_stamp = if timestamp > m.asktimestamp { timestamp } else { m.asktimestamp + 1 };
-        //ask
-        let aq = AskQuery {
-            qtype: "ask".to_string(),
-            session_id: info.session_id,
-            person: pf.person.to_i16(),
-            number: pf.number.to_i16(),
-            tense: pf.tense.to_i16(),
-            voice: pf.voice.to_i16(),
-            mood: pf.mood.to_i16(),
-            verb: pf.verb.id as i32,
-        };
-        let _ = db.insert_ask_move_tx(&mut tx, None, &aq, new_time_stamp).await?;
+        ask_practice(&mut tx, db, info.session_id, prev_form, timestamp, m.asktimestamp).await?;
     }
     else {
         //add to other player's score if not practice and not correct
@@ -295,38 +262,7 @@ pub async fn hc_mf_pressed(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, tim
 
         //if practice session, ask the next here
         if s.challenged_user_id.is_none() {
-            let persons = vec![HcPerson::First, HcPerson::Second, HcPerson::Third];
-            let numbers = vec![HcNumber::Singular, HcNumber::Plural];
-            let tenses = vec![HcTense::Present, HcTense::Imperfect, HcTense::Future, HcTense::Aorist, HcTense::Perfect, HcTense::Pluperfect];
-            let moods = vec![HcMood::Indicative, HcMood::Subjunctive, HcMood::Optative, HcMood::Imperative];
-            let voices = vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive];
-
-            //a = HcGreekVerbForm { verb: verbs[idx].clone(), person, number, tense, voice, mood, gender: None, case: None};
-
-            let mut pf:HcGreekVerbForm;
-            loop {
-                pf = prev_form.clone();
-    
-                pf.change_params(2, &persons, &numbers, &tenses, &voices, &moods);
-                if let Ok(_ff) = pf.get_form(false) {
-                    break;
-                }
-            }
-    
-            //be sure this asktimestamp is at least one greater than previous one
-            let new_time_stamp = if timestamp > m.asktimestamp { timestamp } else { m.asktimestamp + 1 };
-            //ask
-            let aq = AskQuery {
-                qtype: "ask".to_string(),
-                session_id: info.session_id,
-                person: pf.person.to_i16(),
-                number: pf.number.to_i16(),
-                tense: pf.tense.to_i16(),
-                voice: pf.voice.to_i16(),
-                mood: pf.mood.to_i16(),
-                verb: pf.verb.id as i32,
-            };
-            let _ = db.insert_ask_move_tx(&mut tx, None, &aq, new_time_stamp).await?;
+            ask_practice(&mut tx, db, info.session_id, prev_form, timestamp, m.asktimestamp).await?;
         }
         else {
             //add to other player's score if not practice and not correct
@@ -360,6 +296,43 @@ pub async fn hc_mf_pressed(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, tim
     
         Ok(res)
     }
+}
+
+async fn ask_practice<'a, 'b>(
+    tx: &'a mut sqlx::Transaction<'b, Postgres>, db: &HcSqliteDb, session_id:Uuid, prev_form:HcGreekVerbForm, timestamp:i64, asktimestamp:i64) -> Result<(), sqlx::Error> {
+    let persons = vec![HcPerson::First, HcPerson::Second, HcPerson::Third];
+    let numbers = vec![HcNumber::Singular, HcNumber::Plural];
+    let tenses = vec![HcTense::Present, HcTense::Imperfect, HcTense::Future, HcTense::Aorist, HcTense::Perfect, HcTense::Pluperfect];
+    let moods = vec![HcMood::Indicative, HcMood::Subjunctive, HcMood::Optative, HcMood::Imperative];
+    let voices = vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive];
+
+    //a = HcGreekVerbForm { verb: verbs[idx].clone(), person, number, tense, voice, mood, gender: None, case: None};
+
+    let mut pf:HcGreekVerbForm;
+    loop {
+        pf = prev_form.clone();
+
+        pf.change_params(2, &persons, &numbers, &tenses, &voices, &moods);
+        if let Ok(_ff) = pf.get_form(false) {
+            break;
+        }
+    }
+
+    //be sure this asktimestamp is at least one greater than previous one
+    let new_time_stamp = if timestamp > asktimestamp { timestamp } else { asktimestamp + 1 };
+    //ask
+    let aq = AskQuery {
+        qtype: "ask".to_string(),
+        session_id,
+        person: pf.person.to_i16(),
+        number: pf.number.to_i16(),
+        tense: pf.tense.to_i16(),
+        voice: pf.voice.to_i16(),
+        mood: pf.mood.to_i16(),
+        verb: pf.verb.id as i32,
+    };
+    let _ = db.insert_ask_move_tx(tx, None, &aq, new_time_stamp).await?;
+    Ok(())
 }
 
 //opponent_id gets move status for opponent rather than user_id when true:
