@@ -30,14 +30,10 @@ argon2 = { version = "0.4.1", features = ["std"] }
 chrono = "0.4.23"
 hex = "0.4.3"
 
-rand = "0.8.5"
-
 uuid = { version = "1.2.2", features = ["v4", "serde"] }
 
-#polytonic-greek = { path = "../polytonic-greek" }
 #hoplite_verbs_rs = { path = "../hoplite_verbs_rs" }
-polytonic-greek = { git = "https://github.com/jeremymarch/polytonic-greek", version = "0.4.3" }
-hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.3.5" }
+hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.3.7" }
 
 [dev-dependencies]
 tokio = "1.22.0"

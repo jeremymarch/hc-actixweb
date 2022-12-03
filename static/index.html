@@ -708,13 +708,16 @@ a {color:blue;}
                 if (typeof WebAssembly === "object"
                     && typeof WebAssembly.instantiate === "function") {
                     const module = new WebAssembly.Module(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00));
-                    if (module instanceof WebAssembly.Module)
+                    if (module instanceof WebAssembly.Module) {
                         return new WebAssembly.Instance(module) instanceof WebAssembly.Instance;
+                    }
                 }
-            } catch (e) { }
+            } catch (e) { console.log("error checking for webassembly: " + e.message) }
             return false;
         })();
-	    //console.log(supported ? "WebAssembly is supported" : "WebAssembly is not supported");
+        if (!supported) {
+	        console.log("WebAssembly is not supported");
+        }
 	
         //block pasting
         let answerform = q("#answerform");
@@ -723,7 +726,6 @@ a {color:blue;}
         });
 
         answerform.addEventListener('keypress', handleKey, false);
-        //$(".gkinput").keypress(handleKey);
 
         global_session_id = localStorage.getItem("selected_session_id");
         if (supportsWebSockets) {
