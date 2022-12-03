@@ -538,3 +538,26 @@ pub async fn hc_get_available_verbs(db: &HcSqliteDb, _user_id:Uuid, session_id:U
     res_verbs.sort_by(|a,b| hgk_compare_sqlite(&a.verb,&b.verb));
     Ok(res_verbs)
 }
+
+/*
+text_id, gloss_id, count
+
+pub async fn hc_get_verbs(db: &HcSqliteDb, _user_id:Uuid, session_id:Uuid, top_unit:Option<i16>, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<Vec<HCVerbOption>, sqlx::Error> { 
+    let mut res_verbs:Vec<HCVerbOption> = vec![];
+
+    let used_verbs = db.get_used_verbs(session_id).await?;
+
+    for v in verbs {
+        if top_unit.is_none() || v.hq_unit <= top_unit.unwrap() as u32 && !used_verbs.contains(&(v.id as i32))  { //&& verb_id_not_used()
+            let newv = HCVerbOption {
+                id: v.id as i32,
+                verb: if v.pps[0] == "—" { format!("—, {}", v.pps[1]) } else { v.pps[0].clone() },
+            };
+            res_verbs.push(newv);
+        }
+    }
+
+    res_verbs.sort_by(|a,b| hgk_compare_sqlite(&a.verb,&b.verb));
+    Ok(res_verbs)
+}
+*/

@@ -361,6 +361,20 @@ a {color:blue;}
     <button id="submitbutton" onclick="submit_clicked()">Start</button>
     <div id="statusmesg">press start to begin</div>
 </div>
+<script type="module">
+    import { compare, convert, toggle, translit, strip_diacritics, default as init } from './hoplitekb_wasm_rs.js';
+
+    async function run() {
+        await init('./hoplitekb_wasm_rs_bg.wasm');
+        // make the function available to the browser
+        window.convert = convert;
+        window.toggle = toggle;
+        window.translit = translit;
+        window.strip_diacritics = strip_diacritics;
+        window.compare = compare;
+    }
+    run(); 
+</script>
     <script>
     'use strict';
 
@@ -651,7 +665,7 @@ a {color:blue;}
     let global_timed_out = false;
     let global_seconds = 30;
     let global_timer_ref = null;
-    let unicodeMode = 0;
+    const unicodeMode = 0;
     let myturnIcon = `<svg class="myturnIcon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="50" /></svg>`;
     let correctIcon = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" enable-background="new 0 0 64 64"><path d="M32,2C15.431,2,2,15.432,2,32c0,16.568,13.432,30,30,30c16.568,0,30-13.432,30-30C62,15.432,48.568,2,32,2z M25.025,50  l-0.02-0.02L24.988,50L11,35.6l7.029-7.164l6.977,7.184l21-21.619L53,21.199L25.025,50z" fill="#43a047"/></svg>`;
     let incorrectIcon = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" enable-background="new 0 0 64 64"><path d="m32 2c-16.568 0-30 13.432-30 30s13.432 30 30 30 30-13.432 30-30-13.432-30-30-30m5.513 44.508l-5.514-9.894-5.825 9.894h-7.048l9.331-14.783-8.878-14.232h7.244l5.175 9.449 5.317-9.449h7.008l-8.878 13.996 9.429 15.02h-7.361z" fill="#e53935"/></svg>`;
@@ -676,42 +690,12 @@ a {color:blue;}
         }
     }
 	
-	function loadWebAssembly(filename, imports) {
-		return fetch(filename)
-		.then(response => response.arrayBuffer())
-		.then(buffer => WebAssembly.compile(buffer))
-		.then(module => {
-			return WebAssembly.instantiate(module);
-		});
-	}
-	
-	let wasmBuffer0;
-	let accentSyllableWASM;
-	let transliterateWASM;
-	let wasmBufferLength = 256;
-	let memory;
-	loadWebAssembly('hoplitekb.wasm', { js: { mem: memory } })
-		.then(instance => {
-			let exports = instance.exports;
-			accentSyllableWASM = exports.accentSyllable2;
-			transliterateWASM = exports.transliterate;
-			memory = exports.memory;
-	
-			//console.log("memory: " + memory.buffer.byteLength);
-	
-			//https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/2020/06/07/wasm-arrays.html
-			//offset is in bytes, length is in array elements
-			//https://stackoverflow.com/questions/15417310/why-typed-array-constructors-require-offset-to-be-multiple-of-underlying-type-si
-			let offset = 2; //don't set start at zero (null), use 2 for proper alignment
-			wasmBuffer0 = new Uint16Array(memory.buffer, offset, wasmBufferLength);
-			//console.log("offset0: " + offset + ", " + wasmBuffer0.byteOffset + ", " + wasmBuffer0.length);
-		}
-	);
+
 	
 	function strToCodePoints(str) {
 		let a = "";
 		for (let i = 0; i < str.length; i++) {
-			a += str.codePointAt(i).toString(16).padStart(4,"0").toUpperCase() + " ";
+			a += str.codePointAt(i).toString(16).padStart(4, "0").toUpperCase() + " ";
 		}
 		return a.trim();
 	}
@@ -770,97 +754,53 @@ function getTextWidth(text, font) {
 //   const fontFamily = getCssStyle(el, 'font-family') || 'Times New Roman';
   
 //   return `${fontWeight} ${fontSize} ${fontFamily}`;
-// }
+// }	
 
+    function toggle_diacritic(str, pos, diacritic, unicodeMode) {
+        if (pos < 0 || pos > str.length) {
+            return { str: str, pos: str.length };
+        }
+        const max_combining_chars = 10;
+        let replace_len = Math.min(max_combining_chars + 1, pos);
+        let s = str.slice(pos - replace_len, pos);
+        let res = toggle(s, parseInt(diacritic), false, parseInt(unicodeMode));
 
-	
-	function accentSyllable(origChars, key) {
-		let len = origChars.length;
-		//add letter and any combining diacritics to the buffer as code points
-		for (let i = 0; i < len && i < wasmBufferLength; i++) {
-			wasmBuffer0[i] = origChars.codePointAt(i);
-			//console.log("accent1: " + origChars.codePointAt(i));
-		}
-		//console.log("accent1a: " + len + ", " + key);
-		len = accentSyllableWASM(wasmBuffer0.byteOffset, len, key, 1, parseInt(unicodeMode) );
-	
-		//transform the returned code points back to a string
-		let newLetter = "";
-		for (let i = 0; i < len && i < wasmBufferLength; i++) {
-			newLetter += String.fromCodePoint(wasmBuffer0[i]);
-			//console.log("accent2: " + String.fromCodePoint(wasmBuffer0[i]));
-		}
-		/*
-		for (let i = 0; i < 10; i++) {
-			wasmBuffer0[i] = 0;
-		}*/
-		//console.log("ptr2: " + wasmBuffer0.byteOffset + ", " + wasmBuffer0.length);
-		//let win1251decoder = new TextDecoder('utf-16le');
-		return newLetter;
-	}
-	
-	function handleKey(e) {
-		let val = this.value;
-        
-        let charCode = typeof(e.which) == "number" ? e.which : e.keyCode;
-		if (typeof(this.selectionStart) == "number" && typeof(this.selectionEnd) == "number") {
-			let start = this.selectionStart;
-			let end = this.selectionEnd;
-			let newLetter = "";
-			let replacing = 0;
-			
-			let key = String.fromCharCode(charCode);
-	
-            if (charCode && charCode == 13) { //enter key
+        let new_pos = (pos - replace_len) + res.length;
+
+        return { str: str.slice(0, pos - replace_len) + res + str.slice(pos), pos: new_pos };
+    }
+
+    //let forceLowercase = true;
+    function handleKey(e) {
+        if (typeof(this.selectionStart) == "number" && typeof(this.selectionEnd) == "number") {
+            let text = this.value;
+            let start = this.selectionStart;
+            let key = e.key;
+            
+            if (key == "Enter") { //enter key
                 submit_clicked();
                 return false;
             }
-			else if (charCode && charCode > 64 && charCode < 123) //transliterate letter
-			{
-				//newLetter = accentSyllable("", key.codePointAt(0));
-				newLetter = String.fromCharCode( transliterateWASM( key.codePointAt(0) ) );
-				//console.log("new: " + newLetter);
-			}
-			else if (charCode && charCode > 47 && charCode < 58) //number: 0-9 are 48-57
-			{ 
-                //console.log("handlekey2: " + charCode + ", " + val.length);
-				//underdot,rough,smooth,acute,grave,circ,macron,breve,iotasub,diaeresis
-				const diacriticKeys = [11,5,6,1,3,2,4,10,7,9];
-				let hckey = diacriticKeys[ parseInt(key) ];
-	
-				const combining = [0x0300, 0x0301, 0x0304, 0x0306, 0x0308, 0x0313, 0x0314, 0x0323, 0x0342, 0x0345];
-				let offset = 1;
-				for (let i = start; i > -1; i--) {
-					if (combining.indexOf(val.codePointAt(i - 1)) > -1) {
-						offset++;
-					}
-					else {
-						break;
-					}
-				}
-	
-				unicodeMode = 0;
-	
-				newLetter = accentSyllable(val.slice(start - offset, start), hckey);
-				replacing = start - (start - offset);
-			}
-	
-			if (newLetter.length > 0) {
-				//update the input/textarea
-				this.value = val.slice(0, start - replacing) + newLetter + val.slice(end);
-				// Move the caret
-				this.selectionStart = this.selectionEnd = (start - replacing) + newLetter.length;
-                //e.stopPropagation();
-                e.preventDefault(); //called by default when keypress is attached with jquery and returning false
-				return false;
-			}
-		}
-        if (charCode && charCode > 47 && charCode < 58) {
-            e.stopPropagation();
-            e.preventDefault();
+            else if ( !isNaN( parseInt(key) ) ) {                
+                let res = toggle_diacritic(text, start, key, unicodeMode);
+                this.value = res.str;
+                this.selectionStart = this.selectionEnd = res.pos;
+                e.preventDefault();
+                return false;
+            }
+            else {
+                let greek_letter = translit(key); //returns \0 if the character cannot be transliterated
+                if (greek_letter !== "\0") {
+                    let end = this.selectionEnd;            
+                    this.value = text.slice(0, start) + greek_letter + text.slice(end);
+                    this.selectionStart = this.selectionEnd = start + 1;
+                    e.preventDefault();
+                    return false;     
+                }
+            }
         }
-		return true; //this allows most punctuation to pass through
-	}
+        return true; // true allows most punctuation, etc. pass through
+    }
     
     //https://github.com/le717/microajax
     function microAjax(options) {
