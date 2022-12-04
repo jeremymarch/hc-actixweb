@@ -23,7 +23,7 @@ use polytonic_greek::hgk_compare_multiple_forms;
 use sqlx::Postgres;
 
 pub async fn get_session_state(
-    db: &HcSqliteDb,
+    db: &HcDb,
     user_id: sqlx::types::Uuid,
     session_id: sqlx::types::Uuid,
 ) -> Result<SessionState, sqlx::Error> {
@@ -42,7 +42,7 @@ pub async fn get_session_state(
 
 pub async fn get_session_state_tx<'a, 'b>(
     tx: &'a mut sqlx::Transaction<'b, Postgres>,
-    db: &HcSqliteDb,
+    db: &HcDb,
     user_id: sqlx::types::Uuid,
     session_id: sqlx::types::Uuid,
 ) -> Result<SessionState, sqlx::Error> {
@@ -85,7 +85,7 @@ pub async fn get_session_state_tx<'a, 'b>(
     Ok(r)
 }
 
-pub async fn hc_ask(db: &HcSqliteDb, user_id:Uuid, info:&AskQuery, timestamp:i64, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> {
+pub async fn hc_ask(db: &HcDb, user_id:Uuid, info:&AskQuery, timestamp:i64, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> {
     //todo check that user_id is either challenger_user_id or challenged_user_id
     //todo check that user_id == challenger_user_id if this is first move
 
@@ -127,7 +127,7 @@ pub async fn hc_ask(db: &HcSqliteDb, user_id:Uuid, info:&AskQuery, timestamp:i64
     Ok(res)
 }
 
-pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timestamp:i64, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> { 
+pub async fn hc_answer(db: &HcDb, user_id:Uuid, info:&AnswerQuery, timestamp:i64, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> { 
     //todo check that user_id is either challenger_user_id or challenged_user_id
     let mut tx = db.db.begin().await?;
 
@@ -207,7 +207,7 @@ pub async fn hc_answer(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timesta
     Ok(res)
 }
 
-pub async fn hc_mf_pressed(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, timestamp:i64, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> {
+pub async fn hc_mf_pressed(db: &HcDb, user_id:Uuid, info:&AnswerQuery, timestamp:i64, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> {
     let mut tx = db.db.begin().await?;
     
     let s = db.get_session_tx(&mut tx, info.session_id).await?;
@@ -300,7 +300,7 @@ pub async fn hc_mf_pressed(db: &HcSqliteDb, user_id:Uuid, info:&AnswerQuery, tim
 }
 
 async fn ask_practice<'a, 'b>(
-    tx: &'a mut sqlx::Transaction<'b, Postgres>, db: &HcSqliteDb, session_id:Uuid, prev_form:HcGreekVerbForm, timestamp:i64, asktimestamp:i64) -> Result<(), sqlx::Error> {
+    tx: &'a mut sqlx::Transaction<'b, Postgres>, db: &HcDb, session_id:Uuid, prev_form:HcGreekVerbForm, timestamp:i64, asktimestamp:i64) -> Result<(), sqlx::Error> {
     let persons = vec![HcPerson::First, HcPerson::Second, HcPerson::Third];
     let numbers = vec![HcNumber::Singular, HcNumber::Plural];
     let tenses = vec![HcTense::Present, HcTense::Imperfect, HcTense::Future, HcTense::Aorist, HcTense::Perfect, HcTense::Pluperfect];
@@ -338,7 +338,7 @@ async fn ask_practice<'a, 'b>(
 
 //opponent_id gets move status for opponent rather than user_id when true:
 //we handle the case of s.challenged_user_id.is_none() here, but opponent_id should always be false for practice games
-pub async fn hc_get_move(db: &HcSqliteDb, user_id:Uuid, opponent_id:bool, session_id:Uuid, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> { 
+pub async fn hc_get_move(db: &HcDb, user_id:Uuid, opponent_id:bool, session_id:Uuid, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<SessionState, sqlx::Error> { 
     let s = db.get_session(session_id).await?;
 
     let real_user_id = if !opponent_id || s.challenged_user_id.is_none() { user_id } else if user_id == s.challenger_user_id { s.challenged_user_id.unwrap() } else { s.challenger_user_id };
@@ -418,7 +418,7 @@ fn move_get_type(s:Option<&MoveResult>, user_id:Uuid, challenged_id:Option<Uuid>
     (myturn, move_type)
 }
 
-pub async fn hc_get_sessions(db: &HcSqliteDb, user_id:Uuid) -> Result<Vec<SessionsListQuery>, sqlx::Error> { 
+pub async fn hc_get_sessions(db: &HcDb, user_id:Uuid) -> Result<Vec<SessionsListQuery>, sqlx::Error> { 
     let mut res = db.get_sessions(user_id).await?;
 
     for r in &mut res {
@@ -435,7 +435,7 @@ pub async fn hc_get_sessions(db: &HcSqliteDb, user_id:Uuid) -> Result<Vec<Sessio
     Ok(res) 
 }
 
-pub async fn hc_insert_session(db: &HcSqliteDb, user_id:Uuid, info:&CreateSessionQuery, verbs:&[Arc<HcGreekVerb>], timestamp:i64) -> Result<Uuid, sqlx::Error> { 
+pub async fn hc_insert_session(db: &HcDb, user_id:Uuid, info:&CreateSessionQuery, verbs:&[Arc<HcGreekVerb>], timestamp:i64) -> Result<Uuid, sqlx::Error> { 
     let opponent_user_id:Option<Uuid>;
     if !info.opponent.is_empty() {
         let o = db.get_user_id(&info.opponent).await?; //we want to return an error if len of info.opponent > 0 and not found, else it is practice game
@@ -494,7 +494,7 @@ pub async fn hc_insert_session(db: &HcSqliteDb, user_id:Uuid, info:&CreateSessio
     }
 }
 
-pub async fn hc_get_available_verbs(db: &HcSqliteDb, _user_id:Uuid, session_id:Uuid, top_unit:Option<i16>, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<Vec<HCVerbOption>, sqlx::Error> { 
+pub async fn hc_get_available_verbs(db: &HcDb, _user_id:Uuid, session_id:Uuid, top_unit:Option<i16>, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<Vec<HCVerbOption>, sqlx::Error> { 
     let mut res_verbs:Vec<HCVerbOption> = vec![];
 
     let used_verbs = db.get_used_verbs(session_id).await?;
@@ -516,7 +516,7 @@ pub async fn hc_get_available_verbs(db: &HcSqliteDb, _user_id:Uuid, session_id:U
 /*
 text_id, gloss_id, count
 
-pub async fn hc_get_verbs(db: &HcSqliteDb, _user_id:Uuid, session_id:Uuid, top_unit:Option<i16>, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<Vec<HCVerbOption>, sqlx::Error> { 
+pub async fn hc_get_verbs(db: &HcDb, _user_id:Uuid, session_id:Uuid, top_unit:Option<i16>, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<Vec<HCVerbOption>, sqlx::Error> { 
     let mut res_verbs:Vec<HCVerbOption> = vec![];
 
     let used_verbs = db.get_used_verbs(session_id).await?;

@@ -9,7 +9,7 @@ use sqlx::types::Uuid;
 
 use std::sync::Arc;
 use hoplite_verbs_rs::HcGreekVerb;
-use crate::HcSqliteDb;
+use crate::HcDb;
 use crate::libhc;
 use crate::get_timestamp;
 use crate::SessionsListResponse;
@@ -40,7 +40,7 @@ pub struct WsHcGameSession {
 
     pub addr: Addr<server::HcGameServer>,
     pub verbs: Vec<Arc<HcGreekVerb>>,
-    pub db: HcSqliteDb,
+    pub db: HcDb,
     pub username: Option<String>,
 }
 

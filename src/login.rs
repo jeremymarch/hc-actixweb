@@ -161,7 +161,7 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
 pub async fn login_post(
     (session, form, req): (Session, web::Form<LoginFormData>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
-    let db = req.app_data::<HcSqliteDb>().unwrap();
+    let db = req.app_data::<HcDb>().unwrap();
 
     let credentials = Credentials {
         username: form.0.username,
@@ -313,7 +313,7 @@ pub async fn new_user_get(flash_messages: IncomingFlashMessages) -> Result<HttpR
 pub async fn new_user_post(
     (/*session, */form, req): (/*Session,*/ web::Form<CreateUserFormData>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
-    let db = req.app_data::<HcSqliteDb>().unwrap();
+    let db = req.app_data::<HcDb>().unwrap();
 
     let username = form.0.username;
     let password = form.0.password;

@@ -25,14 +25,14 @@ use crate::UserResult;
 use crate::MoveResult;
 use crate::SessionResult;
 use crate::MoveType;
-use crate::HcSqliteDb;
+use crate::HcDb;
 use crate::AskQuery;
 use crate::AnswerQuery;
 
 use sqlx::postgres::PgRow;
 use sqlx::Postgres;
 
-impl HcSqliteDb {
+impl HcDb {
 
     // pub async fn begin_tx(&self) -> Result<Transaction<sqlx::Sqlite>, sqlx::Error> {
     //     let mut tx = self.db.begin().await?;
