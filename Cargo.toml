@@ -25,7 +25,8 @@ log = "0.4.17"
 thiserror = "1.0.37"
 secrecy = { version = "0.8.0", features = ["serde"] }
 argon2 = { version = "0.4.1", features = ["std"] }
-chrono = "0.4.23"
+#https://www.reddit.com/r/rust/comments/qamgyh/comment/hh3u59e/?utm_source=share&utm_medium=web2x&context=3
+chrono = { version = "0.4.23", default-features = false, features=["clock"] }
 hex = "0.4.3"
 rand = "0.8.5"
 
