@@ -18,6 +18,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 use super::*;
+use rand::prelude::SliceRandom;
+use std::collections::HashSet;
 use polytonic_greek::hgk_compare_sqlite;
 use polytonic_greek::hgk_compare_multiple_forms;
 use sqlx::Postgres;
@@ -184,6 +186,7 @@ pub async fn hc_answer(db: &HcDb, user_id:Uuid, info:&AnswerQuery, timestamp:i64
     }
     
     let mut res = get_session_state_tx(&mut tx, db, user_id, info.session_id).await?;
+    //starting_form is 1st pp if new verb
     if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
         res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
     }
@@ -275,6 +278,7 @@ pub async fn hc_mf_pressed(db: &HcDb, user_id:Uuid, info:&AnswerQuery, timestamp
         }
 
         let mut res = get_session_state_tx(&mut tx, db, user_id, info.session_id).await?;
+        //starting_form is 1st pp if new verb
         if res.starting_form.is_none() && res.verb.is_some() && (res.verb.unwrap() as usize) < verbs.len() {
             res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
         }
@@ -307,7 +311,56 @@ async fn ask_practice<'a, 'b>(
     let moods = vec![HcMood::Indicative, HcMood::Subjunctive, HcMood::Optative, HcMood::Imperative];
     let voices = vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive];
 
-    //a = HcGreekVerbForm { verb: verbs[idx].clone(), person, number, tense, voice, mood, gender: None, case: None};
+    let moves = db.get_last_n_moves(tx, session_id, 100).await?;
+    let mut reps = 0;
+    let mut last_verb:Option<i32> = None;
+    let mut change_verb = false;
+    let mut used_verbs: HashSet<i32> = HashSet::new();
+    let max_per_verb = 4;
+    //let available_verbs: HashSet<i32> = vec![1, 2, 3, 4, 5].into_iter().collect();
+    //verbs except esti (77), exesti (78), dei (122), xrh (127)
+    let available_verbs: HashSet<i32> = (1..127).filter(|&i: &i32| i != 78 && i != 79 && i != 122 && i != 127 ).collect::<HashSet<i32>>();
+    //println!("v: {:?}", v);
+
+    for mov in moves {
+        if last_verb.is_none() {
+            last_verb = mov.verb_id;
+        }
+        if last_verb == mov.verb_id {
+            reps += 1;
+        }
+        if reps >= max_per_verb {
+            change_verb = true;
+        }
+        if let Some(v) = mov.verb_id {
+            used_verbs.insert(v);
+        }
+        //println!("here {:?}", reps);
+    }
+    let mut verb_id:i32 = prev_form.verb.id as i32;
+    if change_verb {
+        let verbs = available_verbs.difference(&used_verbs).collect::<Vec<&i32>>();
+        // if verbs.is_empty() {
+        //     verbs = available_verbs;
+        // }
+        let new_verb_id = verbs.choose(&mut rand::thread_rng());
+        
+        verb_id = **new_verb_id.unwrap();
+        
+        // let aq = AskQuery {
+        //     qtype: "ask".to_string(),
+        //     session_id,
+        //     person: pf.person.to_i16(),
+        //     number: pf.number.to_i16(),
+        //     tense: pf.tense.to_i16(),
+        //     voice: pf.voice.to_i16(),
+        //     mood: pf.mood.to_i16(),
+        //     verb: pf.verb.id as i32,
+        // };
+        // let _ = db.insert_ask_move_tx(tx, None, &aq, new_time_stamp).await?;
+    }
+
+    println!("id: {:?} reps: {:?}", verb_id, reps);
 
     let mut pf:HcGreekVerbForm;
     loop {
@@ -330,7 +383,7 @@ async fn ask_practice<'a, 'b>(
         tense: pf.tense.to_i16(),
         voice: pf.voice.to_i16(),
         mood: pf.mood.to_i16(),
-        verb: pf.verb.id as i32,
+        verb: verb_id,
     };
     let _ = db.insert_ask_move_tx(tx, None, &aq, new_time_stamp).await?;
     Ok(())

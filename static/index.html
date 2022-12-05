@@ -39,7 +39,7 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
 .gkinput, .gkinputnontyping {
     font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
 }
-#mainTime { font-size:14pt;}
+#mainTime { font-size:1rem;}
 .sym {
     font-family: "AppleColorEmoji","Apple Color Emoji","Segoe UI Emoji",'Noto Color Emoji',"NotoColorEmoji","Segoe UI Symbol","EmojiSymbols",Symbola,"Android Emoji","AndroidEmoji","Arial Unicode MS","Zapf Dingbats","AppleSDGothicNeo-Regular","lucida grande",tahoma,verdana,arial,sans-serif;
     text-rendering: optimizeLegibility;
@@ -64,58 +64,57 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
     display:flex;
     justify-content: center;
     align-items: center;
-    margin:0px auto;
-    height:90px;
-    font-size:24pt;
+    margin:1rem auto;
+    height:6rem;
+    font-size:2rem;
     border:1px solid black;
     text-align: center;
-    border-radius:6px;
+    border-radius:0.5rem;
     font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
 }
 .newform {
     width:100%;
     display:block;
-    margin:0px auto;
-    height:90px;
-    font-size:24pt;
+    margin:1px auto;
+    height:6rem;
+    font-size:2rem;
     border:1px solid black;
     text-align: center;
-    padding-top:20px;
-    border-radius:6px;
+    padding:1rem;
+    border-radius:0.5rem;
     font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
 }
 .changedesc {
     width:100%;
     display:block;
-    margin:10px auto;
-    height:42px;
-    font-size:16pt;
+    margin:1.5rem auto;
+    height:2rem;
+    font-size:1.5rem;
     text-align: center;
-    padding-top: 16px;
 }
 #statusmesg {
     display: block;
-    margin: 0px auto;
-    font-size: 12pt;
+    margin: 0rem auto;
+    font-size: 1rem;
     text-align: center;
     border-top: 1px solid black;
-    padding-top: 4px;
+    padding-top: 0.5rem;
 }
 .correctanswer {
     width:100%;
     display:block;
-    margin:10px auto;
-    font-size:24pt;
+    margin:1rem auto;
+    font-size:2rem;
     text-align: center;
-    height:42px;
+    height:2rem;
 }
 #submitbutton {
-    margin:10px auto;
-    width:100px;
-    height:26px;
-    display: block;
-    margin-bottom: 20px;
+    margin:1rem auto;
+    width:6rem;
+    height:2rem;
 }
+BUTTON {border-radius: 0.5rem;}
+
 #mainstopwatch {
     float:right;
 }
@@ -138,8 +137,8 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
 }
 .mfbutton {
     float: left;
-    width: 55px;
-    height: 26px;
+    width: 6rem;
+    height: 2rem;
 }
 
 #settings {
@@ -168,14 +167,14 @@ border:2px solid black;
     display: block;
 }
 #menubar {
-    height:20px;
+    height:1.5rem;
     border-bottom:1px solid black;
     display:flex;
     justify-content: flex-end;
     background-color:white;
     position:relative;
     z-index:900;
-    padding:3px 10px;
+    padding:0.2rem 1rem;
 }
 .myturn {
     /* background-color: red; */
@@ -185,10 +184,10 @@ border:2px solid black;
 }
 .myturnIcon {
     fill: red;
-    width: 15px;
-    top: 6px;
+    width: 1rem;
+    top: 0.4rem;
     position: absolute;
-    right:10px;
+    right:0rem;
 }
 #askparamsdiv {
     display: none;
@@ -196,11 +195,11 @@ border:2px solid black;
 .hcform {
     display: none;
     border: 2px solid gray;
-    width: 600px;
-    margin: 14px auto;
-    padding: 14px 14px;
-    border-radius: 8px;
-    padding-bottom: 4px;
+    width: 40rem;
+    margin: 1rem auto;
+    padding: 1rem;
+    border-radius: 1rem;
+    padding-bottom: 0.5rem;
     background-color: lightgrey;
     z-index: 999;
     position: relative;
@@ -214,8 +213,8 @@ border:2px solid black;
 }
 .gamerow {
     position: relative;
-    padding: 4px 6px;
-    margin: 8px;
+    padding: 0.25rem;
+    margin: 0.5rem;
     cursor:pointer;
     color:blue;
 }
@@ -231,18 +230,17 @@ SELECT, OPTION {
     border-bottom: 4px solid red;
 }
 
-BUTTON {border-radius: 7px;}
 a {color:blue;}
 
 #refreshbutton {
     position: absolute;
-    left: 7px;
-    top: 3px;
+    left: 1rem;
+    top: 0.3rem;
 }
 
 @media only screen and (max-width: 800px) {
   .hcform {
-    width:90%;
+    width:calc(100% - 4rem);
   }
 }
 #chat {
@@ -356,7 +354,7 @@ a {color:blue;}
             </div>
         </div>
     </div>
-    <textarea id="answerform" class="gkinput newform disablecopypaste" disabled autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="padding:10px;"></textarea>
+    <textarea id="answerform" class="gkinput newform disablecopypaste" disabled autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
     <div id="correctanswer" class="gkinput correctanswer" style="visibility: hidden;"></div>
     <button id="submitbutton" onclick="submit_clicked()">Start</button>
     <div id="statusmesg">press start to begin</div>
