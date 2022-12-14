@@ -284,7 +284,7 @@ a {color:blue;}
                     <tr><td colspan="2">New Game</td></tr>
                     <tr><td>Top Unit:</td><td><input id="unitinput" type="text" value="20"/></td></tr>
                     <tr><td>Opponent:</td><td><input id="opponentinput" type="text"/></td></tr>
-                    <tr><td>Count down:</td></td><td align="center"> down <input name="countdown" id="countupinput" type="radio" value="down"/> up <input checked name="countdown" id="countdowninput" type="radio" value="up"/></td></tr>
+                    <tr><td>Count down:</td></td><td align="center"> down <input name="countdown" id="countdowninput" type="radio" value="down"/> up <input checked name="countdown" id="countupinput" type="radio" value="up"/></td></tr>
                     <tr><td>Reps per verb:</td><td><input id="repsperverb" type="text" value="4"/></td></tr>
                     <tr><td>Max changes:</td><td><input id="maxchanges" type="text" value="2"/></td></tr>
                     <tr><td>Max time:</td><td><input id="maxtime" type="text" value="30"/></td></tr>
@@ -907,7 +907,7 @@ function getTextWidth(text, font) {
                     rows += "<div data-uuid='" + s.session_id + "' ";
                     rows += "data-max-changes='" + s.max_changes + "' ";
                     rows += "data-max-time='" + s.max_time + "' ";
-                    rows += "data-countdown='" + (s.countdown != 1) + "' ";
+                    rows += "data-countdown='" + (s.countdown != 0) + "' ";
                     rows += "class='gamerow" + (s.myturn && s.move_type != "Practice" ? " myturn" : "");
                     rows += (s.session_id == global_session_id ? " selectedGame" : "") + "' ";
                     rows += (s.opponent_name ? "opponent='" + s.opponent_name + "' " : "");
