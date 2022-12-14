@@ -285,9 +285,9 @@ a {color:blue;}
                     <tr><td>Top Unit:</td><td><input id="unitinput" type="text" value="20"/></td></tr>
                     <tr><td>Opponent:</td><td><input id="opponentinput" type="text"/></td></tr>
                     <tr><td>Count down:</td></td><td align="center"> down <input name="countdown" id="countupinput" type="radio" value="down"/> up <input checked name="countdown" id="countdowninput" type="radio" value="up"/></td></tr>
-                    <tr><td>Reps per verb:</td><td><input id="repsperverb" type="text"/></td></tr>
-                    <tr><td>Max changes:</td><td><input id="maxchanges" type="text"/></td></tr>
-                    <tr><td>Max time:</td><td><input id="maxtime" type="text"/></td></tr>
+                    <tr><td>Reps per verb:</td><td><input id="repsperverb" type="text" value="4"/></td></tr>
+                    <tr><td>Max changes:</td><td><input id="maxchanges" type="text" value="2"/></td></tr>
+                    <tr><td>Max time:</td><td><input id="maxtime" type="text" value="30"/></td></tr>
                     <tr><td align="center" colspan="2"><button id="creategamebutton" onclick="new_game_clicked()">Create Game</button></td></tr>
                 </table>
             </div>
@@ -299,7 +299,7 @@ a {color:blue;}
             <button id="mfbutton" class="mfbutton" onclick="mf_clicked()" title="Multiple Forms Button">MF</button>
             <div id="mainstopwatch">
                 <div id="mainTime">
-                    30:00
+                    
                 </div>
             </div>
         </div>
@@ -647,6 +647,7 @@ a {color:blue;}
     return ReconnectingWebSocket;
 });
 
+    let global_countdown = false;
     let global_username = null;
     let global_timer_intv = null;
     let global_countDownDate = null;
@@ -906,7 +907,7 @@ function getTextWidth(text, font) {
                     rows += "<div data-uuid='" + s.session_id + "' ";
                     rows += "data-max-changes='" + s.max_changes + "' ";
                     rows += "data-max-time='" + s.max_time + "' ";
-                    rows += "data-countdown='" + s.countdown + "' ";
+                    rows += "data-countdown='" + (s.countdown != 1) + "' ";
                     rows += "class='gamerow" + (s.myturn && s.move_type != "Practice" ? " myturn" : "");
                     rows += (s.session_id == global_session_id ? " selectedGame" : "") + "' ";
                     rows += (s.opponent_name ? "opponent='" + s.opponent_name + "' " : "");
@@ -1005,6 +1006,10 @@ function getTextWidth(text, font) {
         let reps = parseInt(q("#repsperverb").value.trim());
         let max_changes = parseInt(q("#maxchanges").value.trim());
         let max_time = parseInt(q("#maxtime").value.trim());
+
+        reps = (reps) ? parseInt(reps) : 4;
+        max_changes = (max_changes) ? parseInt(max_changes) : 2;
+        max_time = (max_time) ? parseInt(max_time) : 30;
         
         let send_data = {qtype:"newsession", unit:unitv, opponent:opponentv,practice_reps_per_verb:reps,countdown:countdown,max_changes:max_changes,max_time:max_time};
         generic_send_request("new", send_data, null);
@@ -1285,10 +1290,12 @@ function getTextWidth(text, font) {
 
         q("#askparamsdiv").style.display = "none";
 
+        global_seconds = parseInt(q(".gamerow.selectedGame").getAttribute("data-max-time"));
+
         q("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
         q("#submitbutton").style.display = "none";
         q("#mfbutton").disabled = true;
-        q("#mainTime").innerText = "30:00";
+        q("#mainTime").innerText = global_seconds + ":00";
         q("#verbchooser").style.display = "none";
     }
 
@@ -1409,7 +1416,9 @@ function getTextWidth(text, font) {
             q("#verbchooser").style.display = "none";
             q("#statusmesg").innerHTML = "Change up to (2) parameters";
         }
-        q("#mainTime").innerHTML = "30:00";
+        global_seconds = parseInt(q(".gamerow.selectedGame").getAttribute("data-max-time"));
+
+        q("#mainTime").innerHTML = global_seconds + ":00";
         q("#askparamsdiv").style.display = "block";
         q("#changedesc").innerHTML = "";//desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
         //q("#changedesc").style.display = "none";
@@ -1460,9 +1469,16 @@ function getTextWidth(text, font) {
     function add_seconds_to_time(secs) {
         global_countDownDate += (secs * 1000);
     }
+    
     function startTimer() {
+        let session = q(".gamerow.selectedGame");
+        global_seconds = parseInt(session.getAttribute("data-max-time"));
+        global_countdown = (session.getAttribute("data-countdown") == "true");
         global_timed_out = false;
-        global_countDownDate = new Date().getTime() + (global_seconds * 1000);
+        global_countDownDate = new Date().getTime();
+        if (global_countdown) {
+            global_countDownDate += (global_seconds * 1000);
+        }
         global_timer_intv = setInterval(interval_func, 10);
         global_timerRunning = true;
     }
@@ -1473,9 +1489,15 @@ function getTextWidth(text, font) {
     }
     function interval_func() {
         let now = new Date().getTime();
-        let distance = global_countDownDate - now;
+        let distance = 0;
+        if (global_countdown) {
+            distance = global_countDownDate - now;
+        }
+        else {
+            distance = now - global_countDownDate;
+        }
 
-        if (distance <= 0) {
+        if (distance <= 0 && global_countdown) {
             timeout();
             return;
         }
