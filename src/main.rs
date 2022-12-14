@@ -264,7 +264,10 @@ pub struct CreateSessionQuery {
     qtype:String,
     unit: String,
     opponent:String,
+    countdown:bool,
     practice_reps_per_verb:Option<i16>,
+    max_changes:i16,
+    max_time:i32,
 }
 
 #[derive(PartialEq,Debug,Eq,Deserialize,Serialize, FromRow)]
@@ -278,6 +281,9 @@ pub struct SessionsListQuery {
     move_type: MoveType,
     my_score:Option<i32>,
     their_score:Option<i32>,
+    countdown:i32,
+    max_time:i32,
+    max_changes:i16,
 }
 
 #[derive(Deserialize,Serialize)]
@@ -1018,7 +1024,10 @@ mod tests {
             qtype:"abc".to_string(),
             unit: "20".to_string(),
             opponent: "testuser2".to_string(),
+            countdown:true,
             practice_reps_per_verb: Some(4),
+            max_changes:4,
+            max_time:30,
         };
 
         let session_uuid = hc_insert_session(&db, uuid1, &csq, &verbs, timestamp).await;
@@ -1496,7 +1505,10 @@ mod tests {
             qtype:"abc".to_string(),
             unit: "20".to_string(),
             opponent: "".to_string(),
+            countdown:true,
             practice_reps_per_verb: Some(4),
+            max_changes:4,
+            max_time:30,
         };
 
         let session_uuid = hc_insert_session(&db, uuid1, &csq, &verbs, timestamp).await;

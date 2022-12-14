@@ -504,9 +504,8 @@ pub async fn hc_insert_session(db: &HcDb, user_id:Uuid, info:&CreateSessionQuery
     }
 
     let highest_unit = if let Ok(v) = info.unit.parse::<i16>() { Some(v) } else { None };
-    let max_changes = 2;
 
-    match db.insert_session(user_id, highest_unit, opponent_user_id, max_changes, info.practice_reps_per_verb, timestamp).await {
+    match db.insert_session(user_id, highest_unit, opponent_user_id, info, timestamp).await {
         Ok(session_uuid) => {
             //for practice sessions we should do the ask here
             if opponent_user_id.is_none() {

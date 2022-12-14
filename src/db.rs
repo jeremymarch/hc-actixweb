@@ -28,6 +28,7 @@ use crate::MoveType;
 use crate::HcDb;
 use crate::AskQuery;
 use crate::AnswerQuery;
+use crate::CreateSessionQuery;
 
 use sqlx::postgres::PgRow;
 use sqlx::Postgres;
@@ -89,22 +90,35 @@ impl HcDb {
         user_id: Uuid,
         highest_unit: Option<i16>,
         opponent_id: Option<Uuid>,
-        max_changes: i16,
-        practice_reps_per_verb: Option<i16>,
+        info: &CreateSessionQuery,
         timestamp: i64,
     ) -> Result<Uuid, sqlx::Error> {
         let mut tx = self.db.begin().await?;
 
         let uuid = sqlx::types::Uuid::new_v4();
 
-        let query = r#"INSERT INTO sessions VALUES ($1,$2,$3,$4,NULL,$5,0,0,$6,$7);"#;
+        let query = r#"INSERT INTO sessions (
+            session_id,
+            challenger_user_id,
+            challenged_user_id,
+            highest_unit,
+            custom_verbs,
+            max_changes,
+            challenger_score,
+            challenged_score,
+            practice_reps_per_verb,
+            countdown,
+            max_time,
+            timestamp) VALUES ($1,$2,$3,$4,NULL,$5,0,0,$6,$7,$8,$9);"#;
         let _res = sqlx::query(query)
             .bind(uuid)
             .bind(user_id)
             .bind(opponent_id)
             .bind(highest_unit)
-            .bind(max_changes)
-            .bind(practice_reps_per_verb)
+            .bind(info.max_changes)
+            .bind(info.practice_reps_per_verb)
+            .bind(info.countdown as i32)
+            .bind(info.max_time)
             .bind(timestamp)
             .execute(&mut tx)
             .await?;
@@ -124,11 +138,11 @@ impl HcDb {
         //strftime('%Y-%m-%d %H:%M:%S', DATETIME(timestamp, 'unixepoch')) as timestamp, 
         //    ORDER BY updated DESC \
         let query = "SELECT session_id AS session_id, challenged_user_id AS challenged, b.user_name AS username, challenger_score as myscore, challenged_score as theirscore, \
-        a.timestamp as timestamp \
+        a.timestamp as timestamp, countdown, max_time, max_changes \
         FROM sessions a LEFT JOIN users b ON a.challenged_user_id = b.user_id \
         where challenger_user_id = $1 \
         UNION SELECT session_id AS session_id, challenged_user_id AS challenged, b.user_name AS username, challenged_score as myscore, challenger_score as theirscore, \
-        a.timestamp as timestamp \
+        a.timestamp as timestamp, countdown, max_time, max_changes \
         FROM sessions a LEFT JOIN users b ON a.challenger_user_id = b.user_id \
         where challenged_user_id  = $2 \
         ORDER BY timestamp DESC \
@@ -139,10 +153,26 @@ impl HcDb {
             .bind(user_id)
             .bind(user_id)
             .map(|rec: PgRow| {
-                SessionsListQuery { session_id: rec.get("session_id"), challenged:rec.get("challenged"), /*opponent:rec.get("opponent_user_id"),*/ opponent_name: rec.get("username"),timestamp:rec.get("timestamp"), myturn:false, move_type:MoveType::Practice, my_score:rec.get("myscore"), their_score:rec.get("theirscore") }
+                SessionsListQuery { session_id: rec.get("session_id"), 
+                challenged:rec.get("challenged"), /*opponent:rec.get("opponent_user_id"),*/ 
+                opponent_name: rec.get("username"),
+                timestamp:rec.get("timestamp"), 
+                myturn:false, 
+                move_type:MoveType::Practice, 
+                my_score:rec.get("myscore"), 
+                their_score:rec.get("theirscore"),
+                countdown: rec.get("countdown"),
+                max_time: rec.get("max_time"),
+                max_changes: rec.get("max_changes"),
+            }
             })
             .fetch_all(&mut tx)
             .await?;
+
+        /*let res2 = match res {
+            Ok(e) => e,
+            Err(e) => {println!("error: {:?}", e); return Err(e); },
+        };*/
 
         tx.commit().await?;
             
@@ -407,6 +437,8 @@ impl HcDb {
     challenger_score INT,
     challenged_score INT,
     practice_reps_per_verb SMALLINT,
+    countdown INT,
+    max_time INT,
     timestamp BIGINT NOT NULL DEFAULT 0,
     FOREIGN KEY (challenger_user_id) REFERENCES users(user_id), 
     FOREIGN KEY (challenged_user_id) REFERENCES users(user_id)
