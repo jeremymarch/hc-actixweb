@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
     <meta charset="UTF-8">
     <title>Hoplite Challenge</title>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
@@ -144,24 +144,25 @@ BUTTON:disabled {cursor:default}
 
 #settings {
     border:2px solid black;
-    width:300px;
     position: absolute;
     top: 28px;
     left: 10px;
-    padding:10px;
-    height:265px;
 }
 .addheight{
     top:28px;
 }
-#list {
-border:2px solid black;
+#listouter {
+    border:2px solid black;
     width:320px;
     position: absolute;
-    top: 315px;
-    left: 10px;
+    top: 2rem;
+    right: 10px;
     transition: top 2s;
     z-index:899;
+}
+
+#list {
+
     
 }
 #creategamebutton {
@@ -234,9 +235,15 @@ SELECT, OPTION {
 a {color:blue;}
 
 #refreshbutton {
-    position: absolute;
-    left: 1rem;
-    top: 0.3rem;
+    margin: 0.25rem 0.5rem;
+}
+
+#verblist {
+    font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
+}
+
+.verblistck {
+  margin-right: 0.5rem;
 }
 
 @media only screen and (max-width: 800px) {
@@ -256,7 +263,7 @@ a {color:blue;}
 .dark .hcform { background-color: #202124;color:white; }
 .dark .startingform {border: 1px solid white;background-color:black}
 .dark #statusmesg {border-top: 1px solid white;}
-.dark #list {border: 2px solid white;}
+.dark #listouter {border: 2px solid white;}
 .dark #settings {border: 2px solid white;}
 .dark #menubar { background-color: black;color:white;border-bottom: 1px solid white; }
 .dark #answerform {background-color: black;color:white;border: 1px solid white;}
@@ -268,30 +275,72 @@ a {color:blue;}
 .dark a {color:#03A5F3;}
 .dark .gamerow {color:#03A5F3;}
 .dark .selectedGame {background-color: white;}
+
+#newgamediv.expanded {
+   background-color: green;
+   margin-top: 0;
+}
+
+#container {
+   border: 1px solid black;
+   padding: 15px;
+}
+
+#top-section { }
+
+#expand-container {
+  overflow: hidden;
+}
+
+#expand-contract {
+  margin-top: -4000px;
+  transition: all 0.3s;
+}
+
+#expand-contract.expanded {
+   margin-top: 0;
+}
+.verbrow {
+    margin-left:1.5rem;
+}
+.verbunitrow { font-family: Helvetica, Arial, sans-serif;}
     </style>
     </head>
     <body onload="start()">
         <div id="menubar">
-            <button id="refreshbutton" onclick="get_sessions(true)" style="display:none;">refresh</button>
+            
             <div style="padding:0px 20px"><a id="loginlink" href="login">login</a>
                 <span id="logoutlink" style="display:none;"><span id="username"></span> (<a href="logout">logout</a>)</span>
             </div>
             <div style="font-weight:bold;">HOPLITE CHALLENGE</div>
         </div>
-        <div id="listouter" style="display:none;">
+        
             <div id="settings">
-                <table cellpadding="4" cellspacing="0">
-                    <tr><td colspan="2">New Game</td></tr>
-                    <tr><td>Top Unit:</td><td><input id="unitinput" type="text" value="20"/></td></tr>
-                    <tr><td>Opponent:</td><td><input id="opponentinput" type="text"/></td></tr>
-                    <tr><td>Count down:</td></td><td align="center"> down <input name="countdown" id="countdowninput" type="radio" value="down"/> up <input checked name="countdown" id="countupinput" type="radio" value="up"/></td></tr>
-                    <tr><td>Reps per verb:</td><td><input id="repsperverb" type="text" value="4"/></td></tr>
-                    <tr><td>Max changes:</td><td><input id="maxchanges" type="text" value="2"/></td></tr>
-                    <tr><td>Max time:</td><td><input id="maxtime" type="text" value="30"/></td></tr>
-                    <tr><td align="center" colspan="2"><button id="creategamebutton" onclick="new_game_clicked()">Create Game</button></td></tr>
-                </table>
+                <div id="container">
+                    <div id="top-section">
+                        <a href="javascript:expandContract()">New Game</a>
+                    </div>
+                    <div id="expand-container">
+                      <div id="expand-contract" class="">
+                        <table cellpadding="4" cellspacing="0">
+                                <tr><td>Top Unit:</td><td><input id="unitinput" type="text" value="20"/></td></tr>
+                                <tr><td>Opponent:</td><td><input id="opponentinput" type="text"/></td></tr>
+                                <tr><td>Timer:</td></td><td align="center"> down <input name="countdown" id="countdowninput" type="radio" value="down"/> up <input checked name="countdown" id="countupinput" type="radio" value="up"/></td></tr>
+                                <tr><td>Reps per verb:</td><td><input id="repsperverb" type="text" value="4"/></td></tr>
+                                <tr><td>Max changes:</td><td><input id="maxchanges" type="text" value="2"/></td></tr>
+                                <tr><td>Max time:</td><td><input id="maxtime" type="text" value="30"/></td></tr>
+                                <tr><td align="center" colspan="2"><button id="creategamebutton" onclick="new_game_clicked()">Create Game</button></td></tr>
+                            </table>
+                            <div id="verblist"></div>
+                      </div>
+                    </div>
+                  </div>
             </div>
+        
+        <div id="listouter">
+            <button id="refreshbutton" onclick="get_sessions(true)">refresh</button>
             <div id="list"></div>
+        </div>
         </div>
 
         <div class="hcform">
@@ -374,6 +423,13 @@ a {color:blue;}
 </script>
     <script>
     'use strict';
+
+function expandContract() {
+    verbList();
+    let el = document.getElementById("expand-contract");
+    el.classList.toggle('expanded');
+    el.classList.toggle('collapsed');
+}
 
 (function (global, factory) {
     if (typeof define === 'function' && define.amd) {
@@ -701,6 +757,7 @@ a {color:blue;}
     const supportsWebSockets = 'WebSocket' in window || 'MozWebSocket' in window;
     function start() {
         global_timer_ref = q('#mainTime');
+        
 	    const supported = (() => {
             try {
                 if (typeof WebAssembly === "object"
@@ -921,8 +978,8 @@ function getTextWidth(text, font) {
                 //q(".gamerow[data-uuid='b72df91e-3a4c-4f1b-aeda-c14fea61def6']").style.backgroundColor = "blue";
             }
             q("#list").innerHTML = rows;
-            q("#refreshbutton").style.display = "block";
-            q("#listouter").style.display = "block";
+            //q("#refreshbutton").style.display = "block";
+            //q("#listouter").style.display = "block";
 
             if (data.current_session) {
                 setUI(data.current_session);
@@ -1503,12 +1560,12 @@ function getTextWidth(text, font) {
         }
 
         //let days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        //let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
         let seconds = Math.floor((distance % (1000 * 60)) / 1000);
         let ms = Math.floor((distance % (1000)) / 10);
 
-        global_timer_ref.innerHTML = ((minutes > 0) ? ((minutes < 10) ? ("0" + minutes + ":") : minutes + ":") : "") + ((seconds < 10) ? ("0" + seconds + ":") : seconds + ":") + ((ms < 10) ? ("0" + ms) : ms);
+        global_timer_ref.innerHTML = ((hours > 0) ? ((hours < 10) ? ("0" + hours + ":") : hours + ":") : "") + ((minutes > 0 || hours > 0) ? ((minutes < 10) ? ("0" + minutes + ":") : minutes + ":") : "") + ((seconds < 10) ? ("0" + seconds + ":") : seconds + ":") + ((ms < 10) ? ("0" + ms) : ms);
     }
 
     //   const $status = q('#status')
@@ -1643,7 +1700,161 @@ function getTextWidth(text, font) {
     //     $input.focus()
     //   })
 
+
       updateConnectionStatus();
+      
+      function verbList() {
+        let list = q("#verblist");
+        let rows = "";
+        let i = 0;
+        let lastUnit = null;
+        for ( ; i < verbs.length; i++) {
+            if (verbs[i].i == 122 || verbs[i].i == 127 || verbs[i].i == 78 || verbs[i].i == 79) {
+                continue;
+            }
+            let end = ",";
+            let plus = 0;
+            if (verbs[i].pp[0] == "—") { //-, erhsomai and -, anerhsomai
+                end = "ι,";
+                plus = 1;
+            }
+            if (verbs[i].u != lastUnit) {
+                lastUnit = verbs[i].u;
+                rows += "<div class='verbunitrow'><input class='verblistck' id='cku" + verbs[i].u + "' value='" + verbs[i].u + "' type='checkbox'/>unit " + verbs[i].u + "</div>";
+            }
+            rows += "<div class='verbrow'><input class='verblistck' id='ckv" + verbs[i].i + "' value='" + verbs[i].i + "' type='checkbox'/>" + verbs[i].pp.substring(0, (verbs[i].pp.indexOf(end) + plus)) + "</div>";
+        }
+        list.innerHTML = rows;
+      }
+
+const verbs = [
+{i:1,pp:"παιδεύω, παιδεύσω, ἐπαίδευσα, πεπαίδευκα, πεπαίδευμαι, ἐπαιδεύθην", u:2},
+{i:2,pp:"πέμπω, πέμψω, ἔπεμψα, πέπομφα, πέπεμμαι, ἐπέμφθην", u:2},
+{i:3,pp:"κελεύω, κελεύσω, ἐκέλευσα, κεκέλευκα, κεκέλευσμαι, ἐκελεύσθην", u:2},
+{i:4,pp:"λῡ́ω, λῡ́σω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην", u:2},
+{i:5,pp:"γράφω, γράψω, ἔγραψα, γέγραφα, γέγραμμαι, ἐγράφην", u:3},
+{i:6,pp:"θῡ́ω, θῡ́σω, ἔθῡσα, τέθυκα, τέθυμαι, ἐτύθην", u:3},
+{i:7,pp:"παύω, παύσω, ἔπαυσα, πέπαυκα, πέπαυμαι, ἐπαύθην", u:3},
+{i:8,pp:"φυλάττω, φυλάξω, ἐφύλαξα, πεφύλαχα, πεφύλαγμαι, ἐφυλάχθην", u:3},
+{i:9,pp:"διδάσκω, διδάξω, ἐδίδαξα, δεδίδαχα, δεδίδαγμαι, ἐδιδάχθην", u:4},
+{i:10,pp:"ἐθέλω, ἐθελήσω, ἠθέλησα, ἠθέληκα, —, —", u:4},
+{i:11,pp:"θάπτω, θάψω, ἔθαψα, —, τέθαμμαι, ἐτάφην", u:4},
+{i:12,pp:"τάττω, τάξω, ἔταξα, τέταχα, τέταγμαι, ἐτάχθην", u:4},
+{i:13,pp:"ἄρχω, ἄρξω, ἦρξα, ἦρχα, ἦργμαι, ἤρχθην", u:5},
+{i:14,pp:"βλάπτω, βλάψω, ἔβλαψα, βέβλαφα, βέβλαμμαι, ἐβλάβην / ἐβλάφθην", u:5},
+{i:15,pp:"πείθω, πείσω, ἔπεισα, πέπεικα, πέπεισμαι, ἐπείσθην", u:5},
+{i:16,pp:"πρᾱ́ττω, πρᾱ́ξω, ἔπρᾱξα, πέπρᾱχα / πέπρᾱγα, πέπρᾱγμαι, ἐπρᾱ́χθην", u:5},
+{i:17,pp:"δουλεύω, δουλεύσω, ἐδούλευσα, δεδούλευκα, —, —", u:6},
+{i:18,pp:"κωλῡ́ω, κωλῡ́σω, ἐκώλῡσα, κεκώλῡκα, κεκώλῡμαι, ἐκωλῡ́θην", u:6},
+{i:19,pp:"πολῑτεύω, πολῑτεύσω, ἐπολῑ́τευσα, πεπολῑ́τευκα, πεπολῑ́τευμαι, ἐπολῑτεύθην", u:6},
+{i:20,pp:"χορεύω, χορεύσω, ἐχόρευσα, κεχόρευκα, κεχόρευμαι, ἐχορεύθην", u:6},
+{i:21,pp:"κλέπτω, κλέψω, ἔκλεψα, κέκλοφα, κέκλεμμαι, ἐκλάπην", u:7},
+{i:22,pp:"λείπω, λείψω, ἔλιπον, λέλοιπα, λέλειμμαι, ἐλείφθην", u:7},
+{i:23,pp:"σῴζω, σώσω, ἔσωσα, σέσωκα, σέσωσμαι / σέσωμαι, ἐσώθην", u:7},
+{i:24,pp:"ἄγω, ἄξω, ἤγαγον, ἦχα, ἦγμαι, ἤχθην", u:8},
+{i:25,pp:"ἥκω, ἥξω, —, —, —, —", u:8},
+{i:26,pp:"ἀδικέω, ἀδικήσω, ἠδίκησα, ἠδίκηκα, ἠδίκημαι, ἠδικήθην", u:9},
+{i:27,pp:"νῑκάω, νῑκήσω, ἐνῑ́κησα, νενῑ́κηκα, νενῑ́κημαι, ἐνῑκήθην", u:9},
+{i:28,pp:"ποιέω, ποιήσω, ἐποίησα, πεποίηκα, πεποίημαι, ἐποιήθην", u:9},
+{i:29,pp:"τῑμάω, τῑμήσω, ἐτῑ́μησα, τετῑ́μηκα, τετῑ́μημαι, ἐτῑμήθην", u:9},
+{i:30,pp:"ἀγγέλλω, ἀγγελῶ, ἤγγειλα, ἤγγελκα, ἤγγελμαι, ἠγγέλθην", u:10},
+{i:31,pp:"ἀξιόω, ἀξιώσω, ἠξίωσα, ἠξίωκα, ἠξίωμαι, ἠξιώθην", u:10},
+{i:32,pp:"δηλόω, δηλώσω, ἐδήλωσα, δεδήλωκα, δεδήλωμαι, ἐδηλώθην", u:10},
+{i:33,pp:"καλέω, καλῶ, ἐκάλεσα, κέκληκα, κέκλημαι, ἐκλήθην", u:10},
+{i:34,pp:"μένω, μενῶ, ἔμεινα, μεμένηκα, —, —", u:10},
+{i:35,pp:"τελευτάω, τελευτήσω, ἐτελεύτησα, τετελεύτηκα, τετελεύτημαι, ἐτελευτήθην", u:10},
+{i:36,pp:"ἀκούω, ἀκούσομαι, ἤκουσα, ἀκήκοα, —, ἠκούσθην", u:11},
+{i:37,pp:"ἀποδέχομαι, ἀποδέξομαι, ἀπεδεξάμην, —, ἀποδέδεγμαι, —", u:11},
+{i:38,pp:"βάλλω, βαλῶ, ἔβαλον, βέβληκα, βέβλημαι, ἐβλήθην", u:11},
+{i:39,pp:"βούλομαι, βουλήσομαι, —, —, βεβούλημαι, ἐβουλήθην", u:11},
+{i:40,pp:"δέχομαι, δέξομαι, ἐδεξάμην, —, δέδεγμαι, —", u:11},
+{i:41,pp:"λαμβάνω, λήψομαι, ἔλαβον, εἴληφα, εἴλημμαι, ἐλήφθην", u:11},
+{i:42,pp:"πάσχω, πείσομαι, ἔπαθον, πέπονθα, —, —", u:11},
+{i:43,pp:"ἀνατίθημι, ἀναθήσω, ἀνέθηκα, ἀνατέθηκα, ἀνατέθειμαι, ἀνετέθην", u:12},
+{i:44,pp:"ἀποδίδωμι, ἀποδώσω, ἀπέδωκα, ἀποδέδωκα, ἀποδέδομαι, ἀπεδόθην", u:12},
+{i:45,pp:"ἀφίστημι, ἀποστήσω, ἀπέστησα / ἀπέστην, ἀφέστηκα, ἀφέσταμαι, ἀπεστάθην", u:12},
+{i:46,pp:"δίδωμι, δώσω, ἔδωκα, δέδωκα, δέδομαι, ἐδόθην", u:12},
+{i:47,pp:"ἵστημι, στήσω, ἔστησα / ἔστην, ἕστηκα, ἕσταμαι, ἐστάθην", u:12},
+{i:48,pp:"καθίστημι, καταστήσω, κατέστησα / κατέστην, καθέστηκα, καθέσταμαι, κατεστάθην", u:12},
+{i:49,pp:"καταλῡ́ω, καταλῡ́σω, κατέλῡσα, καταλέλυκα, καταλέλυμαι, κατελύθην", u:12},
+{i:50,pp:"τίθημι, θήσω, ἔθηκα, τέθηκα, τέθειμαι, ἐτέθην", u:12},
+{i:51,pp:"φιλέω, φιλήσω, ἐφίλησα, πεφίληκα, πεφίλημαι, ἐφιλήθην", u:12},
+{i:52,pp:"φοβέομαι, φοβήσομαι, —, —, πεφόβημαι, ἐφοβήθην", u:12},
+{i:53,pp:"γίγνομαι, γενήσομαι, ἐγενόμην, γέγονα, γεγένημαι, —", u:13},
+{i:54,pp:"ἔρχομαι, ἐλεύσομαι, ἦλθον, ἐλήλυθα, —, —", u:13},
+{i:55,pp:"μανθάνω, μαθήσομαι, ἔμαθον, μεμάθηκα, —, —", u:13},
+{i:56,pp:"μάχομαι, μαχοῦμαι, ἐμαχεσάμην, —, μεμάχημαι, —", u:13},
+{i:57,pp:"μεταδίδωμι, μεταδώσω, μετέδωκα, μεταδέδωκα, μεταδέδομαι, μετεδόθην", u:13},
+{i:58,pp:"μετανίσταμαι, μεταναστήσομαι, μετανέστην, μετανέστηκα, —, —", u:13},
+{i:59,pp:"μηχανάομαι, μηχανήσομαι, ἐμηχανησάμην, —, μεμηχάνημαι, —", u:13},
+{i:60,pp:"φεύγω, φεύξομαι, ἔφυγον, πέφευγα, —, —", u:13},
+{i:61,pp:"δείκνῡμι, δείξω, ἔδειξα, δέδειχα, δέδειγμαι, ἐδείχθην", u:14},
+{i:62,pp:"ἐπανίσταμαι, ἐπαναστήσομαι, ἐπανέστην, ἐπανέστηκα, —, —", u:14},
+{i:63,pp:"ἐπιδείκνυμαι, ἐπιδείξομαι, ἐπεδειξάμην, —, ἐπιδέδειγμαι, —", u:14},
+{i:64,pp:"ἐρωτάω, ἐρωτήσω, ἠρώτησα, ἠρώτηκα, ἠρώτημαι, ἠρωτήθην", u:14},
+{i:65,pp:"λανθάνω, λήσω, ἔλαθον, λέληθα, —, —", u:14},
+{i:66,pp:"παραγίγνομαι, παραγενήσομαι, παρεγενόμην, παραγέγονα, παραγεγένημαι, —", u:14},
+{i:67,pp:"παραδίδωμι, παραδώσω, παρέδωκα, παραδέδωκα, παραδέδομαι, παρεδόθην", u:14},
+{i:68,pp:"παραμένω, παραμενῶ, παρέμεινα, παραμεμένηκα, —, —", u:14},
+{i:69,pp:"τυγχάνω, τεύξομαι, ἔτυχον, τετύχηκα, —, —", u:14},
+{i:70,pp:"ὑπακούω, ὑπακούσομαι, ὑπηκουσα, ὑπακήκοα, —, ὑπηκούσθην", u:14},
+{i:71,pp:"ὑπομένω, ὑπομενῶ, ὑπέμεινα, ὑπομεμένηκα, —, —", u:14},
+{i:72,pp:"φθάνω, φθήσομαι, ἔφθασα / ἔφθην, —, —, —", u:14},
+{i:73,pp:"χαίρω, χαιρήσω, —, κεχάρηκα, —, ἐχάρην", u:14},
+{i:74,pp:"αἱρέω, αἱρήσω, εἷλον, ᾕρηκα, ᾕρημαι, ᾑρέθην", u:15},
+{i:75,pp:"αἰσθάνομαι, αἰσθήσομαι, ᾐσθόμην, —, ᾔσθημαι, —", u:15},
+{i:76,pp:"διαφέρω, διοίσω, διήνεγκα / διήνεγκον, διενήνοχα, διενήνεγμαι, διηνέχθην", u:15},
+{i:77,pp:"εἰμί, ἔσομαι, —, —, —, —", u:15},
+{i:78,pp:"ἔστι(ν), ἔσται, —, —, —, —", u:15},
+{i:79,pp:"ἔξεστι(ν), ἐξέσται, —, —, —, —", u:15},
+{i:80,pp:"ἕπομαι, ἕψομαι, ἑσπόμην, —, —, —", u:15},
+{i:81,pp:"ὁράω, ὄψομαι, εἶδον, ἑόρᾱκα / ἑώρᾱκα, ἑώρᾱμαι / ὦμμαι, ὤφθην", u:15},
+{i:82,pp:"συμφέρω, συνοίσω, συνήνεγκα / συνήνεγκον, συνενήνοχα, συνενήνεγμαι, συνηνέχθην", u:15},
+{i:83,pp:"φέρω, οἴσω, ἤνεγκα / ἤνεγκον, ἐνήνοχα, ἐνήνεγμαι, ἠνέχθην", u:15},
+{i:84,pp:"ἀναβαίνω, ἀναβήσομαι, ἀνέβην, ἀναβέβηκα, —, —", u:16},
+{i:85,pp:"βαίνω, -βήσομαι, -ἔβην, βέβηκα, —, —", u:16},
+{i:86,pp:"γιγνώσκω, γνώσομαι, ἔγνων, ἔγνωκα, ἔγνωσμαι, ἐγνώσθην", u:16},
+{i:87,pp:"ἐκπῑ́πτω, ἐκπεσοῦμαι, ἐξέπεσον, ἐκπέπτωκα, —, —", u:16},
+{i:88,pp:"λέγω, ἐρῶ / λέξω, εἶπον / ἔλεξα, εἴρηκα, εἴρημαι / λέλεγμαι, ἐλέχθην / ἐρρήθην", u:16},
+{i:89,pp:"νομίζω, νομιῶ, ἐνόμισα, νενόμικα, νενόμισμαι, ἐνομίσθην", u:16},
+{i:90,pp:"πῑ́πτω, πεσοῦμαι, ἔπεσον, πέπτωκα, —, —", u:16},
+{i:91,pp:"προδίδωμι, προδώσω, προέδωκα / προύδωκα, προδέδωκα, προδέδομαι, προεδόθην / προυδόθην", u:16},
+{i:92,pp:"φημί, φήσω, ἔφησα, —, —, —", u:16},
+{i:93,pp:"ἁμαρτάνω, ἁμαρτήσομαι, ἥμαρτον, ἡμάρτηκα, ἡμάρτημαι, ἡμαρτήθην", u:17},
+{i:94,pp:"δοκέω, δόξω, ἔδοξα, —, δέδογμαι, -ἐδόχθην", u:17},
+{i:95,pp:"δύναμαι, δυνήσομαι, —, —, δεδύνημαι, ἐδυνήθην", u:17},
+{i:96,pp:"εἶμι, —, —, —, —, —", u:17},
+{i:97,pp:"ἐλαύνω, ἐλῶ, ἤλασα, -ἐλήλακα, ἐλήλαμαι, ἠλάθην", u:17},
+{i:98,pp:"ἐπίσταμαι, ἐπιστήσομαι, —, —, —, ἠπιστήθην", u:17},
+{i:99,pp:"ἔχω, ἕξω / σχήσω, ἔσχον, ἔσχηκα, -ἔσχημαι, —", u:17},
+{i:100,pp:"ἀποθνῄσκω, ἀποθανοῦμαι, ἀπέθανον, τέθνηκα, —, —", u:18},
+{i:101,pp:"ἀποκτείνω, ἀποκτενῶ, ἀπέκτεινα, ἀπέκτονα, —, —", u:18},
+{i:102,pp:"ἀφῑ́ημι, ἀφήσω, ἀφῆκα, ἀφεῖκα, ἀφεῖμαι, ἀφείθην", u:18},
+{i:103,pp:"βουλεύω, βουλεύσω, ἐβούλευσα, βεβούλευκα, βεβούλευμαι, ἐβουλεύθην", u:18},
+{i:104,pp:"ἐπιβουλεύω, ἐπιβουλεύσω, ἐπεβούλευσα, ἐπιβεβούλευκα, ἐπιβεβούλευμαι, ἐπεβουλεύθην", u:18},
+{i:105,pp:"ζητέω, ζητήσω, ἐζήτησα, ἐζήτηκα, —, ἐζητήθην", u:18},
+{i:106,pp:"ῑ̔́ημι, -ἥσω, -ἧκα, -εἷκα, -εἷμαι, -εἵθην", u:18},
+{i:107,pp:"μέλλω, μελλήσω, ἐμέλλησα, —, —, —", u:18},
+{i:108,pp:"πιστεύω, πιστεύσω, ἐπίστευσα, πεπίστευκα, πεπίστευμαι, ἐπιστεύθην", u:18},
+{i:109,pp:"συμβουλεύω, συμβουλεύσω, συνεβούλευσα, συμβεβούλευκα, συμβεβούλευμαι, συνεβουλεύθην", u:18},
+{i:110,pp:"συνῑ́ημι, συνήσω, συνῆκα, συνεῖκα, συνεῖμαι, συνείθην", u:18},
+{i:111,pp:"αἰσχῡ́νομαι, αἰσχυνοῦμαι, —, —, ᾔσχυμμαι, ᾐσχύνθην", u:19},
+{i:112,pp:"ἀποκρῑ́νομαι, ἀποκρινοῦμαι, ἀπεκρῑνάμην, —, ἀποκέκριμαι, —", u:19},
+{i:113,pp:"ἀπόλλῡμι, ἀπολῶ, ἀπώλεσα / ἀπωλόμην, ἀπολώλεκα / ἀπόλωλα, —, —", u:19},
+{i:114,pp:"—, ἀνερήσομαι, ἀνηρόμην, —, —, —", u:19},
+{i:115,pp:"—, ἐρήσομαι, ἠρόμην, —, —, —", u:19},
+{i:116,pp:"εὑρίσκω, εὑρήσω, ηὗρον, ηὕρηκα, ηὕρημαι, ηὑρέθην", u:19},
+{i:117,pp:"ἡγέομαι, ἡγήσομαι, ἡγησάμην, —, ἥγημαι, ἡγήθην", u:19},
+{i:118,pp:"κρῑ́νω, κρινῶ, ἔκρῑνα, κέκρικα, κέκριμαι, ἐκρίθην", u:19},
+{i:119,pp:"οἶδα, εἴσομαι, —, —, —, —", u:19},
+{i:120,pp:"σύνοιδα, συνείσομαι, —, —, —, —", u:19},
+{i:121,pp:"ἀφικνέομαι, ἀφίξομαι, ἀφῑκόμην, —, ἀφῖγμαι, —", u:20},
+{i:122,pp:"δεῖ, δεήσει, ἐδέησε(ν), —, —, —", u:20},
+{i:123,pp:"κεῖμαι, κείσομαι, —, —, —, —", u:20},
+{i:124,pp:"πυνθάνομαι, πεύσομαι, ἐπυθόμην, —, πέπυσμαι, —", u:20},
+{i:125,pp:"τρέπω, τρέψω, ἔτρεψα / ἐτραπόμην, τέτροφα, τέτραμμαι, ἐτράπην / ἐτρέφθην", u:20},
+{i:126,pp:"φαίνω, φανῶ, ἔφηνα, πέφηνα, πέφασμαι, ἐφάνην", u:20},
+{i:127,pp:"χρή, χρῆσται, —, —, —, —", u:20}];
     </script>
 </body>
 </html>
