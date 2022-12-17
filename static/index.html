@@ -1056,13 +1056,13 @@ function getTextWidth(text, font) {
         let max_changes = parseInt(q("#maxchanges").value.trim());
         let max_time = parseInt(q("#maxtime").value.trim());
 
-        let u = [];
-        let ck = document.querySelectorAll(".verblistck:checked");
+        let v = [];
+        let ck = document.querySelectorAll(".verblistckverb:checked");
         let i = 0;
         for ( ; i < ck.length; i++) {
-            u.push(ck[i].value)
+            v.push(ck[i].value)
         }
-        let unitv = u.join(",");
+        let unitv = v.join(",");
         console.log("verbs: " + unitv);
 
         reps = (reps) ? parseInt(reps) : 4;
@@ -1728,22 +1728,40 @@ function getTextWidth(text, font) {
                 rows += "<div class='verbunitrow'><input class='verblistck verblistckunit' id='cku" + verbs[i].u + "' value='" + verbs[i].u + "' type='checkbox'/><a href='#' onclick='ex(this)'>unit " + verbs[i].u + "</a></div>";
                 rows += "<div class='expand-container'><div id='unitdiv" + verbs[i].u + "' class='expand-contract'>";
             }
-            rows += "<div class='verbrow'><input class='verblistck' id='ckv" + verbs[i].i + "' value='" + verbs[i].i + "' type='checkbox'/>" + verbs[i].pp.substring(0, (verbs[i].pp.indexOf(end) + plus)) + "</div>";
+            rows += "<div class='verbrow'><input class='verblistck verblistckverb' id='ckv" + verbs[i].i + "' value='" + verbs[i].i + "' type='checkbox'/>" + verbs[i].pp.substring(0, (verbs[i].pp.indexOf(end) + plus)) + "</div>";
         }
         rows += "</div></div>";
         list.innerHTML = rows;
 
-        // <div class="expand-container">
-        //         <div id="newgamediv" class="expand-contract">
+        let c = document.querySelectorAll(".verblistckunit");
+        let j = 0;
+        for (j = 0; j < c.length; j++) {
+            c[j].addEventListener("click", function() {
+                let checked = false;
+                if (this.checked) {
+                    checked = true;
+                }
+                let a = this.parentNode.nextSibling.querySelectorAll(".verblistck");
+                let k = 0;
+                for (k = 0; k < a.length; k++) {
+                    a[k].checked = checked;
+                }
+            });
+        }
 
-        // let c = document.querySelectorAll(".verblistckunit");
-        // let j = 0;
-        // for (j = 0; j < c.length; j++) {
-        //     c[j].addEventListener("click", function() {
-       
-        //     });
-        // }
-      }
+        let all = document.querySelector("#ckuall");
+        all.addEventListener("click", function() {
+            let checked = false;
+                if (this.checked) {
+                    checked = true;
+                }
+            let a = document.querySelectorAll(".verblistck");
+            let k = 0;
+                for (k = 0; k < a.length; k++) {
+                    a[k].checked = checked;
+                }
+        });
+    }
 
       function ex(n) {
         let el = n.parentNode.nextSibling.firstChild;
