@@ -147,6 +147,7 @@ BUTTON:disabled {cursor:default}
     position: absolute;
     top: 28px;
     left: 10px;
+    padding: 15px;
 }
 .addheight{
     top:28px;
@@ -276,29 +277,25 @@ a {color:blue;}
 .dark .gamerow {color:#03A5F3;}
 .dark .selectedGame {background-color: white;}
 
-#newgamediv.expanded {
-   background-color: green;
-   margin-top: 0;
-}
-
 #container {
    border: 1px solid black;
    padding: 15px;
 }
 
-#top-section { }
-
-#expand-container {
+.expand-container {
   overflow: hidden;
 }
 
-#expand-contract {
-  margin-top: -4000px;
+#newgamediv {
+    margin-top: -4000px;
+}
+.expand-contract {
+  margin-top: -270px;
   transition: all 0.3s;
 }
 
-#expand-contract.expanded {
-   margin-top: 0;
+.expand-contract.expanded {
+   margin-top: 0 !important;
 }
 .verbrow {
     margin-left:1.5rem;
@@ -315,27 +312,22 @@ a {color:blue;}
             <div style="font-weight:bold;">HOPLITE CHALLENGE</div>
         </div>
         
-            <div id="settings">
-                <div id="container">
-                    <div id="top-section">
-                        <a href="javascript:expandContract()">New Game</a>
-                    </div>
-                    <div id="expand-container">
-                      <div id="expand-contract" class="">
-                        <table cellpadding="4" cellspacing="0">
-                                <tr><td>Top Unit:</td><td><input id="unitinput" type="text" value="20"/></td></tr>
-                                <tr><td>Opponent:</td><td><input id="opponentinput" type="text"/></td></tr>
-                                <tr><td>Timer:</td></td><td align="center"> down <input name="countdown" id="countdowninput" type="radio" value="down"/> up <input checked name="countdown" id="countupinput" type="radio" value="up"/></td></tr>
-                                <tr><td>Reps per verb:</td><td><input id="repsperverb" type="text" value="4"/></td></tr>
-                                <tr><td>Max changes:</td><td><input id="maxchanges" type="text" value="2"/></td></tr>
-                                <tr><td>Max time:</td><td><input id="maxtime" type="text" value="30"/></td></tr>
-                                <tr><td align="center" colspan="2"><button id="creategamebutton" onclick="new_game_clicked()">Create Game</button></td></tr>
-                            </table>
-                            <div id="verblist"></div>
-                      </div>
-                    </div>
-                  </div>
+        <div id="settings">
+            <a href="javascript:expandContractNewGameDiv()">New Game</a>
+            <div class="expand-container">
+                <div id="newgamediv" class="expand-contract">
+                    <table cellpadding="4" cellspacing="0">
+                        <tr><td align="center" colspan="2"><button id="creategamebutton" onclick="new_game_clicked()">Create Game</button></td></tr>
+                        <tr><td>Opponent:</td><td><input id="opponentinput" type="text"/></td></tr>
+                        <tr><td>Timer:</td></td><td><input name="countdown" id="countdowninput" type="radio" value="down"/>countdown <input id="maxtime" type="text" value="30" style="width:30px;"/><br/><input checked name="countdown" id="countupinput" type="radio" value="up"/>elapsed </td></tr>
+                        <tr><td>Reps per verb:</td><td><input id="repsperverb" type="text" value="4"/></td></tr>
+                        <tr><td>Max changes:</td><td><input id="maxchanges" type="text" value="2"/></td></tr>
+                        <!--<tr><td>Top Unit:</td><td><input id="unitinput" type="text" value="20"/></td></tr>-->
+                    </table>
+                    <div id="verblist"></div>
+                </div>
             </div>
+        </div>
         
         <div id="listouter">
             <button id="refreshbutton" onclick="get_sessions(true)">refresh</button>
@@ -424,11 +416,11 @@ a {color:blue;}
     <script>
     'use strict';
 
-function expandContract() {
+function expandContractNewGameDiv() {
     verbList();
-    let el = document.getElementById("expand-contract");
+    let el = document.getElementById("newgamediv");
     el.classList.toggle('expanded');
-    el.classList.toggle('collapsed');
+    //el.classList.toggle('collapsed');
 }
 
 (function (global, factory) {
@@ -1057,12 +1049,21 @@ function getTextWidth(text, font) {
     }
 
     function new_game_clicked() {
-        let unitv = q("#unitinput").value.trim();
+        //let unitv = q("#unitinput").value.trim();
         let opponentv = q("#opponentinput").value.trim();
         let countdown = (q("input[name=countdown]:checked").value == "down");
         let reps = parseInt(q("#repsperverb").value.trim());
         let max_changes = parseInt(q("#maxchanges").value.trim());
         let max_time = parseInt(q("#maxtime").value.trim());
+
+        let u = [];
+        let ck = document.querySelectorAll(".verblistck:checked");
+        let i = 0;
+        for ( ; i < ck.length; i++) {
+            u.push(ck[i].value)
+        }
+        let unitv = u.join(",");
+        console.log("verbs: " + unitv);
 
         reps = (reps) ? parseInt(reps) : 4;
         max_changes = (max_changes) ? parseInt(max_changes) : 2;
@@ -1705,7 +1706,7 @@ function getTextWidth(text, font) {
       
       function verbList() {
         let list = q("#verblist");
-        let rows = "";
+        let rows = "<div class='verbunitrow'><input class='verblistck verblistckunit' id='ckuall' type='checkbox'/>all</div>";
         let i = 0;
         let lastUnit = null;
         for ( ; i < verbs.length; i++) {
@@ -1719,12 +1720,35 @@ function getTextWidth(text, font) {
                 plus = 1;
             }
             if (verbs[i].u != lastUnit) {
+                if (lastUnit !== null) {
+                    rows += "</div></div>";
+                }
                 lastUnit = verbs[i].u;
-                rows += "<div class='verbunitrow'><input class='verblistck' id='cku" + verbs[i].u + "' value='" + verbs[i].u + "' type='checkbox'/>unit " + verbs[i].u + "</div>";
+                
+                rows += "<div class='verbunitrow'><input class='verblistck verblistckunit' id='cku" + verbs[i].u + "' value='" + verbs[i].u + "' type='checkbox'/><a href='#' onclick='ex(this)'>unit " + verbs[i].u + "</a></div>";
+                rows += "<div class='expand-container'><div id='unitdiv" + verbs[i].u + "' class='expand-contract'>";
             }
             rows += "<div class='verbrow'><input class='verblistck' id='ckv" + verbs[i].i + "' value='" + verbs[i].i + "' type='checkbox'/>" + verbs[i].pp.substring(0, (verbs[i].pp.indexOf(end) + plus)) + "</div>";
         }
+        rows += "</div></div>";
         list.innerHTML = rows;
+
+        // <div class="expand-container">
+        //         <div id="newgamediv" class="expand-contract">
+
+        // let c = document.querySelectorAll(".verblistckunit");
+        // let j = 0;
+        // for (j = 0; j < c.length; j++) {
+        //     c[j].addEventListener("click", function() {
+       
+        //     });
+        // }
+      }
+
+      function ex(n) {
+        let el = n.parentNode.nextSibling.firstChild;
+        el.classList.toggle('expanded');
+        //el.classList.toggle('collapsed');
       }
 
 const verbs = [
