@@ -417,7 +417,6 @@ a {color:blue;}
     'use strict';
 
 function expandContractNewGameDiv() {
-    verbList();
     let el = document.getElementById("newgamediv");
     el.classList.toggle('expanded');
     //el.classList.toggle('collapsed');
@@ -748,6 +747,7 @@ function expandContractNewGameDiv() {
 
     const supportsWebSockets = 'WebSocket' in window || 'MozWebSocket' in window;
     function start() {
+        verbList();
         global_timer_ref = q('#mainTime');
         
 	    const supported = (() => {
@@ -1733,13 +1733,16 @@ function getTextWidth(text, font) {
         rows += "</div></div>";
         list.innerHTML = rows;
 
+        let all = document.querySelector("#ckuall");
+        //unit notes
         let c = document.querySelectorAll(".verblistckunit");
         let j = 0;
         for (j = 0; j < c.length; j++) {
             c[j].addEventListener("click", function() {
-                let checked = false;
-                if (this.checked) {
-                    checked = true;
+                let checked = true;
+                if (!this.checked) {
+                    checked = false;
+                    all.checked = false;
                 }
                 let a = this.parentNode.nextSibling.querySelectorAll(".verblistck");
                 let k = 0;
@@ -1748,8 +1751,18 @@ function getTextWidth(text, font) {
                 }
             });
         }
-
-        let all = document.querySelector("#ckuall");
+        //verb leaves
+        let vv = document.querySelectorAll(".verblistckverb");
+        let k = 0;
+        for ( ; k < vv.length; k++) {
+            vv[k].addEventListener("click", function() {
+                if (!this.checked) {
+                    all.checked = false;
+                    let a = this.parentNode.parentNode.parentNode.previousSibling.firstChild.checked = false;
+                }
+            });
+        }
+        //all
         all.addEventListener("click", function() {
             let checked = false;
                 if (this.checked) {
