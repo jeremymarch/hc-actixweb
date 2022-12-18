@@ -174,7 +174,7 @@ pub async fn hc_answer(db: &HcDb, user_id:Uuid, info:&AnswerQuery, timestamp:i64
 
     //if practice session, ask the next here
     if s.challenged_user_id.is_none() {
-        ask_practice(&mut tx, db, info.session_id, prev_form, s.practice_reps_per_verb, timestamp, m.asktimestamp).await?;
+        ask_practice(&mut tx, db, info.session_id, prev_form, &s, timestamp, m.asktimestamp).await?;
     }
     else {
         //add to other player's score if not practice and not correct
@@ -266,7 +266,7 @@ pub async fn hc_mf_pressed(db: &HcDb, user_id:Uuid, info:&AnswerQuery, timestamp
 
         //if practice session, ask the next here
         if s.challenged_user_id.is_none() {
-            ask_practice(&mut tx, db, info.session_id, prev_form, s.practice_reps_per_verb, timestamp, m.asktimestamp).await?;
+            ask_practice(&mut tx, db, info.session_id, prev_form, &s, timestamp, m.asktimestamp).await?;
         }
         else {
             //add to other player's score if not practice and not correct
@@ -304,7 +304,7 @@ pub async fn hc_mf_pressed(db: &HcDb, user_id:Uuid, info:&AnswerQuery, timestamp
 }
 
 async fn ask_practice<'a, 'b>(
-    tx: &'a mut sqlx::Transaction<'b, Postgres>, db: &HcDb, session_id:Uuid, prev_form:HcGreekVerbForm, practice_reps_per_verb:Option<i16>, timestamp:i64, asktimestamp:i64) -> Result<(), sqlx::Error> {
+    tx: &'a mut sqlx::Transaction<'b, Postgres>, db: &HcDb, session_id:Uuid, prev_form:HcGreekVerbForm, session:&SessionResult, timestamp:i64, asktimestamp:i64) -> Result<(), sqlx::Error> {
     let persons = vec![HcPerson::First, HcPerson::Second, HcPerson::Third];
     let numbers = vec![HcNumber::Singular, HcNumber::Plural];
     let tenses = vec![HcTense::Present, HcTense::Imperfect, HcTense::Future, HcTense::Aorist, HcTense::Perfect, HcTense::Pluperfect];
@@ -316,14 +316,24 @@ async fn ask_practice<'a, 'b>(
     let mut last_verb:Option<i32> = None;
     let mut change_verb = false;
     let mut used_verbs: HashSet<i32> = HashSet::new();
-    let max_per_verb = match practice_reps_per_verb {
+    let max_per_verb = match session.practice_reps_per_verb {
         Some(r) => r,
         _ => 4,
     };
     //let available_verbs: HashSet<i32> = vec![1, 2, 3, 4, 5].into_iter().collect();
     //verbs except esti (77), exesti (78), dei (122), xrh (127)
-    let available_verbs: HashSet<i32> = (1..127).filter(|&i: &i32| i != 78 && i != 79 && i != 122 && i != 127 ).collect::<HashSet<i32>>();
+    
+    let mut available_verbs: HashSet<i32> = match &session.custom_verbs {
+        Some(v) => {
+            v.split(',').filter_map(|num| num.parse::<i32>().ok()).collect::<HashSet<i32>>()
+        },
+        _ => (1..127).filter(|&i: &i32| i != 78 && i != 79 && i != 122 && i != 127 ).collect::<HashSet<i32>>(),
+    };
     //println!("v: {:?}", v);
+
+    if available_verbs.is_empty() {
+        available_verbs.insert(1);
+    }
 
     for mov in moves {
         if last_verb.is_none() {
@@ -506,9 +516,10 @@ pub async fn hc_insert_session(db: &HcDb, user_id:Uuid, info:&CreateSessionQuery
         return Err(sqlx::Error::RowNotFound); //todo oops
     }
 
-    let highest_unit = if let Ok(v) = info.unit.parse::<i16>() { Some(v) } else { None };
+    //let highest_unit = if let Ok(v) = info.unit.parse::<i16>() { Some(v) } else { None };
+    let custom_verbs = &info.unit;
 
-    match db.insert_session(user_id, highest_unit, opponent_user_id, info, timestamp).await {
+    match db.insert_session(user_id, custom_verbs, opponent_user_id, info, timestamp).await {
         Ok(session_uuid) => {
             //for practice sessions we should do the ask here
             if opponent_user_id.is_none() {
@@ -518,7 +529,10 @@ pub async fn hc_insert_session(db: &HcDb, user_id:Uuid, info:&CreateSessionQuery
                 let moods = vec![HcMood::Indicative, HcMood::Subjunctive, HcMood::Optative, HcMood::Imperative];
                 let voices = vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive];
 
-                let idx = 0;
+                //need to change this to use ask_practice
+                //ask_practice(&mut tx, db, info.session_id, prev_form, &s, timestamp, m.asktimestamp).await?;
+                
+                let idx = 1;
 
                 let mut prev_form = HcGreekVerbForm { verb: verbs[idx].clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Active, mood:HcMood::Indicative, gender: None, case: None};
                 loop {

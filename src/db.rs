@@ -88,7 +88,7 @@ impl HcDb {
     pub async fn insert_session(
         &self,
         user_id: Uuid,
-        highest_unit: Option<i16>,
+        custom_verbs: &str,
         opponent_id: Option<Uuid>,
         info: &CreateSessionQuery,
         timestamp: i64,
@@ -109,12 +109,12 @@ impl HcDb {
             practice_reps_per_verb,
             countdown,
             max_time,
-            timestamp) VALUES ($1,$2,$3,$4,NULL,$5,0,0,$6,$7,$8,$9);"#;
+            timestamp) VALUES ($1,$2,$3,NULL,$4,$5,0,0,$6,$7,$8,$9);"#;
         let _res = sqlx::query(query)
             .bind(uuid)
             .bind(user_id)
             .bind(opponent_id)
-            .bind(highest_unit)
+            .bind(custom_verbs)
             .bind(info.max_changes)
             .bind(info.practice_reps_per_verb)
             .bind(info.countdown as i32)

@@ -824,14 +824,13 @@ fn load_verbs(_path:&str) -> Vec<Arc<HcGreekVerb>> {
     //         }
     //     }
     // }
+    verbs.push(Arc::new(HcGreekVerb::from_string_with_properties(1, "blank,blank,blank,blank,blank,blank % 0").unwrap())); //so paideuw is at index 1
     let pp_lines = PPS.split('\n');
-    for (idx, line) in pp_lines.enumerate() {
-        
-            if !line.starts_with('#') && !line.is_empty() { //skip commented lines
-                //println!("line: {}", line);
-                verbs.push(Arc::new(HcGreekVerb::from_string_with_properties(idx as u32, line).unwrap()));
-            }
-        
+    for (idx, line) in pp_lines.enumerate() {        
+        if !line.starts_with('#') && !line.is_empty() { //skip commented lines
+            //println!("line: {} {}", idx, line);
+            verbs.push(Arc::new(HcGreekVerb::from_string_with_properties(idx as u32 + 1, line).unwrap()));
+        }
     }
 
     verbs
