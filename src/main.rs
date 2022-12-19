@@ -1006,7 +1006,7 @@ mod tests {
         used.insert(1,2);
         used.insert(2,1);
         used.insert(3,2);
-        let mut a = get_available_verbs(&Some("1,2,3".to_string()), &used, 2);
+        let mut a = hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &used, 2);
         a.sort();
         assert_eq!(vec![2], a);
 
@@ -1014,12 +1014,12 @@ mod tests {
         used.insert(1,2);
         used.insert(2,2);
         used.insert(3,2);
-        let mut a = get_available_verbs(&Some("1,2,3".to_string()), &used, 2);
+        let mut a = hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &used, 2);
         a.sort();
         assert_eq!(vec![1,2,3], a);
 
         let used = HashMap::new();
-        let mut a = get_available_verbs(&Some("1,2,3".to_string()), &used, 0);
+        let mut a = hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &used, 0);
         a.sort();
         assert_eq!(vec![1,2,3], a);
     }

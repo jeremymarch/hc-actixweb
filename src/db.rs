@@ -84,7 +84,7 @@ impl HcDb {
 
         Ok(res)
     }
-    
+
     pub async fn insert_session(
         &self,
         user_id: Uuid,
@@ -93,7 +93,31 @@ impl HcDb {
         info: &CreateSessionQuery,
         timestamp: i64,
     ) -> Result<Uuid, sqlx::Error> {
+
         let mut tx = self.db.begin().await?;
+
+        let uuid = self.insert_session_tx(&mut tx,
+            user_id,
+            custom_verbs,
+            opponent_id,
+            info,
+            timestamp,
+        ).await?;
+
+        tx.commit().await?;
+
+        Ok(uuid)
+    }
+
+    pub async fn insert_session_tx<'a, 'b>(&self,
+            tx: &'a mut sqlx::Transaction<'b, Postgres>,
+        user_id: Uuid,
+        custom_verbs: &str,
+        opponent_id: Option<Uuid>,
+        info: &CreateSessionQuery,
+        timestamp: i64,
+    ) -> Result<Uuid, sqlx::Error> {
+        
 
         let uuid = sqlx::types::Uuid::new_v4();
 
@@ -120,10 +144,8 @@ impl HcDb {
             .bind(info.countdown as i32)
             .bind(info.max_time)
             .bind(timestamp)
-            .execute(&mut tx)
+            .execute(&mut *tx)
             .await?;
-
-        tx.commit().await?;
 
         Ok(uuid)
     }
