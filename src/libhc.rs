@@ -303,6 +303,36 @@ pub async fn hc_mf_pressed(db: &HcDb, user_id:Uuid, info:&AnswerQuery, timestamp
     }
 }
 
+pub fn get_available_verbs(available_verbs_str:&Option<String>, new_used_verbs:&HashMap<i32,i32>, highest_count:i32) -> Vec<i32> {
+    //let available_verbs: HashSet<i32> = vec![1, 2, 3, 4, 5].into_iter().collect();
+    //verbs except esti (77), exesti (78), dei (122), xrh (127)
+    
+    let mut available_verbs: HashSet<i32> = match available_verbs_str {
+        Some(v) => {
+            v.split(',').filter_map(|num| num.parse::<i32>().ok()).collect::<HashSet<i32>>()
+        },
+        _ => (1..127).filter(|&i: &i32| i != 78 && i != 79 && i != 122 && i != 127 ).collect::<HashSet<i32>>(),
+    };
+    //println!("v: {:?}", available_verbs);
+
+    if available_verbs.is_empty() {
+        available_verbs.insert(1);
+    }
+
+    let mut used_verbs = HashSet::<i32>::new();
+    for (k,v) in new_used_verbs.iter() {
+        if v == &highest_count { //verbs with highest count are the ones we want to filter out
+            used_verbs.insert(*k);
+        }
+    }
+    //= new_used_verbs.iter().filter(|(u,v,)| v < &highest_count).collect::<HashSet<i32>>();
+    if used_verbs.len() == available_verbs.len() {
+        used_verbs.clear();
+    }
+    available_verbs.difference(&used_verbs).cloned().collect::<Vec<i32>>()
+}
+
+use std::collections::HashMap;
 async fn ask_practice<'a, 'b>(
     tx: &'a mut sqlx::Transaction<'b, Postgres>, db: &HcDb, session_id:Uuid, prev_form:HcGreekVerbForm, session:&SessionResult, timestamp:i64, asktimestamp:i64) -> Result<(), sqlx::Error> {
     let persons = vec![HcPerson::First, HcPerson::Second, HcPerson::Third];
@@ -315,26 +345,14 @@ async fn ask_practice<'a, 'b>(
     let mut reps = 0;
     let mut last_verb:Option<i32> = None;
     let mut change_verb = false;
-    let mut used_verbs: HashSet<i32> = HashSet::new();
+    //let mut used_verbs: HashSet<i32> = HashSet::new();
     let max_per_verb = match session.practice_reps_per_verb {
         Some(r) => r,
         _ => 4,
     };
-    //let available_verbs: HashSet<i32> = vec![1, 2, 3, 4, 5].into_iter().collect();
-    //verbs except esti (77), exesti (78), dei (122), xrh (127)
-    
-    let mut available_verbs: HashSet<i32> = match &session.custom_verbs {
-        Some(v) => {
-            v.split(',').filter_map(|num| num.parse::<i32>().ok()).collect::<HashSet<i32>>()
-        },
-        _ => (1..127).filter(|&i: &i32| i != 78 && i != 79 && i != 122 && i != 127 ).collect::<HashSet<i32>>(),
-    };
-    //println!("v: {:?}", v);
 
-    if available_verbs.is_empty() {
-        available_verbs.insert(1);
-    }
-
+    let mut new_used_verbs = HashMap::new();
+    let mut highest_count = 0;
     for mov in moves {
         if last_verb.is_none() {
             last_verb = mov.verb_id;
@@ -346,19 +364,37 @@ async fn ask_practice<'a, 'b>(
             change_verb = true;
         }
         if let Some(v) = mov.verb_id {
-            used_verbs.insert(v);
+            //used_verbs.insert(v);
+
+            if let Some(x) = new_used_verbs.get_mut(&v) {
+                *x += 1;
+                if *x > highest_count {
+                    highest_count = *x;
+                }
+            }
+            else {
+                new_used_verbs.insert(v, 1);
+            }
         }
         //println!("here {:?}", reps);
     }
+
     let mut verb_id:i32 = prev_form.verb.id as i32;
     if change_verb {
-        let verbs = available_verbs.difference(&used_verbs).collect::<Vec<&i32>>();
+        // let verbs = if used_verbs.len() == available_verbs.len() {
+        //     available_verbs.collect::<Vec<&i32>>();
+        // }
+        // else 
+        // {
+        //     available_verbs.difference(&used_verbs).collect::<Vec<&i32>>();
+        // };
+        let verbs = get_available_verbs(&session.custom_verbs, &new_used_verbs, highest_count);
         // if verbs.is_empty() {
         //     verbs = available_verbs;
         // }
         let new_verb_id = verbs.choose(&mut rand::thread_rng());
         
-        verb_id = **new_verb_id.unwrap();
+        verb_id = *new_verb_id.unwrap();
         
         // let aq = AskQuery {
         //     qtype: "ask".to_string(),
@@ -567,9 +603,12 @@ pub async fn hc_get_available_verbs(db: &HcDb, _user_id:Uuid, session_id:Uuid, t
     let mut res_verbs:Vec<HCVerbOption> = vec![];
 
     let used_verbs = db.get_used_verbs(session_id).await?;
-
+    //println!("used_verbs: {:?}", used_verbs);
     for v in verbs {
-        if top_unit.is_none() || v.hq_unit <= top_unit.unwrap() as u32 && !used_verbs.contains(&(v.id as i32))  { //&& verb_id_not_used()
+        if v.id == 0 {
+            continue;
+        }
+        if (top_unit.is_none() || v.hq_unit <= top_unit.unwrap() as u32) && !used_verbs.contains(&(v.id as i32))  { //&& verb_id_not_used()
             let newv = HCVerbOption {
                 id: v.id as i32,
                 verb: if v.pps[0] == "—" { format!("—, {}", v.pps[1]) } else { v.pps[0].clone() },
