@@ -329,6 +329,7 @@ pub fn hc_get_available_verbs_practice(available_verbs_str:&Option<String>, new_
     //= new_used_verbs.iter().filter(|(u,v,)| v < &highest_count).collect::<HashSet<i32>>();
     if used_verbs.len() == available_verbs.len() {
         used_verbs.clear();
+        //todo: need to add last seen verb to used_verbs so it cannot immediately repeat
     }
     available_verbs.difference(&used_verbs).cloned().collect::<Vec<i32>>()
 }
@@ -353,19 +354,18 @@ async fn ask_practice<'a, 'b>(
 
     let mut new_used_verbs = HashMap::new();
     let mut highest_count = 0;
+    let mut i = 1;
     for mov in &moves {
         if last_verb.is_none() {
             last_verb = mov.verb_id;
         }
-        if last_verb == mov.verb_id {
+        if last_verb == mov.verb_id && i <= max_per_verb {
             reps += 1;
         }
         if reps >= max_per_verb {
             change_verb = true;
         }
         if let Some(v) = mov.verb_id {
-            //used_verbs.insert(v);
-
             if let Some(x) = new_used_verbs.get_mut(&v) {
                 *x += 1;
                 if *x > highest_count {
@@ -376,6 +376,7 @@ async fn ask_practice<'a, 'b>(
                 new_used_verbs.insert(v, 1);
             }
         }
+        i += 1;
         //println!("here {:?}", reps);
     }
 
@@ -413,7 +414,7 @@ async fn ask_practice<'a, 'b>(
         // let _ = db.insert_ask_move_tx(tx, None, &aq, new_time_stamp).await?;
     }
 
-    //println!("id: {:?} reps: {:?}", verb_id, reps);
+    println!("id: {:?} reps: {:?}", verb_id, reps);
 
     let mut pf:HcGreekVerbForm;
     loop {
