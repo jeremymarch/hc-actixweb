@@ -1002,6 +1002,86 @@ mod tests {
 
     #[test]
     async fn test_available() {
+        let mut a = hc_get_available_verbs_practice2(&Some("1,2,3".to_string()), &vec![], 1);
+        a.sort();
+        assert_eq!(vec![1,2,3], a);
+        let mut a = hc_get_available_verbs_practice2(&Some("1,2,3".to_string()), &vec![1], 1);
+        a.sort();
+        assert_eq!(vec![2,3], a);
+        let mut a = hc_get_available_verbs_practice2(&Some("1,2,3".to_string()), &vec![1,2], 1);
+        a.sort();
+        assert_eq!(vec![3], a);
+        let mut a = hc_get_available_verbs_practice2(&Some("1,2,3".to_string()), &vec![3,1,2], 1); //skip 3
+        a.sort();
+        assert_eq!(vec![1,2], a);
+        let mut a = hc_get_available_verbs_practice2(&Some("1,2,3".to_string()), &vec![2,1,2,3,2,1,3,2,3,1,3,1,2], 1);
+        a.sort();
+        assert_eq!(vec![1,3], a);
+        let mut a = hc_get_available_verbs_practice2(&Some("1,2,3".to_string()), &vec![1,3,2,1,3,2,1,3,2,3,1,3,1,2], 1);
+        a.sort();
+        assert_eq!(vec![2], a);
+        let mut a = hc_get_available_verbs_practice2(&Some("1,2,3".to_string()), &vec![2,1,3,2,1,3,2,3,1,3,1,2], 1); //skip 2
+        a.sort();
+        assert_eq!(vec![1,3], a);
+
+
+        let mut a = hc_get_available_verbs_practice2(&Some("1,2,3".to_string()), &vec![], 2);
+        a.sort();
+        assert_eq!(vec![1,2,3], a);
+        let mut a = hc_get_available_verbs_practice2(&Some("1,2,3".to_string()), &vec![1,1], 2);
+        a.sort();
+        assert_eq!(vec![2,3], a);
+        let mut a = hc_get_available_verbs_practice2(&Some("1,2,3".to_string()), &vec![1,1,2,2], 2);
+        a.sort();
+        assert_eq!(vec![3], a);
+
+        let mut a = hc_get_available_verbs_practice2(&Some("1,2,3".to_string()), &vec![3,3,1,1,2,2], 2); //skip 3
+        a.sort();
+        assert_eq!(vec![1,2], a);
+        let mut a = hc_get_available_verbs_practice2(&Some("1,2,3".to_string()), &vec![3,3,2,2,1,1,3,3,2,2,1,1,3,3,2,2,3,3,1,1,3,3,1,1,2,2], 2);
+        a.sort();
+        assert_eq!(vec![1,2], a);
+        let mut a = hc_get_available_verbs_practice2(&Some("1,2,3".to_string()), &vec![1,1,2,2,2,2,1,1,3,3,2,2,1,1,3,3,2,2,1,1,3,3,3,3,1,1,2,2], 2);
+        a.sort();
+        assert_eq!(vec![3], a);
+        let mut a = hc_get_available_verbs_practice2(&Some("1,2,3".to_string()), &vec![2,2,1,1,3,3,2,2,1,1,3,3,2,2,3,3,1,1,3,3,1,1,2,2], 2); //skip 2
+        a.sort();
+        assert_eq!(vec![1,3], a);
+
+
+
+        let mut a = hc_get_available_verbs_practice2(&Some("1,2".to_string()), &vec![], 2);
+        a.sort();
+        assert_eq!(vec![1,2], a);
+        let mut a = hc_get_available_verbs_practice2(&Some("1,2".to_string()), &vec![1,1], 2);
+        a.sort();
+        assert_eq!(vec![2], a);
+        let mut a = hc_get_available_verbs_practice2(&Some("1,2".to_string()), &vec![1,1,2,2], 2);
+        a.sort();
+        assert_eq!(vec![2], a);
+
+        let mut a = hc_get_available_verbs_practice2(&Some("1,2".to_string()), &vec![2,2,1,1,2,2,1,1,2,2,1,1,2,2,1,1,2,2], 2);
+        a.sort();
+        assert_eq!(vec![1], a);
+
+
+
+        let mut a = hc_get_available_verbs_practice2(&Some("1".to_string()), &vec![], 1);
+        a.sort();
+        assert_eq!(vec![1], a);
+        let mut a = hc_get_available_verbs_practice2(&Some("1".to_string()), &vec![1,1], 1);
+        a.sort();
+        assert_eq!(vec![1], a);
+        let mut a = hc_get_available_verbs_practice2(&Some("1".to_string()), &vec![1,1,1], 1);
+        a.sort();
+        assert_eq!(vec![1], a);
+
+        let mut a = hc_get_available_verbs_practice2(&Some("1".to_string()), &vec![1,1,1,1,1,1,1,1,1,1], 1);
+        a.sort();
+        assert_eq!(vec![1], a);
+
+
+        /*
         let mut used = HashMap::new();
         used.insert(1,2);
         used.insert(2,1);
@@ -1022,6 +1102,7 @@ mod tests {
         let mut a = hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &used, 0);
         a.sort();
         assert_eq!(vec![1,2,3], a);
+        */
     }
 
     #[test]
