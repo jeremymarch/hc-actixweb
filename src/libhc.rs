@@ -20,7 +20,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 use super::*;
 use rand::prelude::SliceRandom;
 use std::collections::HashSet;
-use std::collections::HashMap;
 use polytonic_greek::hgk_compare_sqlite;
 use polytonic_greek::hgk_compare_multiple_forms;
 use sqlx::Postgres;
@@ -304,8 +303,8 @@ pub async fn hc_mf_pressed(db: &HcDb, user_id:Uuid, info:&AnswerQuery, timestamp
     }
 }
 
-pub fn hc_get_available_verbs_practice2(available_verbs_str:&Option<String>, used_verbs:&Vec<i32>, max_reps:usize) -> Vec<i32> {
-    let mut available_verbs: HashSet<i32> = match available_verbs_str {
+pub fn hc_get_available_verbs_practice(available_verbs_str:&Option<String>, used_verbs:&Vec<i32>, max_reps:usize) -> Vec<i32> {
+    let available_verbs: HashSet<i32> = match available_verbs_str {
         Some(v) => {
             v.split(',').filter_map(|num| num.parse::<i32>().ok()).collect::<HashSet<i32>>()
         },
@@ -317,7 +316,7 @@ pub fn hc_get_available_verbs_practice2(available_verbs_str:&Option<String>, use
     }
 
     let remainder = used_verbs.len() % (available_verbs.len() * max_reps);
-    println!("remainder: {:?}", remainder);
+    //println!("remainder: {:?}", remainder);
 
     let mut filter = used_verbs[0..remainder].iter().cloned().collect::<HashSet<i32>>();
 
@@ -325,40 +324,8 @@ pub fn hc_get_available_verbs_practice2(available_verbs_str:&Option<String>, use
         filter.insert(used_verbs[0]); //if all verbs have been used, do not allow next verb to be last one used
     }
 
-    println!("avail: {:?}, used: {:?}", available_verbs, used_verbs);
+    //println!("avail: {:?}, used: {:?}", available_verbs, used_verbs);
     available_verbs.difference(&filter).cloned().collect::<Vec<i32>>()
-}
-
-pub fn hc_get_available_verbs_practice(available_verbs_str:&Option<String>, new_used_verbs:&HashMap<i32,i32>, highest_count:i32, last_verb:i32) -> Vec<i32> {
-    //let available_verbs: HashSet<i32> = vec![1, 2, 3, 4, 5].into_iter().collect();
-    //verbs except esti (77), exesti (78), dei (122), xrh (127)
-    
-    let mut available_verbs: HashSet<i32> = match available_verbs_str {
-        Some(v) => {
-            v.split(',').filter_map(|num| num.parse::<i32>().ok()).collect::<HashSet<i32>>()
-        },
-        _ => (1..127).filter(|&i: &i32| i != 78 && i != 79 && i != 122 && i != 127 ).collect::<HashSet<i32>>(),
-    };
-    //println!("v: {:?}", available_verbs);
-
-    if available_verbs.is_empty() {
-        available_verbs.insert(1);
-    }
-
-    let mut used_verbs = HashSet::<i32>::new();
-    for (k,v) in new_used_verbs.iter() {
-        if v == &highest_count { //verbs with highest count are the ones we want to filter out
-            used_verbs.insert(*k);
-        }
-    }
-    //= new_used_verbs.iter().filter(|(u,v,)| v < &highest_count).collect::<HashSet<i32>>();
-    if used_verbs.len() == available_verbs.len() {
-        used_verbs.clear();
-        //todo: need to add last seen verb to used_verbs so it cannot immediately repeat
-        used_verbs.insert(last_verb);
-    }
-    println!("avail: {:?}, used: {:?}", available_verbs, used_verbs);
-    available_verbs.difference(&used_verbs).cloned().collect::<Vec<i32>>()
 }
 
 async fn ask_practice<'a, 'b>(
@@ -370,100 +337,24 @@ async fn ask_practice<'a, 'b>(
     let voices = vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive];
 
     let moves = db.get_last_n_moves(tx, session_id, 100).await?;
-    let mut reps = 0;
-    let mut last_verb:Option<i32> = None;
-    let mut change_verb = false;
-    //let mut used_verbs: HashSet<i32> = HashSet::new();
+
     let max_per_verb = match session.practice_reps_per_verb {
         Some(r) => r,
         _ => 4,
     };
 
-    //.filter_map(|num| num.parse::<i32>().ok()).collect::<HashSet<i32>>()
-    //let last_verb_ids = moves.iter().map(|m| if m.verb_id.is_some() { m.verb_id.unwrap() }else {0} ).collect::<Vec<i32>>();
     let last_verb_ids = moves.iter().filter_map(|m| m.verb_id.map(|_| m.verb_id.unwrap() )).collect::<Vec<i32>>();
 
-    let mut new_used_verbs = HashMap::new();
-    let mut highest_count = 0;
-    let mut i = 1;
-    for mov in &moves {
-        if last_verb.is_none() {
-            last_verb = mov.verb_id;
-        }
-        if last_verb == mov.verb_id && i <= max_per_verb {
-            reps += 1;
-        }
-        if reps >= max_per_verb {
-            //change_verb = true;
-        }
-        if let Some(v) = mov.verb_id {
-            if let Some(x) = new_used_verbs.get_mut(&v) {
-                *x += 1;
-                if *x > highest_count {
-                    highest_count = *x;
-                }
-            }
-            else {
-                new_used_verbs.insert(v, 1);
-            }
-        }
-        i += 1;
-        //println!("here {:?}", reps);
-    }
-
-    // if moves.is_empty() {
-    //     change_verb = true;
-    // }
-
     let l = last_verb_ids.len();
-    if l > max_per_verb as usize {
-        println!("used: {:?}, max: {:?}, one: {}, two: {}", last_verb_ids, max_per_verb, last_verb_ids[0], last_verb_ids[max_per_verb as usize - 1]);
-    }
-    if l == 0 || (l >= max_per_verb as usize && last_verb_ids[0] == last_verb_ids[max_per_verb as usize - 1]) {
-        change_verb = true;
-    }
-    else {
-        change_verb = false;
-    }
+    let change_verb = l == 0 || (l >= max_per_verb as usize && last_verb_ids[0] == last_verb_ids[max_per_verb as usize - 1]);
 
     let mut verb_id:i32 = prev_form.verb.id as i32;
     if change_verb {
-        // let verbs = if used_verbs.len() == available_verbs.len() {
-        //     available_verbs.collect::<Vec<&i32>>();
-        // }
-        // else 
-        // {
-        //     available_verbs.difference(&used_verbs).collect::<Vec<&i32>>();
-        // };
-        let last_last = if l > 0 { last_verb_ids[l - 1] } else { 0 };
-        //let mut verbs = hc_get_available_verbs_practice(&session.custom_verbs, &new_used_verbs, highest_count, last_last);
-        //println!("difference: {:?}", verbs);
-        let verbs = hc_get_available_verbs_practice2(&session.custom_verbs, &last_verb_ids, max_per_verb as usize);
-        // if verbs.is_empty() {
-        //     verbs = available_verbs;
-        // }
-        //.iter().filter(&v: &i32 **v != last_last).collect::<Vec<i32>>()
-        // if let Some(pos) = verbs.iter().position(|x| *x == last_last) {
-        //     verbs.remove(pos);
-        // }
+        let verbs = hc_get_available_verbs_practice(&session.custom_verbs, &last_verb_ids, max_per_verb as usize);
         let new_verb_id = verbs.choose(&mut rand::thread_rng());
         
         verb_id = *new_verb_id.unwrap();
-        
-        // let aq = AskQuery {
-        //     qtype: "ask".to_string(),
-        //     session_id,
-        //     person: pf.person.to_i16(),
-        //     number: pf.number.to_i16(),
-        //     tense: pf.tense.to_i16(),
-        //     voice: pf.voice.to_i16(),
-        //     mood: pf.mood.to_i16(),
-        //     verb: pf.verb.id as i32,
-        // };
-        // let _ = db.insert_ask_move_tx(tx, None, &aq, new_time_stamp).await?;
     }
-
-    println!("id: {:?} reps: {:?}, change: {:?}", verb_id, reps, change_verb);
 
     let mut pf:HcGreekVerbForm;
     loop {
