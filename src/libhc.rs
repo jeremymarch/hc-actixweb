@@ -349,9 +349,6 @@ async fn ask_practice<'a, 'b>(
     let moves = db.get_last_n_moves(tx, session_id, 100).await?;
     let last_verb_ids = moves.iter().filter_map(|m| m.verb_id.map(|_| m.verb_id.unwrap() )).collect::<Vec<i32>>();
 
-    //let l = last_verb_ids.len();
-    //let change_verb = l == 0 || (l >= max_per_verb as usize && last_verb_ids[0] == last_verb_ids[max_per_verb as usize - 1]);
-
     let mut verb_id:i32 = prev_form.verb.id as i32;
 
     if hc_change_verbs(&last_verb_ids, max_per_verb as usize) {
