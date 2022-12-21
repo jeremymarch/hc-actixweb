@@ -328,6 +328,11 @@ pub fn hc_get_available_verbs_practice(available_verbs_str:&Option<String>, used
     available_verbs.difference(&filter).cloned().collect::<Vec<i32>>()
 }
 
+pub fn hc_change_verbs(verb_history: &Vec<i32>, reps: usize) -> bool {
+    let len = verb_history.len();
+    len == 0 || (len >= reps && verb_history[0] == verb_history[reps - 1])
+}
+
 async fn ask_practice<'a, 'b>(
     tx: &'a mut sqlx::Transaction<'b, Postgres>, db: &HcDb, session_id:Uuid, prev_form:HcGreekVerbForm, session:&SessionResult, timestamp:i64, asktimestamp:i64) -> Result<(), sqlx::Error> {
     let persons = vec![HcPerson::First, HcPerson::Second, HcPerson::Third];
@@ -336,20 +341,20 @@ async fn ask_practice<'a, 'b>(
     let moods = vec![HcMood::Indicative, HcMood::Subjunctive, HcMood::Optative, HcMood::Imperative];
     let voices = vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive];
 
-    let moves = db.get_last_n_moves(tx, session_id, 100).await?;
-
     let max_per_verb = match session.practice_reps_per_verb {
         Some(r) => r,
         _ => 4,
     };
 
+    let moves = db.get_last_n_moves(tx, session_id, 100).await?;
     let last_verb_ids = moves.iter().filter_map(|m| m.verb_id.map(|_| m.verb_id.unwrap() )).collect::<Vec<i32>>();
 
-    let l = last_verb_ids.len();
-    let change_verb = l == 0 || (l >= max_per_verb as usize && last_verb_ids[0] == last_verb_ids[max_per_verb as usize - 1]);
+    //let l = last_verb_ids.len();
+    //let change_verb = l == 0 || (l >= max_per_verb as usize && last_verb_ids[0] == last_verb_ids[max_per_verb as usize - 1]);
 
     let mut verb_id:i32 = prev_form.verb.id as i32;
-    if change_verb {
+
+    if hc_change_verbs(&last_verb_ids, max_per_verb as usize) {
         let verbs = hc_get_available_verbs_practice(&session.custom_verbs, &last_verb_ids, max_per_verb as usize);
         let new_verb_id = verbs.choose(&mut rand::thread_rng());
         

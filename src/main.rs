@@ -1081,6 +1081,15 @@ mod tests {
     }
 
     #[test]
+    async fn test_change_verb() {
+        assert!( hc_change_verbs(&vec![], 2) );
+        assert!( hc_change_verbs(&vec![1,1,2,2], 2) );
+        assert!( !hc_change_verbs(&vec![1,1,2,2,2], 3) );
+        assert!( hc_change_verbs(&vec![1,1,1,1,1,2,2,2,2,2], 5) );
+        assert!( !hc_change_verbs(&vec![1,1,1,1,2,2,2,2,2], 5) );
+    }
+
+    #[test]
     async fn test_two_player() {
         initialize_db_once().await;
 
