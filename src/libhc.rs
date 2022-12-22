@@ -174,7 +174,7 @@ pub async fn hc_answer(db: &HcDb, user_id:Uuid, info:&AnswerQuery, timestamp:i64
 
     //if practice session, ask the next here
     if s.challenged_user_id.is_none() {
-        ask_practice(&mut tx, db, info.session_id, prev_form, &s, timestamp, m.asktimestamp).await?;
+        ask_practice(&mut tx, db, prev_form, &s, timestamp, m.asktimestamp, verbs).await?;
     }
     else {
         //add to other player's score if not practice and not correct
@@ -266,7 +266,7 @@ pub async fn hc_mf_pressed(db: &HcDb, user_id:Uuid, info:&AnswerQuery, timestamp
 
         //if practice session, ask the next here
         if s.challenged_user_id.is_none() {
-            ask_practice(&mut tx, db, info.session_id, prev_form, &s, timestamp, m.asktimestamp).await?;
+            ask_practice(&mut tx, db, prev_form, &s, timestamp, m.asktimestamp, verbs).await?;
         }
         else {
             //add to other player's score if not practice and not correct
@@ -303,7 +303,7 @@ pub async fn hc_mf_pressed(db: &HcDb, user_id:Uuid, info:&AnswerQuery, timestamp
     }
 }
 
-pub fn hc_get_available_verbs_practice(available_verbs_str:&Option<String>, used_verbs:&Vec<i32>, max_reps:usize) -> Vec<i32> {
+pub fn hc_get_available_verbs_practice(available_verbs_str:&Option<String>, used_verbs:&Vec<i32>, reps:usize) -> Vec<i32> {
     let available_verbs: HashSet<i32> = match available_verbs_str {
         Some(v) => {
             v.split(',').filter_map(|num| num.parse::<i32>().ok()).collect::<HashSet<i32>>()
@@ -315,7 +315,7 @@ pub fn hc_get_available_verbs_practice(available_verbs_str:&Option<String>, used
         return vec![*available_verbs.iter().next().unwrap()];
     }
 
-    let remainder = used_verbs.len() % (available_verbs.len() * max_reps);
+    let remainder = used_verbs.len() % (available_verbs.len() * reps);
     //println!("remainder: {:?}", remainder);
 
     let mut filter = used_verbs[0..remainder].iter().cloned().collect::<HashSet<i32>>();
@@ -334,7 +334,7 @@ pub fn hc_change_verbs(verb_history: &Vec<i32>, reps: usize) -> bool {
 }
 
 async fn ask_practice<'a, 'b>(
-    tx: &'a mut sqlx::Transaction<'b, Postgres>, db: &HcDb, session_id:Uuid, prev_form:HcGreekVerbForm, session:&SessionResult, timestamp:i64, asktimestamp:i64) -> Result<(), sqlx::Error> {
+    tx: &'a mut sqlx::Transaction<'b, Postgres>, db: &HcDb, prev_form:HcGreekVerbForm, session:&SessionResult, timestamp:i64, asktimestamp:i64, verbs:&[Arc<HcGreekVerb>]) -> Result<(), sqlx::Error> {
     let persons = vec![HcPerson::First, HcPerson::Second, HcPerson::Third];
     let numbers = vec![HcNumber::Singular, HcNumber::Plural];
     let tenses = vec![HcTense::Present, HcTense::Imperfect, HcTense::Future, HcTense::Aorist, HcTense::Perfect, HcTense::Pluperfect];
@@ -346,34 +346,43 @@ async fn ask_practice<'a, 'b>(
         _ => 4,
     };
 
-    let moves = db.get_last_n_moves(tx, session_id, 100).await?;
+    let moves = db.get_last_n_moves(tx, session.session_id, 100).await?;
     let last_verb_ids = moves.iter().filter_map(|m| m.verb_id.map(|_| m.verb_id.unwrap() )).collect::<Vec<i32>>();
 
-    let mut verb_id:i32 = prev_form.verb.id as i32;
+    let verb_id:i32 = if hc_change_verbs(&last_verb_ids, max_per_verb as usize) {
 
-    if hc_change_verbs(&last_verb_ids, max_per_verb as usize) {
         let verbs = hc_get_available_verbs_practice(&session.custom_verbs, &last_verb_ids, max_per_verb as usize);
         let new_verb_id = verbs.choose(&mut rand::thread_rng());
         
-        verb_id = *new_verb_id.unwrap();
+        *new_verb_id.unwrap()
     }
+    else {
+        prev_form.verb.id as i32
+    };
 
     let mut pf:HcGreekVerbForm;
     loop {
         pf = prev_form.clone();
+        pf.verb = verbs[verb_id as usize].clone();
+        //println!("counts: {}, {}", Arc::strong_count(&pf.verb), Arc::weak_count(&pf.verb));
 
         pf.change_params(session.max_changes.try_into().unwrap(), &persons, &numbers, &tenses, &voices, &moods);
-        if let Ok(_ff) = pf.get_form(false) {
-            break;
+        let vf = pf.get_form(false);
+        match vf {
+            Ok(_res) => { /*println!("break {}", res.last().unwrap().form);*/ break },
+            Err(_e) => { /*println!("continue {:?}", e);*/ continue },
         }
     }
+
+    //let vf = pf.get_form(false);
+    //println!("form: {}",vf.unwrap().last().unwrap().form);
 
     //be sure this asktimestamp is at least one greater than previous one
     let new_time_stamp = if timestamp > asktimestamp { timestamp } else { asktimestamp + 1 };
     //ask
     let aq = AskQuery {
         qtype: "ask".to_string(),
-        session_id,
+        session_id: session.session_id,
         person: pf.person.to_i16(),
         number: pf.number.to_i16(),
         tense: pf.tense.to_i16(),
@@ -508,38 +517,6 @@ pub async fn hc_insert_session(db: &HcDb, user_id:Uuid, info:&CreateSessionQuery
         Ok(session_uuid) => {
             //for practice sessions we should do the ask here
             if opponent_user_id.is_none() {
-                /*
-                let persons = vec![HcPerson::First, HcPerson::Second, HcPerson::Third];
-                let numbers = vec![HcNumber::Singular, HcNumber::Plural];
-                let tenses = vec![HcTense::Present, HcTense::Imperfect, HcTense::Future, HcTense::Aorist, HcTense::Perfect, HcTense::Pluperfect];
-                let moods = vec![HcMood::Indicative, HcMood::Subjunctive, HcMood::Optative, HcMood::Imperative];
-                let voices = vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive];
-                
-                let idx = 1;
-                let mut prev_form = HcGreekVerbForm { verb: verbs[idx].clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Active, mood:HcMood::Indicative, gender: None, case: None};
-                loop {
-                    prev_form.change_params(2, &persons, &numbers, &tenses, &voices, &moods);
-                    if let Ok(_ff) = prev_form.get_form(false) {
-                        break;
-                    }
-                }
-
-                //ask
-                let aq = AskQuery {
-                    qtype: "ask".to_string(),
-                    session_id: session_uuid,
-                    person: prev_form.person.to_i16(),
-                    number: prev_form.number.to_i16(),
-                    tense: prev_form.tense.to_i16(),
-                    voice: prev_form.voice.to_i16(),
-                    mood: prev_form.mood.to_i16(),
-                    verb: prev_form.verb.id as i32,
-                };
-                tx.commit().await?;
-                let _ = db.insert_ask_move(None, &aq, timestamp + 1).await?;
-                return Ok(session_uuid);
-                */
-
                 let prev_form = HcGreekVerbForm { verb: verbs[1].clone(), person:HcPerson::First, number:HcNumber::Singular, tense:HcTense::Present, voice:HcVoice::Active, mood:HcMood::Indicative, gender: None, case: None};
 
                 let sesh = SessionResult {
@@ -554,7 +531,7 @@ pub async fn hc_insert_session(db: &HcDb, user_id:Uuid, info:&CreateSessionQuery
                     practice_reps_per_verb: info.practice_reps_per_verb,
                     timestamp,
                 };
-                ask_practice(&mut tx, db, session_uuid, prev_form, &sesh, timestamp, 0).await?;
+                ask_practice(&mut tx, db, prev_form, &sesh, timestamp, 0, verbs).await?;
             }
             tx.commit().await?;
             Ok(session_uuid)
