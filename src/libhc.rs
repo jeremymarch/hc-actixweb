@@ -359,7 +359,7 @@ async fn ask_practice<'a, 'b>(
     else {
         prev_form.verb.id as i32
     };
-
+    
     let mut pf:HcGreekVerbForm;
     loop {
         pf = prev_form.clone();
@@ -369,7 +369,7 @@ async fn ask_practice<'a, 'b>(
         pf.change_params(session.max_changes.try_into().unwrap(), &persons, &numbers, &tenses, &voices, &moods);
         let vf = pf.get_form(false);
         match vf {
-            Ok(_res) => { /*println!("break {}", res.last().unwrap().form);*/ break },
+            Ok(res) => { if res.last().unwrap().form == "—" { continue } else { break } }, //only 3rd pl consonant stem perfects/pluperfects return - now
             Err(_e) => { /*println!("continue {:?}", e);*/ continue },
         }
     }
