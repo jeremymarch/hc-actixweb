@@ -28,13 +28,14 @@
             q("HTML").classList.remove("dark");
         }
     }
-    setTheme();    
+    setTheme();
     </script>
     <style>
 @font-face {
     font-family: 'WebNewAthenaUnicode';
     src: url('/newathu5_8.ttf') format('truetype');
 }
+* { box-sizing: border-box; }
 BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
 .gkinput, .gkinputnontyping {
     font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
@@ -143,11 +144,7 @@ BUTTON:disabled {cursor:default}
 }
 
 #settings {
-    border:2px solid black;
-    position: absolute;
-    top: 28px;
-    left: 10px;
-    padding: 15px;
+    /*border:2px solid black;*/
 }
 .addheight{
     top:28px;
@@ -157,15 +154,13 @@ BUTTON:disabled {cursor:default}
     width:320px;
     position: absolute;
     top: 2rem;
-    right: 10px;
+    left: 1rem;
     transition: top 2s;
     z-index:899;
 }
 
-#list {
+#list { }
 
-    
-}
 #creategamebutton {
     display: block;
 }
@@ -219,6 +214,9 @@ BUTTON:disabled {cursor:default}
     padding: 0.25rem;
     margin: 0.5rem;
     cursor:pointer;
+    
+}
+.gamespan {
     color:blue;
 }
 SELECT, OPTION {
@@ -251,6 +249,9 @@ a {color:blue;}
   .hcform {
     width:calc(100% - 4rem);
   }
+  #listouter {
+    width: calc(100% - 2rem);
+  }
 }
 .myturnIcon { display:none; }
 .myturn .myturnIcon { display:block; }
@@ -265,7 +266,7 @@ a {color:blue;}
 .dark .startingform {border: 1px solid white;background-color:black}
 .dark #statusmesg {border-top: 1px solid white;}
 .dark #listouter {border: 2px solid white;}
-.dark #settings {border: 2px solid white;}
+.dark #settings {/*border: 2px solid white;*/}
 .dark #menubar { background-color: black;color:white;border-bottom: 1px solid white; }
 .dark #answerform {background-color: black;color:white;border: 1px solid white;}
 .dark #mfbutton {background-color: black;color:white;border: 1px solid white;}
@@ -274,7 +275,7 @@ a {color:blue;}
 .dark .paramdiv {border-bottom: 4px solid transparent;}
 .dark .paramdivchanged { border-bottom: 4px solid red;}
 .dark a {color:#03A5F3;}
-.dark .gamerow {color:#03A5F3;}
+.dark .gamespan { color:#03A5F3; }
 .dark .selectedGame {background-color: white;}
 
 #container {
@@ -290,7 +291,7 @@ a {color:blue;}
     margin-top: -4000px;
 }
 .expand-contract {
-  margin-top: -270px;
+  margin-top: -300px;
   transition: all 0.3s;
 }
 
@@ -301,6 +302,7 @@ a {color:blue;}
     margin-left:1.5rem;
 }
 .verbunitrow { font-family: Helvetica, Arial, sans-serif;}
+#verbscontainer { margin-top:-442px; }
     </style>
     </head>
     <body onload="start()">
@@ -312,25 +314,26 @@ a {color:blue;}
             <div style="font-weight:bold;">HOPLITE CHALLENGE</div>
         </div>
         
-        <div id="settings">
-            <a href="javascript:expandContractNewGameDiv()">New Game</a>
-            <div class="expand-container">
-                <div id="newgamediv" class="expand-contract">
-                    <table cellpadding="4" cellspacing="0">
-                        <tr><td align="center" colspan="2"><button id="creategamebutton" onclick="new_game_clicked()">Create Game</button></td></tr>
-                        <tr><td>Opponent:</td><td><input id="opponentinput" type="text"/></td></tr>
-                        <tr><td>Timer:</td></td><td><input name="countdown" id="countdowninput" type="radio" value="down"/>countdown <input id="maxtime" type="text" value="30" style="width:30px;"/><br/><input checked name="countdown" id="countupinput" type="radio" value="up"/>elapsed </td></tr>
-                        <tr><td>Reps per verb:</td><td><input id="repsperverb" type="text" value="4"/></td></tr>
-                        <tr><td>Max changes:</td><td><input id="maxchanges" type="text" value="2"/></td></tr>
-                        <!--<tr><td>Top Unit:</td><td><input id="unitinput" type="text" value="20"/></td></tr>-->
-                    </table>
-                    <div id="verblist"></div>
-                </div>
-            </div>
-        </div>
+        
         
         <div id="listouter">
             <button id="refreshbutton" onclick="get_sessions(true)">refresh</button>
+            <div id="settings" class="gamerow">
+                <a href="javascript:expandContractNewGameDiv()">New</a>
+                <div class="expand-container">
+                    <div id="newgamediv" class="expand-contract">
+                        <table cellpadding="4" cellspacing="0">
+                            <tr><td align="center" colspan="2"><button id="creategamebutton" onclick="new_game_clicked()">Create Game</button></td></tr>
+                            <tr><td>Opponent:</td><td><input id="opponentinput" type="text"/></td></tr>
+                            <tr><td>Timer:</td></td><td><input name="countdown" id="countdowninput" type="radio" value="down"/>countdown <input id="maxtime" type="text" value="30" style="width:30px;"/><br/><input checked name="countdown" id="countupinput" type="radio" value="up"/>elapsed </td></tr>
+                            <tr><td>Reps per verb:</td><td><input id="repsperverb" type="text" value="4"/></td></tr>
+                            <tr><td>Max changes:</td><td><input id="maxchanges" type="text" value="2"/></td></tr>
+                            <!--<tr><td>Top Unit:</td><td><input id="unitinput" type="text" value="20"/></td></tr>-->
+                        </table>
+                        <div id="verblist"></div>
+                    </div>
+                </div>
+            </div>
             <div id="list"></div>
         </div>
         </div>
@@ -961,11 +964,11 @@ function getTextWidth(text, font) {
                     rows += (s.session_id == global_session_id ? " selectedGame" : "") + "' ";
                     rows += (s.opponent_name ? "opponent='" + s.opponent_name + "' " : "");
                     rows += "title='" + s.move_type + "' ";
-                    rows += "onclick='get_move(this)'>";
+                    rows += "onclick='get_move(this)'><span class='gamespan'>";
                     rows += (s.move_type == "Practice" ? "Practice" : (global_username ? global_username : "Game"));
                     rows += (s.opponent_name ? " vs. " + s.opponent_name : "");
                     rows += (s.move_type != "Practice" ? (" (" + s.my_score + " - " + s.their_score + ")") : "");
-                    rows += myturnIcon + "</div>";
+                    rows += myturnIcon + "</span></div>";
                 }
                 //q(".gamerow[data-uuid='b72df91e-3a4c-4f1b-aeda-c14fea61def6']").style.backgroundColor = "blue";
             }
@@ -1706,7 +1709,8 @@ function getTextWidth(text, font) {
       
       function verbList() {
         let list = q("#verblist");
-        let rows = "<div class='verbunitrow'><input class='verblistck verblistckunit' id='ckuall' type='checkbox'/>all</div>";
+        let rows = "<div class='verbunitrow'><a href='#' onclick='ex(this);return false;'>verbs</a></div><div class='expand-container'><div id='verbscontainer' class='expand-contract'>";
+        rows += "<div class='verbunitrow'><input class='verblistck verblistckunit' id='ckuall' type='checkbox'/>all</div>";
         let i = 0;
         let lastUnit = null;
         for ( ; i < verbs.length; i++) {
@@ -1725,12 +1729,12 @@ function getTextWidth(text, font) {
                 }
                 lastUnit = verbs[i].u;
                 
-                rows += "<div class='verbunitrow'><input class='verblistck verblistckunit' id='cku" + verbs[i].u + "' value='" + verbs[i].u + "' type='checkbox'/><a href='#' onclick='ex(this);return false;'>unit " + verbs[i].u + "</a></div>";
+                rows += "<div class='verbunitrow'><input class='verblistck verblistckunit' id='cku" + verbs[i].u + "' value='" + verbs[i].u + "' type='checkbox'/><a href='#' onclick='ex(this);return false;'>H&Q unit " + verbs[i].u + "</a></div>";
                 rows += "<div class='expand-container'><div id='unitdiv" + verbs[i].u + "' class='expand-contract'>";
             }
             rows += "<div class='verbrow'><input class='verblistck verblistckverb' id='ckv" + verbs[i].i + "' value='" + verbs[i].i + "' type='checkbox'/>" + verbs[i].pp.substring(0, (verbs[i].pp.indexOf(end) + plus)) + "</div>";
         }
-        rows += "</div></div>";
+        rows += "</div></div></div></div>";
         list.innerHTML = rows;
 
         let all = document.querySelector("#ckuall");
