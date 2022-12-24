@@ -1725,7 +1725,7 @@ function getTextWidth(text, font) {
                 }
                 lastUnit = verbs[i].u;
                 
-                rows += "<div class='verbunitrow'><input class='verblistck verblistckunit' id='cku" + verbs[i].u + "' value='" + verbs[i].u + "' type='checkbox'/><a href='#' onclick='ex(this)'>unit " + verbs[i].u + "</a></div>";
+                rows += "<div class='verbunitrow'><input class='verblistck verblistckunit' id='cku" + verbs[i].u + "' value='" + verbs[i].u + "' type='checkbox'/><a href='#' onclick='ex(this);return false;'>unit " + verbs[i].u + "</a></div>";
                 rows += "<div class='expand-container'><div id='unitdiv" + verbs[i].u + "' class='expand-contract'>";
             }
             rows += "<div class='verbrow'><input class='verblistck verblistckverb' id='ckv" + verbs[i].i + "' value='" + verbs[i].i + "' type='checkbox'/>" + verbs[i].pp.substring(0, (verbs[i].pp.indexOf(end) + plus)) + "</div>";
