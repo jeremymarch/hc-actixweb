@@ -214,7 +214,6 @@ BUTTON:disabled {cursor:default}
     padding: 0.25rem;
     margin: 0.5rem;
     cursor:pointer;
-    
 }
 .gamespan {
     color:blue;
@@ -245,14 +244,6 @@ a {color:blue;}
   margin-right: 0.5rem;
 }
 
-@media only screen and (max-width: 800px) {
-  .hcform {
-    width:calc(100% - 4rem);
-  }
-  #listouter {
-    width: calc(100% - 2rem);
-  }
-}
 .myturnIcon { display:none; }
 .myturn .myturnIcon { display:block; }
 
@@ -266,7 +257,7 @@ a {color:blue;}
 .dark .startingform {border: 1px solid white;background-color:black}
 .dark #statusmesg {border-top: 1px solid white;}
 .dark #listouter {border: 2px solid white;}
-.dark #settings {/*border: 2px solid white;*/}
+.dark #settings .expand-container {/*border: 2px solid white;*/background-color: black;}
 .dark #menubar { background-color: black;color:white;border-bottom: 1px solid white; }
 .dark #answerform {background-color: black;color:white;border: 1px solid white;}
 .dark #mfbutton {background-color: black;color:white;border: 1px solid white;}
@@ -277,6 +268,8 @@ a {color:blue;}
 .dark a {color:#03A5F3;}
 .dark .gamespan { color:#03A5F3; }
 .dark .selectedGame {background-color: white;}
+
+.dark .gamerow {background-color:#202124;}
 
 #container {
    border: 1px solid black;
@@ -301,8 +294,23 @@ a {color:blue;}
 .verbrow {
     margin-left:1.5rem;
 }
-.verbunitrow { font-family: Helvetica, Arial, sans-serif;}
-#verbscontainer { margin-top:-442px; }
+.verbunitrow { font-family: Helvetica, Arial, sans-serif;line-height: 1.5;}
+#verbscontainer { margin-top:-482px; }
+#closebutton {    float: left;
+    width: 2rem;
+    height: 2rem;display:none;}
+
+@media only screen and (max-width: 800px) {
+  .hcform {
+    width:calc(100% - 4rem);
+  }
+  #listouter {
+    width: calc(100% - 2rem);
+  }
+  #closebutton {
+    display:inline-block;
+  }
+}
     </style>
     </head>
     <body onload="start()">
@@ -324,6 +332,7 @@ a {color:blue;}
                     <div id="newgamediv" class="expand-contract">
                         <table cellpadding="4" cellspacing="0">
                             <tr><td align="center" colspan="2"><button id="creategamebutton" onclick="new_game_clicked()">Create Game</button></td></tr>
+                            <tr><td>Type</td><td>practice <input checked name="gametype" id="gametypepractice" type="radio" value="practice"/> game <input checked name="gametype" id="gametypegame" type="radio" value="game"/></td></tr>
                             <tr><td>Opponent:</td><td><input id="opponentinput" type="text"/></td></tr>
                             <tr><td>Timer:</td></td><td><input name="countdown" id="countdowninput" type="radio" value="down"/>countdown <input id="maxtime" type="text" value="30" style="width:30px;"/><br/><input checked name="countdown" id="countupinput" type="radio" value="up"/>elapsed </td></tr>
                             <tr><td>Reps per verb:</td><td><input id="repsperverb" type="text" value="4"/></td></tr>
@@ -340,6 +349,7 @@ a {color:blue;}
 
         <div class="hcform">
         <div class="hbox">
+            <button id="closebutton" class="closebutton" onclick="close_clicked()" title="Close form">X</button>
             <button id="mfbutton" class="mfbutton" onclick="mf_clicked()" title="Multiple Forms Button">MF</button>
             <div id="mainstopwatch">
                 <div id="mainTime">
@@ -1105,6 +1115,10 @@ function getTextWidth(text, font) {
             console.log(submitbutton.innerText + " clicked");
             uiModeAnwerGoForm(global_starting_form, global_change_desc);
         }
+    }
+
+    function close_clicked() {
+        q(".hcform").style.display = "none";
     }
 
     function mf_clicked() {
