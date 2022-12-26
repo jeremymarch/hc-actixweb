@@ -83,45 +83,6 @@ function getStringFromWasm0(ptr, len) {
 }
 /**
 * @param {string} l
-* @returns {string}
-*/
-export function strip_diacritics(l) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        const ptr0 = passStringToWasm0(l, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        const len0 = WASM_VECTOR_LEN;
-        wasm.strip_diacritics(retptr, ptr0, len0);
-        var r0 = getInt32Memory0()[retptr / 4 + 0];
-        var r1 = getInt32Memory0()[retptr / 4 + 1];
-        return getStringFromWasm0(r0, r1);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-        wasm.__wbindgen_free(r0, r1);
-    }
-}
-
-/**
-* @param {string} l
-* @param {number} mode
-* @returns {string}
-*/
-export function convert(l, mode) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        const ptr0 = passStringToWasm0(l, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        const len0 = WASM_VECTOR_LEN;
-        wasm.convert(retptr, ptr0, len0, mode);
-        var r0 = getInt32Memory0()[retptr / 4 + 0];
-        var r1 = getInt32Memory0()[retptr / 4 + 1];
-        return getStringFromWasm0(r0, r1);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-        wasm.__wbindgen_free(r0, r1);
-    }
-}
-
-/**
-* @param {string} l
 * @param {number} d
 * @param {boolean} on_only
 * @param {number} mode
@@ -159,21 +120,6 @@ export function translit(l) {
         wasm.__wbindgen_add_to_stack_pointer(16);
         wasm.__wbindgen_free(r0, r1);
     }
-}
-
-/**
-* @param {string} a
-* @param {string} b
-* @param {number} compare_type
-* @returns {number}
-*/
-export function compare(a, b, compare_type) {
-    const ptr0 = passStringToWasm0(a, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ptr1 = passStringToWasm0(b, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    const len1 = WASM_VECTOR_LEN;
-    const ret = wasm.compare(ptr0, len0, ptr1, len1, compare_type);
-    return ret;
 }
 
 async function load(module, imports) {

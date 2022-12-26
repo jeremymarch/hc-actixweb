@@ -233,11 +233,13 @@ SELECT, OPTION {
 a {color:blue;}
 
 #refreshbutton {
-    margin: 0.25rem 0.5rem;
+   /*margin: 0.25rem 0.5rem;*/
 }
 
 #verblist {
     font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
+    margin-left: 4px;
+    margin-top: 6px;
 }
 
 .verblistck {
@@ -267,7 +269,7 @@ a {color:blue;}
 .dark .paramdivchanged { border-bottom: 4px solid red;}
 .dark a {color:#03A5F3;}
 .dark .gamespan { color:#03A5F3; }
-.dark .selectedGame {background-color: white;}
+.dark .gamerow.selectedGame {background-color: white;}
 
 .dark .gamerow {background-color:#202124;}
 
@@ -281,7 +283,10 @@ a {color:blue;}
 }
 
 #newgamediv {
-    margin-top: -4000px;
+    margin-top: -288px;
+    margin-left: 1rem;
+    margin-right: 1rem;
+    margin-bottom: 1rem;
 }
 .expand-contract {
   margin-top: -300px;
@@ -302,44 +307,51 @@ a {color:blue;}
 
 @media only screen and (max-width: 800px) {
   .hcform {
-    width:calc(100% - 4rem);
+    width:100%;
   }
   #listouter {
-    width: calc(100% - 2rem);
+    width: 100%;
+    left: 0rem;
+    border:0px solid black;
+  }
+  .dark #listouter {
+    border:0px solid black;
   }
   #closebutton {
     display:inline-block;
+  }
+  .gamerow {
+    line-height: 2;
+    height:44px;
   }
 }
     </style>
     </head>
     <body onload="start()">
         <div id="menubar">
-            
+            <!--<button id="refreshbutton" onclick="get_sessions(true)">refresh</button>-->
             <div style="padding:0px 20px"><a id="loginlink" href="login">login</a>
                 <span id="logoutlink" style="display:none;"><span id="username"></span> (<a href="logout">logout</a>)</span>
             </div>
             <div style="font-weight:bold;">HOPLITE CHALLENGE</div>
         </div>
-        
-        
-        
         <div id="listouter">
-            <button id="refreshbutton" onclick="get_sessions(true)">refresh</button>
-            <div id="settings" class="gamerow">
-                <a href="javascript:expandContractNewGameDiv()">New</a>
+            <div id="settings">
+                <div class="gamerow" onclick="expandContractNewGameDiv()" style="margin-bottom: 0px;">
+                <span class="gamespan">New</span></div>
                 <div class="expand-container">
                     <div id="newgamediv" class="expand-contract">
                         <table cellpadding="4" cellspacing="0">
-                            <tr><td align="center" colspan="2"><button id="creategamebutton" onclick="new_game_clicked()">Create Game</button></td></tr>
                             <tr><td>Type</td><td>practice <input checked name="gametype" id="gametypepractice" type="radio" value="practice"/> game <input checked name="gametype" id="gametypegame" type="radio" value="game"/></td></tr>
                             <tr><td>Opponent:</td><td><input id="opponentinput" type="text"/></td></tr>
                             <tr><td>Timer:</td></td><td><input name="countdown" id="countdowninput" type="radio" value="down"/>countdown <input id="maxtime" type="text" value="30" style="width:30px;"/><br/><input checked name="countdown" id="countupinput" type="radio" value="up"/>elapsed </td></tr>
                             <tr><td>Reps per verb:</td><td><input id="repsperverb" type="text" value="4"/></td></tr>
                             <tr><td>Max changes:</td><td><input id="maxchanges" type="text" value="2"/></td></tr>
                             <!--<tr><td>Top Unit:</td><td><input id="unitinput" type="text" value="20"/></td></tr>-->
+                            
                         </table>
                         <div id="verblist"></div>
+                        <div style="padding-top:1rem;text-align:center;"><button id="creategamebutton" onclick="new_game_clicked()">Create Game</button></div>
                     </div>
                 </div>
             </div>
@@ -413,27 +425,18 @@ a {color:blue;}
     <div id="statusmesg">press start to begin</div>
 </div>
 <script type="module">
-    import { compare, convert, toggle, translit, strip_diacritics, default as init } from './hoplitekb_wasm_rs.js';
+    import { toggle, translit, default as init } from './hoplitekb_wasm_rs.js';
 
     async function run() {
         await init('./hoplitekb_wasm_rs_bg.wasm');
         // make the function available to the browser
-        window.convert = convert;
         window.toggle = toggle;
         window.translit = translit;
-        window.strip_diacritics = strip_diacritics;
-        window.compare = compare;
     }
     run(); 
 </script>
     <script>
     'use strict';
-
-function expandContractNewGameDiv() {
-    let el = document.getElementById("newgamediv");
-    el.classList.toggle('expanded');
-    //el.classList.toggle('collapsed');
-}
 
 (function (global, factory) {
     if (typeof define === 'function' && define.amd) {
@@ -1723,7 +1726,7 @@ function getTextWidth(text, font) {
       
       function verbList() {
         let list = q("#verblist");
-        let rows = "<div class='verbunitrow'><a href='#' onclick='ex(this);return false;'>verbs</a></div><div class='expand-container'><div id='verbscontainer' class='expand-contract'>";
+        let rows = "<div class='verbunitrow'><a href='#' onclick='ex(this);return false;'>H&Q verbs</a></div><div class='expand-container'><div id='verbscontainer' class='expand-contract'>";
         rows += "<div class='verbunitrow'><input class='verblistck verblistckunit' id='ckuall' type='checkbox'/>all</div>";
         let i = 0;
         let lastUnit = null;
@@ -1743,7 +1746,7 @@ function getTextWidth(text, font) {
                 }
                 lastUnit = verbs[i].u;
                 
-                rows += "<div class='verbunitrow'><input class='verblistck verblistckunit' id='cku" + verbs[i].u + "' value='" + verbs[i].u + "' type='checkbox'/><a href='#' onclick='ex(this);return false;'>H&Q unit " + verbs[i].u + "</a></div>";
+                rows += "<div class='verbunitrow'><input class='verblistck verblistckunit' id='cku" + verbs[i].u + "' value='" + verbs[i].u + "' type='checkbox'/><a href='#' onclick='ex(this);return false;'>unit " + verbs[i].u + "</a></div>";
                 rows += "<div class='expand-container'><div id='unitdiv" + verbs[i].u + "' class='expand-contract'>";
             }
             rows += "<div class='verbrow'><input class='verblistck verblistckverb' id='ckv" + verbs[i].i + "' value='" + verbs[i].i + "' type='checkbox'/>" + verbs[i].pp.substring(0, (verbs[i].pp.indexOf(end) + plus)) + "</div>";
@@ -1794,11 +1797,19 @@ function getTextWidth(text, font) {
         });
     }
 
-      function ex(n) {
+    function expandContractNewGameDiv() {
+        let el = document.getElementById("newgamediv");
+        el.classList.toggle('expanded');
+        //collapse all expanded divs below this one
+        el.querySelectorAll(".expand-contract").forEach( e => e.classList.remove("expanded") ); 
+    }
+
+    function ex(n) {
         let el = n.parentNode.nextSibling.firstChild;
         el.classList.toggle('expanded');
-        //el.classList.toggle('collapsed');
-      }
+        //collapse all expanded divs below this one
+        el.querySelectorAll(".expand-contract").forEach( e => e.classList.remove("expanded") ); 
+    }
 
 const verbs = [
 {i:1,pp:"παιδεύω, παιδεύσω, ἐπαίδευσα, πεπαίδευκα, πεπαίδευμαι, ἐπαιδεύθην", u:2},
