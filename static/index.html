@@ -303,7 +303,13 @@ a {color:blue;}
 #verbscontainer { margin-top:-482px; }
 #closebutton {    float: left;
     width: 2rem;
-    height: 2rem;display:none;}
+    height: 2rem;display:none;
+}
+
+.newrow { display:flex;flex-direction: row;padding: 4px 0px;}
+.newcol1 {width:125px;}
+.newcol2 {}
+.newgameinput { width:155px;}
 
 @media only screen and (max-width: 800px) {
   .hcform {
@@ -341,15 +347,15 @@ a {color:blue;}
                 <span class="gamespan">New</span></div>
                 <div class="expand-container">
                     <div id="newgamediv" class="expand-contract">
-                        <table cellpadding="4" cellspacing="0">
-                            <tr><td>Type</td><td>practice <input checked name="gametype" id="gametypepractice" type="radio" value="practice"/> game <input checked name="gametype" id="gametypegame" type="radio" value="game"/></td></tr>
-                            <tr><td>Opponent:</td><td><input id="opponentinput" type="text"/></td></tr>
-                            <tr><td>Timer:</td></td><td><input name="countdown" id="countdowninput" type="radio" value="down"/>countdown <input id="maxtime" type="text" value="30" style="width:30px;"/><br/><input checked name="countdown" id="countupinput" type="radio" value="up"/>elapsed </td></tr>
-                            <tr><td>Reps per verb:</td><td><input id="repsperverb" type="text" value="4"/></td></tr>
-                            <tr><td>Max changes:</td><td><input id="maxchanges" type="text" value="2"/></td></tr>
-                            <!--<tr><td>Top Unit:</td><td><input id="unitinput" type="text" value="20"/></td></tr>-->
+                        <div class="table">
+                            <div class="newrow"><div class="newcol1">Type</div><div class="newcol2">practice <input checked name="gametype" id="gametypepractice" type="radio" value="practice"/> game <input checked name="gametype" id="gametypegame" type="radio" value="game"/></div></div>
+                                <div class="newrow"><div class="newcol1">Opponent:</div><div class="newcol2"><input id="opponentinput" type="text" class="newgameinput"/></div></div>
+                                    <div class="newrow"><div class="newcol1">Timer:</div><div class="newcol2"><input name="countdown" id="countdowninput" type="radio" value="down"/>countdown <input id="maxtime" type="text" value="30" style="width:30px;"/><br/><input checked name="countdown" id="countupinput" type="radio" value="up"/>elapsed </div></div>
+                                        <div class="newrow"><div class="newcol1">Reps per verb:</div><div class="newcol2"><input id="repsperverb" type="text" value="4" class="newgameinput"/></div></div>
+                                            <div class="newrow"><div class="newcol1">Max changes:</div><div class="newcol2"><input id="maxchanges" type="text" value="2" class="newgameinput"/></div></div>
+                            <!--<div class="newrow"><td>Top Unit:</td><td><input id="unitinput" type="text" value="20"/></td></div>-->
                             
-                        </table>
+                        </div>
                         <div id="verblist"></div>
                         <div style="padding-top:1rem;text-align:center;"><button id="creategamebutton" onclick="new_game_clicked()">Create Game</button></div>
                     </div>
