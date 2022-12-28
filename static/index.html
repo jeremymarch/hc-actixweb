@@ -163,6 +163,7 @@ BUTTON:disabled {cursor:default}
 
 #creategamebutton {
     display: block;
+    margin: 0px auto;
 }
 #menubar {
     height:1.5rem;
@@ -348,8 +349,10 @@ a {color:blue;}
                 <div class="expand-container">
                     <div id="newgamediv" class="expand-contract">
                         <div class="table">
-                            <div class="newrow"><div class="newcol1">Type</div><div class="newcol2">practice <input checked name="gametype" id="gametypepractice" type="radio" value="practice"/> game <input checked name="gametype" id="gametypegame" type="radio" value="game"/></div></div>
-                                <div class="newrow"><div class="newcol1">Opponent:</div><div class="newcol2"><input id="opponentinput" type="text" class="newgameinput"/></div></div>
+                            <div class="newrow"><div class="newcol1">Type</div><div class="newcol2">practice <input checked name="gametype" id="gametypepractice" type="radio" value="practice" onchange="typeChanged(this)"/> game <input name="gametype" id="gametypegame" type="radio" value="game" onchange="typeChanged(this)"/></div></div>
+                            <div class="expand-container">
+                                <div id="opponentrow" class="newrow expand-contract"><div class="newcol1">Opponent:</div><div class="newcol2"><input id="opponentinput" type="text" class="newgameinput"/></div></div>
+                            </div>
                                     <div class="newrow"><div class="newcol1">Timer:</div><div class="newcol2"><input name="countdown" id="countdowninput" type="radio" value="down"/>countdown <input id="maxtime" type="text" value="30" style="width:30px;"/><br/><input checked name="countdown" id="countupinput" type="radio" value="up"/>elapsed </div></div>
                                         <div class="newrow"><div class="newcol1">Reps per verb:</div><div class="newcol2"><input id="repsperverb" type="text" value="4" class="newgameinput"/></div></div>
                                             <div class="newrow"><div class="newcol1">Max changes:</div><div class="newcol2"><input id="maxchanges" type="text" value="2" class="newgameinput"/></div></div>
@@ -443,6 +446,15 @@ a {color:blue;}
 </script>
     <script>
     'use strict';
+
+    function typeChanged(radio) {
+        if (radio.value == "game") {
+            document.querySelector("#opponentrow").classList.add("expanded");
+        }
+        else {
+            document.querySelector("#opponentrow").classList.remove("expanded");
+        }
+    }
 
 (function (global, factory) {
     if (typeof define === 'function' && define.amd) {
