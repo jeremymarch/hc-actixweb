@@ -871,7 +871,7 @@ function getTextWidth(text, font) {
                 e.preventDefault();
                 return false;
             }
-            else {
+            else if (key.length == 1) { //len == 1 to exclude keys like "ENTER", etc.
                 let greek_letter = translit(key); //returns \0 if the character cannot be transliterated
                 if (greek_letter !== "\0") {
                     let end = this.selectionEnd;            
