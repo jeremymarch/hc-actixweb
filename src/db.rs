@@ -45,7 +45,7 @@ impl HcDb {
 
     pub async fn add_to_score<'a, 'b>(&self,
         tx: &'a mut sqlx::Transaction<'b, Postgres>, session_id:Uuid, user_to_score:&str, points:i32) -> Result<u32, sqlx::Error> {
-            let query = format!("UPDATE sessions SET {} = {} + $1 WHERE session_id = $2;", user_to_score, user_to_score);
+            let query = format!("UPDATE sessions SET {user_to_score} = {user_to_score} + $1 WHERE session_id = $2;");
             let _res = sqlx::query(&query)
                 .bind(points)
                 .bind(session_id)

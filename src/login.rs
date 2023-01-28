@@ -107,7 +107,7 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
         <form action="/login" method="post" onsubmit="return validate()">
             <table>
                 <tbody>
-                    <tr><td colspan="2" align="center">{}</td></tr>
+                    <tr><td colspan="2" align="center">{error_html}</td></tr>
                     <tr>
                         <td>               
                             <label for="username">Username</label>
@@ -140,7 +140,7 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
         <script>/*document.getElementById("username").focus();*/</script>
     </body>
 </html>
-"##, error_html)))
+"##)))
 }
 
 //for testing without db
@@ -249,7 +249,7 @@ pub async fn new_user_get(flash_messages: IncomingFlashMessages) -> Result<HttpR
         <form action="/newuser" method="post" onsubmit="return validate()">
             <table>
                 <tbody>
-                <tr><td colspan="2" align="center">{}</td></tr>
+                <tr><td colspan="2" align="center">{error_html}</td></tr>
                     <tr>
                         <td>               
                             <label for="username">Username</label>
@@ -292,7 +292,7 @@ pub async fn new_user_get(flash_messages: IncomingFlashMessages) -> Result<HttpR
         <script>/*document.getElementById("username").focus();*/</script>
     </body>
 </html>
-"##, error_html)))
+"##)))
 }
 
 //for testing without db

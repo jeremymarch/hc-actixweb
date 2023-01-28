@@ -185,7 +185,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                                     ("opponent not found!".to_string(), false)
                                 },
                                 Err(e) => {
-                                    (format!("error inserting: {:?}", e), false)
+                                    (format!("error inserting: {e:?}"), false)
                                 }
                             };
                             let res = StatusResponse {

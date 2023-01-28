@@ -492,7 +492,7 @@ async fn create_session(
                 ("opponent not found!".to_string(), false)
             },
             Err(e) => {
-                (format!("error inserting: {:?}", e), false)
+                (format!("error inserting: {e:?}"), false)
             }
         };
         let res = StatusResponse {
@@ -732,27 +732,27 @@ fn map_sqlx_error(e: sqlx::Error) -> PhilologusError {
         sqlx::Error::Configuration(e) => PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,
             name: "sqlx error".to_string(),
-            error: format!("sqlx Configuration: {}", e),
+            error: format!("sqlx Configuration: {e}"),
         },
         sqlx::Error::Database(e) => PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,
             name: "sqlx error".to_string(),
-            error: format!("sqlx Database: {}", e),
+            error: format!("sqlx Database: {e}"),
         },
         sqlx::Error::Io(e) => PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,
             name: "sqlx error".to_string(),
-            error: format!("sqlx Io: {}", e),
+            error: format!("sqlx Io: {e}"),
         },
         sqlx::Error::Tls(e) => PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,
             name: "sqlx error".to_string(),
-            error: format!("sqlx Tls: {}", e),
+            error: format!("sqlx Tls: {e}"),
         },
         sqlx::Error::Protocol(e) => PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,
             name: "sqlx error".to_string(),
-            error: format!("sqlx Protocol: {}", e),
+            error: format!("sqlx Protocol: {e}"),
         },
         sqlx::Error::RowNotFound => PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,
@@ -772,7 +772,7 @@ fn map_sqlx_error(e: sqlx::Error) -> PhilologusError {
         sqlx::Error::ColumnNotFound(e) => PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,
             name: "sqlx error".to_string(),
-            error: format!("sqlx ColumnNotFound: {}", e),
+            error: format!("sqlx ColumnNotFound: {e}"),
         },
         sqlx::Error::ColumnDecode { .. } => PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,
@@ -782,7 +782,7 @@ fn map_sqlx_error(e: sqlx::Error) -> PhilologusError {
         sqlx::Error::Decode(e) => PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,
             name: "sqlx error".to_string(),
-            error: format!("sqlx Decode: {}", e),
+            error: format!("sqlx Decode: {e}"),
         },
         sqlx::Error::PoolTimedOut => PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,
@@ -802,7 +802,7 @@ fn map_sqlx_error(e: sqlx::Error) -> PhilologusError {
         sqlx::Error::Migrate(e) => PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,
             name: "sqlx error".to_string(),
-            error: format!("sqlx Migrate: {}", e),
+            error: format!("sqlx Migrate: {e}"),
         },
         _ => PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,
@@ -885,7 +885,7 @@ async fn main() -> io::Result<()> {
 
     let res = hcdb.create_db().await;
     if res.is_err() {
-        println!("error: {:?}", res);
+        println!("error: {res:?}");
     }
 
     //1. to make a new key:
@@ -991,7 +991,7 @@ mod tests {
 
         let res = db.create_db().await;
         if res.is_err() {
-            println!("error: {:?}", res);
+            println!("error: {res:?}");
         }
     }
 
@@ -1139,7 +1139,7 @@ mod tests {
         //a valid ask
         let ask = hc_ask(&db, uuid1, &aq, timestamp, &verbs).await;
         if ask.is_err() {
-            println!("error {:?}", ask);
+            println!("error {ask:?}");
         }
         assert!(ask.is_ok());
 
