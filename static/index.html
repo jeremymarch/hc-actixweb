@@ -16,21 +16,21 @@
         integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" 
         crossorigin="anonymous"></script>
 -->
-<script>
+<script nonce="2726c7f26c" type="text/javascript">
     'use strict';
-    function q(i) {return document.querySelector(i)}
-    function setTheme() {
-        let mode = localStorage.getItem("mode");
-        if ((window.matchMedia( "(prefers-color-scheme: dark)" ).matches || mode == "dark") && mode != "light") {
-            q("HTML").classList.add("dark");
-        }
-        else {
-            q("HTML").classList.remove("dark");
-        }
+    function q (i) { return document.querySelector(i); }
+    function setTheme () {
+      const mode = localStorage.getItem('mode');
+      console.log('set theme: ' + mode);
+      if ((window.matchMedia('(prefers-color-scheme: dark)').matches || mode === 'dark') && mode !== 'light') {
+        q('HTML').classList.add('dark');
+      } else {
+        q('HTML').classList.remove('dark');
+      }
     }
     setTheme();
-    </script>
-    <style>
+</script>
+<style nonce="2726c7f26c">
 @font-face {
     font-family: 'WebNewAthenaUnicode';
     src: url('/newathu5_8.ttf') format('truetype');
@@ -142,10 +142,6 @@ BUTTON:disabled {cursor:default}
     width: 6rem;
     height: 2rem;
 }
-
-#settings {
-    /*border:2px solid black;*/
-}
 .addheight{
     top:28px;
 }
@@ -160,7 +156,7 @@ BUTTON:disabled {cursor:default}
     z-index:899;
 }
 
-#list { }
+/* #list { } */
 
 #creategamebutton {
     display: block;
@@ -176,9 +172,9 @@ BUTTON:disabled {cursor:default}
     z-index:900;
     padding:0.2rem 1rem;
 }
-.myturn {
-    /* background-color: red; */
-}
+/* .myturn {
+   
+} */
 .selectedGame {
     background-color: lightgray;
 }
@@ -220,9 +216,6 @@ BUTTON:disabled {cursor:default}
 .gamespan {
     color:blue;
 }
-SELECT, OPTION {
-    /* font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial; */
-}
 .paramdiv {
     margin: 10px 4px;
     border-bottom: 4px solid white;
@@ -233,10 +226,6 @@ SELECT, OPTION {
 }
 
 a {color:blue;}
-
-#refreshbutton {
-   /*margin: 0.25rem 0.5rem;*/
-}
 
 #verblist {
     font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
@@ -309,7 +298,6 @@ a {color:blue;}
 
 .newrow { display:flex;flex-direction: row;padding: 4px 0px;}
 .newcol1 {width:125px;}
-.newcol2 {}
 .newgameinput { width:155px;}
 
 @media only screen and (max-width: 800px) {
@@ -334,9 +322,9 @@ a {color:blue;}
 }
     </style>
     </head>
-    <body onload="start()">
+    <body>
         <div id="menubar">
-            <!--<button id="refreshbutton" onclick="get_sessions(true)">refresh</button>-->
+            <!--<button id="refreshbutton" onclick="getSessions(true)">refresh</button>-->
             <div style="padding:0px 20px"><a id="loginlink" href="login">login</a>
                 <span id="logoutlink" style="display:none;"><span id="username"></span> (<a href="logout">logout</a>)</span>
             </div>
@@ -349,18 +337,22 @@ a {color:blue;}
                 <div class="expand-container">
                     <div id="newgamediv" class="expand-contract">
                         <div class="table">
-                            <div class="newrow"><div class="newcol1">Type</div><div class="newcol2">practice <input checked name="gametype" id="gametypepractice" type="radio" value="practice" onchange="typeChanged(this)"/> game <input name="gametype" id="gametypegame" type="radio" value="game" onchange="typeChanged(this)"/></div></div>
+                            <div class="newrow"><div class="newcol1">Type</div>
+                            <div class="newcol2">
+                              practice <input checked name="gametype" id="gametypepractice" type="radio" value="practice" onchange="typeChanged(this)"/> 
+                              game <input name="gametype" id="gametypegame" type="radio" value="game" onchange="typeChanged(this)"/>
+                            </div></div>
                             <div class="expand-container">
                                 <div id="opponentrow" class="newrow expand-contract"><div class="newcol1">Opponent:</div><div class="newcol2"><input id="opponentinput" type="text" class="newgameinput"/></div></div>
                             </div>
-                                    <div class="newrow"><div class="newcol1">Timer:</div><div class="newcol2"><input name="countdown" id="countdowninput" type="radio" value="down"/>countdown <input id="maxtime" type="text" value="30" style="width:30px;"/><br/><input checked name="countdown" id="countupinput" type="radio" value="up"/>elapsed </div></div>
-                                        <div class="newrow"><div class="newcol1">Reps per verb:</div><div class="newcol2"><input id="repsperverb" type="text" value="4" class="newgameinput"/></div></div>
-                                            <div class="newrow"><div class="newcol1">Max changes:</div><div class="newcol2"><input id="maxchanges" type="text" value="2" class="newgameinput"/></div></div>
+                            <div class="newrow"><div class="newcol1">Timer:</div><div class="newcol2"><input name="countdown" id="countdowninput" type="radio" value="down"/>countdown <input id="maxtime" type="text" value="30" style="width:30px;"/><br/><input checked name="countdown" id="countupinput" type="radio" value="up"/>elapsed </div></div>
+                            <div class="newrow"><div class="newcol1">Reps per verb:</div><div class="newcol2"><input id="repsperverb" type="text" value="4" class="newgameinput"/></div></div>
+                            <div class="newrow"><div class="newcol1">Max changes:</div><div class="newcol2"><input id="maxchanges" type="text" value="2" class="newgameinput"/></div></div>
                             <!--<div class="newrow"><td>Top Unit:</td><td><input id="unitinput" type="text" value="20"/></td></div>-->
                             
                         </div>
                         <div id="verblist"></div>
-                        <div style="padding-top:1rem;text-align:center;"><button id="creategamebutton" onclick="new_game_clicked()">Create Game</button></div>
+                        <div style="padding-top:1rem;text-align:center;"><button id="creategamebutton" onclick="newGameClicked()">Create Game</button></div>
                     </div>
                 </div>
             </div>
@@ -370,8 +362,8 @@ a {color:blue;}
 
         <div class="hcform">
         <div class="hbox">
-            <button id="closebutton" class="closebutton" onclick="close_clicked()" title="Close form">X</button>
-            <button id="mfbutton" class="mfbutton" onclick="mf_clicked()" title="Multiple Forms Button">MF</button>
+            <button id="closebutton" class="closebutton" onclick="closeClicked()" title="Close form">X</button>
+            <button id="mfbutton" class="mfbutton" onclick="mfClicked()" title="Multiple Forms Button">MF</button>
             <div id="mainstopwatch">
                 <div id="mainTime">
                     
@@ -389,20 +381,20 @@ a {color:blue;}
     <div id="askparamsdiv">
         <div id="askparamsdivinner">
             <div id="personparamdiv" class="paramdiv">
-                <select id="personparam" onchange="select_changed(this)">
+                <select id="personparam" onchange="selectChanged(this)">
                     <option value="0">First</option>
                     <option value="1">Second</option>
                     <option value="2">Third</option>
                 </select>
             </div>
             <div id="numberparamdiv" class="paramdiv">
-                <select id="numberparam" onchange="select_changed(this)">
+                <select id="numberparam" onchange="selectChanged(this)">
                     <option value="0">Singular</option>
                     <option value="1">Plural</option>
                 </select>
             </div>
             <div id="tenseparamdiv" class="paramdiv">
-                <select id="tenseparam" onchange="select_changed(this)">
+                <select id="tenseparam" onchange="selectChanged(this)">
                     <option value="0">Present</option>
                     <option value="1">Imperfect</option>
                     <option value="2">Future</option>
@@ -412,7 +404,7 @@ a {color:blue;}
                 </select>
             </div>
             <div id="moodparamdiv" class="paramdiv">
-                <select id="moodparam" onchange="select_changed(this)">
+                <select id="moodparam" onchange="selectChanged(this)">
                     <option value="0">Indicative</option>
                     <option value="1">Subjunctive</option>
                     <option value="2">Optative</option>
@@ -420,7 +412,7 @@ a {color:blue;}
                 </select>
             </div>
             <div id="voiceparamdiv" class="paramdiv">
-                <select id="voiceparam" onchange="select_changed(this)">
+                <select id="voiceparam" onchange="selectChanged(this)">
                     <option value="0">Active</option>
                     <option value="1">Middle</option>
                     <option value="2">Passive</option>
@@ -430,295 +422,297 @@ a {color:blue;}
     </div>
     <textarea id="answerform" class="gkinput newform disablecopypaste" disabled autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
     <div id="correctanswer" class="gkinput correctanswer" style="visibility: hidden;"></div>
-    <button id="submitbutton" onclick="submit_clicked()">Start</button>
+    <button id="submitbutton" onclick="submitClicked()">Start</button>
     <div id="statusmesg">press start to begin</div>
 </div>
-<script type="module">
-    import { toggle, translit, default as init } from './hoplitekb_wasm_rs.js';
+<script nonce="2726c7f26c" type="module">
+  import { toggle, translit, default as init } from './hoplitekb_wasm_rs.js';
 
-    async function run() {
-        await init('./hoplitekb_wasm_rs_bg.wasm');
-        // make the function available to the browser
-        window.toggle = toggle;
-        window.translit = translit;
-    }
-    run(); 
+  async function run () {
+    await init('./hoplitekb_wasm_rs_bg.wasm');
+    // make the function available to the browser
+    window.toggle = toggle;
+    window.translit = translit;
+  }
+  run();
 </script>
-    <script>
-    'use strict';
+<script nonce="2726c7f26c" type="text/javascript">
+  'use strict';
 
-    function typeChanged(radio) {
-        if (radio.value == "game") {
-            document.querySelector("#opponentrow").classList.add("expanded");
-        }
-        else {
-            document.querySelector("#opponentrow").classList.remove("expanded");
-            document.querySelector("#opponentinput").value = "";
-        }
-    }
-
-(function (global, factory) {
-    if (typeof define === 'function' && define.amd) {
-        define([], factory);
-    } else if (typeof module !== 'undefined' && module.exports){
-        module.exports = factory();
+  function typeChanged (radio) {
+    if (radio.value === 'game') {
+      document.querySelector('#opponentrow').classList.add('expanded');
     } else {
-        global.ReconnectingWebSocket = factory();
+      document.querySelector('#opponentrow').classList.remove('expanded');
+      document.querySelector('#opponentinput').value = '';
     }
-})(this, function () {
+  }
 
+  let timeout = null;
+  (function (global, factory) {
+    if (typeof define === 'function' && define.amd) {
+      define([], factory);
+    } else if (typeof module !== 'undefined' && module.exports) {
+      module.exports = factory();
+    } else {
+      global.ReconnectingWebSocket = factory();
+    }
+  })(this, function () {
     if (!('WebSocket' in window)) {
-        return;
+      return;
     }
+  
+    function ReconnectingWebSocket (url, protocols, options) {
+      // Default settings
+      const settings = {
 
-    function ReconnectingWebSocket(url, protocols, options) {
+        /** Whether this instance should log debug messages. */
+        debug: false,
 
-        // Default settings
-        var settings = {
+        /** Whether or not the websocket should attempt to connect immediately upon instantiation. */
+        automaticOpen: true,
 
-            /** Whether this instance should log debug messages. */
-            debug: false,
+        /** The number of milliseconds to delay before attempting to reconnect. */
+        reconnectInterval: 1000,
+        /** The maximum number of milliseconds to delay a reconnection attempt. */
+        maxReconnectInterval: 30000,
+        /** The rate of increase of the reconnect delay. Allows reconnect attempts to back off when problems persist. */
+        reconnectDecay: 1.5,
 
-            /** Whether or not the websocket should attempt to connect immediately upon instantiation. */
-            automaticOpen: true,
+        /** The maximum time in milliseconds to wait for a connection to succeed before closing and retrying. */
+        timeoutInterval: 2000,
 
-            /** The number of milliseconds to delay before attempting to reconnect. */
-            reconnectInterval: 1000,
-            /** The maximum number of milliseconds to delay a reconnection attempt. */
-            maxReconnectInterval: 30000,
-            /** The rate of increase of the reconnect delay. Allows reconnect attempts to back off when problems persist. */
-            reconnectDecay: 1.5,
+        /** The maximum number of reconnection attempts to make. Unlimited if null. */
+        maxReconnectAttempts: null,
 
-            /** The maximum time in milliseconds to wait for a connection to succeed before closing and retrying. */
-            timeoutInterval: 2000,
+        /** The binary type, possible values 'blob' or 'arraybuffer', default 'blob'. */
+        binaryType: 'blob'
+      };
+      if (!options) { options = {}; }
 
-            /** The maximum number of reconnection attempts to make. Unlimited if null. */
-            maxReconnectAttempts: null,
-
-            /** The binary type, possible values 'blob' or 'arraybuffer', default 'blob'. */
-            binaryType: 'blob'
+      // Overwrite and define settings with options if they exist.
+      for (const key in settings) {
+        if (typeof options[key] !== 'undefined') {
+          this[key] = options[key];
+        } else {
+          this[key] = settings[key];
         }
-        if (!options) { options = {}; }
+      }
 
-        // Overwrite and define settings with options if they exist.
-        for (var key in settings) {
-            if (typeof options[key] !== 'undefined') {
-                this[key] = options[key];
-            } else {
-                this[key] = settings[key];
-            }
+      // These should be treated as read-only properties
+
+      /** The URL as resolved by the constructor. This is always an absolute URL. Read only. */
+      this.url = url;
+
+      /** The number of attempted reconnects since starting, or the last successful connection. Read only. */
+      this.reconnectAttempts = 0;
+
+      /**
+       * The current state of the connection.
+       * Can be one of: WebSocket.CONNECTING, WebSocket.OPEN, WebSocket.CLOSING, WebSocket.CLOSED
+       * Read only.
+       */
+      this.readyState = WebSocket.CONNECTING;
+
+      /**
+       * A string indicating the name of the sub-protocol the server selected; this will be one of
+       * the strings specified in the protocols parameter when creating the WebSocket object.
+       * Read only.
+       */
+      this.protocol = null;
+
+      // Private state variables
+
+      const self = this;
+      let ws;
+      let forcedClose = false;
+      let timedOut = false;
+      const eventTarget = document.createElement('div');
+
+      // Wire up "on*" properties as event handlers
+
+      eventTarget.addEventListener('open', function (event) { self.onopen(event); });
+      eventTarget.addEventListener('close', function (event) { self.onclose(event); });
+      eventTarget.addEventListener('connecting', function (event) { self.onconnecting(event); });
+      eventTarget.addEventListener('message', function (event) { self.onmessage(event); });
+      eventTarget.addEventListener('error', function (event) { self.onerror(event); });
+
+      // Expose the API required by EventTarget
+
+      this.addEventListener = eventTarget.addEventListener.bind(eventTarget);
+      this.removeEventListener = eventTarget.removeEventListener.bind(eventTarget);
+      this.dispatchEvent = eventTarget.dispatchEvent.bind(eventTarget);
+
+      /**
+     * This function generates an event that is compatible with standard
+     * compliant browsers and IE9 - IE11
+     *
+     * This will prevent the error:
+     * Object doesn't support this action
+     *
+     * http://stackoverflow.com/questions/19345392/why-arent-my-parameters-getting-passed-through-to-a-dispatched-event/19345563#19345563
+     * @param s String The name that the event should use
+     * @param args Object an optional object that the event will use
+     */
+      function generateEvent (s, args) {
+        const evt = document.createEvent('CustomEvent');
+        evt.initCustomEvent(s, false, false, args);
+        return evt;
+      };
+
+      this.open = function (reconnectAttempt) {
+        ws = new WebSocket(self.url, protocols || []);
+        ws.binaryType = this.binaryType;
+
+        if (reconnectAttempt) {
+          if (this.maxReconnectAttempts && this.reconnectAttempts > this.maxReconnectAttempts) {
+            return;
+          }
+        } else {
+          eventTarget.dispatchEvent(generateEvent('connecting'));
+          this.reconnectAttempts = 0;
         }
 
-        // These should be treated as read-only properties
+        if (self.debug || ReconnectingWebSocket.debugAll) {
+          console.debug('ReconnectingWebSocket', 'attempt-connect', self.url);
+        }
 
-        /** The URL as resolved by the constructor. This is always an absolute URL. Read only. */
-        this.url = url;
+        const localWs = ws;
+        timeout = setTimeout(function () {
+          if (self.debug || ReconnectingWebSocket.debugAll) {
+            console.debug('ReconnectingWebSocket', 'connection-timeout', self.url);
+          }
+          timedOut = true;
+          localWs.close();
+          timedOut = false;
+        }, self.timeoutInterval);
 
-        /** The number of attempted reconnects since starting, or the last successful connection. Read only. */
-        this.reconnectAttempts = 0;
-
-        /**
-         * The current state of the connection.
-         * Can be one of: WebSocket.CONNECTING, WebSocket.OPEN, WebSocket.CLOSING, WebSocket.CLOSED
-         * Read only.
-         */
-        this.readyState = WebSocket.CONNECTING;
-
-        /**
-         * A string indicating the name of the sub-protocol the server selected; this will be one of
-         * the strings specified in the protocols parameter when creating the WebSocket object.
-         * Read only.
-         */
-        this.protocol = null;
-
-        // Private state variables
-
-        var self = this;
-        var ws;
-        var forcedClose = false;
-        var timedOut = false;
-        var eventTarget = document.createElement('div');
-
-        // Wire up "on*" properties as event handlers
-
-        eventTarget.addEventListener('open',       function(event) { self.onopen(event); });
-        eventTarget.addEventListener('close',      function(event) { self.onclose(event); });
-        eventTarget.addEventListener('connecting', function(event) { self.onconnecting(event); });
-        eventTarget.addEventListener('message',    function(event) { self.onmessage(event); });
-        eventTarget.addEventListener('error',      function(event) { self.onerror(event); });
-
-        // Expose the API required by EventTarget
-
-        this.addEventListener = eventTarget.addEventListener.bind(eventTarget);
-        this.removeEventListener = eventTarget.removeEventListener.bind(eventTarget);
-        this.dispatchEvent = eventTarget.dispatchEvent.bind(eventTarget);
-
-        /**
-         * This function generates an event that is compatible with standard
-         * compliant browsers and IE9 - IE11
-         *
-         * This will prevent the error:
-         * Object doesn't support this action
-         *
-         * http://stackoverflow.com/questions/19345392/why-arent-my-parameters-getting-passed-through-to-a-dispatched-event/19345563#19345563
-         * @param s String The name that the event should use
-         * @param args Object an optional object that the event will use
-         */
-        function generateEvent(s, args) {
-        	var evt = document.createEvent("CustomEvent");
-        	evt.initCustomEvent(s, false, false, args);
-        	return evt;
+        ws.onopen = function (event) {
+          clearTimeout(timeout);
+          if (self.debug || ReconnectingWebSocket.debugAll) {
+            console.debug('ReconnectingWebSocket', 'onopen', self.url);
+          }
+          self.protocol = ws.protocol;
+          self.readyState = WebSocket.OPEN;
+          self.reconnectAttempts = 0;
+          const e = generateEvent('open');
+          e.isReconnect = reconnectAttempt;
+          reconnectAttempt = false;
+          eventTarget.dispatchEvent(e);
         };
 
-        this.open = function (reconnectAttempt) {
-            ws = new WebSocket(self.url, protocols || []);
-            ws.binaryType = this.binaryType;
-
-            if (reconnectAttempt) {
-                if (this.maxReconnectAttempts && this.reconnectAttempts > this.maxReconnectAttempts) {
-                    return;
-                }
-            } else {
-                eventTarget.dispatchEvent(generateEvent('connecting'));
-                this.reconnectAttempts = 0;
+        ws.onclose = function (event) {
+          clearTimeout(timeout);
+          ws = null;
+          if (forcedClose) {
+            self.readyState = WebSocket.CLOSED;
+            eventTarget.dispatchEvent(generateEvent('close'));
+          } else {
+            self.readyState = WebSocket.CONNECTING;
+            const e = generateEvent('connecting');
+            e.code = event.code;
+            e.reason = event.reason;
+            e.wasClean = event.wasClean;
+            eventTarget.dispatchEvent(e);
+            if (!reconnectAttempt && !timedOut) {
+              if (self.debug || ReconnectingWebSocket.debugAll) {
+                console.debug('ReconnectingWebSocket', 'onclose', self.url);
+              }
+              eventTarget.dispatchEvent(generateEvent('close'));
             }
 
-            if (self.debug || ReconnectingWebSocket.debugAll) {
-                console.debug('ReconnectingWebSocket', 'attempt-connect', self.url);
-            }
+            timeout = self.reconnectInterval * Math.pow(self.reconnectDecay, self.reconnectAttempts);
+            setTimeout(function () {
+              self.reconnectAttempts++;
+              self.open(true);
+            }, timeout > self.maxReconnectInterval ? self.maxReconnectInterval : timeout);
+          }
+        };
+        ws.onmessage = function (event) {
+          if (self.debug || ReconnectingWebSocket.debugAll) {
+            console.debug('ReconnectingWebSocket', 'onmessage', self.url, event.data);
+          }
+          const e = generateEvent('message');
+          e.data = event.data;
+          eventTarget.dispatchEvent(e);
+        };
+        ws.onerror = function (event) {
+          if (self.debug || ReconnectingWebSocket.debugAll) {
+            console.debug('ReconnectingWebSocket', 'onerror', self.url, event);
+          }
+          eventTarget.dispatchEvent(generateEvent('error'));
+        };
+      };
 
-            var localWs = ws;
-            var timeout = setTimeout(function() {
-                if (self.debug || ReconnectingWebSocket.debugAll) {
-                    console.debug('ReconnectingWebSocket', 'connection-timeout', self.url);
-                }
-                timedOut = true;
-                localWs.close();
-                timedOut = false;
-            }, self.timeoutInterval);
+      // Whether or not to create a websocket upon instantiation
+      if (this.automaticOpen === true) {
+        this.open(false);
+      }
 
-            ws.onopen = function(event) {
-                clearTimeout(timeout);
-                if (self.debug || ReconnectingWebSocket.debugAll) {
-                    console.debug('ReconnectingWebSocket', 'onopen', self.url);
-                }
-                self.protocol = ws.protocol;
-                self.readyState = WebSocket.OPEN;
-                self.reconnectAttempts = 0;
-                var e = generateEvent('open');
-                e.isReconnect = reconnectAttempt;
-                reconnectAttempt = false;
-                eventTarget.dispatchEvent(e);
-            };
-
-            ws.onclose = function(event) {
-                clearTimeout(timeout);
-                ws = null;
-                if (forcedClose) {
-                    self.readyState = WebSocket.CLOSED;
-                    eventTarget.dispatchEvent(generateEvent('close'));
-                } else {
-                    self.readyState = WebSocket.CONNECTING;
-                    var e = generateEvent('connecting');
-                    e.code = event.code;
-                    e.reason = event.reason;
-                    e.wasClean = event.wasClean;
-                    eventTarget.dispatchEvent(e);
-                    if (!reconnectAttempt && !timedOut) {
-                        if (self.debug || ReconnectingWebSocket.debugAll) {
-                            console.debug('ReconnectingWebSocket', 'onclose', self.url);
-                        }
-                        eventTarget.dispatchEvent(generateEvent('close'));
-                    }
-
-                    var timeout = self.reconnectInterval * Math.pow(self.reconnectDecay, self.reconnectAttempts);
-                    setTimeout(function() {
-                        self.reconnectAttempts++;
-                        self.open(true);
-                    }, timeout > self.maxReconnectInterval ? self.maxReconnectInterval : timeout);
-                }
-            };
-            ws.onmessage = function(event) {
-                if (self.debug || ReconnectingWebSocket.debugAll) {
-                    console.debug('ReconnectingWebSocket', 'onmessage', self.url, event.data);
-                }
-                var e = generateEvent('message');
-                e.data = event.data;
-                eventTarget.dispatchEvent(e);
-            };
-            ws.onerror = function(event) {
-                if (self.debug || ReconnectingWebSocket.debugAll) {
-                    console.debug('ReconnectingWebSocket', 'onerror', self.url, event);
-                }
-                eventTarget.dispatchEvent(generateEvent('error'));
-            };
-        }
-
-        // Whether or not to create a websocket upon instantiation
-        if (this.automaticOpen == true) {
-            this.open(false);
-        }
-
-        /**
+      /**
          * Transmits data to the server over the WebSocket connection.
          *
          * @param data a text string, ArrayBuffer or Blob to send to the server.
          */
-        this.send = function(data) {
-            if (ws) {
-                if (self.debug || ReconnectingWebSocket.debugAll) {
-                    console.debug('ReconnectingWebSocket', 'send', self.url, data);
-                }
-                return ws.send(data);
-            } else {
-                throw 'INVALID_STATE_ERR : Pausing to reconnect websocket';
-            }
-        };
+      this.send = function (data) {
+        if (ws) {
+          if (self.debug || ReconnectingWebSocket.debugAll) {
+            console.debug('ReconnectingWebSocket', 'send', self.url, data);
+          }
+          return ws.send(data);
+        } else {
+          // throw 'INVALID_STATE_ERR : Pausing to reconnect websocket';
+          throw Object.assign(
+            new Error('INVALID_STATE_ERR : Pausing to reconnect websocket'),
+            { code: 402 }
+          );
+        }
+      };
 
-        /**
-         * Closes the WebSocket connection or connection attempt, if any.
-         * If the connection is already CLOSED, this method does nothing.
-         */
-        this.close = function(code, reason) {
-            // Default CLOSE_NORMAL code
-            if (typeof code == 'undefined') {
-                code = 1000;
-            }
-            forcedClose = true;
-            if (ws) {
-                ws.close(code, reason);
-            }
-        };
+      /**
+     * Closes the WebSocket connection or connection attempt, if any.
+     * If the connection is already CLOSED, this method does nothing.
+     */
+      this.close = function (code, reason) {
+        // Default CLOSE_NORMAL code
+        if (typeof code === 'undefined') {
+          code = 1000;
+        }
+        forcedClose = true;
+        if (ws) {
+          ws.close(code, reason);
+        }
+      };
 
-        /**
-         * Additional public API method to refresh the connection if still open (close, re-open).
-         * For example, if the app suspects bad data / missed heart beats, it can try to refresh.
-         */
-        this.refresh = function() {
-            if (ws) {
-                ws.close();
-            }
-        };
+      /**
+     * Additional public API method to refresh the connection if still open (close, re-open).
+     * For example, if the app suspects bad data / missed heart beats, it can try to refresh.
+     */
+      this.refresh = function () {
+        if (ws) {
+          ws.close();
+        }
+      };
     }
 
     /**
-     * An event listener to be called when the WebSocket connection's readyState changes to OPEN;
-     * this indicates that the connection is ready to send and receive data.
-     */
-    ReconnectingWebSocket.prototype.onopen = function(event) {};
+       * An event listener to be called when the WebSocket connection's readyState changes to OPEN;
+       * this indicates that the connection is ready to send and receive data.
+       */
+    ReconnectingWebSocket.prototype.onopen = function (event) {};
     /** An event listener to be called when the WebSocket connection's readyState changes to CLOSED. */
-    ReconnectingWebSocket.prototype.onclose = function(event) {};
+    ReconnectingWebSocket.prototype.onclose = function (event) {};
     /** An event listener to be called when a connection begins being attempted. */
-    ReconnectingWebSocket.prototype.onconnecting = function(event) {};
+    ReconnectingWebSocket.prototype.onconnecting = function (event) {};
     /** An event listener to be called when a message is received from the server. */
-    ReconnectingWebSocket.prototype.onmessage = function(event) {};
+    ReconnectingWebSocket.prototype.onmessage = function (event) {};
     /** An event listener to be called when an error occurs. */
-    ReconnectingWebSocket.prototype.onerror = function(event) {};
+    ReconnectingWebSocket.prototype.onerror = function (event) {};
 
     /**
-     * Whether all instances of ReconnectingWebSocket should log debug messages.
-     * Setting this to true is the equivalent of setting all instances of ReconnectingWebSocket.debug to true.
-     */
+   * Whether all instances of ReconnectingWebSocket should log debug messages.
+   * Setting this to true is the equivalent of setting all instances of ReconnectingWebSocket.debug to true.
+   */
     ReconnectingWebSocket.debugAll = false;
 
     ReconnectingWebSocket.CONNECTING = WebSocket.CONNECTING;
@@ -727,1237 +721,1211 @@ a {color:blue;}
     ReconnectingWebSocket.CLOSED = WebSocket.CLOSED;
 
     return ReconnectingWebSocket;
-});
+  });
 
-    let global_countdown = false;
-    let global_username = null;
-    let global_timer_intv = null;
-    let global_countDownDate = null;
-    let global_timerRunning = false;
-    let global_starting_form = null;
-    let global_change_desc = null;
-    let global_max_changes = null;
-    let global_show_correct = false;
-    let global_practice = false;
-    let global_session_state = null;
-    let global_session_id = null;
-    let global_mf_pressed = false;
-    let global_timed_out = false;
-    let global_seconds = 30;
-    let global_timer_ref = null;
-    const unicodeMode = 0;
-    let myturnIcon = `<svg class="myturnIcon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="50" /></svg>`;
-    let correctIcon = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" enable-background="new 0 0 64 64"><path d="M32,2C15.431,2,2,15.432,2,32c0,16.568,13.432,30,30,30c16.568,0,30-13.432,30-30C62,15.432,48.568,2,32,2z M25.025,50  l-0.02-0.02L24.988,50L11,35.6l7.029-7.164l6.977,7.184l21-21.619L53,21.199L25.025,50z" fill="#43a047"/></svg>`;
-    let incorrectIcon = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" enable-background="new 0 0 64 64"><path d="m32 2c-16.568 0-30 13.432-30 30s13.432 30 30 30 30-13.432 30-30-13.432-30-30-30m5.513 44.508l-5.514-9.894-5.825 9.894h-7.048l9.331-14.783-8.878-14.232h7.244l5.175 9.449 5.317-9.449h7.008l-8.878 13.996 9.429 15.02h-7.361z" fill="#e53935"/></svg>`;
-    // Check for wasm support.
-	if (!('WebAssembly' in window)) {
-		alert('you need a browser with wasm support enabled :(');
-	}
+  /* global q */
+  let globalCountDown = false;
+  let globalUserName = null;
+  let globalTimerIntV = null;
+  let globalCountDownDate = null;
+  let globalTimerRunning = false;
+  let globalStartingForm = null;
+  let globalChangeDesc = null;
+  let globalMaxChanges = null;
+  const globalShowCorrect = false;
+  let globalPractice = false;
+  let globalSessionState = null;
+  let globalSessionId = null;
+  let globalMFPressed = false;
+  let globalTimedOut = false;
+  let globalSeconds = 30;
+  let globalTimerRef = null;
+  const unicodeMode = 0;
+  const myturnIcon = '<svg class="myturnIcon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="50" /></svg>';
+  const correctIcon = '<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" enable-background="new 0 0 64 64"><path d="M32,2C15.431,2,2,15.432,2,32c0,16.568,13.432,30,30,30c16.568,0,30-13.432,30-30C62,15.432,48.568,2,32,2z M25.025,50  l-0.02-0.02L24.988,50L11,35.6l7.029-7.164l6.977,7.184l21-21.619L53,21.199L25.025,50z" fill="#43a047"/></svg>';
+  const incorrectIcon = '<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" enable-background="new 0 0 64 64"><path d="m32 2c-16.568 0-30 13.432-30 30s13.432 30 30 30 30-13.432 30-30-13.432-30-30-30m5.513 44.508l-5.514-9.894-5.825 9.894h-7.048l9.331-14.783-8.878-14.232h7.244l5.175 9.449 5.317-9.449h7.008l-8.878 13.996 9.429 15.02h-7.361z" fill="#e53935"/></svg>';
+  // Check for wasm support.
+  if (!('WebAssembly' in window)) {
+    alert('you need a browser with wasm support enabled :(');
+  }
 
-    function select_changed(s) {
-        let changed_nodes = document.querySelectorAll(".paramdivchanged");
-        if (changed_nodes && global_max_changes !== null && changed_nodes.length >= global_max_changes 
-            && s.value != s.getAttribute("orig") 
-            && !s.parentNode.classList.contains("paramdivchanged")) {
-            s.value = s.getAttribute("orig");
-        }
+  window.addEventListener('load', start, false);
 
-        if (s.value != s.getAttribute("orig") && global_max_changes !== null) {
-            s.parentNode.classList.add("paramdivchanged");
-        }
-        else {
-            s.parentNode.classList.remove("paramdivchanged");
-        }
+  function selectChanged (s) {
+    const changedNodes = document.querySelectorAll('.paramdivchanged');
+    if (changedNodes && globalMaxChanges !== null && changedNodes.length >= globalMaxChanges &&
+      s.value !== s.getAttribute('orig') &&
+        !s.parentNode.classList.contains('paramdivchanged')) {
+      s.value = s.getAttribute('orig');
     }
-	
+    if (s.value !== s.getAttribute('orig') && globalMaxChanges !== null) {
+      s.parentNode.classList.add('paramdivchanged');
+    } else {
+      s.parentNode.classList.remove('paramdivchanged');
+    }
+  }
 
-	
-	function strToCodePoints(str) {
-		let a = "";
-		for (let i = 0; i < str.length; i++) {
-			a += str.codePointAt(i).toString(16).padStart(4, "0").toUpperCase() + " ";
-		}
-		return a.trim();
-	}
+  function strToCodePoints (str) {
+    let a = '';
+    for (let i = 0; i < str.length; i++) {
+      a += str.codePointAt(i).toString(16).padStart(4, '0').toUpperCase() + ' ';
+    }
+    return a.trim();
+  }
 
-    const supportsWebSockets = 'WebSocket' in window || 'MozWebSocket' in window;
-    function start() {
-        verbList();
-        global_timer_ref = q('#mainTime');
-        
-	    const supported = (() => {
-            try {
-                if (typeof WebAssembly === "object"
-                    && typeof WebAssembly.instantiate === "function") {
-                    const module = new WebAssembly.Module(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00));
-                    if (module instanceof WebAssembly.Module) {
-                        return new WebAssembly.Instance(module) instanceof WebAssembly.Instance;
-                    }
-                }
-            } catch (e) { console.log("error checking for webassembly: " + e.message) }
-            return false;
-        })();
-        if (!supported) {
-	        console.log("WebAssembly is not supported");
-        }
-	
-        //block pasting
-        let answerform = q("#answerform");
-        answerform.addEventListener('paste', (event) => {
-            event.preventDefault();
-        });
-
-        answerform.addEventListener('keypress', handleKey, false);
-
-        global_session_id = localStorage.getItem("selected_session_id");
-        if (supportsWebSockets) {
-            wsconnect();
-        }
-        // else {
-        //     get_sessions(true);
-        // }
-        console.log(getTextWidth("παιδεύσητε", "normal 24pt WebNewAthenaUnicode"));  // close to 86
-	}
-
-function getTextWidth(text, font) {
-  // re-use canvas object for better performance
-  const canvas = getTextWidth.canvas || (getTextWidth.canvas = document.createElement("canvas"));
-  const context = canvas.getContext("2d");
-  context.font = font;
-  const metrics = context.measureText(text);
-  return metrics.width;
-}
-
-// function getCssStyle(element, prop) {
-//     return window.getComputedStyle(element, null).getPropertyValue(prop);
-// }
-
-// function getCanvasFont(el = document.body) {
-//   const fontWeight = getCssStyle(el, 'font-weight') || 'normal';
-//   const fontSize = getCssStyle(el, 'font-size') || '16px';
-//   const fontFamily = getCssStyle(el, 'font-family') || 'Times New Roman';
+  const supportsWebSockets = 'WebSocket' in window || 'MozWebSocket' in window;
+  function start () {
+    verbList();
+    globalTimerRef = q('#mainTime');
   
-//   return `${fontWeight} ${fontSize} ${fontFamily}`;
-// }	
-
-    function toggle_diacritic(str, pos, diacritic, unicodeMode) {
-        if (pos < 0 || pos > str.length) {
-            return { str: str, pos: str.length };
-        }
-        const max_combining_chars = 10;
-        let replace_len = Math.min(max_combining_chars + 1, pos);
-        let s = str.slice(pos - replace_len, pos);
-        let res = toggle(s, parseInt(diacritic), false, parseInt(unicodeMode));
-
-        let new_pos = (pos - replace_len) + res.length;
-
-        return { str: str.slice(0, pos - replace_len) + res + str.slice(pos), pos: new_pos };
-    }
-
-    function handleKey(e) {
-        if (typeof(this.selectionStart) == "number" && typeof(this.selectionEnd) == "number") {
-            let text = this.value;
-            let start = this.selectionStart;
-            let key = e.key.toLowerCase(); //force lower case
-            
-            if (key == "enter") { //enter key
-                submit_clicked();
-                return false;
-            }
-            else if ( !isNaN( parseInt(key) ) ) {                
-                let res = toggle_diacritic(text, start, key, unicodeMode);
-                this.value = res.str;
-                this.selectionStart = this.selectionEnd = res.pos;
-                e.preventDefault();
-                return false;
-            }
-            else if (key.length == 1) { //len == 1 to exclude keys like "ENTER", etc.
-                let greek_letter = translit(key); //returns \0 if the character cannot be transliterated
-                if (greek_letter !== "\0") {
-                    let end = this.selectionEnd;            
-                    this.value = text.slice(0, start) + greek_letter + text.slice(end);
-                    this.selectionStart = this.selectionEnd = start + 1;
-                    e.preventDefault();
-                    return false;     
-                }
-            }
-        }
-        return true; // true allows most punctuation, etc. pass through
-    }
-    
-    //https://github.com/le717/microajax
-    function microAjax(options) {
-      "use strict";
-
-      // Default to GET
-      if (!options.method) {
-        options.method = "GET";
-      }
-
-      // Default empty functions for the callbacks
-      function noop() {}
-      if (!options.success) {
-        options.success = noop;
-      }
-      if (!options.warning) {
-        options.warning = noop;
-      }
-      if (!options.error) {
-        options.error = noop;
-      }
-
-      let request = new XMLHttpRequest();
-      request.open(options.method, options.url, true);
-      //request.setRequestHeader('Content-type', 'application/json; charset=UTF-8')
-      request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded; charset=UTF-8')
-      request.send(options.data);
-
-      request.onload = function() {
-        // Success!
-        if (request.readyState === 4 && request.status === 200) {
-          options.success(JSON.parse(request.responseText));
-
-          // We reached our target destination, but it returned an error
-        } else {
-          options.warning(request.responseText);
-        }
-      };
-
-      // There was a connection error of some sort
-      request.onerror = options.error;
-    }
-
-    function procResponseError(data) {
-        console.log(data);
-    }
-
-    function procResponse(data) {
-        console.log(data);
-
-        // if (handle_response !== null) {
-        //     handle_response(data);
-        // }
-        // else 
-        if (data.response_to == "ask" && data.success) {
-            get_sessions(false);
-            uiModeAskResponse(data);
-        }
-        else if ((data.response_to == "answerresponse" || data.response_to == "answerresponsepractice") && data.success) {
-            get_sessions(false);
-
-            global_starting_form = data.starting_form;
-            global_change_desc = data.change_desc;
-            uiModeAnswerResponseReceived(data);
-        }
-        else if ((data.response_to == "mfpressedresponse" || data.response_to == "mfpressedresponsepractice") && data.success) {
-            if (data.is_correct == false) {
-                uiModeClickedEnter();
-            
-                global_starting_form = data.starting_form;
-                global_change_desc = data.change_desc;
-                uiModeAnswerResponseReceived(data);
-            }
-        }
-        else if (data.response_to == "newsession" && data.success) {
-            get_sessions(true);
-        }
-        else if (data.response_to == "getmoves" && data.success) {
-            if (data.myturn && data.move_type != "Practice") {
-                q(".gamerow[data-uuid='" + data.session_id + "']").classList.add("myturn");
-            }
-            else {
-                q(".gamerow[data-uuid='" + data.session_id + "']").classList.remove("myturn");
-            }
-            setUI(data);
-        }
-        else if (data.response_to == "getsessions" && data.success) {
-            if (data.username) {
-                q("#loginlink").style.display = "none";
-                q("#logoutlink").style.display = "inline";
-                q("#username").innerText = data.username;
-                global_username = data.username;
-            }
-            else {
-                q("#loginlink").style.display = "inline";
-                q("#logoutlink").style.display = "none";
-                q("#username").innerText = "";
-                global_username = null;
-            }
-
-            let rows = "";
-            for (let i = 0; i < data.sessions.length; i++) {
-                let s = data.sessions[i];
-                if (s.move_type != "FirstMoveTheirTurn") /* do not show if first move not asked yet and I did not start game */ {
-                    rows += "<div data-uuid='" + s.session_id + "' ";
-                    rows += "data-max-changes='" + s.max_changes + "' ";
-                    rows += "data-max-time='" + s.max_time + "' ";
-                    rows += "data-countdown='" + (s.countdown != 0) + "' ";
-                    rows += "class='gamerow" + (s.myturn && s.move_type != "Practice" ? " myturn" : "");
-                    rows += (s.session_id == global_session_id ? " selectedGame" : "") + "' ";
-                    rows += (s.opponent_name ? "opponent='" + s.opponent_name + "' " : "");
-                    rows += "title='" + s.move_type + "' ";
-                    rows += "onclick='get_move(this)'><span class='gamespan'>";
-                    rows += (s.move_type == "Practice" ? "Practice" : (global_username ? global_username : "Game"));
-                    rows += (s.opponent_name ? " vs. " + s.opponent_name : "");
-                    rows += (s.move_type != "Practice" ? (" (" + s.my_score + " - " + s.their_score + ")") : "");
-                    rows += myturnIcon + "</span></div>";
-                }
-                //q(".gamerow[data-uuid='b72df91e-3a4c-4f1b-aeda-c14fea61def6']").style.backgroundColor = "blue";
-            }
-            q("#list").innerHTML = rows;
-            //q("#refreshbutton").style.display = "block";
-            //q("#listouter").style.display = "block";
-
-            if (data.current_session) {
-                setUI(data.current_session);
-            }
-        }
-    }
-
-    function serialize(obj) {
-        let str = [];
-        for (let p in obj)
-        if (obj.hasOwnProperty(p)) {
-            str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
-        }
-        return str.join("&");
-    }
-
-    let pending_send_data = null;
-    function generic_send_request(send_url, send_data, handle_response) {
-        // if (supportsWebSockets && !socket) {
-        //     wsconnect(send_url, send_data);
-        //     return;
-        // }
- 
-        if (socket) {
-            console.log("websocket request");
-            send_data = JSON.stringify(send_data);
-            socket.send(send_data);
-        }
-        else {
-            console.log("ws not connected: can't send.");
-            /*
-            pending_send_data = send_data;
-            wsconnect();
-            */
-
-            // console.log("http request");
-            // send_data = serialize(send_data);
-            // microAjax({
-            //     url: send_url,
-            //     method: "POST",
-            //     data: send_data,
-            //     success: procResponse,
-            //     warning: procResponseError,
-            //     error: null
-            // });
-        }
-
-        // $.ajax({
-        //     url: send_url,
-        //     type: "POST",
-        //     data: send_data,
-        //     dataType: "json",
-        //     success: function (data, textStatus, jqXHR) {
-        //          procResponse(data);
-        //     },
-        //     error: function(response) {
-        //         console.log("error: " + response);
-        //     }
-        // });
-    }
-
-    function send_ask(session_id, person, number, tense, mood, voice, verb_id) {
-        let send_data = {qtype:"ask", session_id: session_id, person: parseInt(person), number: parseInt(number), tense: parseInt(tense), mood: parseInt(mood), voice: parseInt(voice), verb: parseInt(verb_id)};
-        generic_send_request("ask", send_data, null);
-    }
-
-    function send_answer(session_id, answer, time, mfPressed, timedOut) {
-        let send_data = {qtype:"submit", answer:answer, time:time, mf_pressed:mfPressed, timed_out:timedOut, session_id: session_id};
-        generic_send_request("enter", send_data, null);
-    }
-
-    function send_mf(session_id, answer, time, mfPressed, timedOut) {
-        let send_data = {qtype:"mfpressed", answer:answer, time:time, mf_pressed:mfPressed, timed_out:timedOut, session_id: session_id};
-        generic_send_request("mf", send_data, null);
-    }
-
-    function new_game_clicked() {
-        //let unitv = q("#unitinput").value.trim();
-        let opponentv = q("#opponentinput").value.trim();
-        let countdown = (q("input[name=countdown]:checked").value == "down");
-        let reps = parseInt(q("#repsperverb").value.trim());
-        let max_changes = parseInt(q("#maxchanges").value.trim());
-        let max_time = parseInt(q("#maxtime").value.trim());
-
-        let v = [];
-        let ck = document.querySelectorAll(".verblistckverb:checked");
-        let i = 0;
-        for ( ; i < ck.length; i++) {
-            v.push(ck[i].value)
-        }
-        let unitv = v.join(",");
-        console.log("verbs: " + unitv);
-
-        reps = (reps) ? parseInt(reps) : 4;
-        max_changes = (max_changes) ? parseInt(max_changes) : 2;
-        max_time = (max_time) ? parseInt(max_time) : 30;
-        
-        let send_data = {qtype:"newsession", unit:unitv, opponent:opponentv,practice_reps_per_verb:reps,countdown:countdown,max_changes:max_changes,max_time:max_time};
-        generic_send_request("new", send_data, null);
-    }
-
-    function submit_clicked() {
-        let submitbutton = q("#submitbutton");
-        if (submitbutton.innerText == "Enter") {
-            uiModeClickedEnter();
-
-            let answer = q("#answerform").value.trim();
-            let time = q("#mainTime").innerText.trim();
-            console.log("Enter clicked: " + answer + ", time: " + time + ", mfPressed: " + global_mf_pressed + ", timedout: " + global_timed_out);
-        
-            send_answer(global_session_id, answer, time, global_mf_pressed, global_timed_out);
-        }
-        else if (submitbutton.innerText == "Continue" || submitbutton.innerText == "Start") {
-            console.log(submitbutton.innerText + " clicked");
-            uiModeAskForm2();
-        }
-        else if (submitbutton.innerText == "Ask") {
-            let vals = get_param_values();
-            if (document.querySelectorAll(".paramdivchanged").length > 0 || 
-                q("#verbchooser").style.display != "none") {
-                send_ask(global_session_id, vals[0], vals[1], vals[2], vals[3], vals[4], vals[5]);
-            }
-            else {
-                alert("you must change at least one parameter");
-            }
-        }
-        else if (submitbutton.innerText == "Go") {
-            console.log(submitbutton.innerText + " clicked");
-            uiModeAnwerGoForm(global_starting_form, global_change_desc);
-        }
-    }
-
-    function close_clicked() {
-        q(".hcform").style.display = "none";
-    }
-
-    function mf_clicked() {
-        console.log("multiple forms clicked");
-        if (!global_mf_pressed) { //only allow clicking this once
-            q("#mfbutton").disabled = true;
-
-            add_seconds_to_time(global_seconds / 2);
-            global_mf_pressed = true;
-
-            let answer = q("#answerform").value.trim();
-            let time = q("#mainTime").innerText.trim();
-            console.log("MF clicked: " + answer + ", time: " + time + ", mfPressed: " + global_mf_pressed + ", timedout: " + global_timed_out);
-
-            send_mf(global_session_id, answer, time, global_mf_pressed, global_timed_out);
-        }
-    }
-
-    function timeout() {
-        console.log("timed out");
-        clearInterval(global_timer_intv);
-        global_timed_out = true;
-        global_timer_ref.innerHTML = "<span style=\"color:red;font-weight:bold;\">00:00</span>";
-        submit_clicked();
-    }
-    
-    function get_move(thisrow) {
-        document.querySelectorAll(".selectedGame").forEach((row) => {
-            row.classList.remove("selectedGame");
-        });        
-        thisrow.classList.add("selectedGame");
-
-        global_session_id = thisrow.getAttribute("data-uuid");
-        localStorage.setItem("selected_session_id", global_session_id);
-
-        let send_data = { qtype: "getmove", session_id: global_session_id };
-        generic_send_request("getmove", send_data, null);
-    }
-
-    function get_sessions(with_current_game) {
-        let send_data = { qtype:"getsessions", current_session: ((with_current_game) ? global_session_id : null) };
-        generic_send_request("list", send_data, null);
-    }
-
-    function set_params_dropdowns(person, number, tense, voice, mood, verb_id) {
-        let a = document.querySelectorAll(".paramdivchanged").forEach(e => e.classList.remove("paramdivchanged"));
-
-        let p = q("#personparam");
-        p.value = person;
-        p.setAttribute("orig", person);
-        let n = q("#numberparam");
-        n.value = number;
-        n.setAttribute("orig", number);
-        let t = q("#tenseparam");
-        t.value = tense;
-        t.setAttribute("orig", tense);
-        let m = q("#moodparam");
-        m.value = mood;
-        m.setAttribute("orig", mood);
-        let v = q("#voiceparam");
-        v.value = voice;
-        v.setAttribute("orig", voice);
-        let vc = q("#verbchooser");
-        //if the dropdown doesn't have enough rows to assign value, just add a new row for it. it's ok: we can't see it
-        if (verb_id >= vc.options.length && vc.value != verb_id /* so we don't get two of same option */) {
-            let o = document.createElement("option");
-            o.value = verb_id;
-            o.text = "";
-            vc.add(o);
-        }
-        vc.value = verb_id;
-    }
-
-    function get_param_values() {
-        let p = q("#personparam").value;
-        let n = q("#numberparam").value;
-        let t = q("#tenseparam").value;
-        let m = q("#moodparam").value;
-        let v = q("#voiceparam").value;
-        let verb_id = q("#verbchooser").value;
-
-        //console.log("vals: " + p + n + t + m + v + verb_id);
-        return [p,n,t,m,v,verb_id];
-    }
-
-    function setUI(data) {
-        global_practice = false;
-        q(".hcform").style.display = "block";
-        switch(data.move_type) {
-            case "Practice": 
-                uiModePractice(data); //practice
-                break;
-            case "FirstMoveMyTurn": 
-                uiModeAskForm(data, 5); //I need to ask first move
-                break;
-            case "FirstMoveTheirTurn": 
-                uiModeWaitingForAsk(data); //no moves: waiting for other player to ask first move
-                break;
-            case "AnswerMyTurn": 
-                uiModeAnwerForm(data); //I need to answer
-                break;
-            case "AskTheirTurn":     
-                uiModeWaitingForAsk(data); //waiting for you to ask
-                break;
-            case "AskMyTurn": 
-                uiModeAskForm(data, 2); //I need to ask
-                break;
-            case "AnswerTheirTurn": 
-                uiModeWaitingForAnswer(data); //waiting for you to answer
-                break;
-            case "GameOver": 
-                uiModeGameIsOver(); //game has ended
-                break;
-            default:
-                break;
-        }
-    }
-
-    const persons = ["first", "second", "third"];
-    const numbers = ["singular", "plural"];
-    const tenses = ["present", "imperfect", "future", "aorist", "perfect", "pluperfect"];
-    const voices  = ["active", "middle", "passive"];
-    const moods = ["indicative", "subjunctive", "optative", "imperative"];
-    function desc(person, number, tense, mood, voice, prevp, prevn, prevt, prevm, prevv) {
-        if (person !== prevp && prevp !== null) {
-            person = "<b>" + persons[person] + "</b>";
-        }
-        else {
-            person = persons[person];
-        }
-        if (number !== prevn && prevn !== null) {
-            number = "<b>" + numbers[number] + "</b>";
-        }
-        else {
-            number = numbers[number];
-        }
-        if (tense !== prevt && prevt !== null) {
-            tense = "<b>" + tenses[tense] + "</b>";
-        }
-        else {
-            tense = tenses[tense];
-        }
-        if (mood !== prevm && prevm !== null) {
-            mood = "<b>" + moods[mood] + "</b>";
-        }
-        else {
-            mood = moods[mood];
-        }
-        if (voice !== prevv && prevv !== null) {
-            voice = "<b>" + voices[voice] + "</b>";
-        }
-        else {
-            voice = voices[voice];
-        }
-        return person + " " + number + " " + tense + " " + mood + " " + voice;
-    }
-
-    function uiModeGameIsOver() {
-        let submitbutton = q("#submitbutton");
-        submitbutton.disabled = true;
-        q("#statusmesg").innerHTML = "Game is over.";
-        q("#answerform").value = "";
-        q("#answerform").disabled = true;
-        q("#correctanswer").innerHTML = "";
-        q("#correctanswer").style.visibility = "hidden";
-        q("#startingform").innerText = "";
-        q("#mfbutton").disabled = true;
-        q("#verbchooser").style.display = "none";
-    }
-
-    //need to set prev params for first form
-    function uiModePractice(data) {
-        let submitbutton = q("#submitbutton");
-        submitbutton.disabled = false;
-        submitbutton.innerText = "Go";
-        global_starting_form = data.starting_form;
-        global_change_desc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
-        //q("#statusmesg").innerHTML = "Click Go to answer!"
-        q("#statusmesg").innerHTML = "Practice Mode";
-        q("#changedesc").innerHTML = (data.person_prev !== null) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, null, null, null, null, null) : "";
-        q("#answerform").value = "";
-        q("#answerform").disabled = true;
-        q("#mfbutton").disabled = true;
-        q("#correctanswer").innerHTML = "";
-        q("#correctanswer").style.visibility = "hidden";
-        q("#startingform").innerText = (data.starting_form) ? data.starting_form : "";
-
-        q("#askparamsdiv").style.display = "none";
-        q("#submitbutton").style.display = "block";
-        q("#verbchooser").style.display = "none";
-    }
-
-    function uiModeAnwerForm(data) {
-        let submitbutton = q("#submitbutton");
-        submitbutton.disabled = false;
-        submitbutton.innerText = "Go";
-        global_starting_form = data.starting_form;
-        global_change_desc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
-        q("#statusmesg").innerHTML = "Click Go to answer!"
-        q("#changedesc").innerHTML = (data.person_prev !== null) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, null, null, null, null, null) : "";
-        q("#answerform").value = "";
-        q("#answerform").disabled = true;
-        q("#mfbutton").disabled = true;
-        q("#correctanswer").innerHTML = "";
-        q("#correctanswer").style.visibility = "hidden";
-        q("#startingform").innerText = (data.starting_form) ? data.starting_form : "";
-
-        q("#askparamsdiv").style.display = "none";
-        q("#submitbutton").style.display = "block";
-        q("#verbchooser").style.display = "none";
-    }
-
-    function uiModeAnwerGoForm(loc_starting_form, loc_change_desc) {
-        let submitbutton = q("#submitbutton");
-        submitbutton.disabled = false;
-        submitbutton.innerText = "Enter";
-        global_mf_pressed = false;
-        
-        q("#statusmesg").innerHTML = "Click enter to submit!"
-        q("#changedesc").innerHTML = loc_change_desc;
-        q("#answerform").value = "";
-        q("#answerform").disabled = false;
-        q("#mfbutton").disabled = false;
-        q("#answerform").focus();
-        q("#correctanswer").innerHTML = "";
-        q("#correctanswer").style.visibility = "hidden";
-        q("#startingform").innerText = loc_starting_form;
-
-        q("#askparamsdiv").style.display = "none";
-        startTimer();
-        q("#submitbutton").style.display = "block";
-        q("#verbchooser").style.display = "none";
-    }
-
-    function uiModeWaitingForAnswer(data) {
-        let submitbutton = q("#submitbutton");
-        submitbutton.disabled = true;
-        q("#statusmesg").innerHTML = "Waiting for opponent to answer.";
-        q("#answerform").value = "";
-        q("#answerform").disabled = true;
-        q("#correctanswer").innerHTML = "";
-        q("#correctanswer").style.visibility = "hidden";
-        q("#startingform").innerText = data.starting_form;
-
-        q("#askparamsdiv").style.display = "none";
-
-        global_seconds = parseInt(q(".gamerow.selectedGame").getAttribute("data-max-time"));
-
-        q("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
-        q("#submitbutton").style.display = "none";
-        q("#mfbutton").disabled = true;
-        q("#mainTime").innerText = global_seconds + ":00";
-        q("#verbchooser").style.display = "none";
-    }
-
-    function uiModeWaitingForAsk(data) {
-        let submitbutton = q("#submitbutton");
-        submitbutton.disabled = true;
-        q("#statusmesg").innerHTML = "Waiting for opponent to ask.";
-        q("#answerform").value = data.answer;
-        q("#answerform").disabled = true;
-        
-        q("#correctanswer").style.visibility = "visible";
-        q("#startingform").innerText = data.starting_form;
-        
-        q("#mainTime").innerText = data.time;
-        q("#askparamsdiv").style.display = "none";
-        q("#submitbutton").style.display = "none";
-        q("#mfbutton").disabled = true;
-
-        if (data.move_type == "FirstMoveTheirTurn") {
-            q("#changedesc").innerHTML = "";
-            q("#correctanswer").innerHTML = "";
-        }
-        else {
-            q("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
-            q("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || global_show_correct) ? data.correct_answer : "");
-
-        }
-        q("#verbchooser").style.display = "none";
-    }
-
-    function uiModeAskResponse(data) {
-        console.log("ask successfully submitted");
-        q("#mfbutton").disabled = true;
-        let submitbutton = q("#submitbutton");
-        submitbutton.innerText = "Sent!";
-        q("#statusmesg").innerHTML = "Sent!";
-        submitbutton.disabled = true;
-        q("#askparamsdiv").style.display = "none";
-        q("#verbchooser").style.display = "none";
-        if (data.starting_form) {
-            q("#startingform").innerText = data.starting_form;
-        }
-        q("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
-    }
-
-    function uiModeAskForm(data, max_params_to_change) {
-        global_session_state = data;
-        set_params_dropdowns(data.person, data.number, data.tense, data.voice, data.mood, data.verb);
-
-        if (data.move_type == "FirstMoveMyTurn") {
-            uiModeAskForm2();
-            return;
-        }
-
-        q("#mfbutton").disabled = true;
-        let submitbutton = q("#submitbutton");
-        if (data.move_type == "Practice") {
-            submitbutton.innerText = "Ask";
-            q("#verbchooser").style.display = "none";
-            q("#askparamsdiv").style.display = "block";
-            q("#statusmesg").innerHTML = "Click ask to ask this form."
-            q("#startingform").innerText = "";
-            q("#changedesc").innerHTML = "";
-            q("#answerform").value = "";
-            q("#correctanswer").style.visibility = "hidden";
-            q("#correctanswer").innerHTML = "";
-        }
-        else {
-            submitbutton.innerText = "Continue";
-            q("#verbchooser").style.display = "none";
-            q("#mainTime").innerText = data.time;
-            q("#askparamsdiv").style.display = "none";
-            q("#statusmesg").innerHTML = "Click Continue to ask the next form."
-            q("#startingform").innerText = data.starting_form;
-            q("#changedesc").innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
-            q("#answerform").value = data.answer;
-            q("#correctanswer").style.visibility = "visible";
-            q("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || global_show_correct) ? data.correct_answer : "");
-        }
-        submitbutton.style.display = "block";
-        submitbutton.disabled = false;
-    }
-
-    function uiModeAskForm2() {
-        let data = global_session_state;
-        global_session_state = null;
-        
-        let submitbutton = q("#submitbutton");
-        submitbutton.innerText = "Ask";
-        submitbutton.style.display = "block";
-        submitbutton.disabled = false;
-        q("#mfbutton").disabled = true;
-        if (data.move_type == "FirstMoveMyTurn") {
-            global_max_changes = null; //can change all
-            set_params_dropdowns(null, null, null, null, null, null);
-            let verbchooser = q("#verbchooser");
-            //remove verb options
-            while (verbchooser.options.length > 0) {                
-                verbchooser.remove(0);
-            }
-            //add new verb options
-            for (let v = 0; v < data.verbs.length; v++) {
-                let o = document.createElement("option");
-                o.value = data.verbs[v].id;
-                o.text = data.verbs[v].verb;
-                verbchooser.add(o);
-            }
-            verbchooser.value = null;
-        
-            q("#startingform").innerText = "";
-            verbchooser.style.display = "inline-block";
-            q("#statusmesg").innerHTML = "Choose a verb and set all parameters";
-        }
-        else {
-            global_max_changes = 2;
-            set_params_dropdowns(data.person, data.number, data.tense, data.voice, data.mood, data.verb);
-            q("#startingform").innerText = data.correct_answer;
-            q("#verbchooser").style.display = "none";
-            q("#statusmesg").innerHTML = "Change up to (2) parameters";
-        }
-        global_seconds = parseInt(q(".gamerow.selectedGame").getAttribute("data-max-time"));
-
-        q("#mainTime").innerHTML = global_seconds + ":00";
-        q("#askparamsdiv").style.display = "block";
-        q("#changedesc").innerHTML = "";//desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
-        //q("#changedesc").style.display = "none";
-        q("#answerform").value = "";
-        q("#correctanswer").style.visibility = "hidden";
-        q("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || global_show_correct) ? data.correct_answer : "");
-
-        //q("#statusmesg").innerHTML = "Click Ask to ask the next form."
-        // if (max_params_to_change == 5) {
-        //     q("#statusmesg").innerHTML = "Choose a verb and set all params.";
-        // }
-        // else {
-        //     q("#statusmesg").innerHTML = "Change up to (" + max_params_to_change + ") params.";
-        // }
-
-    }
-    function uiModeClickedEnter() {
-        let submitbutton = q("#submitbutton");
-        submitbutton.innerText = "Loading...";
-        submitbutton.disabled = true;
-        stopTimer();
-        q("#answerform").disabled = true;
-    }
-
-    function uiModeAnswerResponseReceived(data) {
-        let submitbutton = q("#submitbutton");
-        if (data.move_type == "Practice") {
-            submitbutton.innerText = "Go";
-            global_practice = true;
-            global_starting_form = data.starting_form;
-            global_change_desc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
-            q("#statusmesg").innerHTML = "Click Go to answer the next form."
-        }
-        else {
-            global_practice = false;
-            submitbutton.innerText = "Continue";
-            q("#statusmesg").innerHTML = "Click Continue to ask the next form."
-        }
-        global_session_state = data;
-        submitbutton.disabled = false;
-        submitbutton.focus();
-        q("#mfbutton").disabled = true;
-        //mark (in)correct, show correct answer
-        q("#correctanswer").style.visibility = "visible";
-        q("#correctanswer").innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + " " + ((!data.is_correct || global_show_correct) ? data.correct_answer : "");
-    }
-
-    function add_seconds_to_time(secs) {
-        global_countDownDate += (secs * 1000);
-    }
-    
-    function startTimer() {
-        let session = q(".gamerow.selectedGame");
-        global_seconds = parseInt(session.getAttribute("data-max-time"));
-        global_countdown = (session.getAttribute("data-countdown") == "true");
-        global_timed_out = false;
-        global_countDownDate = new Date().getTime();
-        if (global_countdown) {
-            global_countDownDate += (global_seconds * 1000);
-        }
-        global_timer_intv = setInterval(interval_func, 10);
-        global_timerRunning = true;
-    }
-    function stopTimer() {
-        clearInterval(global_timer_intv);
-        global_timer_intv = null;
-        global_timerRunning = false;
-    }
-    function interval_func() {
-        let now = new Date().getTime();
-        let distance = 0;
-        if (global_countdown) {
-            distance = global_countDownDate - now;
-        }
-        else {
-            distance = now - global_countDownDate;
-        }
-
-        if (distance <= 0 && global_countdown) {
-            timeout();
-            return;
-        }
-
-        //let days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        let seconds = Math.floor((distance % (1000 * 60)) / 1000);
-        let ms = Math.floor((distance % (1000)) / 10);
-
-        global_timer_ref.innerHTML = ((hours > 0) ? ((hours < 10) ? ("0" + hours + ":") : hours + ":") : "") + ((minutes > 0 || hours > 0) ? ((minutes < 10) ? ("0" + minutes + ":") : minutes + ":") : "") + ((seconds < 10) ? ("0" + seconds + ":") : seconds + ":") + ((ms < 10) ? ("0" + ms) : ms);
-    }
-
-    //   const $status = q('#status')
-    //   const $connectButton = q('#connect')
-    //   const $log = q('#log')
-    //   const $form = q('#chatform')
-    //   const $input = q('#text')
-
-      /** @type {WebSocket | null} */
-      var socket = null
-
-    //   function log(msg, type = 'status') {
-    //     $log.innerHTML += `<p class="msg msg--${type}">${msg}</p>`
-    //     $log.scrollTop += 1000
-    //   }
-
-    let visibilityCheck = false;
-      function wsconnect() {
-        //wsdisconnect()
-
-        const { location } = window;
-
-        const proto = location.protocol.startsWith('https') ? 'wss' : 'ws';
-        const wsUri = `${proto}://${location.host}/ws`;
-
-        //log('Connecting...')
-        //socket = new WebSocket(wsUri);
-        socket = null;
-        socket = new ReconnectingWebSocket(wsUri, null, {debug: true});
-
-        socket.onopen = () => {
-            console.log("ws connected");
-            //log('Connected')
-            updateConnectionStatus();
-            /*
-            if (pending_send_data) {
-                generic_send_request(null, pending_send_data, null);
-                pending_send_data = null;
-            }
-            if (!visibilityCheck) {
-                //https://stackoverflow.com/questions/1060008/is-there-a-way-to-detect-if-a-browser-window-is-not-currently-active
-                document.addEventListener("visibilitychange", onchange);
-                function onchange (evt) {
-                    if (document.hidden) {
-                        console.log("document hidden");
-                    }
-                    else {
-                        console.log("document visible");
-                        if (!socket) {
-                            wsconnect();
-                        }
-                    }
-                }
-                visibilityCheck = true;
-            }*/
-        }
-
-        socket.onmessage = (ev) => {
-          console.log("websocket data received");// + ev.data);
-          try {
-            let json = JSON.parse(ev.data);
-            procResponse(json);
+    const supported = (() => {
+      try {
+        if (typeof WebAssembly === 'object' &&
+                typeof WebAssembly.instantiate === 'function') {
+          const module = new WebAssembly.Module(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00));
+          if (module instanceof WebAssembly.Module) {
+            return new WebAssembly.Instance(module) instanceof WebAssembly.Instance;
           }
-          catch(e) { console.log(e.message) }
         }
+      } catch (e) { console.log('error checking for webassembly: ' + e.message); }
+      return false;
+    })();
+    if (!supported) {
+      console.log('WebAssembly is not supported');
+    }
 
-        socket.onclose = () => {
-          console.log("ws disconnected");
-          //socket = null
-          //updateConnectionStatus()
+    // block pasting
+    const answerform = q('#answerform');
+    answerform.addEventListener('paste', (event) => {
+      event.preventDefault();
+    });
+
+    answerform.addEventListener('keypress', handleKey, false);
+
+    globalSessionId = localStorage.getItem('selected_session_id');
+    if (supportsWebSockets) {
+      wsconnect();
+    }
+    // else {
+    //     getSessions(true);
+    // }
+    console.log(getTextWidth('παιδεύσητε', 'normal 24pt WebNewAthenaUnicode')); // close to 86
+  }
+
+  function getTextWidth (text, font) {
+    // re-use canvas object for better performance
+    const canvas = getTextWidth.canvas || (getTextWidth.canvas = document.createElement('canvas'));
+    const context = canvas.getContext('2d');
+    context.font = font;
+    const metrics = context.measureText(text);
+    return metrics.width;
+  }
+
+  // function getCssStyle(element, prop) {
+  //     return window.getComputedStyle(element, null).getPropertyValue(prop);
+  // }
+
+  // function getCanvasFont(el = document.body) {
+  //   const fontWeight = getCssStyle(el, 'font-weight') || 'normal';
+  //   const fontSize = getCssStyle(el, 'font-size') || '16px';
+  //   const fontFamily = getCssStyle(el, 'font-family') || 'Times New Roman';
+
+  //   return `${fontWeight} ${fontSize} ${fontFamily}`;
+  // }
+
+  function toggleDiacritic (str, pos, diacritic, unicodeMode) {
+    if (pos < 0 || pos > str.length) {
+      return { str, pos: str.length };
+    }
+    const maxCombiningChars = 10;
+    const replaceLen = Math.min(maxCombiningChars + 1, pos);
+    const s = str.slice(pos - replaceLen, pos);
+    const res = toggle(s, parseInt(diacritic), false, parseInt(unicodeMode));
+
+    const newPos = (pos - replaceLen) + res.length;
+
+    return { str: str.slice(0, pos - replaceLen) + res + str.slice(pos), pos: newPos };
+  }
+
+  function handleKey (e) {
+    if (typeof (this.selectionStart) === 'number' && typeof (this.selectionEnd) === 'number') {
+      const text = this.value;
+      const start = this.selectionStart;
+      const key = e.key.toLowerCase(); // force lower case
+
+      if (key === 'enter') { // enter key
+        submitClicked();
+        return false;
+      } else if (!isNaN(parseInt(key))) {
+        const res = toggleDiacritic(text, start, key, unicodeMode);
+        this.value = res.str;
+        this.selectionStart = this.selectionEnd = res.pos;
+        e.preventDefault();
+        return false;
+      } else if (key.length === 1) { // len == 1 to exclude keys like "ENTER", etc.
+        const greekLetter = translit(key); // returns \0 if the character cannot be transliterated
+        if (greekLetter !== '\0') {
+          const end = this.selectionEnd;
+          this.value = text.slice(0, start) + greekLetter + text.slice(end);
+          this.selectionStart = this.selectionEnd = start + 1;
+          e.preventDefault();
+          return false;
         }
       }
+    }
+    return true; // true allows most punctuation, etc. pass through
+  }
+  
+  // https://github.com/le717/microajax
+  function microAjax (options) {
+    'use strict';
 
-    //   function try_ws_reconnect() {
-    //     if (!socket) {
-    //         wsconnect();
-    //         //setTimeout(try_ws_reconnect, 4000);
-    //     }
-    //   }
+    // Default to GET
+    if (!options.method) {
+      options.method = 'GET';
+    }
 
-    //   function wsdisconnect() {
-    //     if (socket) {
-    //       //log('Disconnecting...')
-    //       socket.close()
-    //       socket = null
+    // Default empty functions for the callbacks
+    function noop () {}
+    if (!options.success) {
+      options.success = noop;
+    }
+    if (!options.warning) {
+      options.warning = noop;
+    }
+    if (!options.error) {
+      options.error = noop;
+    }
 
-    //       updateConnectionStatus()
-    //     }
-    //   }
+    const request = new XMLHttpRequest();
+    request.open(options.method, options.url, true);
+    // request.setRequestHeader('Content-type', 'application/json; charset=UTF-8')
+    request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded; charset=UTF-8');
+    request.send(options.data);
 
-      function updateConnectionStatus() {
-        if (socket) {
-        //   $status.style.backgroundColor = 'transparent'
-        //   $status.style.color = 'green'
-        //   $status.textContent = `connected`
-        //   $connectButton.innerHTML = 'Disconnect'
-          //$input.focus()
-          get_sessions(true);
-        } else {
-        //   $status.style.backgroundColor = 'red'
-        //   $status.style.color = 'white'
-        //   $status.textContent = 'disconnected'
-        //   $connectButton.textContent = 'Connect'
-        }
+    request.onload = function () {
+      // Success!
+      if (request.readyState === 4 && request.status === 200) {
+        options.success(JSON.parse(request.responseText));
+
+        // We reached our target destination, but it returned an error
+      } else {
+        options.warning(request.responseText);
+      }
+    };
+
+    // There was a connection error of some sort
+    request.onerror = options.error;
+  }
+
+  function procResponseError (data) {
+    console.log(data);
+  }
+
+  function procResponse (data) {
+    console.log(data);
+
+    // if (handleResponse !== null) {
+    //     handleResponse(data);
+    // }
+    // else
+    if (data.response_to === 'ask' && data.success) {
+      getSessions(false);
+      uiModeAskResponse(data);
+    } else if ((data.response_to === 'answerresponse' || data.response_to === 'answerresponsepractice') && data.success) {
+      getSessions(false);
+
+      globalStartingForm = data.starting_form;
+      globalChangeDesc = data.change_desc;
+      uiModeAnswerResponseReceived(data);
+    } else if ((data.response_to === 'mfpressedresponse' || data.response_to === 'mfpressedresponsepractice') && data.success) {
+      if (data.is_correct === false) {
+        uiModeClickedEnter();
+  
+        globalStartingForm = data.starting_form;
+        globalChangeDesc = data.change_desc;
+        uiModeAnswerResponseReceived(data);
+      }
+    } else if (data.response_to === 'newsession' && data.success) {
+      getSessions(true);
+    } else if (data.response_to === 'getmoves' && data.success) {
+      if (data.myturn && data.move_type !== 'Practice') {
+        q(".gamerow[data-uuid='" + data.session_id + "']").classList.add('myturn');
+      } else {
+        q(".gamerow[data-uuid='" + data.session_id + "']").classList.remove('myturn');
+      }
+      setUI(data);
+    } else if (data.response_to === 'getsessions' && data.success) {
+      if (data.username) {
+        q('#loginlink').style.display = 'none';
+        q('#logoutlink').style.display = 'inline';
+        q('#username').innerText = data.username;
+        globalUserName = data.username;
+      } else {
+        q('#loginlink').style.display = 'inline';
+        q('#logoutlink').style.display = 'none';
+        q('#username').innerText = '';
+        globalUserName = null;
       }
 
-    // document.addEventListener("visibilitychange", () => {
-    //     console.log(document.hidden);
-    //     try_ws_reconnect();
-    //     // Modify behavior…
+      let rows = '';
+      for (let i = 0; i < data.sessions.length; i++) {
+        const s = data.sessions[i];
+        if (s.move_type !== 'FirstMoveTheirTurn') /* do not show if first move not asked yet and I did not start game */ {
+          rows += "<div data-uuid='" + s.session_id + "' ";
+          rows += "data-max-changes='" + s.max_changes + "' ";
+          rows += "data-max-time='" + s.max_time + "' ";
+          rows += "data-countdown='" + (s.countdown !== 0) + "' ";
+          rows += "class='gamerow" + (s.myturn && s.move_type !== 'Practice' ? ' myturn' : '');
+          rows += (s.session_id === globalSessionId ? ' selectedGame' : '') + "' ";
+          rows += (s.opponent_name ? "opponent='" + s.opponent_name + "' " : '');
+          rows += "title='" + s.move_type + "' ";
+          rows += "onclick='getMove(this)'><span class='gamespan'>";
+          rows += (s.move_type === 'Practice' ? 'Practice' : (globalUserName || 'Game'));
+          rows += (s.opponent_name ? ' vs. ' + s.opponent_name : '');
+          rows += (s.move_type !== 'Practice' ? (' (' + s.my_score + ' - ' + s.their_score + ')') : '');
+          rows += myturnIcon + '</span></div>';
+        }
+        // q(".gamerow[data-uuid='b72df91e-3a4c-4f1b-aeda-c14fea61def6']").style.backgroundColor = "blue";
+      }
+      q('#list').innerHTML = rows;
+      // q("#refreshbutton").style.display = "block";
+      // q("#listouter").style.display = "block";
+
+      if (data.current_session) {
+        setUI(data.current_session);
+      }
+    }
+  }
+
+  function serialize (obj) {
+    const str = [];
+    for (const p in obj) {
+      if (obj.hasOwn(p)) {
+        str.push(encodeURIComponent(p) + '=' + encodeURIComponent(obj[p]));
+      }
+    }
+    return str.join('&');
+  }
+
+  const pendingSendData = null;
+  function genericSendRequest (sendUrl, sendData, handleResponse) {
+    // if (supportsWebSockets && !socket) {
+    //     wsconnect(sendUrl, send_data);
+    //     return;
+    // }
+
+    if (socket) {
+      console.log('websocket request');
+      sendData = JSON.stringify(sendData);
+      socket.send(sendData);
+    } else {
+      console.log("ws not connected: can't send.");
+      /*
+        pendingSendData = send_data;
+        wsconnect();
+        */
+
+      // console.log("http request");
+      // send_data = serialize(send_data);
+      // microAjax({
+      //     url: sendUrl,
+      //     method: "POST",
+      //     data: send_data,
+      //     success: procResponse,
+      //     warning: procResponseError,
+      //     error: null
+      // });
+    }
+    // $.ajax({
+    //     url: sendUrl,
+    //     type: "POST",
+    //     data: send_data,
+    //     dataType: "json",
+    //     success: function (data, textStatus, jqXHR) {
+    //          procResponse(data);
+    //     },
+    //     error: function(response) {
+    //         console.log("error: " + response);
+    //     }
     // });
+  }
 
-    //   $connectButton.addEventListener('click', () => {
-    //     if (socket) {
-    //       wsdisconnect()
-    //     } else {
-    //         wsconnect()
-    //     }
+  function sendAsk (session_id, person, number, tense, mood, voice, verbId) {
+    const sendData = { qtype: 'ask', session_id, person: parseInt(person), number: parseInt(number), tense: parseInt(tense), mood: parseInt(mood), voice: parseInt(voice), verb: parseInt(verbId) };
+    genericSendRequest('ask', sendData, null);
+  }
 
-    //     updateConnectionStatus()
-    //   })
+  function sendAnswer (session_id, answer, time, mfPressed, timedOut) {
+    const sendData = { qtype: 'submit', answer, time, mf_pressed: mfPressed, timed_out: timedOut, session_id };
+    genericSendRequest('enter', sendData, null);
+  }
 
-    //   $form.addEventListener('submit', (ev) => {
-    //     ev.preventDefault()
+  function sendMF (session_id, answer, time, mfPressed, timedOut) {
+    const sendData = { qtype: 'mfpressed', answer, time, mf_pressed: mfPressed, timed_out: timedOut, session_id };
+    genericSendRequest('mf', sendData, null);
+  }
 
-    //     const text = $input.value
+  function newGameClicked () {
+    // let unitv = q("#unitinput").value.trim();
+    const opponentv = q('#opponentinput').value.trim();
+    const countdown = (q('input[name=countdown]:checked').value === 'down');
+    let reps = parseInt(q('#repsperverb').value.trim());
+    let maxChanges = parseInt(q('#maxchanges').value.trim());
+    let maxTime = parseInt(q('#maxtime').value.trim());
 
-    //     //log('Sending: ' + text)
-    //     socket.send(text)
+    const v = [];
+    const ck = document.querySelectorAll('.verblistckverb:checked');
+    let i = 0;
+    for (; i < ck.length; i++) {
+      v.push(ck[i].value);
+    }
+    const unitv = v.join(',');
+    console.log('verbs: ' + unitv);
 
-    //     $input.value = ''
-    //     $input.focus()
-    //   })
+    reps = (reps) ? parseInt(reps) : 4;
+    maxChanges = (maxChanges) ? parseInt(maxChanges) : 2;
+    maxTime = (maxTime) ? parseInt(maxTime) : 30;
 
+    const sendData = { qtype: 'newsession', unit: unitv, opponent: opponentv, practice_reps_per_verb: reps, countdown, maxChanges, maxTime };
+    genericSendRequest('new', sendData, null);
+  }
 
+  function submitClicked () {
+    const submitbutton = q('#submitbutton');
+    if (submitbutton.innerText === 'Enter') {
+      uiModeClickedEnter();
+
+      const answer = q('#answerform').value.trim();
+      const time = q('#mainTime').innerText.trim();
+      console.log('Enter clicked: ' + answer + ', time: ' + time + ', mfPressed: ' + globalMFPressed + ', timedout: ' + globalTimedOut);
+  
+      sendAnswer(globalSessionId, answer, time, globalMFPressed, globalTimedOut);
+    } else if (submitbutton.innerText === 'Continue' || submitbutton.innerText === 'Start') {
+      console.log(submitbutton.innerText + ' clicked');
+      uiModeAskForm2();
+    } else if (submitbutton.innerText === 'Ask') {
+      const vals = getParamValues();
+      if (document.querySelectorAll('.paramdivchanged').length > 0 ||
+                q('#verbchooser').style.display !== 'none') {
+        sendAsk(globalSessionId, vals[0], vals[1], vals[2], vals[3], vals[4], vals[5]);
+      } else {
+        alert('you must change at least one parameter');
+      }
+    } else if (submitbutton.innerText === 'Go') {
+      console.log(submitbutton.innerText + ' clicked');
+      uiModeAnwerGoForm(globalStartingForm, globalChangeDesc);
+    }
+  }
+
+  function closeClicked () {
+    q('.hcform').style.display = 'none';
+  }
+
+  function mfClicked () {
+    console.log('multiple forms clicked');
+    if (!globalMFPressed) { // only allow clicking this once
+      q('#mfbutton').disabled = true;
+
+      addSecondsToTime(globalSeconds / 2);
+      globalMFPressed = true;
+
+      const answer = q('#answerform').value.trim();
+      const time = q('#mainTime').innerText.trim();
+      console.log('MF clicked: ' + answer + ', time: ' + time + ', mfPressed: ' + globalMFPressed + ', timedout: ' + globalTimedOut);
+
+      sendMF(globalSessionId, answer, time, globalMFPressed, globalTimedOut);
+    }
+  }
+
+  function mytimeout () {
+    console.log('timed out');
+    clearInterval(globalTimerIntV);
+    globalTimedOut = true;
+    globalTimerRef.innerHTML = '<span style="color:red;font-weight:bold;">00:00</span>';
+    submitClicked();
+  }
+  
+  function getMove (thisrow) {
+    document.querySelectorAll('.selectedGame').forEach((row) => {
+      row.classList.remove('selectedGame');
+    });
+    thisrow.classList.add('selectedGame');
+
+    globalSessionId = thisrow.getAttribute('data-uuid');
+    localStorage.setItem('selected_session_id', globalSessionId);
+
+    const sendData = { qtype: 'getmove', session_id: globalSessionId };
+    genericSendRequest('getmove', sendData, null);
+  }
+
+  function getSessions (withCurrentGame) {
+    const sendData = { qtype: 'getsessions', current_session: ((withCurrentGame) ? globalSessionId : null) };
+    genericSendRequest('list', sendData, null);
+  }
+
+  function setParamsDropdowns (person, number, tense, voice, mood, verbId) {
+    const a = document.querySelectorAll('.paramdivchanged').forEach(e => e.classList.remove('paramdivchanged'));
+
+    const p = q('#personparam');
+    p.value = person;
+    p.setAttribute('orig', person);
+    const n = q('#numberparam');
+    n.value = number;
+    n.setAttribute('orig', number);
+    const t = q('#tenseparam');
+    t.value = tense;
+    t.setAttribute('orig', tense);
+    const m = q('#moodparam');
+    m.value = mood;
+    m.setAttribute('orig', mood);
+    const v = q('#voiceparam');
+    v.value = voice;
+    v.setAttribute('orig', voice);
+    const vc = q('#verbchooser');
+    // if the dropdown doesn't have enough rows to assign value, just add a new row for it. it's ok: we can't see it
+    if (verbId >= vc.options.length && vc.value !== verbId /* so we don't get two of same option */) {
+      const o = document.createElement('option');
+      o.value = verbId;
+      o.text = '';
+      vc.add(o);
+    }
+    vc.value = verbId;
+  }
+
+  function getParamValues () {
+    const p = q('#personparam').value;
+    const n = q('#numberparam').value;
+    const t = q('#tenseparam').value;
+    const m = q('#moodparam').value;
+    const v = q('#voiceparam').value;
+    const verbId = q('#verbchooser').value;
+
+    // console.log("vals: " + p + n + t + m + v + verb_id);
+    return [p, n, t, m, v, verbId];
+  }
+
+  function setUI (data) {
+    globalPractice = false;
+    q('.hcform').style.display = 'block';
+    switch (data.move_type) {
+      case 'Practice':
+        uiModePractice(data); // practice
+        break;
+      case 'FirstMoveMyTurn':
+        uiModeAskForm(data, 5); // I need to ask first move
+        break;
+      case 'FirstMoveTheirTurn':
+        uiModeWaitingForAsk(data); // no moves: waiting for other player to ask first move
+        break;
+      case 'AnswerMyTurn':
+        uiModeAnwerForm(data); // I need to answer
+        break;
+      case 'AskTheirTurn':
+        uiModeWaitingForAsk(data); // waiting for you to ask
+        break;
+      case 'AskMyTurn':
+        uiModeAskForm(data, 2); // I need to ask
+        break;
+      case 'AnswerTheirTurn':
+        uiModeWaitingForAnswer(data); // waiting for you to answer
+        break;
+      case 'GameOver':
+        uiModeGameIsOver(); // game has ended
+        break;
+      default:
+        break;
+    }
+  }
+
+  const persons = ['first', 'second', 'third'];
+  const numbers = ['singular', 'plural'];
+  const tenses = ['present', 'imperfect', 'future', 'aorist', 'perfect', 'pluperfect'];
+  const voices = ['active', 'middle', 'passive'];
+  const moods = ['indicative', 'subjunctive', 'optative', 'imperative'];
+  function desc (person, number, tense, mood, voice, prevp, prevn, prevt, prevm, prevv) {
+    if (person !== prevp && prevp !== null) {
+      person = '<b>' + persons[person] + '</b>';
+    } else {
+      person = persons[person];
+    }
+    if (number !== prevn && prevn !== null) {
+      number = '<b>' + numbers[number] + '</b>';
+    } else {
+      number = numbers[number];
+    }
+    if (tense !== prevt && prevt !== null) {
+      tense = '<b>' + tenses[tense] + '</b>';
+    } else {
+      tense = tenses[tense];
+    }
+    if (mood !== prevm && prevm !== null) {
+      mood = '<b>' + moods[mood] + '</b>';
+    } else {
+      mood = moods[mood];
+    }
+    if (voice !== prevv && prevv !== null) {
+      voice = '<b>' + voices[voice] + '</b>';
+    } else {
+      voice = voices[voice];
+    }
+    return person + ' ' + number + ' ' + tense + ' ' + mood + ' ' + voice;
+  }
+
+  function uiModeGameIsOver () {
+    const submitbutton = q('#submitbutton');
+    submitbutton.disabled = true;
+    q('#statusmesg').innerHTML = 'Game is over.';
+    q('#answerform').value = '';
+    q('#answerform').disabled = true;
+    q('#correctanswer').innerHTML = '';
+    q('#correctanswer').style.visibility = 'hidden';
+    q('#startingform').innerText = '';
+    q('#mfbutton').disabled = true;
+    q('#verbchooser').style.display = 'none';
+  }
+
+  // need to set prev params for first form
+  function uiModePractice (data) {
+    const submitbutton = q('#submitbutton');
+    submitbutton.disabled = false;
+    submitbutton.innerText = 'Go';
+    globalStartingForm = data.starting_form;
+    globalChangeDesc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+    // q("#statusmesg").innerHTML = "Click Go to answer!"
+    q('#statusmesg').innerHTML = 'Practice Mode';
+    q('#changedesc').innerHTML = (data.person_prev !== null) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, null, null, null, null, null) : '';
+    q('#answerform').value = '';
+    q('#answerform').disabled = true;
+    q('#mfbutton').disabled = true;
+    q('#correctanswer').innerHTML = '';
+    q('#correctanswer').style.visibility = 'hidden';
+    q('#startingform').innerText = (data.starting_form) ? data.starting_form : '';
+
+    q('#askparamsdiv').style.display = 'none';
+    q('#submitbutton').style.display = 'block';
+    q('#verbchooser').style.display = 'none';
+  }
+
+  function uiModeAnwerForm (data) {
+    const submitbutton = q('#submitbutton');
+    submitbutton.disabled = false;
+    submitbutton.innerText = 'Go';
+    globalStartingForm = data.starting_form;
+    globalChangeDesc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+    q('#statusmesg').innerHTML = 'Click Go to answer!';
+    q('#changedesc').innerHTML = (data.person_prev !== null) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, null, null, null, null, null) : '';
+    q('#answerform').value = '';
+    q('#answerform').disabled = true;
+    q('#mfbutton').disabled = true;
+    q('#correctanswer').innerHTML = '';
+    q('#correctanswer').style.visibility = 'hidden';
+    q('#startingform').innerText = (data.starting_form) ? data.starting_form : '';
+
+    q('#askparamsdiv').style.display = 'none';
+    q('#submitbutton').style.display = 'block';
+    q('#verbchooser').style.display = 'none';
+  }
+
+  function uiModeAnwerGoForm (locStartingForm, locChangeDesc) {
+    const submitbutton = q('#submitbutton');
+    submitbutton.disabled = false;
+    submitbutton.innerText = 'Enter';
+    globalMFPressed = false;
+
+    q('#statusmesg').innerHTML = 'Click enter to submit!';
+    q('#changedesc').innerHTML = locChangeDesc;
+    q('#answerform').value = '';
+    q('#answerform').disabled = false;
+    q('#mfbutton').disabled = false;
+    q('#answerform').focus();
+    q('#correctanswer').innerHTML = '';
+    q('#correctanswer').style.visibility = 'hidden';
+    q('#startingform').innerText = locStartingForm;
+
+    q('#askparamsdiv').style.display = 'none';
+    startTimer();
+    q('#submitbutton').style.display = 'block';
+    q('#verbchooser').style.display = 'none';
+  }
+
+  function uiModeWaitingForAnswer (data) {
+    const submitbutton = q('#submitbutton');
+    submitbutton.disabled = true;
+    q('#statusmesg').innerHTML = 'Waiting for opponent to answer.';
+    q('#answerform').value = '';
+    q('#answerform').disabled = true;
+    q('#correctanswer').innerHTML = '';
+    q('#correctanswer').style.visibility = 'hidden';
+    q('#startingform').innerText = data.starting_form;
+
+    q('#askparamsdiv').style.display = 'none';
+
+    globalSeconds = parseInt(q('.gamerow.selectedGame').getAttribute('data-max-time'));
+
+    q('#changedesc').innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+    q('#submitbutton').style.display = 'none';
+    q('#mfbutton').disabled = true;
+    q('#mainTime').innerText = globalSeconds + ':00';
+    q('#verbchooser').style.display = 'none';
+  }
+
+  function uiModeWaitingForAsk (data) {
+    const submitbutton = q('#submitbutton');
+    submitbutton.disabled = true;
+    q('#statusmesg').innerHTML = 'Waiting for opponent to ask.';
+    q('#answerform').value = data.answer;
+    q('#answerform').disabled = true;
+
+    q('#correctanswer').style.visibility = 'visible';
+    q('#startingform').innerText = data.starting_form;
+
+    q('#mainTime').innerText = data.time;
+    q('#askparamsdiv').style.display = 'none';
+    q('#submitbutton').style.display = 'none';
+    q('#mfbutton').disabled = true;
+
+    if (data.move_type === 'FirstMoveTheirTurn') {
+      q('#changedesc').innerHTML = '';
+      q('#correctanswer').innerHTML = '';
+    } else {
+      q('#changedesc').innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+      q('#correctanswer').innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + ' ' + ((!data.is_correct || globalShowCorrect) ? data.correct_answer : '');
+    }
+    q('#verbchooser').style.display = 'none';
+  }
+
+  function uiModeAskResponse (data) {
+    console.log('ask successfully submitted');
+    q('#mfbutton').disabled = true;
+    const submitbutton = q('#submitbutton');
+    submitbutton.innerText = 'Sent!';
+    q('#statusmesg').innerHTML = 'Sent!';
+    submitbutton.disabled = true;
+    q('#askparamsdiv').style.display = 'none';
+    q('#verbchooser').style.display = 'none';
+    if (data.starting_form) {
+      q('#startingform').innerText = data.starting_form;
+    }
+    q('#changedesc').innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+  }
+
+  function uiModeAskForm (data, maxParamsToChange) {
+    globalSessionState = data;
+    setParamsDropdowns(data.person, data.number, data.tense, data.voice, data.mood, data.verb);
+
+    if (data.move_type === 'FirstMoveMyTurn') {
+      uiModeAskForm2();
+      return;
+    }
+
+    q('#mfbutton').disabled = true;
+    const submitbutton = q('#submitbutton');
+    if (data.move_type === 'Practice') {
+      submitbutton.innerText = 'Ask';
+      q('#verbchooser').style.display = 'none';
+      q('#askparamsdiv').style.display = 'block';
+      q('#statusmesg').innerHTML = 'Click ask to ask this form.';
+      q('#startingform').innerText = '';
+      q('#changedesc').innerHTML = '';
+      q('#answerform').value = '';
+      q('#correctanswer').style.visibility = 'hidden';
+      q('#correctanswer').innerHTML = '';
+    } else {
+      submitbutton.innerText = 'Continue';
+      q('#verbchooser').style.display = 'none';
+      q('#mainTime').innerText = data.time;
+      q('#askparamsdiv').style.display = 'none';
+      q('#statusmesg').innerHTML = 'Click Continue to ask the next form.';
+      q('#startingform').innerText = data.starting_form;
+      q('#changedesc').innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+      q('#answerform').value = data.answer;
+      q('#correctanswer').style.visibility = 'visible';
+      q('#correctanswer').innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + ' ' + ((!data.is_correct || globalShowCorrect) ? data.correct_answer : '');
+    }
+    submitbutton.style.display = 'block';
+    submitbutton.disabled = false;
+  }
+
+  function uiModeAskForm2 () {
+    const data = globalSessionState;
+    globalSessionState = null;
+
+    const submitbutton = q('#submitbutton');
+    submitbutton.innerText = 'Ask';
+    submitbutton.style.display = 'block';
+    submitbutton.disabled = false;
+    q('#mfbutton').disabled = true;
+    if (data.move_type === 'FirstMoveMyTurn') {
+      globalMaxChanges = null; // can change all
+      setParamsDropdowns(null, null, null, null, null, null);
+      const verbchooser = q('#verbchooser');
+      // remove verb options
+      while (verbchooser.options.length > 0) {
+        verbchooser.remove(0);
+      }
+      // add new verb options
+      for (let v = 0; v < data.verbs.length; v++) {
+        const o = document.createElement('option');
+        o.value = data.verbs[v].id;
+        o.text = data.verbs[v].verb;
+        verbchooser.add(o);
+      }
+      verbchooser.value = null;
+  
+      q('#startingform').innerText = '';
+      verbchooser.style.display = 'inline-block';
+      q('#statusmesg').innerHTML = 'Choose a verb and set all parameters';
+    } else {
+      globalMaxChanges = 2;
+      setParamsDropdowns(data.person, data.number, data.tense, data.voice, data.mood, data.verb);
+      q('#startingform').innerText = data.correct_answer;
+      q('#verbchooser').style.display = 'none';
+      q('#statusmesg').innerHTML = 'Change up to (2) parameters';
+    }
+    globalSeconds = parseInt(q('.gamerow.selectedGame').getAttribute('data-max-time'));
+
+    q('#mainTime').innerHTML = globalSeconds + ':00';
+    q('#askparamsdiv').style.display = 'block';
+    q('#changedesc').innerHTML = '';// desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+    // q("#changedesc").style.display = "none";
+    q('#answerform').value = '';
+    q('#correctanswer').style.visibility = 'hidden';
+    q('#correctanswer').innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + ' ' + ((!data.is_correct || globalShowCorrect) ? data.correct_answer : '');
+
+    // q("#statusmesg").innerHTML = "Click Ask to ask the next form."
+    // if (max_params_to_change == 5) {
+    //     q("#statusmesg").innerHTML = "Choose a verb and set all params.";
+    // }
+    // else {
+    //     q("#statusmesg").innerHTML = "Change up to (" + max_params_to_change + ") params.";
+    // }
+}
+  function uiModeClickedEnter () {
+    const submitbutton = q('#submitbutton');
+    submitbutton.innerText = 'Loading...';
+    submitbutton.disabled = true;
+    stopTimer();
+    q('#answerform').disabled = true;
+  }
+
+  function uiModeAnswerResponseReceived (data) {
+    const submitbutton = q('#submitbutton');
+    if (data.move_type === 'Practice') {
+      submitbutton.innerText = 'Go';
+      globalPractice = true;
+      globalStartingForm = data.starting_form;
+      globalChangeDesc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
+      q('#statusmesg').innerHTML = 'Click Go to answer the next form.';
+    } else {
+      globalPractice = false;
+      submitbutton.innerText = 'Continue';
+      q('#statusmesg').innerHTML = 'Click Continue to ask the next form.';
+    }
+    globalSessionState = data;
+    submitbutton.disabled = false;
+    submitbutton.focus();
+    q('#mfbutton').disabled = true;
+    // mark (in)correct, show correct answer
+    q('#correctanswer').style.visibility = 'visible';
+    q('#correctanswer').innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + ' ' + ((!data.is_correct || globalShowCorrect) ? data.correct_answer : '');
+  }
+
+  function addSecondsToTime (secs) {
+    globalCountDownDate += (secs * 1000);
+  }
+  
+  function startTimer () {
+    const session = q('.gamerow.selectedGame');
+    globalSeconds = parseInt(session.getAttribute('data-max-time'));
+    globalCountDown = (session.getAttribute('data-countdown') === 'true');
+    globalTimedOut = false;
+    globalCountDownDate = new Date().getTime();
+    if (globalCountDown) {
+      globalCountDownDate += (globalSeconds * 1000);
+    }
+    globalTimerIntV = setInterval(intervalFunc, 10);
+    globalTimerRunning = true;
+  }
+
+  function stopTimer () {
+    clearInterval(globalTimerIntV);
+    globalTimerIntV = null;
+    globalTimerRunning = false;
+  }
+
+  function intervalFunc () {
+    const now = new Date().getTime();
+    let distance = 0;
+    if (globalCountDown) {
+      distance = globalCountDownDate - now;
+    } else {
+      distance = now - globalCountDownDate;
+    }
+
+    if (distance <= 0 && globalCountDown) {
+      mytimeout();
+      return;
+    }
+
+    // let days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+    const ms = Math.floor((distance % (1000)) / 10);
+
+    globalTimerRef.innerHTML = ((hours > 0) ? ((hours < 10) ? ('0' + hours + ':') : hours + ':') : '') + ((minutes > 0 || hours > 0) ? ((minutes < 10) ? ('0' + minutes + ':') : minutes + ':') : '') + ((seconds < 10) ? ('0' + seconds + ':') : seconds + ':') + ((ms < 10) ? ('0' + ms) : ms);
+  }
+
+  //   const $status = q('#status')
+  //   const $connectButton = q('#connect')
+  //   const $log = q('#log')
+  //   const $form = q('#chatform')
+  //   const $input = q('#text')
+
+  /** @type {WebSocket | null} */
+  let socket = null;
+
+  //   function log(msg, type = 'status') {
+  //     $log.innerHTML += `<p class="msg msg--${type}">${msg}</p>`
+  //     $log.scrollTop += 1000
+  //   }
+
+  const visibilityCheck = false;
+  function wsconnect () {
+    // wsdisconnect()
+
+    const { location } = window;
+
+    const proto = location.protocol.startsWith('https') ? 'wss' : 'ws';
+    const wsUri = `${proto}://${location.host}/ws`;
+
+    // log('Connecting...')
+    // socket = new WebSocket(wsUri);
+    socket = null;
+    socket = new ReconnectingWebSocket(wsUri, null, { debug: true });
+
+    socket.onopen = () => {
+      console.log('ws connected');
+      // log('Connected')
       updateConnectionStatus();
-      
-      function verbList() {
-        let list = q("#verblist");
-        let rows = "<div class='verbunitrow'><a href='#' onclick='ex(this);return false;'>H&Q verbs</a></div><div class='expand-container'><div id='verbscontainer' class='expand-contract'>";
-        rows += "<div class='verbunitrow'><input class='verblistck verblistckunit' id='ckuall' type='checkbox'/>all</div>";
-        let i = 0;
-        let lastUnit = null;
-        for ( ; i < verbs.length; i++) {
-            if (verbs[i].i == 122 || verbs[i].i == 127 || verbs[i].i == 78 || verbs[i].i == 79) {
-                continue;
-            }
-            let end = ",";
-            let plus = 0;
-            if (verbs[i].pp[0] == "—") { //-, erhsomai and -, anerhsomai
-                end = "ι,";
-                plus = 1;
-            }
-            if (verbs[i].u != lastUnit) {
-                if (lastUnit !== null) {
-                    rows += "</div></div>";
-                }
-                lastUnit = verbs[i].u;
-                
-                rows += "<div class='verbunitrow'><input class='verblistck verblistckunit' id='cku" + verbs[i].u + "' value='" + verbs[i].u + "' type='checkbox'/><a href='#' onclick='ex(this);return false;'>unit " + verbs[i].u + "</a></div>";
-                rows += "<div class='expand-container'><div id='unitdiv" + verbs[i].u + "' class='expand-contract'>";
-            }
-            rows += "<div class='verbrow'><input class='verblistck verblistckverb' id='ckv" + verbs[i].i + "' value='" + verbs[i].i + "' type='checkbox'/>" + verbs[i].pp.substring(0, (verbs[i].pp.indexOf(end) + plus)) + "</div>";
-        }
-        rows += "</div></div></div></div>";
-        list.innerHTML = rows;
+      /*
+          if (pendingSendData) {
+              genericSendRequest(null, pendingSendData, null);
+              pendingSendData = null;
+          }
+          if (!visibilityCheck) {
+              //https://stackoverflow.com/questions/1060008/is-there-a-way-to-detect-if-a-browser-window-is-not-currently-active
+              document.addEventListener("visibilitychange", onchange);
+              function onchange (evt) {
+                  if (document.hidden) {
+                      console.log("document hidden");
+                  }
+                  else {
+                      console.log("document visible");
+                      if (!socket) {
+                          wsconnect();
+                      }
+                  }
+              }
+              visibilityCheck = true;
+          } */
+    };
 
-        let all = document.querySelector("#ckuall");
-        //unit notes
-        let c = document.querySelectorAll(".verblistckunit");
-        let j = 0;
-        for (j = 0; j < c.length; j++) {
-            c[j].addEventListener("click", function() {
-                let checked = true;
-                if (!this.checked) {
-                    checked = false;
-                    all.checked = false;
-                }
-                let a = this.parentNode.nextSibling.querySelectorAll(".verblistck");
-                let k = 0;
-                for (k = 0; k < a.length; k++) {
-                    a[k].checked = checked;
-                }
-            });
+    socket.onmessage = (ev) => {
+      console.log('websocket data received');// + ev.data);
+      try {
+        const json = JSON.parse(ev.data);
+        procResponse(json);
+      } catch (e) { console.log(e.message); }
+    };
+
+    socket.onclose = () => {
+      console.log('ws disconnected');
+      // socket = null
+      // updateConnectionStatus()
+    };
+  }
+
+  //   function try_ws_reconnect() {
+  //     if (!socket) {
+  //         wsconnect();
+  //         //setTimeout(try_ws_reconnect, 4000);
+  //     }
+  //   }
+
+  //   function wsdisconnect() {
+  //     if (socket) {
+  //       //log('Disconnecting...')
+  //       socket.close()
+  //       socket = null
+
+  //       updateConnectionStatus()
+  //     }
+  //   }
+
+  function updateConnectionStatus () {
+    if (socket) {
+      //   $status.style.backgroundColor = 'transparent'
+      //   $status.style.color = 'green'
+      //   $status.textContent = `connected`
+      //   $connectButton.innerHTML = 'Disconnect'
+      // $input.focus()
+      getSessions(true);
+    } else {
+      //   $status.style.backgroundColor = 'red'
+      //   $status.style.color = 'white'
+      //   $status.textContent = 'disconnected'
+      //   $connectButton.textContent = 'Connect'
+    }
+  }
+
+  // document.addEventListener("visibilitychange", () => {
+  //     console.log(document.hidden);
+  //     try_ws_reconnect();
+  //     // Modify behavior…
+  // });
+
+  //   $connectButton.addEventListener('click', () => {
+  //     if (socket) {
+  //       wsdisconnect()
+  //     } else {
+  //         wsconnect()
+  //     }
+
+  //     updateConnectionStatus()
+  //   })
+
+  //   $form.addEventListener('submit', (ev) => {
+  //     ev.preventDefault()
+
+  //     const text = $input.value
+
+  //     //log('Sending: ' + text)
+  //     socket.send(text)
+
+  //     $input.value = ''
+  //     $input.focus()
+  //   })
+
+  updateConnectionStatus();
+
+  function verbList () {
+    const list = q('#verblist');
+    let rows = "<div class='verbunitrow'><a href='#' onclick='ex(this);return false;'>H&Q verbs</a></div><div class='expand-container'><div id='verbscontainer' class='expand-contract'>";
+    rows += "<div class='verbunitrow'><input class='verblistck verblistckunit' id='ckuall' type='checkbox'/>all</div>";
+    let i = 0;
+    let lastUnit = null;
+    for (; i < verbs.length; i++) {
+      if (verbs[i].i === 122 || verbs[i].i === 127 || verbs[i].i === 78 || verbs[i].i === 79) {
+        continue;
+      }
+      let end = ',';
+      let plus = 0;
+      if (verbs[i].pp[0] === '—') { // -, erhsomai and -, anerhsomai
+        end = 'ι,';
+        plus = 1;
+      }
+      if (verbs[i].u !== lastUnit) {
+        if (lastUnit !== null) {
+          rows += '</div></div>';
         }
-        //verb leaves
-        let vv = document.querySelectorAll(".verblistckverb");
+        lastUnit = verbs[i].u;
+
+        rows += "<div class='verbunitrow'><input class='verblistck verblistckunit' id='cku" + verbs[i].u + "' value='" + verbs[i].u + "' type='checkbox'/><a href='#' onclick='ex(this);return false;'>unit " + verbs[i].u + '</a></div>';
+        rows += "<div class='expand-container'><div id='unitdiv" + verbs[i].u + "' class='expand-contract'>";
+      }
+      rows += "<div class='verbrow'><input class='verblistck verblistckverb' id='ckv" + verbs[i].i + "' value='" + verbs[i].i + "' type='checkbox'/>" + verbs[i].pp.substring(0, (verbs[i].pp.indexOf(end) + plus)) + '</div>';
+    }
+    rows += '</div></div></div></div>';
+    list.innerHTML = rows;
+
+    const all = document.querySelector('#ckuall');
+    // unit notes
+    const c = document.querySelectorAll('.verblistckunit');
+    let j = 0;
+    for (j = 0; j < c.length; j++) {
+      c[j].addEventListener('click', function () {
+        let checked = true;
+        if (!this.checked) {
+          checked = false;
+          all.checked = false;
+        }
+        const a = this.parentNode.nextSibling.querySelectorAll('.verblistck');
         let k = 0;
-        for ( ; k < vv.length; k++) {
-            vv[k].addEventListener("click", function() {
-                if (!this.checked) {
-                    all.checked = false;
-                    let a = this.parentNode.parentNode.parentNode.previousSibling.firstChild.checked = false;
-                }
-            });
+        for (k = 0; k < a.length; k++) {
+          a[k].checked = checked;
         }
-        //all
-        all.addEventListener("click", function() {
-            let checked = false;
-                if (this.checked) {
-                    checked = true;
-                }
-            let a = document.querySelectorAll(".verblistck");
-            let k = 0;
-                for (k = 0; k < a.length; k++) {
-                    a[k].checked = checked;
-                }
-        });
+      });
     }
-
-    function expandContractNewGameDiv() {
-        let el = document.getElementById("newgamediv");
-        el.classList.toggle('expanded');
-        //collapse all expanded divs below this one
-        el.querySelectorAll(".expand-contract").forEach( e => e.classList.remove("expanded") ); 
+    // verb leaves
+    const vv = document.querySelectorAll('.verblistckverb');
+    let k = 0;
+    for (; k < vv.length; k++) {
+      vv[k].addEventListener('click', function () {
+        if (!this.checked) {
+          all.checked = false;
+          const a = this.parentNode.parentNode.parentNode.previousSibling.firstChild.checked = false;
+        }
+      });
     }
+    // all
+    all.addEventListener('click', function () {
+      let checked = false;
+      if (this.checked) {
+        checked = true;
+      }
+      const a = document.querySelectorAll('.verblistck');
+      let k = 0;
+      for (k = 0; k < a.length; k++) {
+        a[k].checked = checked;
+      }
+    });
+  }
 
-    function ex(n) {
-        let el = n.parentNode.nextSibling.firstChild;
-        el.classList.toggle('expanded');
-        //collapse all expanded divs below this one
-        el.querySelectorAll(".expand-contract").forEach( e => e.classList.remove("expanded") ); 
-    }
+  function expandContractNewGameDiv () {
+    const el = document.getElementById('newgamediv');
+    el.classList.toggle('expanded');
+    // collapse all expanded divs below this one
+    el.querySelectorAll('.expand-contract').forEach(e => e.classList.remove('expanded'));
+  }
 
-const verbs = [
-{i:1,pp:"παιδεύω, παιδεύσω, ἐπαίδευσα, πεπαίδευκα, πεπαίδευμαι, ἐπαιδεύθην", u:2},
-{i:2,pp:"πέμπω, πέμψω, ἔπεμψα, πέπομφα, πέπεμμαι, ἐπέμφθην", u:2},
-{i:3,pp:"κελεύω, κελεύσω, ἐκέλευσα, κεκέλευκα, κεκέλευσμαι, ἐκελεύσθην", u:2},
-{i:4,pp:"λῡ́ω, λῡ́σω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην", u:2},
-{i:5,pp:"γράφω, γράψω, ἔγραψα, γέγραφα, γέγραμμαι, ἐγράφην", u:3},
-{i:6,pp:"θῡ́ω, θῡ́σω, ἔθῡσα, τέθυκα, τέθυμαι, ἐτύθην", u:3},
-{i:7,pp:"παύω, παύσω, ἔπαυσα, πέπαυκα, πέπαυμαι, ἐπαύθην", u:3},
-{i:8,pp:"φυλάττω, φυλάξω, ἐφύλαξα, πεφύλαχα, πεφύλαγμαι, ἐφυλάχθην", u:3},
-{i:9,pp:"διδάσκω, διδάξω, ἐδίδαξα, δεδίδαχα, δεδίδαγμαι, ἐδιδάχθην", u:4},
-{i:10,pp:"ἐθέλω, ἐθελήσω, ἠθέλησα, ἠθέληκα, —, —", u:4},
-{i:11,pp:"θάπτω, θάψω, ἔθαψα, —, τέθαμμαι, ἐτάφην", u:4},
-{i:12,pp:"τάττω, τάξω, ἔταξα, τέταχα, τέταγμαι, ἐτάχθην", u:4},
-{i:13,pp:"ἄρχω, ἄρξω, ἦρξα, ἦρχα, ἦργμαι, ἤρχθην", u:5},
-{i:14,pp:"βλάπτω, βλάψω, ἔβλαψα, βέβλαφα, βέβλαμμαι, ἐβλάβην / ἐβλάφθην", u:5},
-{i:15,pp:"πείθω, πείσω, ἔπεισα, πέπεικα, πέπεισμαι, ἐπείσθην", u:5},
-{i:16,pp:"πρᾱ́ττω, πρᾱ́ξω, ἔπρᾱξα, πέπρᾱχα / πέπρᾱγα, πέπρᾱγμαι, ἐπρᾱ́χθην", u:5},
-{i:17,pp:"δουλεύω, δουλεύσω, ἐδούλευσα, δεδούλευκα, —, —", u:6},
-{i:18,pp:"κωλῡ́ω, κωλῡ́σω, ἐκώλῡσα, κεκώλῡκα, κεκώλῡμαι, ἐκωλῡ́θην", u:6},
-{i:19,pp:"πολῑτεύω, πολῑτεύσω, ἐπολῑ́τευσα, πεπολῑ́τευκα, πεπολῑ́τευμαι, ἐπολῑτεύθην", u:6},
-{i:20,pp:"χορεύω, χορεύσω, ἐχόρευσα, κεχόρευκα, κεχόρευμαι, ἐχορεύθην", u:6},
-{i:21,pp:"κλέπτω, κλέψω, ἔκλεψα, κέκλοφα, κέκλεμμαι, ἐκλάπην", u:7},
-{i:22,pp:"λείπω, λείψω, ἔλιπον, λέλοιπα, λέλειμμαι, ἐλείφθην", u:7},
-{i:23,pp:"σῴζω, σώσω, ἔσωσα, σέσωκα, σέσωσμαι / σέσωμαι, ἐσώθην", u:7},
-{i:24,pp:"ἄγω, ἄξω, ἤγαγον, ἦχα, ἦγμαι, ἤχθην", u:8},
-{i:25,pp:"ἥκω, ἥξω, —, —, —, —", u:8},
-{i:26,pp:"ἀδικέω, ἀδικήσω, ἠδίκησα, ἠδίκηκα, ἠδίκημαι, ἠδικήθην", u:9},
-{i:27,pp:"νῑκάω, νῑκήσω, ἐνῑ́κησα, νενῑ́κηκα, νενῑ́κημαι, ἐνῑκήθην", u:9},
-{i:28,pp:"ποιέω, ποιήσω, ἐποίησα, πεποίηκα, πεποίημαι, ἐποιήθην", u:9},
-{i:29,pp:"τῑμάω, τῑμήσω, ἐτῑ́μησα, τετῑ́μηκα, τετῑ́μημαι, ἐτῑμήθην", u:9},
-{i:30,pp:"ἀγγέλλω, ἀγγελῶ, ἤγγειλα, ἤγγελκα, ἤγγελμαι, ἠγγέλθην", u:10},
-{i:31,pp:"ἀξιόω, ἀξιώσω, ἠξίωσα, ἠξίωκα, ἠξίωμαι, ἠξιώθην", u:10},
-{i:32,pp:"δηλόω, δηλώσω, ἐδήλωσα, δεδήλωκα, δεδήλωμαι, ἐδηλώθην", u:10},
-{i:33,pp:"καλέω, καλῶ, ἐκάλεσα, κέκληκα, κέκλημαι, ἐκλήθην", u:10},
-{i:34,pp:"μένω, μενῶ, ἔμεινα, μεμένηκα, —, —", u:10},
-{i:35,pp:"τελευτάω, τελευτήσω, ἐτελεύτησα, τετελεύτηκα, τετελεύτημαι, ἐτελευτήθην", u:10},
-{i:36,pp:"ἀκούω, ἀκούσομαι, ἤκουσα, ἀκήκοα, —, ἠκούσθην", u:11},
-{i:37,pp:"ἀποδέχομαι, ἀποδέξομαι, ἀπεδεξάμην, —, ἀποδέδεγμαι, —", u:11},
-{i:38,pp:"βάλλω, βαλῶ, ἔβαλον, βέβληκα, βέβλημαι, ἐβλήθην", u:11},
-{i:39,pp:"βούλομαι, βουλήσομαι, —, —, βεβούλημαι, ἐβουλήθην", u:11},
-{i:40,pp:"δέχομαι, δέξομαι, ἐδεξάμην, —, δέδεγμαι, —", u:11},
-{i:41,pp:"λαμβάνω, λήψομαι, ἔλαβον, εἴληφα, εἴλημμαι, ἐλήφθην", u:11},
-{i:42,pp:"πάσχω, πείσομαι, ἔπαθον, πέπονθα, —, —", u:11},
-{i:43,pp:"ἀνατίθημι, ἀναθήσω, ἀνέθηκα, ἀνατέθηκα, ἀνατέθειμαι, ἀνετέθην", u:12},
-{i:44,pp:"ἀποδίδωμι, ἀποδώσω, ἀπέδωκα, ἀποδέδωκα, ἀποδέδομαι, ἀπεδόθην", u:12},
-{i:45,pp:"ἀφίστημι, ἀποστήσω, ἀπέστησα / ἀπέστην, ἀφέστηκα, ἀφέσταμαι, ἀπεστάθην", u:12},
-{i:46,pp:"δίδωμι, δώσω, ἔδωκα, δέδωκα, δέδομαι, ἐδόθην", u:12},
-{i:47,pp:"ἵστημι, στήσω, ἔστησα / ἔστην, ἕστηκα, ἕσταμαι, ἐστάθην", u:12},
-{i:48,pp:"καθίστημι, καταστήσω, κατέστησα / κατέστην, καθέστηκα, καθέσταμαι, κατεστάθην", u:12},
-{i:49,pp:"καταλῡ́ω, καταλῡ́σω, κατέλῡσα, καταλέλυκα, καταλέλυμαι, κατελύθην", u:12},
-{i:50,pp:"τίθημι, θήσω, ἔθηκα, τέθηκα, τέθειμαι, ἐτέθην", u:12},
-{i:51,pp:"φιλέω, φιλήσω, ἐφίλησα, πεφίληκα, πεφίλημαι, ἐφιλήθην", u:12},
-{i:52,pp:"φοβέομαι, φοβήσομαι, —, —, πεφόβημαι, ἐφοβήθην", u:12},
-{i:53,pp:"γίγνομαι, γενήσομαι, ἐγενόμην, γέγονα, γεγένημαι, —", u:13},
-{i:54,pp:"ἔρχομαι, ἐλεύσομαι, ἦλθον, ἐλήλυθα, —, —", u:13},
-{i:55,pp:"μανθάνω, μαθήσομαι, ἔμαθον, μεμάθηκα, —, —", u:13},
-{i:56,pp:"μάχομαι, μαχοῦμαι, ἐμαχεσάμην, —, μεμάχημαι, —", u:13},
-{i:57,pp:"μεταδίδωμι, μεταδώσω, μετέδωκα, μεταδέδωκα, μεταδέδομαι, μετεδόθην", u:13},
-{i:58,pp:"μετανίσταμαι, μεταναστήσομαι, μετανέστην, μετανέστηκα, —, —", u:13},
-{i:59,pp:"μηχανάομαι, μηχανήσομαι, ἐμηχανησάμην, —, μεμηχάνημαι, —", u:13},
-{i:60,pp:"φεύγω, φεύξομαι, ἔφυγον, πέφευγα, —, —", u:13},
-{i:61,pp:"δείκνῡμι, δείξω, ἔδειξα, δέδειχα, δέδειγμαι, ἐδείχθην", u:14},
-{i:62,pp:"ἐπανίσταμαι, ἐπαναστήσομαι, ἐπανέστην, ἐπανέστηκα, —, —", u:14},
-{i:63,pp:"ἐπιδείκνυμαι, ἐπιδείξομαι, ἐπεδειξάμην, —, ἐπιδέδειγμαι, —", u:14},
-{i:64,pp:"ἐρωτάω, ἐρωτήσω, ἠρώτησα, ἠρώτηκα, ἠρώτημαι, ἠρωτήθην", u:14},
-{i:65,pp:"λανθάνω, λήσω, ἔλαθον, λέληθα, —, —", u:14},
-{i:66,pp:"παραγίγνομαι, παραγενήσομαι, παρεγενόμην, παραγέγονα, παραγεγένημαι, —", u:14},
-{i:67,pp:"παραδίδωμι, παραδώσω, παρέδωκα, παραδέδωκα, παραδέδομαι, παρεδόθην", u:14},
-{i:68,pp:"παραμένω, παραμενῶ, παρέμεινα, παραμεμένηκα, —, —", u:14},
-{i:69,pp:"τυγχάνω, τεύξομαι, ἔτυχον, τετύχηκα, —, —", u:14},
-{i:70,pp:"ὑπακούω, ὑπακούσομαι, ὑπηκουσα, ὑπακήκοα, —, ὑπηκούσθην", u:14},
-{i:71,pp:"ὑπομένω, ὑπομενῶ, ὑπέμεινα, ὑπομεμένηκα, —, —", u:14},
-{i:72,pp:"φθάνω, φθήσομαι, ἔφθασα / ἔφθην, —, —, —", u:14},
-{i:73,pp:"χαίρω, χαιρήσω, —, κεχάρηκα, —, ἐχάρην", u:14},
-{i:74,pp:"αἱρέω, αἱρήσω, εἷλον, ᾕρηκα, ᾕρημαι, ᾑρέθην", u:15},
-{i:75,pp:"αἰσθάνομαι, αἰσθήσομαι, ᾐσθόμην, —, ᾔσθημαι, —", u:15},
-{i:76,pp:"διαφέρω, διοίσω, διήνεγκα / διήνεγκον, διενήνοχα, διενήνεγμαι, διηνέχθην", u:15},
-{i:77,pp:"εἰμί, ἔσομαι, —, —, —, —", u:15},
-{i:78,pp:"ἔστι(ν), ἔσται, —, —, —, —", u:15},
-{i:79,pp:"ἔξεστι(ν), ἐξέσται, —, —, —, —", u:15},
-{i:80,pp:"ἕπομαι, ἕψομαι, ἑσπόμην, —, —, —", u:15},
-{i:81,pp:"ὁράω, ὄψομαι, εἶδον, ἑόρᾱκα / ἑώρᾱκα, ἑώρᾱμαι / ὦμμαι, ὤφθην", u:15},
-{i:82,pp:"συμφέρω, συνοίσω, συνήνεγκα / συνήνεγκον, συνενήνοχα, συνενήνεγμαι, συνηνέχθην", u:15},
-{i:83,pp:"φέρω, οἴσω, ἤνεγκα / ἤνεγκον, ἐνήνοχα, ἐνήνεγμαι, ἠνέχθην", u:15},
-{i:84,pp:"ἀναβαίνω, ἀναβήσομαι, ἀνέβην, ἀναβέβηκα, —, —", u:16},
-{i:85,pp:"βαίνω, -βήσομαι, -ἔβην, βέβηκα, —, —", u:16},
-{i:86,pp:"γιγνώσκω, γνώσομαι, ἔγνων, ἔγνωκα, ἔγνωσμαι, ἐγνώσθην", u:16},
-{i:87,pp:"ἐκπῑ́πτω, ἐκπεσοῦμαι, ἐξέπεσον, ἐκπέπτωκα, —, —", u:16},
-{i:88,pp:"λέγω, ἐρῶ / λέξω, εἶπον / ἔλεξα, εἴρηκα, εἴρημαι / λέλεγμαι, ἐλέχθην / ἐρρήθην", u:16},
-{i:89,pp:"νομίζω, νομιῶ, ἐνόμισα, νενόμικα, νενόμισμαι, ἐνομίσθην", u:16},
-{i:90,pp:"πῑ́πτω, πεσοῦμαι, ἔπεσον, πέπτωκα, —, —", u:16},
-{i:91,pp:"προδίδωμι, προδώσω, προέδωκα / προύδωκα, προδέδωκα, προδέδομαι, προεδόθην / προυδόθην", u:16},
-{i:92,pp:"φημί, φήσω, ἔφησα, —, —, —", u:16},
-{i:93,pp:"ἁμαρτάνω, ἁμαρτήσομαι, ἥμαρτον, ἡμάρτηκα, ἡμάρτημαι, ἡμαρτήθην", u:17},
-{i:94,pp:"δοκέω, δόξω, ἔδοξα, —, δέδογμαι, -ἐδόχθην", u:17},
-{i:95,pp:"δύναμαι, δυνήσομαι, —, —, δεδύνημαι, ἐδυνήθην", u:17},
-{i:96,pp:"εἶμι, —, —, —, —, —", u:17},
-{i:97,pp:"ἐλαύνω, ἐλῶ, ἤλασα, -ἐλήλακα, ἐλήλαμαι, ἠλάθην", u:17},
-{i:98,pp:"ἐπίσταμαι, ἐπιστήσομαι, —, —, —, ἠπιστήθην", u:17},
-{i:99,pp:"ἔχω, ἕξω / σχήσω, ἔσχον, ἔσχηκα, -ἔσχημαι, —", u:17},
-{i:100,pp:"ἀποθνῄσκω, ἀποθανοῦμαι, ἀπέθανον, τέθνηκα, —, —", u:18},
-{i:101,pp:"ἀποκτείνω, ἀποκτενῶ, ἀπέκτεινα, ἀπέκτονα, —, —", u:18},
-{i:102,pp:"ἀφῑ́ημι, ἀφήσω, ἀφῆκα, ἀφεῖκα, ἀφεῖμαι, ἀφείθην", u:18},
-{i:103,pp:"βουλεύω, βουλεύσω, ἐβούλευσα, βεβούλευκα, βεβούλευμαι, ἐβουλεύθην", u:18},
-{i:104,pp:"ἐπιβουλεύω, ἐπιβουλεύσω, ἐπεβούλευσα, ἐπιβεβούλευκα, ἐπιβεβούλευμαι, ἐπεβουλεύθην", u:18},
-{i:105,pp:"ζητέω, ζητήσω, ἐζήτησα, ἐζήτηκα, —, ἐζητήθην", u:18},
-{i:106,pp:"ῑ̔́ημι, -ἥσω, -ἧκα, -εἷκα, -εἷμαι, -εἵθην", u:18},
-{i:107,pp:"μέλλω, μελλήσω, ἐμέλλησα, —, —, —", u:18},
-{i:108,pp:"πιστεύω, πιστεύσω, ἐπίστευσα, πεπίστευκα, πεπίστευμαι, ἐπιστεύθην", u:18},
-{i:109,pp:"συμβουλεύω, συμβουλεύσω, συνεβούλευσα, συμβεβούλευκα, συμβεβούλευμαι, συνεβουλεύθην", u:18},
-{i:110,pp:"συνῑ́ημι, συνήσω, συνῆκα, συνεῖκα, συνεῖμαι, συνείθην", u:18},
-{i:111,pp:"αἰσχῡ́νομαι, αἰσχυνοῦμαι, —, —, ᾔσχυμμαι, ᾐσχύνθην", u:19},
-{i:112,pp:"ἀποκρῑ́νομαι, ἀποκρινοῦμαι, ἀπεκρῑνάμην, —, ἀποκέκριμαι, —", u:19},
-{i:113,pp:"ἀπόλλῡμι, ἀπολῶ, ἀπώλεσα / ἀπωλόμην, ἀπολώλεκα / ἀπόλωλα, —, —", u:19},
-{i:114,pp:"—, ἀνερήσομαι, ἀνηρόμην, —, —, —", u:19},
-{i:115,pp:"—, ἐρήσομαι, ἠρόμην, —, —, —", u:19},
-{i:116,pp:"εὑρίσκω, εὑρήσω, ηὗρον, ηὕρηκα, ηὕρημαι, ηὑρέθην", u:19},
-{i:117,pp:"ἡγέομαι, ἡγήσομαι, ἡγησάμην, —, ἥγημαι, ἡγήθην", u:19},
-{i:118,pp:"κρῑ́νω, κρινῶ, ἔκρῑνα, κέκρικα, κέκριμαι, ἐκρίθην", u:19},
-{i:119,pp:"οἶδα, εἴσομαι, —, —, —, —", u:19},
-{i:120,pp:"σύνοιδα, συνείσομαι, —, —, —, —", u:19},
-{i:121,pp:"ἀφικνέομαι, ἀφίξομαι, ἀφῑκόμην, —, ἀφῖγμαι, —", u:20},
-{i:122,pp:"δεῖ, δεήσει, ἐδέησε(ν), —, —, —", u:20},
-{i:123,pp:"κεῖμαι, κείσομαι, —, —, —, —", u:20},
-{i:124,pp:"πυνθάνομαι, πεύσομαι, ἐπυθόμην, —, πέπυσμαι, —", u:20},
-{i:125,pp:"τρέπω, τρέψω, ἔτρεψα / ἐτραπόμην, τέτροφα, τέτραμμαι, ἐτράπην / ἐτρέφθην", u:20},
-{i:126,pp:"φαίνω, φανῶ, ἔφηνα, πέφηνα, πέφασμαι, ἐφάνην", u:20},
-{i:127,pp:"χρή, χρῆσται, —, —, —, —", u:20}];
-    </script>
+  function ex (n) {
+    const el = n.parentNode.nextSibling.firstChild;
+    el.classList.toggle('expanded');
+    // collapse all expanded divs below this one
+    el.querySelectorAll('.expand-contract').forEach(e => e.classList.remove('expanded'));
+  }
+
+  const verbs = [
+    { i: 1, pp: 'παιδεύω, παιδεύσω, ἐπαίδευσα, πεπαίδευκα, πεπαίδευμαι, ἐπαιδεύθην', u: 2 },
+    { i: 2, pp: 'πέμπω, πέμψω, ἔπεμψα, πέπομφα, πέπεμμαι, ἐπέμφθην', u: 2 },
+    { i: 3, pp: 'κελεύω, κελεύσω, ἐκέλευσα, κεκέλευκα, κεκέλευσμαι, ἐκελεύσθην', u: 2 },
+    { i: 4, pp: 'λῡ́ω, λῡ́σω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην', u: 2 },
+    { i: 5, pp: 'γράφω, γράψω, ἔγραψα, γέγραφα, γέγραμμαι, ἐγράφην', u: 3 },
+    { i: 6, pp: 'θῡ́ω, θῡ́σω, ἔθῡσα, τέθυκα, τέθυμαι, ἐτύθην', u: 3 },
+    { i: 7, pp: 'παύω, παύσω, ἔπαυσα, πέπαυκα, πέπαυμαι, ἐπαύθην', u: 3 },
+    { i: 8, pp: 'φυλάττω, φυλάξω, ἐφύλαξα, πεφύλαχα, πεφύλαγμαι, ἐφυλάχθην', u: 3 },
+    { i: 9, pp: 'διδάσκω, διδάξω, ἐδίδαξα, δεδίδαχα, δεδίδαγμαι, ἐδιδάχθην', u: 4 },
+    { i: 10, pp: 'ἐθέλω, ἐθελήσω, ἠθέλησα, ἠθέληκα, —, —', u: 4 },
+    { i: 11, pp: 'θάπτω, θάψω, ἔθαψα, —, τέθαμμαι, ἐτάφην', u: 4 },
+    { i: 12, pp: 'τάττω, τάξω, ἔταξα, τέταχα, τέταγμαι, ἐτάχθην', u: 4 },
+    { i: 13, pp: 'ἄρχω, ἄρξω, ἦρξα, ἦρχα, ἦργμαι, ἤρχθην', u: 5 },
+    { i: 14, pp: 'βλάπτω, βλάψω, ἔβλαψα, βέβλαφα, βέβλαμμαι, ἐβλάβην / ἐβλάφθην', u: 5 },
+    { i: 15, pp: 'πείθω, πείσω, ἔπεισα, πέπεικα, πέπεισμαι, ἐπείσθην', u: 5 },
+    { i: 16, pp: 'πρᾱ́ττω, πρᾱ́ξω, ἔπρᾱξα, πέπρᾱχα / πέπρᾱγα, πέπρᾱγμαι, ἐπρᾱ́χθην', u: 5 },
+    { i: 17, pp: 'δουλεύω, δουλεύσω, ἐδούλευσα, δεδούλευκα, —, —', u: 6 },
+    { i: 18, pp: 'κωλῡ́ω, κωλῡ́σω, ἐκώλῡσα, κεκώλῡκα, κεκώλῡμαι, ἐκωλῡ́θην', u: 6 },
+    { i: 19, pp: 'πολῑτεύω, πολῑτεύσω, ἐπολῑ́τευσα, πεπολῑ́τευκα, πεπολῑ́τευμαι, ἐπολῑτεύθην', u: 6 },
+    { i: 20, pp: 'χορεύω, χορεύσω, ἐχόρευσα, κεχόρευκα, κεχόρευμαι, ἐχορεύθην', u: 6 },
+    { i: 21, pp: 'κλέπτω, κλέψω, ἔκλεψα, κέκλοφα, κέκλεμμαι, ἐκλάπην', u: 7 },
+    { i: 22, pp: 'λείπω, λείψω, ἔλιπον, λέλοιπα, λέλειμμαι, ἐλείφθην', u: 7 },
+    { i: 23, pp: 'σῴζω, σώσω, ἔσωσα, σέσωκα, σέσωσμαι / σέσωμαι, ἐσώθην', u: 7 },
+    { i: 24, pp: 'ἄγω, ἄξω, ἤγαγον, ἦχα, ἦγμαι, ἤχθην', u: 8 },
+    { i: 25, pp: 'ἥκω, ἥξω, —, —, —, —', u: 8 },
+    { i: 26, pp: 'ἀδικέω, ἀδικήσω, ἠδίκησα, ἠδίκηκα, ἠδίκημαι, ἠδικήθην', u: 9 },
+    { i: 27, pp: 'νῑκάω, νῑκήσω, ἐνῑ́κησα, νενῑ́κηκα, νενῑ́κημαι, ἐνῑκήθην', u: 9 },
+    { i: 28, pp: 'ποιέω, ποιήσω, ἐποίησα, πεποίηκα, πεποίημαι, ἐποιήθην', u: 9 },
+    { i: 29, pp: 'τῑμάω, τῑμήσω, ἐτῑ́μησα, τετῑ́μηκα, τετῑ́μημαι, ἐτῑμήθην', u: 9 },
+    { i: 30, pp: 'ἀγγέλλω, ἀγγελῶ, ἤγγειλα, ἤγγελκα, ἤγγελμαι, ἠγγέλθην', u: 10 },
+    { i: 31, pp: 'ἀξιόω, ἀξιώσω, ἠξίωσα, ἠξίωκα, ἠξίωμαι, ἠξιώθην', u: 10 },
+    { i: 32, pp: 'δηλόω, δηλώσω, ἐδήλωσα, δεδήλωκα, δεδήλωμαι, ἐδηλώθην', u: 10 },
+    { i: 33, pp: 'καλέω, καλῶ, ἐκάλεσα, κέκληκα, κέκλημαι, ἐκλήθην', u: 10 },
+    { i: 34, pp: 'μένω, μενῶ, ἔμεινα, μεμένηκα, —, —', u: 10 },
+    { i: 35, pp: 'τελευτάω, τελευτήσω, ἐτελεύτησα, τετελεύτηκα, τετελεύτημαι, ἐτελευτήθην', u: 10 },
+    { i: 36, pp: 'ἀκούω, ἀκούσομαι, ἤκουσα, ἀκήκοα, —, ἠκούσθην', u: 11 },
+    { i: 37, pp: 'ἀποδέχομαι, ἀποδέξομαι, ἀπεδεξάμην, —, ἀποδέδεγμαι, —', u: 11 },
+    { i: 38, pp: 'βάλλω, βαλῶ, ἔβαλον, βέβληκα, βέβλημαι, ἐβλήθην', u: 11 },
+    { i: 39, pp: 'βούλομαι, βουλήσομαι, —, —, βεβούλημαι, ἐβουλήθην', u: 11 },
+    { i: 40, pp: 'δέχομαι, δέξομαι, ἐδεξάμην, —, δέδεγμαι, —', u: 11 },
+    { i: 41, pp: 'λαμβάνω, λήψομαι, ἔλαβον, εἴληφα, εἴλημμαι, ἐλήφθην', u: 11 },
+    { i: 42, pp: 'πάσχω, πείσομαι, ἔπαθον, πέπονθα, —, —', u: 11 },
+    { i: 43, pp: 'ἀνατίθημι, ἀναθήσω, ἀνέθηκα, ἀνατέθηκα, ἀνατέθειμαι, ἀνετέθην', u: 12 },
+    { i: 44, pp: 'ἀποδίδωμι, ἀποδώσω, ἀπέδωκα, ἀποδέδωκα, ἀποδέδομαι, ἀπεδόθην', u: 12 },
+    { i: 45, pp: 'ἀφίστημι, ἀποστήσω, ἀπέστησα / ἀπέστην, ἀφέστηκα, ἀφέσταμαι, ἀπεστάθην', u: 12 },
+    { i: 46, pp: 'δίδωμι, δώσω, ἔδωκα, δέδωκα, δέδομαι, ἐδόθην', u: 12 },
+    { i: 47, pp: 'ἵστημι, στήσω, ἔστησα / ἔστην, ἕστηκα, ἕσταμαι, ἐστάθην', u: 12 },
+    { i: 48, pp: 'καθίστημι, καταστήσω, κατέστησα / κατέστην, καθέστηκα, καθέσταμαι, κατεστάθην', u: 12 },
+    { i: 49, pp: 'καταλῡ́ω, καταλῡ́σω, κατέλῡσα, καταλέλυκα, καταλέλυμαι, κατελύθην', u: 12 },
+    { i: 50, pp: 'τίθημι, θήσω, ἔθηκα, τέθηκα, τέθειμαι, ἐτέθην', u: 12 },
+    { i: 51, pp: 'φιλέω, φιλήσω, ἐφίλησα, πεφίληκα, πεφίλημαι, ἐφιλήθην', u: 12 },
+    { i: 52, pp: 'φοβέομαι, φοβήσομαι, —, —, πεφόβημαι, ἐφοβήθην', u: 12 },
+    { i: 53, pp: 'γίγνομαι, γενήσομαι, ἐγενόμην, γέγονα, γεγένημαι, —', u: 13 },
+    { i: 54, pp: 'ἔρχομαι, ἐλεύσομαι, ἦλθον, ἐλήλυθα, —, —', u: 13 },
+    { i: 55, pp: 'μανθάνω, μαθήσομαι, ἔμαθον, μεμάθηκα, —, —', u: 13 },
+    { i: 56, pp: 'μάχομαι, μαχοῦμαι, ἐμαχεσάμην, —, μεμάχημαι, —', u: 13 },
+    { i: 57, pp: 'μεταδίδωμι, μεταδώσω, μετέδωκα, μεταδέδωκα, μεταδέδομαι, μετεδόθην', u: 13 },
+    { i: 58, pp: 'μετανίσταμαι, μεταναστήσομαι, μετανέστην, μετανέστηκα, —, —', u: 13 },
+    { i: 59, pp: 'μηχανάομαι, μηχανήσομαι, ἐμηχανησάμην, —, μεμηχάνημαι, —', u: 13 },
+    { i: 60, pp: 'φεύγω, φεύξομαι, ἔφυγον, πέφευγα, —, —', u: 13 },
+    { i: 61, pp: 'δείκνῡμι, δείξω, ἔδειξα, δέδειχα, δέδειγμαι, ἐδείχθην', u: 14 },
+    { i: 62, pp: 'ἐπανίσταμαι, ἐπαναστήσομαι, ἐπανέστην, ἐπανέστηκα, —, —', u: 14 },
+    { i: 63, pp: 'ἐπιδείκνυμαι, ἐπιδείξομαι, ἐπεδειξάμην, —, ἐπιδέδειγμαι, —', u: 14 },
+    { i: 64, pp: 'ἐρωτάω, ἐρωτήσω, ἠρώτησα, ἠρώτηκα, ἠρώτημαι, ἠρωτήθην', u: 14 },
+    { i: 65, pp: 'λανθάνω, λήσω, ἔλαθον, λέληθα, —, —', u: 14 },
+    { i: 66, pp: 'παραγίγνομαι, παραγενήσομαι, παρεγενόμην, παραγέγονα, παραγεγένημαι, —', u: 14 },
+    { i: 67, pp: 'παραδίδωμι, παραδώσω, παρέδωκα, παραδέδωκα, παραδέδομαι, παρεδόθην', u: 14 },
+    { i: 68, pp: 'παραμένω, παραμενῶ, παρέμεινα, παραμεμένηκα, —, —', u: 14 },
+    { i: 69, pp: 'τυγχάνω, τεύξομαι, ἔτυχον, τετύχηκα, —, —', u: 14 },
+    { i: 70, pp: 'ὑπακούω, ὑπακούσομαι, ὑπηκουσα, ὑπακήκοα, —, ὑπηκούσθην', u: 14 },
+    { i: 71, pp: 'ὑπομένω, ὑπομενῶ, ὑπέμεινα, ὑπομεμένηκα, —, —', u: 14 },
+    { i: 72, pp: 'φθάνω, φθήσομαι, ἔφθασα / ἔφθην, —, —, —', u: 14 },
+    { i: 73, pp: 'χαίρω, χαιρήσω, —, κεχάρηκα, —, ἐχάρην', u: 14 },
+    { i: 74, pp: 'αἱρέω, αἱρήσω, εἷλον, ᾕρηκα, ᾕρημαι, ᾑρέθην', u: 15 },
+    { i: 75, pp: 'αἰσθάνομαι, αἰσθήσομαι, ᾐσθόμην, —, ᾔσθημαι, —', u: 15 },
+    { i: 76, pp: 'διαφέρω, διοίσω, διήνεγκα / διήνεγκον, διενήνοχα, διενήνεγμαι, διηνέχθην', u: 15 },
+    { i: 77, pp: 'εἰμί, ἔσομαι, —, —, —, —', u: 15 },
+    { i: 78, pp: 'ἔστι(ν), ἔσται, —, —, —, —', u: 15 },
+    { i: 79, pp: 'ἔξεστι(ν), ἐξέσται, —, —, —, —', u: 15 },
+    { i: 80, pp: 'ἕπομαι, ἕψομαι, ἑσπόμην, —, —, —', u: 15 },
+    { i: 81, pp: 'ὁράω, ὄψομαι, εἶδον, ἑόρᾱκα / ἑώρᾱκα, ἑώρᾱμαι / ὦμμαι, ὤφθην', u: 15 },
+    { i: 82, pp: 'συμφέρω, συνοίσω, συνήνεγκα / συνήνεγκον, συνενήνοχα, συνενήνεγμαι, συνηνέχθην', u: 15 },
+    { i: 83, pp: 'φέρω, οἴσω, ἤνεγκα / ἤνεγκον, ἐνήνοχα, ἐνήνεγμαι, ἠνέχθην', u: 15 },
+    { i: 84, pp: 'ἀναβαίνω, ἀναβήσομαι, ἀνέβην, ἀναβέβηκα, —, —', u: 16 },
+    { i: 85, pp: 'βαίνω, -βήσομαι, -ἔβην, βέβηκα, —, —', u: 16 },
+    { i: 86, pp: 'γιγνώσκω, γνώσομαι, ἔγνων, ἔγνωκα, ἔγνωσμαι, ἐγνώσθην', u: 16 },
+    { i: 87, pp: 'ἐκπῑ́πτω, ἐκπεσοῦμαι, ἐξέπεσον, ἐκπέπτωκα, —, —', u: 16 },
+    { i: 88, pp: 'λέγω, ἐρῶ / λέξω, εἶπον / ἔλεξα, εἴρηκα, εἴρημαι / λέλεγμαι, ἐλέχθην / ἐρρήθην', u: 16 },
+    { i: 89, pp: 'νομίζω, νομιῶ, ἐνόμισα, νενόμικα, νενόμισμαι, ἐνομίσθην', u: 16 },
+    { i: 90, pp: 'πῑ́πτω, πεσοῦμαι, ἔπεσον, πέπτωκα, —, —', u: 16 },
+    { i: 91, pp: 'προδίδωμι, προδώσω, προέδωκα / προύδωκα, προδέδωκα, προδέδομαι, προεδόθην / προυδόθην', u: 16 },
+    { i: 92, pp: 'φημί, φήσω, ἔφησα, —, —, —', u: 16 },
+    { i: 93, pp: 'ἁμαρτάνω, ἁμαρτήσομαι, ἥμαρτον, ἡμάρτηκα, ἡμάρτημαι, ἡμαρτήθην', u: 17 },
+    { i: 94, pp: 'δοκέω, δόξω, ἔδοξα, —, δέδογμαι, -ἐδόχθην', u: 17 },
+    { i: 95, pp: 'δύναμαι, δυνήσομαι, —, —, δεδύνημαι, ἐδυνήθην', u: 17 },
+    { i: 96, pp: 'εἶμι, —, —, —, —, —', u: 17 },
+    { i: 97, pp: 'ἐλαύνω, ἐλῶ, ἤλασα, -ἐλήλακα, ἐλήλαμαι, ἠλάθην', u: 17 },
+    { i: 98, pp: 'ἐπίσταμαι, ἐπιστήσομαι, —, —, —, ἠπιστήθην', u: 17 },
+    { i: 99, pp: 'ἔχω, ἕξω / σχήσω, ἔσχον, ἔσχηκα, -ἔσχημαι, —', u: 17 },
+    { i: 100, pp: 'ἀποθνῄσκω, ἀποθανοῦμαι, ἀπέθανον, τέθνηκα, —, —', u: 18 },
+    { i: 101, pp: 'ἀποκτείνω, ἀποκτενῶ, ἀπέκτεινα, ἀπέκτονα, —, —', u: 18 },
+    { i: 102, pp: 'ἀφῑ́ημι, ἀφήσω, ἀφῆκα, ἀφεῖκα, ἀφεῖμαι, ἀφείθην', u: 18 },
+    { i: 103, pp: 'βουλεύω, βουλεύσω, ἐβούλευσα, βεβούλευκα, βεβούλευμαι, ἐβουλεύθην', u: 18 },
+    { i: 104, pp: 'ἐπιβουλεύω, ἐπιβουλεύσω, ἐπεβούλευσα, ἐπιβεβούλευκα, ἐπιβεβούλευμαι, ἐπεβουλεύθην', u: 18 },
+    { i: 105, pp: 'ζητέω, ζητήσω, ἐζήτησα, ἐζήτηκα, —, ἐζητήθην', u: 18 },
+    { i: 106, pp: 'ῑ̔́ημι, -ἥσω, -ἧκα, -εἷκα, -εἷμαι, -εἵθην', u: 18 },
+    { i: 107, pp: 'μέλλω, μελλήσω, ἐμέλλησα, —, —, —', u: 18 },
+    { i: 108, pp: 'πιστεύω, πιστεύσω, ἐπίστευσα, πεπίστευκα, πεπίστευμαι, ἐπιστεύθην', u: 18 },
+    { i: 109, pp: 'συμβουλεύω, συμβουλεύσω, συνεβούλευσα, συμβεβούλευκα, συμβεβούλευμαι, συνεβουλεύθην', u: 18 },
+    { i: 110, pp: 'συνῑ́ημι, συνήσω, συνῆκα, συνεῖκα, συνεῖμαι, συνείθην', u: 18 },
+    { i: 111, pp: 'αἰσχῡ́νομαι, αἰσχυνοῦμαι, —, —, ᾔσχυμμαι, ᾐσχύνθην', u: 19 },
+    { i: 112, pp: 'ἀποκρῑ́νομαι, ἀποκρινοῦμαι, ἀπεκρῑνάμην, —, ἀποκέκριμαι, —', u: 19 },
+    { i: 113, pp: 'ἀπόλλῡμι, ἀπολῶ, ἀπώλεσα / ἀπωλόμην, ἀπολώλεκα / ἀπόλωλα, —, —', u: 19 },
+    { i: 114, pp: '—, ἀνερήσομαι, ἀνηρόμην, —, —, —', u: 19 },
+    { i: 115, pp: '—, ἐρήσομαι, ἠρόμην, —, —, —', u: 19 },
+    { i: 116, pp: 'εὑρίσκω, εὑρήσω, ηὗρον, ηὕρηκα, ηὕρημαι, ηὑρέθην', u: 19 },
+    { i: 117, pp: 'ἡγέομαι, ἡγήσομαι, ἡγησάμην, —, ἥγημαι, ἡγήθην', u: 19 },
+    { i: 118, pp: 'κρῑ́νω, κρινῶ, ἔκρῑνα, κέκρικα, κέκριμαι, ἐκρίθην', u: 19 },
+    { i: 119, pp: 'οἶδα, εἴσομαι, —, —, —, —', u: 19 },
+    { i: 120, pp: 'σύνοιδα, συνείσομαι, —, —, —, —', u: 19 },
+    { i: 121, pp: 'ἀφικνέομαι, ἀφίξομαι, ἀφῑκόμην, —, ἀφῖγμαι, —', u: 20 },
+    { i: 122, pp: 'δεῖ, δεήσει, ἐδέησε(ν), —, —, —', u: 20 },
+    { i: 123, pp: 'κεῖμαι, κείσομαι, —, —, —, —', u: 20 },
+    { i: 124, pp: 'πυνθάνομαι, πεύσομαι, ἐπυθόμην, —, πέπυσμαι, —', u: 20 },
+    { i: 125, pp: 'τρέπω, τρέψω, ἔτρεψα / ἐτραπόμην, τέτροφα, τέτραμμαι, ἐτράπην / ἐτρέφθην', u: 20 },
+    { i: 126, pp: 'φαίνω, φανῶ, ἔφηνα, πέφηνα, πέφασμαι, ἐφάνην', u: 20 },
+    { i: 127, pp: 'χρή, χρῆσται, —, —, —, —', u: 20 }
+  ];
+  </script>
 </body>
 </html>
