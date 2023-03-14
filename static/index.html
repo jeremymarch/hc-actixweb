@@ -1801,7 +1801,7 @@ a {color:blue;}
 
     const rowItems = document.querySelectorAll('.verbunitrowlabel');
     for (let i = 0; i < rowItems.length; i++) {
-      rowItems[i].addEventListener('click', ex, false);
+      rowItems[i].addEventListener('click', expandContractGames, false);
     }
 
     const all = document.querySelector('#ckuall');
@@ -1848,13 +1848,17 @@ a {color:blue;}
   }
 
   function expandContractNewGameDiv () {
+    globalSessionId = null;
+    document.querySelector('.hcform').style.display = 'none';
     const el = document.getElementById('newgamediv');
-    el.classList.toggle('expanded');
-    // collapse all expanded divs below this one
-    el.querySelectorAll('.expand-contract').forEach(e => e.classList.remove('expanded'));
+    if (el) {
+      el.classList.toggle('expanded');
+      // collapse all expanded divs below this one
+      el.querySelectorAll('.expand-contract').forEach(e => e.classList.remove('expanded'));
+    }
   }
 
-  function ex () {
+  function expandContractGames () {
     const el = this.parentNode.nextSibling.firstChild;
     if (el) {
       el.classList.toggle('expanded');
