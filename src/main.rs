@@ -23,9 +23,9 @@ use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::cookie::Key;
 use actix_web::cookie::SameSite;
 use actix_web::http::header::ContentType;
-use actix_web::http::header::HeaderValue;
+// use actix_web::http::header::HeaderValue;
 use actix_web::http::header::LOCATION;
-use actix_web::http::header::{CONTENT_SECURITY_POLICY, STRICT_TRANSPORT_SECURITY};
+// use actix_web::http::header::{CONTENT_SECURITY_POLICY, STRICT_TRANSPORT_SECURITY};
 use actix_web::{http::StatusCode, ResponseError};
 use actix_web::{
     middleware, web, App, Error as AWError, HttpRequest, HttpResponse, HttpServer, Result,
@@ -927,7 +927,6 @@ async fn main() -> io::Result<()> {
     let message_framework = FlashMessagesFramework::builder(message_store).build();
 
     HttpServer::new(move || {
-
         App::new()
             .app_data(load_verbs("pp.txt"))
             .app_data(hcdb.clone())
@@ -941,16 +940,18 @@ async fn main() -> io::Result<()> {
             //         HeaderValue::from_static("max-age=31536000" /* 1 year */ )))
             // )
             .wrap(middleware::Compress::default()) // enable automatic response compression - usually register this first
-            .wrap(SessionMiddleware::builder(
-                CookieSessionStore::default(), secret_key.clone())
+            .wrap(
+                SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
                     .cookie_secure(cookie_secure) //cookie_secure must be false if testing without https
                     .cookie_same_site(SameSite::Strict)
                     .cookie_content_security(actix_session::config::CookieContentSecurity::Private)
                     .session_lifecycle(
-                        PersistentSession::default().session_ttl(Duration::seconds(SECS_IN_10_YEARS))
+                        PersistentSession::default()
+                            .session_ttl(Duration::seconds(SECS_IN_10_YEARS)),
                     )
                     .cookie_name(String::from("hcid"))
-                    .build())
+                    .build(),
+            )
             .wrap(message_framework.clone())
             .wrap(middleware::Logger::default()) // enable logger - always register Actix Web Logger middleware last
             .configure(config)
