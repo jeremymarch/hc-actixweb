@@ -1048,7 +1048,9 @@ a {color:blue;}
       // fix me need to exclude New row from here
       const rowItems = document.querySelectorAll('.gamerow');
       for (let i = 0; i < rowItems.length; i++) {
-        rowItems[i].addEventListener('click', getMove, false);
+        if (rowItems[i].id !== 'newGameRow') {
+          rowItems[i].addEventListener('click', getMove, false);
+        }
       }
 
       // q("#refreshbutton").style.display = "block";
@@ -1203,6 +1205,8 @@ a {color:blue;}
     document.querySelectorAll('.selectedGame').forEach((row) => {
       row.classList.remove('selectedGame');
     });
+
+    collapseNewGameDiv();
 
     globalSessionId = this.getAttribute('data-uuid');
     if (globalSessionId) {
@@ -1853,6 +1857,15 @@ a {color:blue;}
     const el = document.getElementById('newgamediv');
     if (el) {
       el.classList.toggle('expanded');
+      // collapse all expanded divs below this one
+      el.querySelectorAll('.expand-contract').forEach(e => e.classList.remove('expanded'));
+    }
+  }
+
+  function collapseNewGameDiv () {
+    const el = document.getElementById('newgamediv');
+    if (el) {
+      el.classList.remove('expanded');
       // collapse all expanded divs below this one
       el.querySelectorAll('.expand-contract').forEach(e => e.classList.remove('expanded'));
     }
