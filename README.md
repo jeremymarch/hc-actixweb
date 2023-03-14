@@ -1,6 +1,6 @@
 # Hoplite Challenge
 
-This web application was modeled after the Hoplite Challenge, an ancient Greek verb conjugation game, which was conceived at the Latin/Greek Institute almost 50 years ago.  
+This web application was modeled after the Hoplite Challenge, an ancient Greek verb conjugation game, which was conceived at the Latin/Greek Institute in the summer of 1978.
 
 
 ## Installation
