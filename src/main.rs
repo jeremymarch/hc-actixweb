@@ -933,13 +933,13 @@ async fn main() -> io::Result<()> {
             .app_data(hcdb.clone())
             .app_data(web::Data::from(app_state.clone()))
             .app_data(web::Data::new(server.clone()))
-            .wrap(middleware::DefaultHeaders::new()
-                .add((CONTENT_SECURITY_POLICY,
-                    HeaderValue::from_static("style-src 'nonce-2726c7f26c';\
-                        script-src 'nonce-2726c7f26c' 'wasm-unsafe-eval' 'unsafe-inline'; object-src 'none'; base-uri 'none'")))
-                .add((STRICT_TRANSPORT_SECURITY,
-                    HeaderValue::from_static("max-age=31536000" /* 1 year */ )))
-            )
+            // .wrap(middleware::DefaultHeaders::new()
+            //     .add((CONTENT_SECURITY_POLICY,
+            //         HeaderValue::from_static("style-src 'nonce-2726c7f26c';\
+            //             script-src 'nonce-2726c7f26c' 'wasm-unsafe-eval' 'unsafe-inline'; object-src 'none'; base-uri 'none'")))
+            //     .add((STRICT_TRANSPORT_SECURITY,
+            //         HeaderValue::from_static("max-age=31536000" /* 1 year */ )))
+            // )
             .wrap(middleware::Compress::default()) // enable automatic response compression - usually register this first
             .wrap(SessionMiddleware::builder(
                 CookieSessionStore::default(), secret_key.clone())

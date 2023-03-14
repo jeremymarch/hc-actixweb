@@ -331,7 +331,10 @@ a {color:blue;}
     <div id="menubar">
         <!--<button id="refreshbutton" onclick="getSessions(true)">refresh</button>-->
         <div style="padding:0px 20px"><a id="loginlink" href="login">login</a>
-            <span id="logoutlink" style="display:none;"><span id="username"></span> (<a href="logout">logout</a>)</span>
+            <span id="logoutlink" style="display:none;">
+              <span id="username"></span> 
+              (<a href="logout">logout</a>)
+            </span>
         </div>
         <div style="font-weight:bold;">HOPLITE CHALLENGE</div>
     </div>
@@ -349,13 +352,30 @@ a {color:blue;}
                           game <input name="gametype" id="gametypegame" type="radio" value="game"/>
                         </div></div>
                         <div class="expand-container">
-                            <div id="opponentrow" class="newrow expand-contract"><div class="newcol1">Opponent:</div><div class="newcol2"><input id="opponentinput" type="text" class="newgameinput"/></div></div>
+                            <div id="opponentrow" class="newrow expand-contract">
+                              <div class="newcol1">Opponent:</div>
+                              <div class="newcol2"><input id="opponentinput" type="text" class="newgameinput"/></div>
+                            </div>
                         </div>
-                        <div class="newrow"><div class="newcol1">Timer:</div><div class="newcol2"><input name="countdown" id="countdowninput" type="radio" value="down"/>countdown <input id="maxtime" type="text" value="30" style="width:30px;"/><br/><input checked name="countdown" id="countupinput" type="radio" value="up"/>elapsed </div></div>
-                        <div class="newrow"><div class="newcol1">Reps per verb:</div><div class="newcol2"><input id="repsperverb" type="text" value="4" class="newgameinput"/></div></div>
-                        <div class="newrow"><div class="newcol1">Max changes:</div><div class="newcol2"><input id="maxchanges" type="text" value="2" class="newgameinput"/></div></div>
+                        <div class="newrow">
+                          <div class="newcol1">Timer:</div>
+                          <div class="newcol2">
+                            <input name="countdown" id="countdowninput" type="radio" value="down"/>countdown 
+                            <input id="maxtime" type="text" value="30" style="width:30px;"/><br/>
+                            <input checked name="countdown" id="countupinput" type="radio" value="up"/>elapsed 
+                          </div>
+                        </div>
+                        <div class="newrow">
+                          <div class="newcol1">Reps per verb:</div>
+                          <div class="newcol2">
+                            <input id="repsperverb" type="text" value="4" class="newgameinput"/>
+                          </div>
+                        </div>
+                        <div class="newrow">
+                          <div class="newcol1">Max changes:</div>
+                          <div class="newcol2"><input id="maxchanges" type="text" value="2" class="newgameinput"/></div>
+                        </div>
                         <!--<div class="newrow"><td>Top Unit:</td><td><input id="unitinput" type="text" value="20"/></td></div>-->
-                        
                     </div>
                     <div id="verblist"></div>
                     <div style="padding-top:1rem;text-align:center;"><button id="creategamebutton">Create Game</button></div>
@@ -363,7 +383,6 @@ a {color:blue;}
             </div>
         </div>
         <div id="list"></div>
-    </div>
     </div>
 
     <div class="hcform">
@@ -426,12 +445,14 @@ a {color:blue;}
         </div>
     </div>
 </div>
-<textarea id="answerform" class="gkinput newform disablecopypaste" disabled autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+<textarea id="answerform" class="gkinput newform disablecopypaste" 
+  disabled autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
 <div id="correctanswer" class="gkinput correctanswer" style="visibility: hidden;"></div>
 <button id="submitbutton">Start</button>
 <div id="statusmesg">press start to begin</div>
 </div>
 <script nonce="2726c7f26c" type="module">
+  // eslint-disable-next-line import/no-named-default
   import { toggle, translit, default as init } from './hoplitekb_wasm_rs.js';
 
   async function run () {
@@ -456,7 +477,9 @@ a {color:blue;}
 
   let timeout = null;
   (function (global, factory) {
+    // eslint-disable-next-line no-undef
     if (typeof define === 'function' && define.amd) {
+      // eslint-disable-next-line no-undef
       define([], factory);
     } else if (typeof module !== 'undefined' && module.exports) {
       module.exports = factory();
@@ -734,12 +757,10 @@ a {color:blue;}
   let globalUserName = null;
   let globalTimerIntV = null;
   let globalCountDownDate = null;
-  let globalTimerRunning = false;
   let globalStartingForm = null;
   let globalChangeDesc = null;
   let globalMaxChanges = null;
   const globalShowCorrect = false;
-  let globalPractice = false;
   let globalSessionState = null;
   let globalSessionId = null;
   let globalMFPressed = false;
@@ -784,13 +805,13 @@ a {color:blue;}
     }
   }
 
-  function strToCodePoints (str) {
-    let a = '';
-    for (let i = 0; i < str.length; i++) {
-      a += str.codePointAt(i).toString(16).padStart(4, '0').toUpperCase() + ' ';
-    }
-    return a.trim();
-  }
+  // function strToCodePoints (str) {
+  //   let a = '';
+  //   for (let i = 0; i < str.length; i++) {
+  //     a += str.codePointAt(i).toString(16).padStart(4, '0').toUpperCase() + ' ';
+  //   }
+  //   return a.trim();
+  // }
 
   const supportsWebSockets = 'WebSocket' in window || 'MozWebSocket' in window;
   function start () {
@@ -859,6 +880,7 @@ a {color:blue;}
     const maxCombiningChars = 10;
     const replaceLen = Math.min(maxCombiningChars + 1, pos);
     const s = str.slice(pos - replaceLen, pos);
+    // eslint-disable-next-line no-undef
     const res = toggle(s, parseInt(diacritic), false, parseInt(unicodeMode));
 
     const newPos = (pos - replaceLen) + res.length;
@@ -882,6 +904,7 @@ a {color:blue;}
         e.preventDefault();
         return false;
       } else if (key.length === 1) { // len == 1 to exclude keys like "ENTER", etc.
+        // eslint-disable-next-line no-undef
         const greekLetter = translit(key); // returns \0 if the character cannot be transliterated
         if (greekLetter !== '\0') {
           const end = this.selectionEnd;
@@ -1031,10 +1054,11 @@ a {color:blue;}
     return str.join('&');
   }
 
-  const pendingSendData = null;
+  const fallbackToAjax = false;
+  // const pendingSendData = null;
   function genericSendRequest (sendUrl, sendData, handleResponse) {
     // if (supportsWebSockets && !socket) {
-    //     wsconnect(sendUrl, send_data);
+    //     wsconnect(sendUrl, sendData);
     //     return;
     // }
 
@@ -1045,33 +1069,23 @@ a {color:blue;}
     } else {
       console.log("ws not connected: can't send.");
       /*
-        pendingSendData = send_data;
+        pendingSendData = sendData;
         wsconnect();
         */
 
-      // console.log("http request");
-      // send_data = serialize(send_data);
-      // microAjax({
-      //     url: sendUrl,
-      //     method: "POST",
-      //     data: send_data,
-      //     success: procResponse,
-      //     warning: procResponseError,
-      //     error: null
-      // });
+      if (fallbackToAjax) {
+        console.log('http request');
+        sendData = serialize(sendData);
+        microAjax({
+          url: sendUrl,
+          method: 'POST',
+          data: sendData,
+          success: procResponse,
+          warning: procResponseError,
+          error: null
+        });
+      }
     }
-    // $.ajax({
-    //     url: sendUrl,
-    //     type: "POST",
-    //     data: send_data,
-    //     dataType: "json",
-    //     success: function (data, textStatus, jqXHR) {
-    //          procResponse(data);
-    //     },
-    //     error: function(response) {
-    //         console.log("error: " + response);
-    //     }
-    // });
   }
 
   function sendAsk (sessionId, person, number, tense, mood, voice, verbId) {
@@ -1237,7 +1251,6 @@ a {color:blue;}
   }
 
   function setUI (data) {
-    globalPractice = false;
     q('.hcform').style.display = 'block';
 
     setGameStateClass(data.move_type.toLowerCase());
@@ -1546,12 +1559,10 @@ a {color:blue;}
     const submitbutton = q('#submitbutton');
     if (data.move_type === 'Practice') {
       submitbutton.innerText = 'Go';
-      globalPractice = true;
       globalStartingForm = data.starting_form;
       globalChangeDesc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
       q('#statusmesg').innerHTML = 'Click Go to answer the next form.';
     } else {
-      globalPractice = false;
       submitbutton.innerText = 'Continue';
       q('#statusmesg').innerHTML = 'Click Continue to ask the next form.';
     }
@@ -1578,13 +1589,11 @@ a {color:blue;}
       globalCountDownDate += (globalSeconds * 1000);
     }
     globalTimerIntV = setInterval(intervalFunc, 10);
-    globalTimerRunning = true;
   }
 
   function stopTimer () {
     clearInterval(globalTimerIntV);
     globalTimerIntV = null;
-    globalTimerRunning = false;
   }
 
   function intervalFunc () {
@@ -1624,7 +1633,7 @@ a {color:blue;}
   //     $log.scrollTop += 1000
   //   }
 
-  const visibilityCheck = false;
+  // const visibilityCheck = false;
   function wsconnect () {
     // wsdisconnect()
 
@@ -1636,6 +1645,7 @@ a {color:blue;}
     // log('Connecting...')
     // socket = new WebSocket(wsUri);
     socket = null;
+    // eslint-disable-next-line no-undef
     socket = new ReconnectingWebSocket(wsUri, null, { debug: true });
 
     socket.onopen = () => {
@@ -1803,7 +1813,7 @@ a {color:blue;}
       vv[k].addEventListener('click', function () {
         if (!this.checked) {
           all.checked = false;
-          const a = this.parentNode.parentNode.parentNode.previousSibling.firstChild.checked = false;
+          this.parentNode.parentNode.parentNode.previousSibling.firstChild.checked = false;
         }
       });
     }
