@@ -14,7 +14,6 @@
     function q (i) { return document.querySelector(i); }
     function setTheme () {
       const mode = localStorage.getItem('mode');
-      console.log('set theme: ' + mode);
       if ((window.matchMedia('(prefers-color-scheme: dark)').matches || mode === 'dark') && mode !== 'light') {
         q('HTML').classList.add('dark');
       } else {
