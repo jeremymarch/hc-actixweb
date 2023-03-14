@@ -33,6 +33,21 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
 .gkinput, .gkinputnontyping {
     font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
 }
+#loginContainer {
+  padding:0px 20px;
+}
+#appTitle {
+  font-weight:bold;
+}
+#newGameRow {
+  margin-bottom: 0px;
+}
+#maxtime {
+  width:30px;
+}
+#correctanswer {
+  visibility: hidden;
+}
 #mainTime { font-size:1rem;}
 #loginlink { display: inline; }
 #logoutlink { display: none; }
@@ -166,6 +181,8 @@ BUTTON:disabled {cursor:default}
 #creategamebutton {
     display: block;
     margin: 0px auto;
+    margin-top:1rem;
+    text-align:center;
 }
 #menubar {
     height:1.5rem;
@@ -330,17 +347,17 @@ a {color:blue;}
 <body>
     <div id="menubar">
         <!--<button id="refreshbutton" onclick="getSessions(true)">refresh</button>-->
-        <div style="padding:0px 20px"><a id="loginlink" href="login">login</a>
-            <span id="logoutlink" style="display:none;">
+        <div id="loginContainer"><a id="loginlink" href="login">login</a>
+            <span id="logoutlink">
               <span id="username"></span> 
               (<a href="logout">logout</a>)
             </span>
         </div>
-        <div style="font-weight:bold;">HOPLITE CHALLENGE</div>
+        <div id="appTitle">HOPLITE CHALLENGE</div>
     </div>
     <div id="listouter">
         <div id="settings">
-            <div id="newGameRow" class="gamerow" style="margin-bottom: 0px;">
+            <div id="newGameRow" class="gamerow">
               <span class="gamespan">New</span>
             </div>
             <div class="expand-container">
@@ -361,7 +378,7 @@ a {color:blue;}
                           <div class="newcol1">Timer:</div>
                           <div class="newcol2">
                             <input name="countdown" id="countdowninput" type="radio" value="down"/>countdown 
-                            <input id="maxtime" type="text" value="30" style="width:30px;"/><br/>
+                            <input id="maxtime" type="text" value="30"/><br/>
                             <input checked name="countdown" id="countupinput" type="radio" value="up"/>elapsed 
                           </div>
                         </div>
@@ -378,7 +395,7 @@ a {color:blue;}
                         <!--<div class="newrow"><td>Top Unit:</td><td><input id="unitinput" type="text" value="20"/></td></div>-->
                     </div>
                     <div id="verblist"></div>
-                    <div style="padding-top:1rem;text-align:center;"><button id="creategamebutton">Create Game</button></div>
+                    <div><button id="creategamebutton">Create Game</button></div>
                 </div>
             </div>
         </div>
@@ -447,7 +464,7 @@ a {color:blue;}
 </div>
 <textarea id="answerform" class="gkinput newform disablecopypaste" 
   disabled autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
-<div id="correctanswer" class="gkinput correctanswer" style="visibility: hidden;"></div>
+<div id="correctanswer" class="gkinput correctanswer"></div>
 <button id="submitbutton">Start</button>
 <div id="statusmesg">press start to begin</div>
 </div>

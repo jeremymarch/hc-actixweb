@@ -67,10 +67,10 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
         <meta http-equiv="content-type" content="text/html; charset=utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1"/>
         <title>Login</title>
-        <script>
+        <script nonce="2726c7f26c">
             function setTheme() {{
                 var mode = localStorage.getItem("mode");
-                if ((window.matchMedia( "(prefers-color-scheme: dark)" ).matches || mode == "dark") && mode != "light") {{
+                if ((window.matchMedia( "(prefers-color-scheme: dark)" ).matches || mode === "dark") && mode !== "light") {{
                     document.querySelector("HTML").classList.add("dark");
                 }}
                 else {{
@@ -90,8 +90,12 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
                     return false;
                   }}
               }}
+              function start() {{
+                document.getElementById("loginform").addEventListener('submit', validate, false);
+              }}
+              window.addEventListener('load', start, false);
         </script>
-        <style>
+        <style nonce="2726c7f26c">
             BODY {{ font-family:helvetica;arial;display: flex;align-items: center;justify-content: center;height: 87vh; flex-direction: column; }}
             TABLE {{ border:2px solid black;padding: 24px;border-radius: 10px; }}
             BUTTON {{ padding: 3px 16px; }}
@@ -100,10 +104,11 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
             .dark TABLE {{ border:2px solid white; }}
             .dark BUTTON {{ background-color:black;color:white;border:1px solid white; }}
             .dark a {{color:#03A5F3;}}
+            #newuserdiv {{ padding-top:12px; }}
         </style>
     </head>
     <body>
-        <form action="/login" method="post" onsubmit="return validate()">
+        <form id="loginform" action="/login" method="post">
             <table>
                 <tbody>
                     <tr><td colspan="2" align="center">{error_html}</td></tr>
@@ -129,14 +134,13 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
                         </td>
                     </tr>
                     <tr>
-                        <td colspan="2" align="right" style="padding-top:12px;">
+                        <td colspan="2" align="right" id="newuserdiv">
                             <a href="newuser">New User</a>
                         </td>
                     </tr>
                 </tbody>
             </table>
         </form>
-        <script>/*document.getElementById("username").focus();*/</script>
     </body>
 </html>
 "##)))
@@ -204,10 +208,10 @@ pub async fn new_user_get(flash_messages: IncomingFlashMessages) -> Result<HttpR
         <meta http-equiv="content-type" content="text/html; charset=utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1"/>
         <title>Login</title>
-        <script>
+        <script nonce="2726c7f26c">
             function setTheme() {{
                 var mode = localStorage.getItem("mode");
-                if ((window.matchMedia( "(prefers-color-scheme: dark)" ).matches || mode == "dark") && mode != "light") {{
+                if ((window.matchMedia( "(prefers-color-scheme: dark)" ).matches || mode === "dark") && mode !== "light") {{
                     document.querySelector("HTML").classList.add("dark");
                 }}
                 else {{
@@ -237,8 +241,12 @@ pub async fn new_user_get(flash_messages: IncomingFlashMessages) -> Result<HttpR
                     return false;
                 }}
               }}
+              function start() {{
+                document.getElementById("createuserform").addEventListener('submit', validate, false);
+              }}
+              window.addEventListener('load', start, false);
         </script>
-        <style>
+        <style nonce="2726c7f26c">
             BODY {{ font-family:helvetica;arial;display: flex;align-items: center;justify-content: center;height: 87vh; flex-direction: column; }}
             TABLE {{ border:2px solid black;padding: 24px;border-radius: 10px; }}
             BUTTON {{ padding: 3px 16px; }}
@@ -250,7 +258,7 @@ pub async fn new_user_get(flash_messages: IncomingFlashMessages) -> Result<HttpR
         </style>
     </head>
     <body>
-        <form action="/newuser" method="post" onsubmit="return validate()">
+        <form id="createuserform" action="/newuser" method="post">
             <table>
                 <tbody>
                 <tr><td colspan="2" align="center">{error_html}</td></tr>
@@ -293,7 +301,6 @@ pub async fn new_user_get(flash_messages: IncomingFlashMessages) -> Result<HttpR
                 </tbody>
             </table>
         </form>
-        <script>/*document.getElementById("username").focus();*/</script>
     </body>
 </html>
 "##)))

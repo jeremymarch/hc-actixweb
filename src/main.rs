@@ -23,9 +23,9 @@ use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::cookie::Key;
 use actix_web::cookie::SameSite;
 use actix_web::http::header::ContentType;
-// use actix_web::http::header::HeaderValue;
+use actix_web::http::header::HeaderValue;
 use actix_web::http::header::LOCATION;
-// use actix_web::http::header::{CONTENT_SECURITY_POLICY, STRICT_TRANSPORT_SECURITY};
+use actix_web::http::header::{CONTENT_SECURITY_POLICY, STRICT_TRANSPORT_SECURITY};
 use actix_web::{http::StatusCode, ResponseError};
 use actix_web::{
     middleware, web, App, Error as AWError, HttpRequest, HttpResponse, HttpServer, Result,
@@ -932,13 +932,13 @@ async fn main() -> io::Result<()> {
             .app_data(hcdb.clone())
             .app_data(web::Data::from(app_state.clone()))
             .app_data(web::Data::new(server.clone()))
-            // .wrap(middleware::DefaultHeaders::new()
-            //     .add((CONTENT_SECURITY_POLICY,
-            //         HeaderValue::from_static("style-src 'nonce-2726c7f26c';\
-            //             script-src 'nonce-2726c7f26c' 'wasm-unsafe-eval' 'unsafe-inline'; object-src 'none'; base-uri 'none'")))
-            //     .add((STRICT_TRANSPORT_SECURITY,
-            //         HeaderValue::from_static("max-age=31536000" /* 1 year */ )))
-            // )
+            .wrap(middleware::DefaultHeaders::new()
+                .add((CONTENT_SECURITY_POLICY,
+                    HeaderValue::from_static("style-src 'nonce-2726c7f26c';\
+                        script-src 'nonce-2726c7f26c' 'wasm-unsafe-eval' 'unsafe-inline'; object-src 'none'; base-uri 'none'")))
+                .add((STRICT_TRANSPORT_SECURITY,
+                    HeaderValue::from_static("max-age=31536000" /* 1 year */ )))
+            )
             .wrap(middleware::Compress::default()) // enable automatic response compression - usually register this first
             .wrap(
                 SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
