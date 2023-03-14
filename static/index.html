@@ -345,7 +345,6 @@ a {color:blue;}
 </head>
 <body>
     <div id="menubar">
-        <!--<button id="refreshbutton" onclick="getSessions(true)">refresh</button>-->
         <div id="loginContainer"><a id="loginlink" href="login">login</a>
             <span id="logoutlink">
               <span id="username"></span> 
@@ -858,7 +857,8 @@ a {color:blue;}
 
     answerform.addEventListener('keypress', handleKey, false);
 
-    globalSessionId = localStorage.getItem('selected_session_id');
+    // is it safe to store session id here on a shared computer with multiple users?
+    // globalSessionId = localStorage.getItem('selected_session_id');
     if (supportsWebSockets) {
       wsconnect();
     }
