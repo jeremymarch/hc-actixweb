@@ -19,10 +19,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::*;
 
+use actix_web_flash_messages::FlashMessage;
+use actix_web_flash_messages::{IncomingFlashMessages, Level};
 use secrecy::ExposeSecret;
 use secrecy::Secret;
-use actix_web_flash_messages::{IncomingFlashMessages, Level};
-use actix_web_flash_messages::FlashMessage;
 use std::fmt::Write;
 
 #[derive(serde::Deserialize)]
@@ -53,10 +53,9 @@ pub async fn logout(session: Session) -> Result<HttpResponse, AWError> {
 }
 
 pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResponse, AWError> {
-
     let mut error_html = String::from("");
     for m in flash_messages.iter().filter(|m| m.level() == Level::Error) {
-        writeln!(error_html, "<p><i>{}</i></p>", m.content()).unwrap(); 
+        writeln!(error_html, "<p><i>{}</i></p>", m.content()).unwrap();
     }
 
     Ok(HttpResponse::Ok()
@@ -168,9 +167,15 @@ pub async fn login_post(
         password: form.0.password,
     };
 
-    if let Ok(user_id) = db.validate_login_db(&credentials.username, credentials.password.expose_secret()).await.map_err(map_sqlx_error) {
+    if let Ok(user_id) = db
+        .validate_login_db(&credentials.username, credentials.password.expose_secret())
+        .await
+        .map_err(map_sqlx_error)
+    {
         session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-        if session.insert("user_id", user_id).is_ok() && session.insert("username", credentials.username).is_ok() {
+        if session.insert("user_id", user_id).is_ok()
+            && session.insert("username", credentials.username).is_ok()
+        {
             return Ok(HttpResponse::SeeOther()
                 .insert_header((LOCATION, "/"))
                 .finish());
@@ -185,10 +190,9 @@ pub async fn login_post(
 }
 
 pub async fn new_user_get(flash_messages: IncomingFlashMessages) -> Result<HttpResponse, AWError> {
-
     let mut error_html = String::from("");
     for m in flash_messages.iter().filter(|m| m.level() == Level::Error) {
-        writeln!(error_html, "<p><i>{}</i></p>", m.content()).unwrap(); 
+        writeln!(error_html, "<p><i>{}</i></p>", m.content()).unwrap();
     }
 
     Ok(HttpResponse::Ok()
@@ -311,7 +315,7 @@ pub async fn new_user_get(flash_messages: IncomingFlashMessages) -> Result<HttpR
 // }
 
 pub async fn new_user_post(
-    (/*session, */form, req): (/*Session,*/ web::Form<CreateUserFormData>, HttpRequest),
+    (/*session, */ form, req): (/*Session,*/ web::Form<CreateUserFormData>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<HcDb>().unwrap();
 
@@ -323,7 +327,11 @@ pub async fn new_user_post(
     let timestamp = get_timestamp();
 
     if username.len() > 1 && password.len() > 3 && email.len() > 6 && password == confirm_password {
-        if let Ok(_user_id) = db.create_user(&username, &password, &email, timestamp).await.map_err(map_sqlx_error) {
+        if let Ok(_user_id) = db
+            .create_user(&username, &password, &email, timestamp)
+            .await
+            .map_err(map_sqlx_error)
+        {
             //session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
             //if session.insert("user_id", user_id).is_ok() {
             return Ok(HttpResponse::SeeOther()
@@ -343,16 +351,14 @@ pub async fn new_user_post(
 pub fn get_user_id(session: Session) -> Option<uuid::Uuid> {
     if let Ok(s) = session.get::<uuid::Uuid>("user_id") {
         s
-    }
-    else {
+    } else {
         None
     }
 }
 pub fn get_username(session: Session) -> Option<String> {
     if let Ok(s) = session.get::<String>("username") {
         s
-    }
-    else {
+    } else {
         None
     }
 }

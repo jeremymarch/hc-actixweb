@@ -2,17 +2,14 @@
 //! And manages available rooms. Peers send messages to other peers in same
 //! room through `HcGameServer`.
 
+use actix::prelude::*;
+use sqlx::types::Uuid;
 use std::{
     collections::{HashMap, HashSet},
-    sync::{
-        atomic::{AtomicUsize},
-        Arc,
-    },
+    sync::{atomic::AtomicUsize, Arc},
 };
-use sqlx::types::Uuid;
-use actix::prelude::*;
 
-pub static MAIN_ROOM:Uuid = Uuid::from_u128(0x00000000000000000000000000000001);
+pub static MAIN_ROOM: Uuid = Uuid::from_u128(0x00000000000000000000000000000001);
 
 /// game server sends this messages to session
 #[derive(Message)]
@@ -205,7 +202,10 @@ impl Handler<Join> for HcGameServer {
     type Result = ();
 
     fn handle(&mut self, msg: Join, _: &mut Context<Self>) {
-        let Join { user_uuid, game_uuid } = msg;
+        let Join {
+            user_uuid,
+            game_uuid,
+        } = msg;
         let mut rooms = Vec::new();
 
         // remove session from all rooms

@@ -18,23 +18,22 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 //use sqlx::sqlite::SqliteRow;
-use sqlx::{Row};
-use sqlx::types::Uuid;
+use crate::AnswerQuery;
+use crate::AskQuery;
+use crate::CreateSessionQuery;
+use crate::HcDb;
+use crate::MoveResult;
+use crate::MoveType;
+use crate::SessionResult;
 use crate::SessionsListQuery;
 use crate::UserResult;
-use crate::MoveResult;
-use crate::SessionResult;
-use crate::MoveType;
-use crate::HcDb;
-use crate::AskQuery;
-use crate::AnswerQuery;
-use crate::CreateSessionQuery;
+use sqlx::types::Uuid;
+use sqlx::Row;
 
 use sqlx::postgres::PgRow;
 use sqlx::Postgres;
 
 impl HcDb {
-
     // pub async fn begin_tx(&self) -> Result<Transaction<sqlx::Sqlite>, sqlx::Error> {
     //     let mut tx = self.db.begin().await?;
     //     Ok(tx)
@@ -43,26 +42,32 @@ impl HcDb {
     //     tx.commit().await
     // }
 
-    pub async fn add_to_score<'a, 'b>(&self,
-        tx: &'a mut sqlx::Transaction<'b, Postgres>, session_id:Uuid, user_to_score:&str, points:i32) -> Result<u32, sqlx::Error> {
-            let query = format!("UPDATE sessions SET {user_to_score} = {user_to_score} + $1 WHERE session_id = $2;");
-            let _res = sqlx::query(&query)
-                .bind(points)
-                .bind(session_id)
-                .execute(&mut *tx)
-                .await?;
-    
+    pub async fn add_to_score<'a, 'b>(
+        &self,
+        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+        session_id: Uuid,
+        user_to_score: &str,
+        points: i32,
+    ) -> Result<u32, sqlx::Error> {
+        let query = format!(
+            "UPDATE sessions SET {user_to_score} = {user_to_score} + $1 WHERE session_id = $2;"
+        );
+        let _res = sqlx::query(&query)
+            .bind(points)
+            .bind(session_id)
+            .execute(&mut *tx)
+            .await?;
+
         Ok(1)
     }
 
     pub async fn validate_login_db(
         &self,
-        username:&str,
-        password:&str,
+        username: &str,
+        password: &str,
     ) -> Result<Uuid, sqlx::Error> {
-
         let query = "SELECT user_id,user_name,password,email,user_type,timestamp FROM users WHERE user_name = $1 AND password = $2 LIMIT 1;";
-        let res:UserResult = sqlx::query_as(query)
+        let res: UserResult = sqlx::query_as(query)
             .bind(username)
             .bind(password)
             .fetch_one(&self.db)
@@ -71,13 +76,9 @@ impl HcDb {
         Ok(res.user_id)
     }
 
-    pub async fn get_user_id(
-        &self,
-        username:&str,
-    ) -> Result<UserResult, sqlx::Error> {
-
+    pub async fn get_user_id(&self, username: &str) -> Result<UserResult, sqlx::Error> {
         let query = "SELECT user_id,user_name,password,email,user_type,timestamp FROM users WHERE user_name = $1 LIMIT 1;";
-        let res:UserResult = sqlx::query_as(query)
+        let res: UserResult = sqlx::query_as(query)
             .bind(username)
             .fetch_one(&self.db)
             .await?;
@@ -93,32 +94,26 @@ impl HcDb {
         info: &CreateSessionQuery,
         timestamp: i64,
     ) -> Result<Uuid, sqlx::Error> {
-
         let mut tx = self.db.begin().await?;
 
-        let uuid = self.insert_session_tx(&mut tx,
-            user_id,
-            custom_verbs,
-            opponent_id,
-            info,
-            timestamp,
-        ).await?;
+        let uuid = self
+            .insert_session_tx(&mut tx, user_id, custom_verbs, opponent_id, info, timestamp)
+            .await?;
 
         tx.commit().await?;
 
         Ok(uuid)
     }
 
-    pub async fn insert_session_tx<'a, 'b>(&self,
-            tx: &'a mut sqlx::Transaction<'b, Postgres>,
+    pub async fn insert_session_tx<'a, 'b>(
+        &self,
+        tx: &'a mut sqlx::Transaction<'b, Postgres>,
         user_id: Uuid,
         custom_verbs: &str,
         opponent_id: Option<Uuid>,
         info: &CreateSessionQuery,
         timestamp: i64,
     ) -> Result<Uuid, sqlx::Error> {
-        
-
         let uuid = sqlx::types::Uuid::new_v4();
 
         let query = r#"INSERT INTO sessions (
@@ -150,14 +145,13 @@ impl HcDb {
         Ok(uuid)
     }
 
-
     pub async fn get_sessions(
         &self,
         user_id: sqlx::types::Uuid,
     ) -> Result<Vec<SessionsListQuery>, sqlx::Error> {
         let mut tx = self.db.begin().await?;
 
-        //strftime('%Y-%m-%d %H:%M:%S', DATETIME(timestamp, 'unixepoch')) as timestamp, 
+        //strftime('%Y-%m-%d %H:%M:%S', DATETIME(timestamp, 'unixepoch')) as timestamp,
         //    ORDER BY updated DESC \
         let query = "SELECT session_id AS session_id, challenged_user_id AS challenged, b.user_name AS username, challenger_score as myscore, challenged_score as theirscore, \
         a.timestamp as timestamp, countdown, max_time, max_changes \
@@ -175,18 +169,19 @@ impl HcDb {
             .bind(user_id)
             .bind(user_id)
             .map(|rec: PgRow| {
-                SessionsListQuery { session_id: rec.get("session_id"), 
-                challenged:rec.get("challenged"), /*opponent:rec.get("opponent_user_id"),*/ 
-                opponent_name: rec.get("username"),
-                timestamp:rec.get("timestamp"), 
-                myturn:false, 
-                move_type:MoveType::Practice, 
-                my_score:rec.get("myscore"), 
-                their_score:rec.get("theirscore"),
-                countdown: rec.get("countdown"),
-                max_time: rec.get("max_time"),
-                max_changes: rec.get("max_changes"),
-            }
+                SessionsListQuery {
+                    session_id: rec.get("session_id"),
+                    challenged: rec.get("challenged"), /*opponent:rec.get("opponent_user_id"),*/
+                    opponent_name: rec.get("username"),
+                    timestamp: rec.get("timestamp"),
+                    myturn: false,
+                    move_type: MoveType::Practice,
+                    my_score: rec.get("myscore"),
+                    their_score: rec.get("theirscore"),
+                    countdown: rec.get("countdown"),
+                    max_time: rec.get("max_time"),
+                    max_changes: rec.get("max_changes"),
+                }
             })
             .fetch_all(&mut tx)
             .await?;
@@ -197,22 +192,25 @@ impl HcDb {
         };*/
 
         tx.commit().await?;
-            
+
         Ok(res)
     }
 
-    pub async fn get_last_move(&self, session_id: sqlx::types::Uuid) -> Result<MoveResult, sqlx::Error> {
+    pub async fn get_last_move(
+        &self,
+        session_id: sqlx::types::Uuid,
+    ) -> Result<MoveResult, sqlx::Error> {
         let mut tx = self.db.begin().await?;
         let res = self.get_last_move_tx(&mut tx, session_id).await?;
         tx.commit().await?;
         Ok(res)
     }
 
-    pub async fn get_last_move_tx<'a, 'b>(&self,
+    pub async fn get_last_move_tx<'a, 'b>(
+        &self,
         tx: &'a mut sqlx::Transaction<'b, Postgres>,
         session_id: sqlx::types::Uuid,
     ) -> Result<MoveResult, sqlx::Error> {
-
         let query = "SELECT * \
         FROM moves \
         where session_id = $1 \
@@ -225,28 +223,29 @@ impl HcDb {
             .bind(1)
             .fetch_one(&mut *tx)
             .await?;
-            
+
         Ok(res)
     }
 
-    pub async fn get_last_n_moves<'a, 'b>(&self,
+    pub async fn get_last_n_moves<'a, 'b>(
+        &self,
         tx: &'a mut sqlx::Transaction<'b, Postgres>,
         session_id: sqlx::types::Uuid,
-        n:u8,
+        n: u8,
     ) -> Result<Vec<MoveResult>, sqlx::Error> {
         let query = "SELECT * \
             FROM moves \
             where session_id = $1 \
             ORDER BY asktimestamp DESC \
             LIMIT $2;";
-        
+
         //println!("query: {} {:?}", query, user_id);
         let res: Vec<MoveResult> = sqlx::query_as(query)
             .bind(session_id)
             .bind(n as i32)
             .fetch_all(&mut *tx)
             .await?;
-            
+
         Ok(res)
     }
 
@@ -254,7 +253,6 @@ impl HcDb {
         &self,
         session_id: sqlx::types::Uuid,
     ) -> Result<SessionResult, sqlx::Error> {
-        
         let query = "SELECT * \
         FROM sessions \
         where session_id = $1 \
@@ -268,11 +266,11 @@ impl HcDb {
         Ok(res)
     }
 
-    pub async fn get_session_tx<'a, 'b>(&self,
+    pub async fn get_session_tx<'a, 'b>(
+        &self,
         tx: &'a mut sqlx::Transaction<'b, Postgres>,
         session_id: sqlx::types::Uuid,
     ) -> Result<SessionResult, sqlx::Error> {
-
         let query = "SELECT * \
         FROM sessions \
         where session_id = $1 \
@@ -290,16 +288,13 @@ impl HcDb {
         &self,
         session_id: sqlx::types::Uuid,
     ) -> Result<Vec<i32>, sqlx::Error> {
-
         let query = "SELECT verb_id \
         FROM moves \
         where verb_id IS NOT NULL AND session_id = $1;";
 
         let res: Vec<i32> = sqlx::query(query)
             .bind(session_id)
-            .map(|rec: PgRow| {
-                rec.get("verb_id")
-            })
+            .map(|rec: PgRow| rec.get("verb_id"))
             .fetch_all(&self.db)
             .await?;
 
@@ -309,17 +304,14 @@ impl HcDb {
     pub async fn insert_ask_move(
         &self,
         user_id: Option<Uuid>,
-        info:&AskQuery,
-        timestamp:i64,
+        info: &AskQuery,
+        timestamp: i64,
     ) -> Result<Uuid, sqlx::Error> {
         let mut tx = self.db.begin().await?;
 
-        let uuid = self.insert_ask_move_tx(
-            &mut tx,
-            user_id,
-            info,
-            timestamp,
-        ).await?;
+        let uuid = self
+            .insert_ask_move_tx(&mut tx, user_id, info, timestamp)
+            .await?;
 
         tx.commit().await?;
 
@@ -330,10 +322,9 @@ impl HcDb {
         &self,
         tx: &'a mut sqlx::Transaction<'b, Postgres>,
         user_id: Option<Uuid>,
-        info:&AskQuery,
-        timestamp:i64,
+        info: &AskQuery,
+        timestamp: i64,
     ) -> Result<Uuid, sqlx::Error> {
-
         let uuid = sqlx::types::Uuid::new_v4();
 
         let query = "INSERT INTO moves VALUES ($1,$2,$3,NULL,$4,$5,$6,$7,$8,$9,NULL,NULL,NULL,NULL,NULL,NULL,$10, NULL);";
@@ -357,24 +348,26 @@ impl HcDb {
 
     pub async fn update_answer_move(
         &self,
-        info:&AnswerQuery,
+        info: &AnswerQuery,
         user_id: Uuid,
-        correct_answer:&str,
-        is_correct:bool,
-        mf_pressed:bool,
-        timestamp:i64,
+        correct_answer: &str,
+        is_correct: bool,
+        mf_pressed: bool,
+        timestamp: i64,
     ) -> Result<u32, sqlx::Error> {
         let mut tx = self.db.begin().await?;
 
-        let a = self.update_answer_move_tx(
-            &mut tx,
-            info,
-            user_id,
-            correct_answer,
-            is_correct,
-            mf_pressed,
-            timestamp,
-        ).await?;
+        let a = self
+            .update_answer_move_tx(
+                &mut tx,
+                info,
+                user_id,
+                correct_answer,
+                is_correct,
+                mf_pressed,
+                timestamp,
+            )
+            .await?;
 
         tx.commit().await?;
 
@@ -392,7 +385,6 @@ impl HcDb {
         mf_pressed: bool,
         timestamp: i64,
     ) -> Result<u32, sqlx::Error> {
-
         let m = self.get_last_move_tx(&mut *tx, info.session_id).await?;
 
         let query = "UPDATE moves SET answer_user_id=$1, answer=$2, correct_answer=$3, is_correct=$4, time=$5, mf_pressed=$6, timed_out=$7, answeredtimestamp=$8 WHERE move_id=$9;";
@@ -412,9 +404,20 @@ impl HcDb {
         Ok(1)
     }
 
-    pub async fn create_user(&self, username:&str, password:&str, email:&str, timestamp:i64) -> Result<Uuid, sqlx::Error> {
-
-        if username.len() < 2 || username.len() > 30 || password.len() < 8 || password.len() > 60 || email.len() < 6 || email.len() > 120 {
+    pub async fn create_user(
+        &self,
+        username: &str,
+        password: &str,
+        email: &str,
+        timestamp: i64,
+    ) -> Result<Uuid, sqlx::Error> {
+        if username.len() < 2
+            || username.len() > 30
+            || password.len() < 8
+            || password.len() > 60
+            || email.len() < 6
+            || email.len() > 120
+        {
             return Err(sqlx::Error::RowNotFound);
         }
 
@@ -445,9 +448,7 @@ impl HcDb {
     UNIQUE(user_name)
     );"#;
 
-        let _res = sqlx::query(query)
-            .execute(&mut tx)
-            .await?;
+        let _res = sqlx::query(query).execute(&mut tx).await?;
 
         let query = r#"CREATE TABLE IF NOT EXISTS sessions ( 
     session_id UUID PRIMARY KEY NOT NULL, 
@@ -465,9 +466,7 @@ impl HcDb {
     FOREIGN KEY (challenger_user_id) REFERENCES users(user_id), 
     FOREIGN KEY (challenged_user_id) REFERENCES users(user_id)
     );"#;
-        let _res = sqlx::query(query)
-            .execute(&mut tx)
-            .await?;
+        let _res = sqlx::query(query).execute(&mut tx).await?;
 
         let query = r#"CREATE TABLE IF NOT EXISTS moves ( 
     move_id UUID PRIMARY KEY NOT NULL, 
@@ -492,14 +491,10 @@ impl HcDb {
     FOREIGN KEY (answer_user_id) REFERENCES users(user_id), 
     FOREIGN KEY (session_id) REFERENCES sessions(session_id) 
     );"#;
-        let _res = sqlx::query(query)
-            .execute(&mut tx)
-            .await?;
+        let _res = sqlx::query(query).execute(&mut tx).await?;
 
         let query = "CREATE INDEX IF NOT EXISTS move_session_id_idx ON moves (session_id);";
-        let _res = sqlx::query(query)
-            .execute(&mut tx)
-            .await?;
+        let _res = sqlx::query(query).execute(&mut tx).await?;
 
         tx.commit().await?;
 
