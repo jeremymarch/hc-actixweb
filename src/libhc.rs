@@ -475,7 +475,7 @@ pub fn hc_change_verbs(verb_history: &Vec<i32>, reps: usize) -> bool {
 async fn ask_practice<'a, 'b>(
     tx: &'a mut sqlx::Transaction<'b, Postgres>,
     db: &HcDb,
-    prev_form: HcGreekVerbForm,
+    mut prev_form: HcGreekVerbForm,
     session: &SessionResult,
     timestamp: i64,
     asktimestamp: i64,
@@ -523,35 +523,15 @@ async fn ask_practice<'a, 'b>(
         prev_form.verb.id as i32
     };
 
-    let mut pf: HcGreekVerbForm;
-    loop {
-        pf = prev_form.clone();
-        pf.verb = verbs[verb_id as usize].clone();
-        //println!("counts: {}, {}", Arc::strong_count(&pf.verb), Arc::weak_count(&pf.verb));
-
-        pf.change_params(
-            session.max_changes.try_into().unwrap(),
-            &persons,
-            &numbers,
-            &tenses,
-            &voices,
-            &moods,
-        );
-        let vf = pf.get_form(false);
-        match vf {
-            Ok(res) => {
-                if res.last().unwrap().form == "—" {
-                    continue;
-                } else {
-                    break;
-                }
-            } //only 3rd pl consonant stem perfects/pluperfects return - now
-            Err(_e) => {
-                /*println!("continue {:?}", e);*/
-                continue;
-            }
-        }
-    }
+    prev_form.verb = verbs[verb_id as usize].clone();
+    let pf = prev_form.random_form(
+        session.max_changes.try_into().unwrap(),
+        &persons,
+        &numbers,
+        &tenses,
+        &voices,
+        &moods,
+    );
 
     //let vf = pf.get_form(false);
     //println!("form: {}",vf.unwrap().last().unwrap().form);

@@ -1103,8 +1103,8 @@ dependencies = [
 
 [[package]]
 name = "hoplite_verbs_rs"
-version = "0.3.7"
-source = "git+https://github.com/jeremymarch/hoplite_verbs_rs#7ac527221c86ee34a4cea3936bed882ed77ca2f0"
+version = "0.3.8"
+source = "git+https://github.com/jeremymarch/hoplite_verbs_rs#ada95f452ea838a375c537371066a431b84afbc1"
 dependencies = [
  "itertools",
  "polytonic-greek",
@@ -1530,8 +1530,8 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "polytonic-greek"
-version = "0.4.3"
-source = "git+https://github.com/jeremymarch/polytonic-greek#9b29dbf56d9032ad28375c236e2dd532bc1a7f79"
+version = "0.4.6"
+source = "git+https://github.com/jeremymarch/polytonic-greek#7ca9195ca0d27ee70be4a12fb4923868b8a9989f"
 dependencies = [
  "unicode-normalization",
 ]
