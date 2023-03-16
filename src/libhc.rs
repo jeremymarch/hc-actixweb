@@ -481,27 +481,34 @@ async fn ask_practice<'a, 'b>(
     asktimestamp: i64,
     verbs: &[Arc<HcGreekVerb>],
 ) -> Result<(), sqlx::Error> {
-    let persons = vec![HcPerson::First, HcPerson::Second, HcPerson::Third];
-    let numbers = vec![HcNumber::Singular, HcNumber::Plural];
-    let tenses = vec![
-        HcTense::Present,
-        HcTense::Imperfect,
-        HcTense::Future,
-        HcTense::Aorist,
-        HcTense::Perfect,
-        HcTense::Pluperfect,
-    ];
-    let moods = vec![
-        HcMood::Indicative,
-        HcMood::Subjunctive,
-        HcMood::Optative,
-        HcMood::Imperative,
-    ];
-    let voices = vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive];
+    let verb_params = VerbParameters {
+        persons: vec![HcPerson::First, HcPerson::Second, HcPerson::Third],
+        numbers: vec![HcNumber::Singular, HcNumber::Plural],
+        tenses: vec![
+            HcTense::Present,
+            HcTense::Imperfect,
+            HcTense::Future,
+            HcTense::Aorist,
+            HcTense::Perfect,
+            HcTense::Pluperfect,
+        ],
+        voices: vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive],
+        moods: vec![
+            HcMood::Indicative,
+            HcMood::Subjunctive,
+            HcMood::Optative,
+            HcMood::Imperative,
+        ],
+    };
 
     let max_per_verb = match session.practice_reps_per_verb {
         Some(r) => r,
         _ => 4,
+    };
+
+    let highest_unit = match session.highest_unit {
+        Some(r) => r,
+        _ => 20,
     };
 
     let moves = db.get_last_n_moves(tx, session.session_id, 100).await?;
@@ -526,11 +533,8 @@ async fn ask_practice<'a, 'b>(
     prev_form.verb = verbs[verb_id as usize].clone();
     let pf = prev_form.random_form(
         session.max_changes.try_into().unwrap(),
-        &persons,
-        &numbers,
-        &tenses,
-        &voices,
-        &moods,
+        highest_unit.try_into().unwrap(),
+        &verb_params,
     );
 
     //let vf = pf.get_form(false);
