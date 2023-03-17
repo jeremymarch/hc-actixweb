@@ -90,8 +90,6 @@ impl HcDb {
         &self,
         user_id: Uuid,
         highest_unit: Option<i32>,
-        custom_verbs: &Option<String>,
-        custom_params: &Option<String>,
         opponent_id: Option<Uuid>,
         info: &CreateSessionQuery,
         timestamp: i64,
@@ -99,16 +97,7 @@ impl HcDb {
         let mut tx = self.db.begin().await?;
 
         let uuid = self
-            .insert_session_tx(
-                &mut tx,
-                user_id,
-                highest_unit,
-                custom_verbs,
-                custom_params,
-                opponent_id,
-                info,
-                timestamp,
-            )
+            .insert_session_tx(&mut tx, user_id, highest_unit, opponent_id, info, timestamp)
             .await?;
 
         tx.commit().await?;
@@ -121,8 +110,6 @@ impl HcDb {
         tx: &'a mut sqlx::Transaction<'b, Postgres>,
         user_id: Uuid,
         highest_unit: Option<i32>,
-        custom_verbs: &Option<String>,
-        custom_params: &Option<String>,
         opponent_id: Option<Uuid>,
         info: &CreateSessionQuery,
         timestamp: i64,
@@ -149,8 +136,8 @@ impl HcDb {
             .bind(user_id)
             .bind(opponent_id)
             .bind(highest_unit)
-            .bind(custom_verbs)
-            .bind(custom_params)
+            .bind(&info.verbs)
+            .bind(&info.params)
             .bind(info.max_changes)
             .bind(info.practice_reps_per_verb)
             .bind(info.countdown as i32)

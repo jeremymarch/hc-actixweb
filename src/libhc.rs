@@ -506,10 +506,7 @@ async fn ask_practice<'a, 'b>(
         _ => 4,
     };
 
-    let highest_unit = match session.highest_unit {
-        Some(r) => r,
-        _ => 20,
-    };
+    let highest_unit = session.highest_unit;
 
     let moves = db.get_last_n_moves(tx, session.session_id, 100).await?;
     let last_verb_ids = moves
@@ -533,7 +530,7 @@ async fn ask_practice<'a, 'b>(
     prev_form.verb = verbs[verb_id as usize].clone();
     let pf = prev_form.random_form(
         session.max_changes.try_into().unwrap(),
-        highest_unit.try_into().unwrap(),
+        highest_unit,
         &verb_params,
     );
 
@@ -705,7 +702,18 @@ pub async fn hc_insert_session(
         return Err(sqlx::Error::RowNotFound); //todo oops
     }
 
-    //let highest_unit = if let Ok(v) = info.unit.parse::<i16>() { Some(v) } else { None };
+    let highest_unit = match info.unit {
+        Some(r) => {
+            if r < 2 {
+                Some(2)
+            } else if r > 20 {
+                Some(20)
+            } else {
+                Some(r)
+            }
+        }
+        _ => None,
+    };
 
     let mut tx = db.db.begin().await?;
 
@@ -713,9 +721,7 @@ pub async fn hc_insert_session(
         .insert_session_tx(
             &mut tx,
             user_id,
-            info.unit,
-            &info.verbs,
-            &info.params,
+            highest_unit,
             opponent_user_id,
             info,
             timestamp,
@@ -740,7 +746,7 @@ pub async fn hc_insert_session(
                     session_id: session_uuid,
                     challenger_user_id: user_id,
                     challenged_user_id: None,
-                    highest_unit: info.unit,
+                    highest_unit,
                     custom_verbs: info.verbs.clone(),
                     custom_params: None,
                     max_changes: info.max_changes,
