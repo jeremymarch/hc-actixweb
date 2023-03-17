@@ -706,7 +706,6 @@ pub async fn hc_insert_session(
     }
 
     //let highest_unit = if let Ok(v) = info.unit.parse::<i16>() { Some(v) } else { None };
-    let custom_verbs = &info.unit;
 
     let mut tx = db.db.begin().await?;
 
@@ -714,7 +713,9 @@ pub async fn hc_insert_session(
         .insert_session_tx(
             &mut tx,
             user_id,
-            custom_verbs,
+            info.unit,
+            &info.verbs,
+            &info.params,
             opponent_user_id,
             info,
             timestamp,
@@ -739,8 +740,9 @@ pub async fn hc_insert_session(
                     session_id: session_uuid,
                     challenger_user_id: user_id,
                     challenged_user_id: None,
-                    highest_unit: None,
-                    custom_verbs: Some(info.unit.clone()),
+                    highest_unit: info.unit,
+                    custom_verbs: info.verbs.clone(),
+                    custom_params: None,
                     max_changes: info.max_changes,
                     challenger_score: None,
                     challenged_score: None,
@@ -760,7 +762,7 @@ pub async fn hc_get_available_verbs(
     db: &HcDb,
     _user_id: Uuid,
     session_id: Uuid,
-    top_unit: Option<i16>,
+    top_unit: Option<i32>,
     verbs: &Vec<Arc<HcGreekVerb>>,
 ) -> Result<Vec<HCVerbOption>, sqlx::Error> {
     let mut res_verbs: Vec<HCVerbOption> = vec![];

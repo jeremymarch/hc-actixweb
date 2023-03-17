@@ -261,7 +261,9 @@ pub struct StatusResponse {
 #[derive(Deserialize, Serialize)]
 pub struct CreateSessionQuery {
     qtype: String,
-    unit: String,
+    verbs: Option<String>,
+    params: Option<String>,
+    unit: Option<i32>,
     opponent: String,
     countdown: bool,
     practice_reps_per_verb: Option<i16>,
@@ -321,8 +323,9 @@ pub struct SessionResult {
     session_id: Uuid,
     challenger_user_id: Uuid,
     challenged_user_id: Option<Uuid>,
-    highest_unit: Option<i16>,
+    highest_unit: Option<i32>,
     custom_verbs: Option<String>,
+    custom_params: Option<String>,
     max_changes: i16,
     challenger_score: Option<i32>,
     challenged_score: Option<i32>,
@@ -1172,7 +1175,9 @@ mod tests {
 
         let csq = CreateSessionQuery {
             qtype: "abc".to_string(),
-            unit: "20".to_string(),
+            verbs: Some("20".to_string()),
+            params: None,
+            unit: None,
             opponent: "testuser2".to_string(),
             countdown: true,
             practice_reps_per_verb: Some(4),
@@ -2163,7 +2168,9 @@ mod tests {
 
         let csq = CreateSessionQuery {
             qtype: "abc".to_string(),
-            unit: "20".to_string(),
+            verbs: Some("20".to_string()),
+            params: None,
+            unit: None,
             opponent: "".to_string(),
             countdown: true,
             practice_reps_per_verb: Some(4),

@@ -89,7 +89,9 @@ impl HcDb {
     pub async fn insert_session(
         &self,
         user_id: Uuid,
-        custom_verbs: &str,
+        highest_unit: Option<i32>,
+        custom_verbs: &Option<String>,
+        custom_params: &Option<String>,
         opponent_id: Option<Uuid>,
         info: &CreateSessionQuery,
         timestamp: i64,
@@ -97,7 +99,16 @@ impl HcDb {
         let mut tx = self.db.begin().await?;
 
         let uuid = self
-            .insert_session_tx(&mut tx, user_id, custom_verbs, opponent_id, info, timestamp)
+            .insert_session_tx(
+                &mut tx,
+                user_id,
+                highest_unit,
+                custom_verbs,
+                custom_params,
+                opponent_id,
+                info,
+                timestamp,
+            )
             .await?;
 
         tx.commit().await?;
@@ -109,7 +120,9 @@ impl HcDb {
         &self,
         tx: &'a mut sqlx::Transaction<'b, Postgres>,
         user_id: Uuid,
-        custom_verbs: &str,
+        highest_unit: Option<i32>,
+        custom_verbs: &Option<String>,
+        custom_params: &Option<String>,
         opponent_id: Option<Uuid>,
         info: &CreateSessionQuery,
         timestamp: i64,
@@ -122,18 +135,22 @@ impl HcDb {
             challenged_user_id,
             highest_unit,
             custom_verbs,
+            custom_params,
             max_changes,
             challenger_score,
             challenged_score,
             practice_reps_per_verb,
             countdown,
             max_time,
-            timestamp) VALUES ($1,$2,$3,NULL,$4,$5,0,0,$6,$7,$8,$9);"#;
+            timestamp,
+            status) VALUES ($1,$2,$3,$4,$5,$6,$7,0,0,$8,$9,$10,$11,1);"#;
         let _res = sqlx::query(query)
             .bind(uuid)
             .bind(user_id)
             .bind(opponent_id)
+            .bind(highest_unit)
             .bind(custom_verbs)
+            .bind(custom_params)
             .bind(info.max_changes)
             .bind(info.practice_reps_per_verb)
             .bind(info.countdown as i32)
@@ -454,8 +471,9 @@ impl HcDb {
     session_id UUID PRIMARY KEY NOT NULL, 
     challenger_user_id UUID, 
     challenged_user_id UUID, 
-    highest_unit SMALLINT,
+    highest_unit INT,
     custom_verbs TEXT, 
+    custom_params TEXT, 
     max_changes SMALLINT,
     challenger_score INT,
     challenged_score INT,
@@ -463,6 +481,7 @@ impl HcDb {
     countdown INT,
     max_time INT,
     timestamp BIGINT NOT NULL DEFAULT 0,
+    status INT NOT NULL DEFAULT 1,
     FOREIGN KEY (challenger_user_id) REFERENCES users(user_id), 
     FOREIGN KEY (challenged_user_id) REFERENCES users(user_id)
     );"#;

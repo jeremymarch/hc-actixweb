@@ -1142,7 +1142,7 @@ a {color:blue;}
     maxChanges = (maxChanges) ? parseInt(maxChanges) : 2;
     maxTime = (maxTime) ? parseInt(maxTime) : 30;
 
-    const sendData = { qtype: 'newsession', unit: unitv, opponent: opponentv, practice_reps_per_verb: reps, countdown, maxChanges, maxTime };
+    const sendData = { qtype: 'newsession', verbs: unitv, params: null, unit: null, opponent: opponentv, practice_reps_per_verb: reps, countdown, max_changes: maxChanges, max_time: maxTime };
     genericSendRequest('new', sendData, null);
   }
 
