@@ -840,7 +840,7 @@ a {color:blue;}
   //   return a.trim();
   // }
 
-  const supportsWebSockets = 'WebSocket' in window || 'MozWebSocket' in window;
+  const supportsWebSockets = false; // 'WebSocket' in window || 'MozWebSocket' in window;
   function start () {
     verbList();
     globalTimerRef = q('#mainTime');
@@ -1076,7 +1076,7 @@ a {color:blue;}
   function serialize (obj) {
     const str = [];
     for (const p in obj) {
-      if (obj.hasOwn(p)) {
+      if (Object.hasOwn(obj, p)) {
         str.push(encodeURIComponent(p) + '=' + encodeURIComponent(obj[p]));
       }
     }
@@ -1149,8 +1149,10 @@ a {color:blue;}
     for (; i < ck.length; i++) {
       v.push(ck[i].value);
     }
-    const unitv = v.join(',');
-    console.log('verbs: ' + unitv);
+    let unitv = v.join(',');
+    if (unitv.length === 0) {
+      unitv = '1,2';
+    }
 
     reps = (reps) ? parseInt(reps) : 4;
     maxChanges = (maxChanges) ? parseInt(maxChanges) : 2;
@@ -1234,7 +1236,12 @@ a {color:blue;}
   }
 
   function getSessions (withCurrentGame) {
-    const sendData = { qtype: 'getsessions', current_session: ((withCurrentGame) ? globalSessionId : null) };
+    // const sendData = { qtype: 'getsessions', current_session: ((withCurrentGame) ? globalSessionId : null) };
+    const sendData = {};
+    sendData.qtype = 'getsessions';
+    if (withCurrentGame && globalSessionId !== null) {
+      sendData.current_session = globalSessionId;
+    }
     genericSendRequest('list', sendData, null);
   }
 
