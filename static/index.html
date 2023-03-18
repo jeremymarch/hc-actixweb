@@ -390,6 +390,18 @@ a {color:blue;}
                           <div class="newcol1">Max changes:</div>
                           <div class="newcol2"><input id="maxchanges" type="text" value="2" class="newgameinput"/></div>
                         </div>
+                        <div class="newrow">
+                          <div class="newcol1">Forms from Unit and below:</div>
+                          <div class="newcol2">
+                            <input id="topunit" type="text" value="" class="newgameinput"/>
+                          </div>
+                        </div>
+                        <div class="newrow">
+                          <div class="newcol1">Verb Parameters:</div>
+                          <div class="newcol2">
+                            <input id="verbparams" type="text" value="" class="newgameinput"/>
+                          </div>
+                        </div>
                         <!--<div class="newrow"><td>Top Unit:</td><td><input id="unitinput" type="text" value="20"/></td></div>-->
                     </div>
                     <div id="verblist"></div>
@@ -861,10 +873,9 @@ a {color:blue;}
     // globalSessionId = localStorage.getItem('selected_session_id');
     if (supportsWebSockets) {
       wsconnect();
+    } else {
+      getSessions(true);
     }
-    // else {
-    //     getSessions(true);
-    // }
     console.log(getTextWidth('παιδεύσητε', 'normal 24pt WebNewAthenaUnicode')); // close to 86
   }
 
@@ -1072,7 +1083,7 @@ a {color:blue;}
     return str.join('&');
   }
 
-  const fallbackToAjax = false;
+  const fallbackToAjax = true;
   // const pendingSendData = null;
   function genericSendRequest (sendUrl, sendData, handleResponse) {
     // if (supportsWebSockets && !socket) {
@@ -1080,7 +1091,7 @@ a {color:blue;}
     //     return;
     // }
 
-    if (socket) {
+    if (supportsWebSockets && socket) {
       console.log('websocket request');
       sendData = JSON.stringify(sendData);
       socket.send(sendData);
@@ -1129,6 +1140,9 @@ a {color:blue;}
     let maxChanges = parseInt(q('#maxchanges').value.trim());
     let maxTime = parseInt(q('#maxtime').value.trim());
 
+    const verbParams = (q('#verbparams').value.trim() || null);
+    const topUnit = (parseInt(q('#topunit').value.trim()) || null);
+
     const v = [];
     const ck = document.querySelectorAll('.verblistckverb:checked');
     let i = 0;
@@ -1142,7 +1156,7 @@ a {color:blue;}
     maxChanges = (maxChanges) ? parseInt(maxChanges) : 2;
     maxTime = (maxTime) ? parseInt(maxTime) : 30;
 
-    const sendData = { qtype: 'newsession', verbs: unitv, params: null, unit: null, opponent: opponentv, practice_reps_per_verb: reps, countdown, max_changes: maxChanges, max_time: maxTime };
+    const sendData = { qtype: 'newsession', verbs: unitv, params: verbParams, unit: topUnit, opponent: opponentv, practice_reps_per_verb: reps, countdown, max_changes: maxChanges, max_time: maxTime };
     genericSendRequest('new', sendData, null);
   }
 

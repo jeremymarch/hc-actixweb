@@ -89,7 +89,7 @@ impl HcDb {
     pub async fn insert_session(
         &self,
         user_id: Uuid,
-        highest_unit: Option<i32>,
+        highest_unit: Option<i16>,
         opponent_id: Option<Uuid>,
         info: &CreateSessionQuery,
         timestamp: i64,
@@ -109,7 +109,7 @@ impl HcDb {
         &self,
         tx: &'a mut sqlx::Transaction<'b, Postgres>,
         user_id: Uuid,
-        highest_unit: Option<i32>,
+        highest_unit: Option<i16>,
         opponent_id: Option<Uuid>,
         info: &CreateSessionQuery,
         timestamp: i64,

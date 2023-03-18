@@ -233,6 +233,7 @@ pub async fn hc_answer(
         Ok(a) => a.last().unwrap().form.replace(" /", ","),
         Err(_) => "—".to_string(),
     };
+
     let is_correct = hgk_compare_multiple_forms(&correct_answer, &info.answer.replace("---", "—"));
 
     let _res = db
@@ -506,8 +507,6 @@ async fn ask_practice<'a, 'b>(
         _ => 4,
     };
 
-    let highest_unit = session.highest_unit;
-
     let moves = db.get_last_n_moves(tx, session.session_id, 100).await?;
     let last_verb_ids = moves
         .iter()
@@ -530,7 +529,7 @@ async fn ask_practice<'a, 'b>(
     prev_form.verb = verbs[verb_id as usize].clone();
     let pf = prev_form.random_form(
         session.max_changes.try_into().unwrap(),
-        highest_unit,
+        session.highest_unit,
         &verb_params,
     );
 
@@ -768,7 +767,7 @@ pub async fn hc_get_available_verbs(
     db: &HcDb,
     _user_id: Uuid,
     session_id: Uuid,
-    top_unit: Option<i32>,
+    top_unit: Option<i16>,
     verbs: &Vec<Arc<HcGreekVerb>>,
 ) -> Result<Vec<HCVerbOption>, sqlx::Error> {
     let mut res_verbs: Vec<HCVerbOption> = vec![];
