@@ -253,8 +253,11 @@ a {color:blue;}
     margin-top: 6px;
 }
 
-.verblistck {
+.limitparam, .verblistck {
   margin-right: 0.5rem;
+}
+.limitparamrow {
+  line-height: 1.5;
 }
 
 .myturnIcon { display:none; }
@@ -294,18 +297,22 @@ a {color:blue;}
 }
 
 #newgamediv {
-    margin-top: -288px;
     margin-left: 1rem;
     margin-right: 1rem;
     margin-bottom: 1rem;
 }
 .expand-contract {
-  margin-top: -300px;
-  transition: all 0.3s;
+  margin-top: -345px;
+  transition: all 0.3s ease-in-out;
+}
+
+#customparams .expand-contract {
+  margin-top: -386px;
 }
 
 .expand-contract.expanded {
    margin-top: 0 !important;
+   transition: all 0.3s ease-in-out;
 }
 .verbrow {
     margin-left:1.5rem;
@@ -396,15 +403,31 @@ a {color:blue;}
                             <input id="topunit" type="text" value="" class="newgameinput"/>
                           </div>
                         </div>
-                        <div class="newrow">
-                          <div class="newcol1">Verb Parameters:</div>
-                          <div class="newcol2">
-                            <input id="verbparams" type="text" value="" class="newgameinput"/>
-                          </div>
-                        </div>
-                        <!--<div class="newrow"><td>Top Unit:</td><td><input id="unitinput" type="text" value="20"/></td></div>-->
                     </div>
                     <div id="verblist"></div>
+                    <div id="customparams">
+                      <div><span class="verbunitrowlabel">Customize Parameters</span></div><div class="expand-container"><div class="expand-contract">
+                          <div class="limitparamrow"><input class="limitparam" value="1" id="paramfirst" type="checkbox">First Person</div>
+                          <div class="limitparamrow"><input class="limitparam" value="2" id="paramsecond" type="checkbox">Second Person</div>
+                          <div class="limitparamrow"><input class="limitparam" value="3" id="paramthird" type="checkbox">Third Person</div>
+                          <div class="limitparamrow"><input class="limitparam" value="4" id="paramsing" type="checkbox">Singular</div>
+                          <div class="limitparamrow"><input class="limitparam" value="5" id="paramplural" type="checkbox">Plural</div>
+                          <div class="limitparamrow"><input class="limitparam" value="6" id="parampresent" type="checkbox">Present</div>
+                          <div class="limitparamrow"><input class="limitparam" value="7" id="paramimperfect" type="checkbox">Imperfect</div>
+                          <div class="limitparamrow"><input class="limitparam" value="8" id="paramfuture" type="checkbox">Future</div>
+                          <div class="limitparamrow"><input class="limitparam" value="9" id="paramaorist" type="checkbox">Aorist</div>
+                          <div class="limitparamrow"><input class="limitparam" value="10" id="paramperfect" type="checkbox">Perfect</div>
+                          <div class="limitparamrow"><input class="limitparam" value="11" id="paramplup" type="checkbox">Pluperfect</div>
+                          <div class="limitparamrow"><input class="limitparam" value="12" id="paramindic" type="checkbox">Indicative</div>
+                          <div class="limitparamrow"><input class="limitparam" value="13" id="paramsubj" type="checkbox">Subjunctive</div>
+                          <div class="limitparamrow"><input class="limitparam" value="14" id="paramindic" type="checkbox">Optative</div>
+                          <div class="limitparamrow"><input class="limitparam" value="15" id="paramsubj" type="checkbox">Imperative</div>
+                          <div class="limitparamrow"><input class="limitparam" value="16" id="paramact" type="checkbox">Active</div>
+                          <div class="limitparamrow"><input class="limitparam" value="17" id="parammid" type="checkbox">Middle</div>
+                          <div class="limitparamrow"><input class="limitparam" value="18" id="parampass" type="checkbox">Passive</div>
+                        </div>
+                      </div>
+                    </div>
                     <div><button id="creategamebutton">Create Game</button></div>
                 </div>
             </div>
@@ -1140,7 +1163,7 @@ a {color:blue;}
     let maxChanges = parseInt(q('#maxchanges').value.trim());
     let maxTime = parseInt(q('#maxtime').value.trim());
 
-    const verbParams = (q('#verbparams').value.trim() || null);
+    // const verbParams = (q('#verbparams').value.trim() || null);
     const topUnit = (parseInt(q('#topunit').value.trim()) || null);
 
     const v = [];
@@ -1157,6 +1180,18 @@ a {color:blue;}
     reps = (reps) ? parseInt(reps) : 4;
     maxChanges = (maxChanges) ? parseInt(maxChanges) : 2;
     maxTime = (maxTime) ? parseInt(maxTime) : 30;
+
+    const lp = [];
+    const lpck = document.querySelectorAll('.limitparam:checked');
+    i = 0;
+    for (; i < lpck.length; i++) {
+      lp.push(lpck[i].value);
+    }
+    let verbParams = lp.join(',');
+    if (verbParams.length === 0 || lpck.length === 16) {
+      verbParams = null;
+    }
+    console.log('limit params: ' + verbParams);
 
     const sendData = { qtype: 'newsession', verbs: unitv, params: verbParams, unit: topUnit, opponent: opponentv, practice_reps_per_verb: reps, countdown, max_changes: maxChanges, max_time: maxTime };
     genericSendRequest('new', sendData, null);
@@ -1893,6 +1928,7 @@ a {color:blue;}
   }
 
   function expandContractGames () {
+    console.log("click");
     const el = this.parentNode.nextSibling.firstChild;
     if (el) {
       el.classList.toggle('expanded');

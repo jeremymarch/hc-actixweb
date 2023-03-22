@@ -482,25 +482,27 @@ async fn ask_practice<'a, 'b>(
     asktimestamp: i64,
     verbs: &[Arc<HcGreekVerb>],
 ) -> Result<(), sqlx::Error> {
-    let verb_params = VerbParameters {
-        persons: vec![HcPerson::First, HcPerson::Second, HcPerson::Third],
-        numbers: vec![HcNumber::Singular, HcNumber::Plural],
-        tenses: vec![
-            HcTense::Present,
-            HcTense::Imperfect,
-            HcTense::Future,
-            HcTense::Aorist,
-            HcTense::Perfect,
-            HcTense::Pluperfect,
-        ],
-        voices: vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive],
-        moods: vec![
-            HcMood::Indicative,
-            HcMood::Subjunctive,
-            HcMood::Optative,
-            HcMood::Imperative,
-        ],
-    };
+    let verb_params = VerbParameters::from_option(session.custom_params.clone());
+
+    // let verb_params = VerbParameters {
+    //     persons: vec![HcPerson::First, HcPerson::Second, HcPerson::Third],
+    //     numbers: vec![HcNumber::Singular, HcNumber::Plural],
+    //     tenses: vec![
+    //         HcTense::Present,
+    //         HcTense::Imperfect,
+    //         HcTense::Future,
+    //         HcTense::Aorist,
+    //         HcTense::Perfect,
+    //         HcTense::Pluperfect,
+    //     ],
+    //     voices: vec![HcVoice::Active, HcVoice::Middle, HcVoice::Passive],
+    //     moods: vec![
+    //         HcMood::Indicative,
+    //         HcMood::Subjunctive,
+    //         HcMood::Optative,
+    //         HcMood::Imperative,
+    //     ],
+    // };
 
     let max_per_verb = match session.practice_reps_per_verb {
         Some(r) => r,
