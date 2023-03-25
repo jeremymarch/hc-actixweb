@@ -323,6 +323,11 @@ pub struct SessionResult {
     session_id: Uuid,
     challenger_user_id: Uuid,
     challenged_user_id: Option<Uuid>,
+    // current_move is not currently used: it is here to hold a move id in the case that
+    // I pre-populate db with a sequence of practice moves.
+    // this will store the current location in that sequence
+    current_move: Option<Uuid>,
+    name: Option<String>,
     highest_unit: Option<i16>,
     custom_verbs: Option<String>,
     custom_params: Option<String>,

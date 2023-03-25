@@ -727,6 +727,8 @@ pub async fn hc_insert_session(
                     session_id: session_uuid,
                     challenger_user_id: user_id,
                     challenged_user_id: None,
+                    current_move: None,
+                    name: None,
                     highest_unit,
                     custom_verbs: info.verbs.clone(),
                     custom_params: None,

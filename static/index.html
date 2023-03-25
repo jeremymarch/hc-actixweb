@@ -272,7 +272,7 @@ a {color:blue;}
 .dark .hcform { background-color: #202124;color:white; }
 .dark .startingform {border: 1px solid white;background-color:black}
 .dark #statusmesg {border-top: 1px solid white;}
-.dark #listouter {border: 2px solid white;border-top:0px solid white;}
+.dark #listouter {border: 1px solid white;border-top:0px solid white;}
 .dark #settings .expand-container {/*border: 2px solid white;*/background-color: black;}
 .dark #menubar { background-color: black;color:white;border-bottom: 1px solid white; }
 .dark #answerform {background-color: black;color:white;border: 1px solid white;}
@@ -1191,9 +1191,21 @@ a {color:blue;}
     if (verbParams.length === 0 || lpck.length === 16) {
       verbParams = null;
     }
-    console.log('limit params: ' + verbParams);
+    // console.log('limit params: ' + verbParams);
 
-    const sendData = { qtype: 'newsession', verbs: unitv, params: verbParams, unit: topUnit, opponent: opponentv, practice_reps_per_verb: reps, countdown, max_changes: maxChanges, max_time: maxTime };
+    const sendData = {
+      qtype: 'newsession',
+      verbs: unitv,
+      params: verbParams,
+      opponent: opponentv,
+      practice_reps_per_verb: reps,
+      countdown,
+      max_changes: maxChanges,
+      max_time: maxTime
+    };
+    if (topUnit !== null) {
+      sendData.unit = topUnit;
+    }
     genericSendRequest('new', sendData, null);
   }
 

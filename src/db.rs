@@ -120,6 +120,8 @@ impl HcDb {
             session_id,
             challenger_user_id,
             challenged_user_id,
+            current_move,
+            name,
             highest_unit,
             custom_verbs,
             custom_params,
@@ -130,7 +132,7 @@ impl HcDb {
             countdown,
             max_time,
             timestamp,
-            status) VALUES ($1,$2,$3,$4,$5,$6,$7,0,0,$8,$9,$10,$11,1);"#;
+            status) VALUES ($1,$2,$3,NULL,NULL,$4,$5,$6,$7,0,0,$8,$9,$10,$11,1);"#;
         let _res = sqlx::query(query)
             .bind(uuid)
             .bind(user_id)
@@ -456,9 +458,11 @@ impl HcDb {
 
         let query = r#"CREATE TABLE IF NOT EXISTS sessions ( 
     session_id UUID PRIMARY KEY NOT NULL, 
-    challenger_user_id UUID, 
-    challenged_user_id UUID, 
-    highest_unit INT,
+    challenger_user_id UUID NOT NULL, 
+    challenged_user_id UUID DEFAULT NULL, 
+    current_move UUID DEFAULT NULL,
+    name TEXT DEFAULT NULL,
+    highest_unit SMALLINT,
     custom_verbs TEXT, 
     custom_params TEXT, 
     max_changes SMALLINT,
