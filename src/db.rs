@@ -132,11 +132,12 @@ impl HcDb {
             countdown,
             max_time,
             timestamp,
-            status) VALUES ($1,$2,$3,NULL,NULL,$4,$5,$6,$7,0,0,$8,$9,$10,$11,1);"#;
+            status) VALUES ($1,$2,$3,NULL,$4,$5,$6,$7,$8,0,0,$9,$10,$11,$12,1);"#;
         let _res = sqlx::query(query)
             .bind(uuid)
             .bind(user_id)
             .bind(opponent_id)
+            .bind(&info.name)
             .bind(highest_unit)
             .bind(&info.verbs)
             .bind(&info.params)

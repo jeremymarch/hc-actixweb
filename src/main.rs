@@ -261,6 +261,7 @@ pub struct StatusResponse {
 #[derive(Deserialize, Serialize)]
 pub struct CreateSessionQuery {
     qtype: String,
+    name: Option<String>,
     verbs: Option<String>,
     params: Option<String>,
     unit: Option<i16>,
@@ -1180,6 +1181,7 @@ mod tests {
 
         let csq = CreateSessionQuery {
             qtype: "abc".to_string(),
+            name: None,
             verbs: Some("20".to_string()),
             params: None,
             unit: None,
@@ -2173,6 +2175,7 @@ mod tests {
 
         let csq = CreateSessionQuery {
             qtype: "abc".to_string(),
+            name: None,
             verbs: Some("20".to_string()),
             params: None,
             unit: None,

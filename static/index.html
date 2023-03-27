@@ -1162,7 +1162,7 @@ a {color:blue;}
   }
 
   function newGameClicked () {
-    // const name = q('#gamename').value.trim();
+    const name = (q('#gamename').value.trim() || null);
     const opponentv = q('#opponentinput').value.trim();
     const countdown = (q('input[name=countdown]:checked').value === 'down');
     let reps = parseInt(q('#repsperverb').value.trim());
@@ -1198,6 +1198,7 @@ a {color:blue;}
 
     const sendData = {
       qtype: 'newsession',
+      name,
       verbs: unitv,
       params: verbParams,
       opponent: opponentv,
