@@ -358,7 +358,7 @@ a {color:blue;}
               (<a href="logout">logout</a>)
             </span>
         </div>
-        <div id="appTitle">HOPLITE CHALLENGE</div>
+        <div id="appTitle">HOPLITE CHALLENGE (beta)</div>
     </div>
     <div id="listouter">
         <div id="settings">
@@ -368,7 +368,13 @@ a {color:blue;}
             <div class="expand-container">
                 <div id="newgamediv" class="expand-contract">
                     <div class="table">
-                        <div class="newrow"><div class="newcol1">Type</div>
+                      <div class="newrow">
+                        <div class="newcol1">Name:</div>
+                        <div class="newcol2">
+                          <input id="gamename" type="text" value="" class="newgameinput"/>
+                        </div>
+                      </div>
+                        <div class="newrow"><div class="newcol1">Type:</div>
                         <div class="newcol2">
                           practice <input checked name="gametype" id="gametypepractice" type="radio" value="practice"/> 
                           game <input name="gametype" id="gametypegame" type="radio" value="game"/>
@@ -398,7 +404,7 @@ a {color:blue;}
                           <div class="newcol2"><input id="maxchanges" type="text" value="2" class="newgameinput"/></div>
                         </div>
                         <div class="newrow">
-                          <div class="newcol1">Forms from Unit and below:</div>
+                          <div class="newcol1">Unit and below:</div>
                           <div class="newcol2">
                             <input id="topunit" type="text" value="" class="newgameinput"/>
                           </div>
@@ -1156,14 +1162,12 @@ a {color:blue;}
   }
 
   function newGameClicked () {
-    // let unitv = q("#unitinput").value.trim();
+    // const name = q('#gamename').value.trim();
     const opponentv = q('#opponentinput').value.trim();
     const countdown = (q('input[name=countdown]:checked').value === 'down');
     let reps = parseInt(q('#repsperverb').value.trim());
     let maxChanges = parseInt(q('#maxchanges').value.trim());
     let maxTime = parseInt(q('#maxtime').value.trim());
-
-    // const verbParams = (q('#verbparams').value.trim() || null);
     const topUnit = (parseInt(q('#topunit').value.trim()) || null);
 
     const v = [];
@@ -1188,10 +1192,9 @@ a {color:blue;}
       lp.push(lpck[i].value);
     }
     let verbParams = lp.join(',');
-    if (verbParams.length === 0 || lpck.length === 16) {
+    if (verbParams.length === 0 || lpck.length === 18) {
       verbParams = null;
     }
-    // console.log('limit params: ' + verbParams);
 
     const sendData = {
       qtype: 'newsession',
@@ -1207,6 +1210,56 @@ a {color:blue;}
       sendData.unit = topUnit;
     }
     genericSendRequest('new', sendData, null);
+
+    collapseNewGameDiv();
+  }
+
+  function setSessionDefaults () {
+    q('#gamename').value = '';
+    q('#gametypepractice').checked = true;
+    q('#opponentinput').value = '';
+    q('#countdowninput').checked = true;
+    q('#repsperverb').value = 4;
+    q('#maxchanges').value = 2;
+    q('#maxtime').value = 30;
+    q('#topunit').value = 20;
+
+    const ck = document.querySelectorAll('.limitparam');
+    let i = 0;
+    for (; i < ck.length; i++) {
+      ck[i].checked = true;
+    }
+
+    const ckv = document.querySelectorAll('.verblistckverb');
+    i = 0;
+    for (; i < ckv.length; i++) {
+      if (parseInt(ckv[i].value) > 4) {
+        ckv[i].checked = false;
+      } else {
+        ckv[i].checked = true;
+      }
+    }
+
+    const cku = document.querySelectorAll('.verblistckunit');
+    i = 0;
+    for (; i < cku.length; i++) {
+      if (parseInt(cku[i].value) === 2) {
+        cku[i].checked = true;
+      } else {
+        cku[i].checked = false;
+      }
+    }
+
+    // const v = [];
+    // const ck = document.querySelectorAll('.verblistckverb:checked');
+    // let i = 0;
+    // for (; i < ck.length; i++) {
+    //   v.push(ck[i].value);
+    // }
+    // let unitv = v.join(',');
+    // if (unitv.length === 0) {
+    //   unitv = '1,2';
+    // }
   }
 
   function submitClicked () {
@@ -1920,6 +1973,7 @@ a {color:blue;}
   }
 
   function expandContractNewGameDiv () {
+    setSessionDefaults();
     globalSessionId = null;
     document.querySelector('.hcform').style.display = 'none';
     const el = document.getElementById('newgamediv');
@@ -1931,6 +1985,7 @@ a {color:blue;}
   }
 
   function collapseNewGameDiv () {
+    setSessionDefaults();
     const el = document.getElementById('newgamediv');
     if (el) {
       el.classList.remove('expanded');
