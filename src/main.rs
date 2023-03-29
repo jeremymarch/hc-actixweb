@@ -275,6 +275,7 @@ pub struct CreateSessionQuery {
 #[derive(PartialEq, Debug, Eq, Deserialize, Serialize, FromRow)]
 pub struct SessionsListQuery {
     session_id: sqlx::types::Uuid,
+    name: Option<String>,
     challenged: Option<sqlx::types::Uuid>, //the one who didn't start the game, or null for practice
     //opponent: Option<sqlx::types::Uuid>,
     opponent_name: Option<String>,
