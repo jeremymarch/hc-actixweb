@@ -32,6 +32,82 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
 .gkinput, .gkinputnontyping {
     font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
 }
+
+
+
+.game-type-radio {
+  list-style-type: none;
+  display: flex;
+  margin: 0px;
+  padding: 0;
+}
+
+.game-type-radio li {
+  margin: 0px 2px;
+  /* width: auto;
+  height: 36px; */
+  position: relative;
+  flex-grow: 1;
+  flex-basis: 0;
+  min-width: 0;
+}
+
+.game-type-radio.small li {
+  width: 30px;
+}
+
+.newcol2 {
+  width:185px;
+}
+
+.game-type-radio input {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.game-type-radio label {
+  display:inline-block;
+  width:100%;
+  height:100%;
+  /* display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0; */
+}
+
+.game-type-radio input[type="radio"] {
+  opacity: 0.01;
+  z-index: 100;
+}
+
+.game-type-radio input[type="radio"]:checked+label,
+.Checked+label {
+  background: #555;
+}
+
+.game-type-radio label {
+  padding: 5px;
+  border: 1px solid #CCC;
+  cursor: pointer;
+  z-index: 90;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.game-type-radio label:hover {
+  background: #DDD;
+}
+
+
+
+
+
 #loginContainer {
   padding:0px 20px;
 }
@@ -167,7 +243,7 @@ BUTTON:disabled {cursor:default}
 #listouter {
     border:2px solid black;
     border-top:0px solid black;
-    width:320px;
+    width:340px;
     position: absolute;
     top: 1.5rem;
     left: 1rem;
@@ -326,7 +402,7 @@ a {color:blue;}
 
 .newrow { display:flex;flex-direction: row;padding: 4px 0px;}
 .newcol1 {width:125px;}
-.newgameinput { width:155px;}
+.newgameinput { width:100%;}
 
 @media only screen and (max-width: 800px) {
   .hcform {
@@ -361,84 +437,212 @@ a {color:blue;}
         <div id="appTitle">HOPLITE CHALLENGE (beta)</div>
     </div>
     <div id="listouter">
-        <div id="settings">
-            <div id="newGameRow" class="gamerow">
-              <span class="gamespan">New</span>
-            </div>
-            <div class="expand-container">
-                <div id="newgamediv" class="expand-contract">
-                    <div class="table">
-                      <div class="newrow">
-                        <div class="newcol1">Name:</div>
-                        <div class="newcol2">
-                          <input id="gamename" type="text" value="" class="newgameinput"/>
-                        </div>
-                      </div>
-                        <div class="newrow"><div class="newcol1">Type:</div>
-                        <div class="newcol2">
-                          practice <input checked name="gametype" id="gametypepractice" type="radio" value="practice"/> 
-                          game <input name="gametype" id="gametypegame" type="radio" value="game"/>
-                        </div></div>
-                        <div class="expand-container">
-                            <div id="opponentrow" class="newrow expand-contract">
-                              <div class="newcol1">Opponent:</div>
-                              <div class="newcol2"><input id="opponentinput" type="text" class="newgameinput"/></div>
-                            </div>
-                        </div>
-                        <div class="newrow">
-                          <div class="newcol1">Timer:</div>
-                          <div class="newcol2">
-                            <input name="countdown" id="countdowninput" type="radio" value="down"/>countdown 
-                            <input id="maxtime" type="text" value="30"/><br/>
-                            <input checked name="countdown" id="countupinput" type="radio" value="up"/>elapsed 
-                          </div>
-                        </div>
-                        <div class="newrow">
-                          <div class="newcol1">Reps per verb:</div>
-                          <div class="newcol2">
-                            <input id="repsperverb" type="text" value="4" class="newgameinput"/>
-                          </div>
-                        </div>
-                        <div class="newrow">
-                          <div class="newcol1">Max changes:</div>
-                          <div class="newcol2"><input id="maxchanges" type="text" value="2" class="newgameinput"/></div>
-                        </div>
-                        <div class="newrow">
-                          <div class="newcol1">Unit and below:</div>
-                          <div class="newcol2">
-                            <input id="topunit" type="text" value="" class="newgameinput"/>
-                          </div>
-                        </div>
+      <div id="settings">
+          <div id="newGameRow" class="gamerow">
+            <span class="gamespan">New</span>
+          </div>
+          <div class="expand-container">
+            <div id="newgamediv" class="expand-contract">
+                <div class="table">
+                  <div class="newrow">
+                    <div class="newcol1">Name:</div>
+                    <div class="newcol2">
+                      <input id="gamename" type="text" value="" class="newgameinput" placeholder="(Optional)"/>
                     </div>
-                    <div id="verblist"></div>
-                    <div id="customparams">
-                      <div><span class="verbunitrowlabel">Customize Parameters</span></div><div class="expand-container"><div class="expand-contract">
-                          <div class="limitparamrow"><input class="limitparam" value="1" id="paramfirst" type="checkbox">First Person</div>
-                          <div class="limitparamrow"><input class="limitparam" value="2" id="paramsecond" type="checkbox">Second Person</div>
-                          <div class="limitparamrow"><input class="limitparam" value="3" id="paramthird" type="checkbox">Third Person</div>
-                          <div class="limitparamrow"><input class="limitparam" value="4" id="paramsing" type="checkbox">Singular</div>
-                          <div class="limitparamrow"><input class="limitparam" value="5" id="paramplural" type="checkbox">Plural</div>
-                          <div class="limitparamrow"><input class="limitparam" value="6" id="parampresent" type="checkbox">Present</div>
-                          <div class="limitparamrow"><input class="limitparam" value="7" id="paramimperfect" type="checkbox">Imperfect</div>
-                          <div class="limitparamrow"><input class="limitparam" value="8" id="paramfuture" type="checkbox">Future</div>
-                          <div class="limitparamrow"><input class="limitparam" value="9" id="paramaorist" type="checkbox">Aorist</div>
-                          <div class="limitparamrow"><input class="limitparam" value="10" id="paramperfect" type="checkbox">Perfect</div>
-                          <div class="limitparamrow"><input class="limitparam" value="11" id="paramplup" type="checkbox">Pluperfect</div>
-                          <div class="limitparamrow"><input class="limitparam" value="12" id="paramindic" type="checkbox">Indicative</div>
-                          <div class="limitparamrow"><input class="limitparam" value="13" id="paramsubj" type="checkbox">Subjunctive</div>
-                          <div class="limitparamrow"><input class="limitparam" value="14" id="paramindic" type="checkbox">Optative</div>
-                          <div class="limitparamrow"><input class="limitparam" value="15" id="paramsubj" type="checkbox">Imperative</div>
-                          <div class="limitparamrow"><input class="limitparam" value="16" id="paramact" type="checkbox">Active</div>
-                          <div class="limitparamrow"><input class="limitparam" value="17" id="parammid" type="checkbox">Middle</div>
-                          <div class="limitparamrow"><input class="limitparam" value="18" id="parampass" type="checkbox">Passive</div>
-                        </div>
+                  </div>
+                    <div class="newrow"><div class="newcol1">Type:</div>
+                      <div class="newcol2">
+                        <ul class="game-type-radio">
+                          <li>
+                            <input checked type="radio" id="gametypepractice" name="gametype" value="practice" />
+                            <label for="gametypepractice">practice</label>
+                          </li>
+                          <li>
+                            <input type="radio" id="gametypegame" name="gametype" value="game"/>
+                            <label for="gametypegame">game</label>
+                          </li>
+                        </ul>
                       </div>
                     </div>
-                    <div><button id="creategamebutton">Create Game</button></div>
+                    <div class="expand-container">
+                        <div id="opponentrow" class="newrow expand-contract">
+                          <div class="newcol1">Opponent:</div>
+                          <div class="newcol2"><input id="opponentinput" type="text" class="newgameinput"/></div>
+                        </div>
+                    </div>
+                    <div class="newrow">
+                      <div class="newcol1">Timing:</div>
+                      <div class="newcol2">
+                        <ul class="game-type-radio">
+                          <li>
+                            <input type="radio" id="countdowninput" name="countdown" value="down" />
+                            <label for="countdowninput">timer</label>
+                          </li>
+                          <li>
+                            <input checked type="radio" id="countupinput" name="countdown" value="up"/>
+                            <label for="countupinput">elapsed</label>
+                          </li>
+                        </ul>
+                      </div>  
+                    </div>
+                    <div class="expand-container">
+                      <div id="timertimerows" class="newrow expand-contract">
+                        <div class="newcol1">Seconds:</div>
+                          <div class="newcol2">
+                            <ul class="game-type-radio small">
+                              <li>
+                                <input type="radio" id="maxtime15" name="maxtime" value="15" />
+                                <label for="maxtime15">15</label>
+                              </li>
+                              <li>
+                                <input checked type="radio" id="maxtime20" name="maxtime" value="20"/>
+                                <label for="maxtime20">20</label>
+                              </li>
+                              <li>
+                                <input type="radio" id="maxtime30" name="maxtime" value="30" />
+                                <label for="maxtime30">30</label>
+                              </li>
+                              <li>
+                                <input type="radio" id="maxtime45" name="maxtime" value="45"/>
+                                <label for="maxtime45">45</label>
+                              </li>
+                              <li>
+                                <input type="radio" id="maxtime60" name="maxtime" value="60" />
+                                <label for="maxtime60">60</label>
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    <div class="newrow">
+                      <div class="newcol1">Reps per verb:</div>
+                      <div class="newcol2">
+                        <ul class="game-type-radio small">
+                          <li>
+                            <input type="radio" id="repsperverbone" name="repsperverb" value="1" />
+                            <label for="repsperverbone">1</label>
+                          </li>
+                          <li>
+                            <input checked type="radio" id="repsperverbfour" name="repsperverb" value="4"/>
+                            <label for="repsperverbfour">4</label>
+                          </li>
+                          <li>
+                            <input type="radio" id="repsperverbeight" name="repsperverb" value="8" />
+                            <label for="repsperverbeight">8</label>
+                          </li>
+                          <li>
+                            <input type="radio" id="repsperverbsixteen" name="repsperverb" value="16"/>
+                            <label for="repsperverbsixteen">16</label>
+                          </li>
+                          <li>
+                            <input type="radio" id="repsperverb32" name="repsperverb" value="32" />
+                            <label for="repsperverb32">32</label>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div class="newrow">
+                      <div class="newcol1">Max changes:</div>
+                      <div class="newcol2">
+                        <ul class="game-type-radio small">
+                          <li>
+                            <input type="radio" id="maxchangesone" name="maxchanges" value="1" />
+                            <label for="maxchangesone">1</label>
+                          </li>
+                          <li>
+                            <input checked type="radio" id="maxchangestwo" name="maxchanges" value="2"/>
+                            <label for="maxchangestwo">2</label>
+                          </li>
+                          <li>
+                            <input type="radio" id="maxchangesthree" name="maxchanges" value="3" />
+                            <label for="maxchangesthree">3</label>
+                          </li>
+                          <li>
+                            <input type="radio" id="maxchangesfour" name="maxchanges" value="4"/>
+                            <label for="maxchangesfour">4</label>
+                          </li>
+                          <li>
+                            <input type="radio" id="maxchangesfive" name="maxchanges" value="5" />
+                            <label for="maxchangesfive">5</label>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div class="newrow">
+                      <div class="newcol1">Unit and below:</div>
+                      <div class="newcol2">
+                        <input id="topunit" type="text" value="" class="newgameinput"/>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="newrow"><div class="newcol1">Verbs:</div>
+                  <div class="newcol2">
+                    <ul class="game-type-radio">
+                      <li>
+                        <input checked type="radio" id="verbselectionmodehqunit" name="verbselectionmode" value="hqunit" />
+                        <label for="verbselectionmodehqunit">h&q unit</label>
+                      </li>
+                      <li>
+                        <input type="radio" id="verbselectionmodecustom" name="verbselectionmode" value="custom"/>
+                        <label for="verbselectionmodecustom">custom</label>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
-            </div>
+
+                  <div class="hqunits">
+                    <div class="hqunitrow"><input class="hqunitchk" value="1" id="hqunitchkall" type="checkbox">all</div>
+                    <div class="hqunitrow"><input class="hqunitchk" value="2" id="hqunitchk2" type="checkbox">unit 2</div>
+                    <div class="hqunitrow"><input class="hqunitchk" value="3" id="hqunitchk3" type="checkbox">unit 3</div>
+                    <div class="hqunitrow"><input class="hqunitchk" value="4" id="hqunitchk4" type="checkbox">unit 4</div>
+                    <div class="hqunitrow"><input class="hqunitchk" value="5" id="hqunitchk5" type="checkbox">unit 5</div>
+                    <div class="hqunitrow"><input class="hqunitchk" value="6" id="hqunitchk6" type="checkbox">unit 6</div>
+                    <div class="hqunitrow"><input class="hqunitchk" value="7" id="hqunitchk7" type="checkbox">unit 7</div>
+                    <div class="hqunitrow"><input class="hqunitchk" value="8" id="hqunitchk8" type="checkbox">unit 8</div>
+                    <div class="hqunitrow"><input class="hqunitchk" value="9" id="hqunitchk9" type="checkbox">unit 9</div>
+                    <div class="hqunitrow"><input class="hqunitchk" value="10" id="hqunitchk10" type="checkbox">unit 10</div>
+                    <div class="hqunitrow"><input class="hqunitchk" value="11" id="hqunitchk11" type="checkbox">unit 11</div>
+                    <div class="hqunitrow"><input class="hqunitchk" value="12" id="hqunitchk12" type="checkbox">unit 12</div>
+                    <div class="hqunitrow"><input class="hqunitchk" value="13" id="hqunitchk13" type="checkbox">unit 13</div>
+                    <div class="hqunitrow"><input class="hqunitchk" value="14" id="hqunitchk14" type="checkbox">unit 14</div>
+                    <div class="hqunitrow"><input class="hqunitchk" value="15" id="hqunitchk15" type="checkbox">unit 15</div>
+                    <div class="hqunitrow"><input class="hqunitchk" value="16" id="hqunitchk16" type="checkbox">unit 16</div>
+                    <div class="hqunitrow"><input class="hqunitchk" value="17" id="hqunitchk17" type="checkbox">unit 17</div>
+                    <div class="hqunitrow"><input class="hqunitchk" value="18" id="hqunitchk18" type="checkbox">unit 18</div>
+                    <div class="hqunitrow"><input class="hqunitchk" value="19" id="hqunitchk19" type="checkbox">unit 19</div>
+                    <div class="hqunitrow"><input class="hqunitchk" value="20" id="hqunitchk20" type="checkbox">unit 20</div>
+                  </div>
+
+                  <div id="verblist"></div>
+                  <div id="customparams">
+                    <div><span class="verbunitrowlabel">Customize Parameters</span></div><div class="expand-container"><div class="expand-contract">
+                        <div class="limitparamrow"><input class="limitparam" value="1" id="paramfirst" type="checkbox">First Person</div>
+                        <div class="limitparamrow"><input class="limitparam" value="2" id="paramsecond" type="checkbox">Second Person</div>
+                        <div class="limitparamrow"><input class="limitparam" value="3" id="paramthird" type="checkbox">Third Person</div>
+                        <div class="limitparamrow"><input class="limitparam" value="4" id="paramsing" type="checkbox">Singular</div>
+                        <div class="limitparamrow"><input class="limitparam" value="5" id="paramplural" type="checkbox">Plural</div>
+                        <div class="limitparamrow"><input class="limitparam" value="6" id="parampresent" type="checkbox">Present</div>
+                        <div class="limitparamrow"><input class="limitparam" value="7" id="paramimperfect" type="checkbox">Imperfect</div>
+                        <div class="limitparamrow"><input class="limitparam" value="8" id="paramfuture" type="checkbox">Future</div>
+                        <div class="limitparamrow"><input class="limitparam" value="9" id="paramaorist" type="checkbox">Aorist</div>
+                        <div class="limitparamrow"><input class="limitparam" value="10" id="paramperfect" type="checkbox">Perfect</div>
+                        <div class="limitparamrow"><input class="limitparam" value="11" id="paramplup" type="checkbox">Pluperfect</div>
+                        <div class="limitparamrow"><input class="limitparam" value="12" id="paramindic" type="checkbox">Indicative</div>
+                        <div class="limitparamrow"><input class="limitparam" value="13" id="paramsubj" type="checkbox">Subjunctive</div>
+                        <div class="limitparamrow"><input class="limitparam" value="14" id="paramindic" type="checkbox">Optative</div>
+                        <div class="limitparamrow"><input class="limitparam" value="15" id="paramsubj" type="checkbox">Imperative</div>
+                        <div class="limitparamrow"><input class="limitparam" value="16" id="paramact" type="checkbox">Active</div>
+                        <div class="limitparamrow"><input class="limitparam" value="17" id="parammid" type="checkbox">Middle</div>
+                        <div class="limitparamrow"><input class="limitparam" value="18" id="parampass" type="checkbox">Passive</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div><button id="creategamebutton">Create Game</button></div>
+              </div>
+          </div>
         </div>
-        <div id="list"></div>
+      <div id="list"></div>
     </div>
 
     <div class="hcform">
@@ -521,6 +725,14 @@ a {color:blue;}
 </script>
 <script nonce="2726c7f26c" type="text/javascript">
   'use strict';
+
+  function timeModeChanged () {
+    if (this.value === 'down') {
+      document.querySelector('#timertimerows').classList.add('expanded');
+    } else {
+      document.querySelector('#timertimerows').classList.remove('expanded');
+    }
+  }
 
   function typeChanged () {
     if (this.value === 'game') {
@@ -841,6 +1053,9 @@ a {color:blue;}
 
   document.getElementById('gametypepractice').addEventListener('change', typeChanged, false);
   document.getElementById('gametypegame').addEventListener('change', typeChanged, false);
+
+  document.getElementById('countdowninput').addEventListener('change', timeModeChanged, false);
+  document.getElementById('countupinput').addEventListener('change', timeModeChanged, false);
   
   const paramItems = document.querySelectorAll('#askparamsdivinner SELECT');
   for (let i = 0; i < paramItems.length; i++) {
@@ -1165,9 +1380,9 @@ a {color:blue;}
     const name = (q('#gamename').value.trim() || null);
     const opponentv = q('#opponentinput').value.trim();
     const countdown = (q('input[name=countdown]:checked').value === 'down');
-    let reps = parseInt(q('#repsperverb').value.trim());
-    let maxChanges = parseInt(q('#maxchanges').value.trim());
-    let maxTime = parseInt(q('#maxtime').value.trim());
+    let reps = parseInt(q('input[name=repsperverb]:checked').value);
+    let maxChanges = parseInt(q('input[name=maxchanges]:checked').value);
+    let maxTime = parseInt(q('input[name=maxtime]:checked').value);
     const topUnit = (parseInt(q('#topunit').value.trim()) || null);
 
     const v = [];
@@ -1219,10 +1434,10 @@ a {color:blue;}
     q('#gamename').value = '';
     q('#gametypepractice').checked = true;
     q('#opponentinput').value = '';
-    q('#countdowninput').checked = true;
-    q('#repsperverb').value = 4;
-    q('#maxchanges').value = 2;
-    q('#maxtime').value = 30;
+    q('#countupinput').checked = true;
+    q('#repsperverbfour').checked = true;
+    q('#maxchangestwo').checked = true;
+    q('#maxtime30').checked = true;
     q('#topunit').value = 20;
 
     const ck = document.querySelectorAll('.limitparam');
