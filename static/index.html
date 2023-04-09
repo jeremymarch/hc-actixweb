@@ -23,14 +23,16 @@
     setTheme();
 </script>
 <style nonce="2726c7f26c">
+/* try to use local NewAthenaUnicode before downloading from server; 
+does not work in Safari https://stackoverflow.com/questions/59986432/safari-user-installed-fonts-dont-render */
 @font-face {
     font-family: 'WebNewAthenaUnicode';
-    src: url('/newathu5_8.ttf') format('truetype');
+    src: local('NewAthenaUnicode'), url('/newathu5_8.ttf') format('truetype');
 }
 * { box-sizing: border-box; }
 BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
 .gkinput, .gkinputnontyping {
-    font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
+    font-family: NewAthenaUnicode,WebNewAthenaUnicode,helvetica,arial;
 }
 
 
@@ -166,7 +168,7 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
     border:1px solid black;
     text-align: center;
     border-radius:0.5rem;
-    font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
+    font-family: NewAthenaUnicode,WebNewAthenaUnicode, helvetica,arial;
 }
 .newform {
     width:100%;
@@ -178,7 +180,7 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
     text-align: center;
     padding:1rem;
     border-radius:0.5rem;
-    font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
+    font-family: NewAthenaUnicode,WebNewAthenaUnicode, helvetica,arial;
 }
 .changedesc {
     width:100%;
@@ -325,7 +327,7 @@ BUTTON:disabled {cursor:default}
 a {color:blue;}
 
 #verblist {
-    font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
+    font-family: NewAthenaUnicode,WebNewAthenaUnicode, helvetica,arial;
     margin-top: 6px;
 }
 
@@ -515,7 +517,7 @@ a {color:blue;}
                         </div>
                       </div>
                     <div class="newrow">
-                      <div class="newcol1">Reps per verb:</div>
+                      <div class="newcol1">Reps/verb:</div>
                       <div class="newcol2">
                         <ul class="game-type-radio small">
                           <li>
@@ -542,7 +544,7 @@ a {color:blue;}
                       </div>
                     </div>
                     <div class="newrow">
-                      <div class="newcol1">Max changes:</div>
+                      <div class="newcol1">Changes:</div>
                       <div class="newcol2">
                         <ul class="game-type-radio small">
                           <li>
