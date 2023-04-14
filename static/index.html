@@ -35,6 +35,21 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
     font-family: NewAthenaUnicode,WebNewAthenaUnicode,helvetica,arial;
 }
 
+#hqparent {
+  display:flex;
+  flex-direction: row;
+}
+.hqunitscol1 {
+  width: 50%;
+}
+.hqunitscol2 {
+  width:50%;
+}
+
+#customverbsandparams {
+  display:none;
+}
+
 
 
 .game-type-radio {
@@ -60,6 +75,10 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
 
 .newcol2 {
   width:185px;
+}
+
+.newrow.hiderow {
+  display:none;
 }
 
 .game-type-radio input {
@@ -93,6 +112,16 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
   background: #555;
 }
 
+.game-type-radio input[type="checkbox"] {
+  opacity: 0.01;
+  z-index: 100;
+}
+
+.game-type-radio input[type="checkbox"]:checked+label,
+.Checked+label {
+  background: #555;
+}
+
 .game-type-radio label {
   padding: 5px;
   border: 1px solid #CCC;
@@ -106,7 +135,15 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
   background: #DDD;
 }
 
+.flex-vertical {
+  flex-direction: column;
+  margin-bottom:10px;
+}
 
+.unit-columns {
+  width:50%;
+
+}
 
 
 
@@ -334,9 +371,11 @@ a {color:blue;}
 .limitparam, .verblistck {
   margin-right: 0.5rem;
 }
+
 .limitparamrow {
   line-height: 1.5;
 }
+
 
 .myturnIcon { display:none; }
 .myturn .myturnIcon { display:block; }
@@ -382,6 +421,10 @@ a {color:blue;}
 .expand-contract {
   margin-top: -345px;
   transition: all 0.3s ease-in-out;
+}
+
+#newgamediv.expand-contract {
+  margin-top: -970px;
 }
 
 #customparams .expand-contract {
@@ -477,12 +520,12 @@ a {color:blue;}
                       <div class="newcol2">
                         <ul class="game-type-radio">
                           <li>
-                            <input type="radio" id="countdowninput" name="countdown" value="down" />
-                            <label for="countdowninput">timer</label>
-                          </li>
-                          <li>
                             <input checked type="radio" id="countupinput" name="countdown" value="up"/>
                             <label for="countupinput">elapsed</label>
+                          </li>
+                          <li>
+                            <input type="radio" id="countdowninput" name="countdown" value="down" />
+                            <label for="countdowninput">timer</label>
                           </li>
                         </ul>
                       </div>  
@@ -517,7 +560,7 @@ a {color:blue;}
                         </div>
                       </div>
                     <div class="newrow">
-                      <div class="newcol1">Reps/verb:</div>
+                      <div class="newcol1">Rep:</div>
                       <div class="newcol2">
                         <ul class="game-type-radio small">
                           <li>
@@ -570,7 +613,7 @@ a {color:blue;}
                         </ul>
                       </div>
                     </div>
-                    <div class="newrow">
+                    <div class="newrow hiderow">
                       <div class="newcol1">Unit and below:</div>
                       <div class="newcol2">
                         <input id="topunit" type="text" value="" class="newgameinput"/>
@@ -592,54 +635,70 @@ a {color:blue;}
                     </ul>
                   </div>
                 </div>
-
-                  <div class="hqunits">
-                    <div class="hqunitrow"><input class="hqunitchk" value="1" id="hqunitchkall" type="checkbox">all</div>
-                    <div class="hqunitrow"><input class="hqunitchk" value="2" id="hqunitchk2" type="checkbox">unit 2</div>
-                    <div class="hqunitrow"><input class="hqunitchk" value="3" id="hqunitchk3" type="checkbox">unit 3</div>
-                    <div class="hqunitrow"><input class="hqunitchk" value="4" id="hqunitchk4" type="checkbox">unit 4</div>
-                    <div class="hqunitrow"><input class="hqunitchk" value="5" id="hqunitchk5" type="checkbox">unit 5</div>
-                    <div class="hqunitrow"><input class="hqunitchk" value="6" id="hqunitchk6" type="checkbox">unit 6</div>
-                    <div class="hqunitrow"><input class="hqunitchk" value="7" id="hqunitchk7" type="checkbox">unit 7</div>
-                    <div class="hqunitrow"><input class="hqunitchk" value="8" id="hqunitchk8" type="checkbox">unit 8</div>
-                    <div class="hqunitrow"><input class="hqunitchk" value="9" id="hqunitchk9" type="checkbox">unit 9</div>
-                    <div class="hqunitrow"><input class="hqunitchk" value="10" id="hqunitchk10" type="checkbox">unit 10</div>
-                    <div class="hqunitrow"><input class="hqunitchk" value="11" id="hqunitchk11" type="checkbox">unit 11</div>
-                    <div class="hqunitrow"><input class="hqunitchk" value="12" id="hqunitchk12" type="checkbox">unit 12</div>
-                    <div class="hqunitrow"><input class="hqunitchk" value="13" id="hqunitchk13" type="checkbox">unit 13</div>
-                    <div class="hqunitrow"><input class="hqunitchk" value="14" id="hqunitchk14" type="checkbox">unit 14</div>
-                    <div class="hqunitrow"><input class="hqunitchk" value="15" id="hqunitchk15" type="checkbox">unit 15</div>
-                    <div class="hqunitrow"><input class="hqunitchk" value="16" id="hqunitchk16" type="checkbox">unit 16</div>
-                    <div class="hqunitrow"><input class="hqunitchk" value="17" id="hqunitchk17" type="checkbox">unit 17</div>
-                    <div class="hqunitrow"><input class="hqunitchk" value="18" id="hqunitchk18" type="checkbox">unit 18</div>
-                    <div class="hqunitrow"><input class="hqunitchk" value="19" id="hqunitchk19" type="checkbox">unit 19</div>
-                    <div class="hqunitrow"><input class="hqunitchk" value="20" id="hqunitchk20" type="checkbox">unit 20</div>
+                <div id="hqparent" class="hqunits">
+                  <div class=" hqunitscol1">
+                    <ul class="game-type-radio flex-vertical">
+                    <li><input class="hqunitchk" value="1" id="hqunitchkall" type="checkbox"><label for="hqunitchkall">all</label></li>
+                    <li><input class="hqunitchk" value="2" id="hqunitchk2" type="checkbox"><label for="hqunitchk2">unit 2</label></li>
+                    <li><input class="hqunitchk" value="3" id="hqunitchk3" type="checkbox"><label for="hqunitchk3">unit 3</label></li>
+                    <li><input class="hqunitchk" value="4" id="hqunitchk4" type="checkbox"><label for="hqunitchk4">unit 4</label></li>
+                    <li><input class="hqunitchk" value="5" id="hqunitchk5" type="checkbox"><label for="hqunitchk5">unit 5</label></li>
+                    <li><input class="hqunitchk" value="6" id="hqunitchk6" type="checkbox"><label for="hqunitchk6">unit 6</label></li>
+                    <li><input class="hqunitchk" value="7" id="hqunitchk7" type="checkbox"><label for="hqunitchk7">unit 7</label></li>
+                    <li><input class="hqunitchk" value="8" id="hqunitchk8" type="checkbox"><label for="hqunitchk8">unit 8</label></li>
+                    <li><input class="hqunitchk" value="9" id="hqunitchk9" type="checkbox"><label for="hqunitchk9">unit 9</label></li>
+                    <li><input class="hqunitchk" value="10" id="hqunitchk10" type="checkbox"><label for="hqunitchk10">unit 10</label></li>
+                  </ul>
+                </div>
+                  <div class="hqunitscol2">
+                  <ul class="game-type-radio flex-vertical">
+                    <li><input class="hqunitchk" value="11" id="hqunitchk11" type="checkbox"><label for="hqunitchk11">unit 11</label></li>
+                    <li><input class="hqunitchk" value="12" id="hqunitchk12" type="checkbox"><label for="hqunitchk12">unit 12</label></li>
+                    <li><input class="hqunitchk" value="13" id="hqunitchk13" type="checkbox"><label for="hqunitchk13">unit 13</label></li>
+                    <li><input class="hqunitchk" value="14" id="hqunitchk14" type="checkbox"><label for="hqunitchk14">unit 14</label></li>
+                    <li><input class="hqunitchk" value="15" id="hqunitchk15" type="checkbox"><label for="hqunitchk15">unit 15</label></li>
+                    <li><input class="hqunitchk" value="16" id="hqunitchk16" type="checkbox"><label for="hqunitchk16">unit 16</label></li>
+                    <li><input class="hqunitchk" value="17" id="hqunitchk17" type="checkbox"><label for="hqunitchk17">unit 17</label></li>
+                    <li><input class="hqunitchk" value="18" id="hqunitchk18" type="checkbox"><label for="hqunitchk18">unit 18</label></li>
+                    <li><input class="hqunitchk" value="19" id="hqunitchk19" type="checkbox"><label for="hqunitchk19">unit 19</label></li>
+                    <li><input class="hqunitchk" value="20" id="hqunitchk20" type="checkbox"><label for="hqunitchk20">unit 20</label></li>
+                  </ul>
+                </div>
                   </div>
-
+                  <div id="customverbsandparams">
                   <div id="verblist"></div>
                   <div id="customparams">
-                    <div><span class="verbunitrowlabel">Customize Parameters</span></div><div class="expand-container"><div class="expand-contract">
-                        <div class="limitparamrow"><input class="limitparam" value="1" id="paramfirst" type="checkbox">First Person</div>
-                        <div class="limitparamrow"><input class="limitparam" value="2" id="paramsecond" type="checkbox">Second Person</div>
-                        <div class="limitparamrow"><input class="limitparam" value="3" id="paramthird" type="checkbox">Third Person</div>
-                        <div class="limitparamrow"><input class="limitparam" value="4" id="paramsing" type="checkbox">Singular</div>
-                        <div class="limitparamrow"><input class="limitparam" value="5" id="paramplural" type="checkbox">Plural</div>
-                        <div class="limitparamrow"><input class="limitparam" value="6" id="parampresent" type="checkbox">Present</div>
-                        <div class="limitparamrow"><input class="limitparam" value="7" id="paramimperfect" type="checkbox">Imperfect</div>
-                        <div class="limitparamrow"><input class="limitparam" value="8" id="paramfuture" type="checkbox">Future</div>
-                        <div class="limitparamrow"><input class="limitparam" value="9" id="paramaorist" type="checkbox">Aorist</div>
-                        <div class="limitparamrow"><input class="limitparam" value="10" id="paramperfect" type="checkbox">Perfect</div>
-                        <div class="limitparamrow"><input class="limitparam" value="11" id="paramplup" type="checkbox">Pluperfect</div>
-                        <div class="limitparamrow"><input class="limitparam" value="12" id="paramindic" type="checkbox">Indicative</div>
-                        <div class="limitparamrow"><input class="limitparam" value="13" id="paramsubj" type="checkbox">Subjunctive</div>
-                        <div class="limitparamrow"><input class="limitparam" value="14" id="paramindic" type="checkbox">Optative</div>
-                        <div class="limitparamrow"><input class="limitparam" value="15" id="paramsubj" type="checkbox">Imperative</div>
-                        <div class="limitparamrow"><input class="limitparam" value="16" id="paramact" type="checkbox">Active</div>
-                        <div class="limitparamrow"><input class="limitparam" value="17" id="parammid" type="checkbox">Middle</div>
-                        <div class="limitparamrow"><input class="limitparam" value="18" id="parampass" type="checkbox">Passive</div>
+                    <div>Customize Parameters</div>
+                    <ul class="game-type-radio flex-vertical">
+                        <li><input class="limitparam" value="1" id="paramfirst" type="checkbox"><label for="paramfirst">First Person</label></li>
+                        <li><input class="limitparam" value="2" id="paramsecond" type="checkbox"><label for="paramsecond">Second Person</label></li>
+                        <li><input class="limitparam" value="3" id="paramthird" type="checkbox"><label for="paramthird">Third Person</label></li>
+                    </ul>
+                    <ul class="game-type-radio flex-vertical">
+                        <li><input class="limitparam" value="4" id="paramsing" type="checkbox"><label for="paramsing">Singular</label></li>
+                        <li><input class="limitparam" value="5" id="paramplural" type="checkbox"><label for="paramplural">Plural</label></li>
+                    </ul>
+                    <ul class="game-type-radio flex-vertical">
+                        <li><input class="limitparam" value="6" id="parampresent" type="checkbox"><label for="parampresent">Present</label></li>
+                        <li><input class="limitparam" value="7" id="paramimperfect" type="checkbox"><label for="paramimperfect">Imperfect</label></li>
+                        <li><input class="limitparam" value="8" id="paramfuture" type="checkbox"><label for="paramfuture">Future</label></li>
+                        <li><input class="limitparam" value="9" id="paramaorist" type="checkbox"><label for="paramaorist">Aorist</label></li>
+                        <li><input class="limitparam" value="10" id="paramperfect" type="checkbox"><label for="paramperfect">Perfect</label></li>
+                        <li><input class="limitparam" value="11" id="paramplup" type="checkbox"><label for="paramplup">Pluperfect</label></li>
+                      </ul>
+                      <ul class="game-type-radio flex-vertical">
+                        <li><input class="limitparam" value="12" id="paramindic" type="checkbox"><label for="paramindic">Indicative</label></li>
+                        <li><input class="limitparam" value="13" id="paramsubj" type="checkbox"><label for="paramsubj">Subjunctive</label></li>
+                        <li><input class="limitparam" value="14" id="paramopt" type="checkbox"><label for="paramopt">Optative</label></li>
+                        <li><input class="limitparam" value="15" id="paramimper" type="checkbox"><label for="paramimper">Imperative</label></li>
+                      </ul>
+                      <ul class="game-type-radio flex-vertical">
+                        <li><input class="limitparam" value="16" id="paramact" type="checkbox"><label for="paramact">Active</label></li>
+                        <li><input class="limitparam" value="17" id="parammid" type="checkbox"><label for="parammid">Middle</label></li>
+                        <li><input class="limitparam" value="18" id="parampass" type="checkbox"><label for="parampass">Passive</label></li>
+                      </ul>
                       </div>
-                    </div>
-                  </div>
+                </div>
                   <div><button id="creategamebutton">Create Game</button></div>
               </div>
           </div>
@@ -742,6 +801,16 @@ a {color:blue;}
     } else {
       document.querySelector('#opponentrow').classList.remove('expanded');
       document.querySelector('#opponentinput').value = '';
+    }
+  }
+
+  function verbTypeChanged () {
+    if (this.value === 'hqunit') {
+      document.querySelector('.hqunits').style.display = 'flex';
+      document.querySelector('#customverbsandparams').style.display = 'none';
+    } else {
+      document.querySelector('.hqunits').style.display = 'none';
+      document.querySelector('#customverbsandparams').style.display = 'block';
     }
   }
 
@@ -1058,6 +1127,9 @@ a {color:blue;}
 
   document.getElementById('countdowninput').addEventListener('change', timeModeChanged, false);
   document.getElementById('countupinput').addEventListener('change', timeModeChanged, false);
+
+  document.getElementById('verbselectionmodehqunit').addEventListener('change', verbTypeChanged, false);
+  document.getElementById('verbselectionmodecustom').addEventListener('change', verbTypeChanged, false);
   
   const paramItems = document.querySelectorAll('#askparamsdivinner SELECT');
   for (let i = 0; i < paramItems.length; i++) {
@@ -1441,6 +1513,9 @@ a {color:blue;}
     q('#maxchangestwo').checked = true;
     q('#maxtime30').checked = true;
     q('#topunit').value = 20;
+    q('#verbselectionmodehqunit').checked = true;
+    q('#hqparent').style.display = 'flex';
+    q('#customverbsandparams').style.display = 'none';
 
     const ck = document.querySelectorAll('.limitparam');
     let i = 0;
