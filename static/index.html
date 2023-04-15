@@ -77,10 +77,6 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
   width:185px;
 }
 
-.newrow.hiderow {
-  display:none;
-}
-
 .game-type-radio input {
   display: block;
   position: absolute;
@@ -559,66 +555,6 @@ a {color:blue;}
                           </div>
                         </div>
                       </div>
-                    <div class="newrow">
-                      <div class="newcol1">Rep:</div>
-                      <div class="newcol2">
-                        <ul class="game-type-radio small">
-                          <li>
-                            <input type="radio" id="repsperverbone" name="repsperverb" value="1" />
-                            <label for="repsperverbone">1</label>
-                          </li>
-                          <li>
-                            <input checked type="radio" id="repsperverbfour" name="repsperverb" value="4"/>
-                            <label for="repsperverbfour">4</label>
-                          </li>
-                          <li>
-                            <input type="radio" id="repsperverbeight" name="repsperverb" value="8" />
-                            <label for="repsperverbeight">8</label>
-                          </li>
-                          <li>
-                            <input type="radio" id="repsperverbsixteen" name="repsperverb" value="16"/>
-                            <label for="repsperverbsixteen">16</label>
-                          </li>
-                          <li>
-                            <input type="radio" id="repsperverb32" name="repsperverb" value="32" />
-                            <label for="repsperverb32">32</label>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                    <div class="newrow">
-                      <div class="newcol1">Changes:</div>
-                      <div class="newcol2">
-                        <ul class="game-type-radio small">
-                          <li>
-                            <input type="radio" id="maxchangesone" name="maxchanges" value="1" />
-                            <label for="maxchangesone">1</label>
-                          </li>
-                          <li>
-                            <input checked type="radio" id="maxchangestwo" name="maxchanges" value="2"/>
-                            <label for="maxchangestwo">2</label>
-                          </li>
-                          <li>
-                            <input type="radio" id="maxchangesthree" name="maxchanges" value="3" />
-                            <label for="maxchangesthree">3</label>
-                          </li>
-                          <li>
-                            <input type="radio" id="maxchangesfour" name="maxchanges" value="4"/>
-                            <label for="maxchangesfour">4</label>
-                          </li>
-                          <li>
-                            <input type="radio" id="maxchangesfive" name="maxchanges" value="5" />
-                            <label for="maxchangesfive">5</label>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-                    <div class="newrow hiderow">
-                      <div class="newcol1">Unit and below:</div>
-                      <div class="newcol2">
-                        <input id="topunit" type="text" value="" class="newgameinput"/>
-                      </div>
-                    </div>
                   </div>
 
                   <div class="newrow"><div class="newcol1">Verbs:</div>
@@ -697,6 +633,60 @@ a {color:blue;}
                         <li><input class="limitparam" value="17" id="parammid" type="checkbox"><label for="parammid">Middle</label></li>
                         <li><input class="limitparam" value="18" id="parampass" type="checkbox"><label for="parampass">Passive</label></li>
                       </ul>
+                      </div>
+                      <div class="newrow">
+                        <div class="newcol1">Rep:</div>
+                        <div class="newcol2">
+                          <ul class="game-type-radio small">
+                            <li>
+                              <input type="radio" id="repsperverbone" name="repsperverb" value="1" />
+                              <label for="repsperverbone">1</label>
+                            </li>
+                            <li>
+                              <input checked type="radio" id="repsperverbfour" name="repsperverb" value="4"/>
+                              <label for="repsperverbfour">4</label>
+                            </li>
+                            <li>
+                              <input type="radio" id="repsperverbeight" name="repsperverb" value="8" />
+                              <label for="repsperverbeight">8</label>
+                            </li>
+                            <li>
+                              <input type="radio" id="repsperverbsixteen" name="repsperverb" value="16"/>
+                              <label for="repsperverbsixteen">16</label>
+                            </li>
+                            <li>
+                              <input type="radio" id="repsperverb32" name="repsperverb" value="32" />
+                              <label for="repsperverb32">32</label>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                      <div class="newrow">
+                        <div class="newcol1">Changes:</div>
+                        <div class="newcol2">
+                          <ul class="game-type-radio small">
+                            <li>
+                              <input type="radio" id="maxchangesone" name="maxchanges" value="1" />
+                              <label for="maxchangesone">1</label>
+                            </li>
+                            <li>
+                              <input checked type="radio" id="maxchangestwo" name="maxchanges" value="2"/>
+                              <label for="maxchangestwo">2</label>
+                            </li>
+                            <li>
+                              <input type="radio" id="maxchangesthree" name="maxchanges" value="3" />
+                              <label for="maxchangesthree">3</label>
+                            </li>
+                            <li>
+                              <input type="radio" id="maxchangesfour" name="maxchanges" value="4"/>
+                              <label for="maxchangesfour">4</label>
+                            </li>
+                            <li>
+                              <input type="radio" id="maxchangesfive" name="maxchanges" value="5" />
+                              <label for="maxchangesfive">5</label>
+                            </li>
+                          </ul>
+                        </div>
                       </div>
                 </div>
                   <div><button id="creategamebutton">Create Game</button></div>
@@ -1130,6 +1120,11 @@ a {color:blue;}
 
   document.getElementById('verbselectionmodehqunit').addEventListener('change', verbTypeChanged, false);
   document.getElementById('verbselectionmodecustom').addEventListener('change', verbTypeChanged, false);
+
+  const hqUnitItems = document.querySelectorAll('.hqunitchk');
+  for (let i = 0; i < hqUnitItems.length; i++) {
+    hqUnitItems[i].addEventListener('click', hqUnitClicked, false);
+  }
   
   const paramItems = document.querySelectorAll('#askparamsdivinner SELECT');
   for (let i = 0; i < paramItems.length; i++) {
@@ -1195,6 +1190,17 @@ a {color:blue;}
       getSessions(true);
     }
     console.log(getTextWidth('παιδεύσητε', 'normal 24pt WebNewAthenaUnicode')); // close to 86
+  }
+
+  function hqUnitClicked () {
+    const value = this.checked;
+    if (this.value === '1') {
+      document.querySelectorAll('.hqunitchk').forEach(e => { e.checked = value; });
+    } else {
+      if (!this.checked) {
+        q('#hqunitchkall').checked = false;
+      }
+    }
   }
 
   function getTextWidth (text, font) {
@@ -1457,17 +1463,40 @@ a {color:blue;}
     let reps = parseInt(q('input[name=repsperverb]:checked').value);
     let maxChanges = parseInt(q('input[name=maxchanges]:checked').value);
     let maxTime = parseInt(q('input[name=maxtime]:checked').value);
-    const topUnit = (parseInt(q('#topunit').value.trim()) || null);
 
-    const v = [];
-    const ck = document.querySelectorAll('.verblistckverb:checked');
-    let i = 0;
-    for (; i < ck.length; i++) {
-      v.push(ck[i].value);
-    }
-    let unitv = v.join(',');
-    if (unitv.length === 0) {
-      unitv = '1,2';
+    let verbs = null;
+    let units = null;
+    let highestUnit = null;
+    const verbSelectionModeHQ = (q('input[name=verbselectionmode]:checked').value === 'hqunit');
+    if (verbSelectionModeHQ) {
+      const u = [];
+      const ck = document.querySelectorAll('.hqunitchk:checked');
+      let i = 0;
+      highestUnit = 2;
+      for (; i < ck.length; i++) {
+        const unitInt = parseInt(ck[i].value);
+        if (unitInt > 1) {
+          u.push(unitInt);
+        }
+        if (unitInt > highestUnit) {
+          highestUnit = unitInt;
+        }
+      }
+      units = u.join(',');
+      if (units.length === 0) {
+        units = '2';
+      }
+    } else {
+      const v = [];
+      const ck = document.querySelectorAll('.verblistckverb:checked');
+      let i = 0;
+      for (; i < ck.length; i++) {
+        v.push(ck[i].value);
+      }
+      verbs = v.join(',');
+      if (verbs.length === 0) {
+        verbs = '1,2';
+      }
     }
 
     reps = (reps) ? parseInt(reps) : 4;
@@ -1476,7 +1505,7 @@ a {color:blue;}
 
     const lp = [];
     const lpck = document.querySelectorAll('.limitparam:checked');
-    i = 0;
+    let i = 0;
     for (; i < lpck.length; i++) {
       lp.push(lpck[i].value);
     }
@@ -1488,7 +1517,6 @@ a {color:blue;}
     const sendData = {
       qtype: 'newsession',
       name,
-      verbs: unitv,
       params: verbParams,
       opponent: opponentv,
       practice_reps_per_verb: reps,
@@ -1496,8 +1524,13 @@ a {color:blue;}
       max_changes: maxChanges,
       max_time: maxTime
     };
-    if (topUnit !== null) {
-      sendData.unit = topUnit;
+    if (verbs !== null) {
+      sendData.verbs = verbs;
+    } else if (units !== null) {
+      sendData.units = units;
+    }
+    if (highestUnit !== null) {
+      sendData.unit = highestUnit;
     }
     genericSendRequest('new', sendData, null);
 
@@ -1512,10 +1545,10 @@ a {color:blue;}
     q('#repsperverbfour').checked = true;
     q('#maxchangestwo').checked = true;
     q('#maxtime30').checked = true;
-    q('#topunit').value = 20;
     q('#verbselectionmodehqunit').checked = true;
     q('#hqparent').style.display = 'flex';
     q('#customverbsandparams').style.display = 'none';
+    document.querySelectorAll('.hqunitchk').forEach(e => { e.checked = false; });
 
     const ck = document.querySelectorAll('.limitparam');
     let i = 0;
