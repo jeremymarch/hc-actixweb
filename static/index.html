@@ -1249,9 +1249,11 @@ a {color:blue;}
         submitClicked();
         return false;
       } else if (!isNaN(parseInt(key))) {
-        const res = toggleDiacritic(text, start, key, unicodeMode);
-        this.value = res.str;
-        this.selectionStart = this.selectionEnd = res.pos;
+        if (parseInt(key) > 0) {
+          const res = toggleDiacritic(text, start, key, unicodeMode);
+          this.value = res.str;
+          this.selectionStart = this.selectionEnd = res.pos;
+        }
         e.preventDefault();
         return false;
       } else if (key.length === 1) { // len == 1 to exclude keys like "ENTER", etc.
@@ -1633,14 +1635,6 @@ a {color:blue;}
 
       sendMF(globalSessionId, answer, time, globalMFPressed, globalTimedOut);
     }
-  }
-
-  function mytimeout () {
-    console.log('timed out');
-    clearInterval(globalTimerIntV);
-    globalTimedOut = true;
-    globalTimerRef.innerHTML = '<span style="color:red;font-weight:bold;">00:00</span>';
-    submitClicked();
   }
   
   function getMove () {
@@ -2046,6 +2040,7 @@ a {color:blue;}
     globalCountDownDate += (secs * 1000);
   }
   
+  const useRequestAnimationFrame = true;
   function startTimer () {
     const session = q('.gamerow.selectedGame');
     globalSeconds = parseInt(session.getAttribute('data-max-time'));
@@ -2055,11 +2050,20 @@ a {color:blue;}
     if (globalCountDown) {
       globalCountDownDate += (globalSeconds * 1000);
     }
-    globalTimerIntV = setInterval(intervalFunc, 10);
+
+    if (useRequestAnimationFrame) {
+      globalTimerIntV = requestAnimationFrame(intervalFunc);
+    } else {
+      globalTimerIntV = setInterval(intervalFunc, 10);
+    }
   }
 
   function stopTimer () {
-    clearInterval(globalTimerIntV);
+    if (useRequestAnimationFrame) {
+      cancelAnimationFrame(globalTimerIntV);
+    } else {
+      clearInterval(globalTimerIntV);
+    }
     globalTimerIntV = null;
   }
 
@@ -2071,10 +2075,26 @@ a {color:blue;}
     } else {
       distance = now - globalCountDownDate;
     }
+    if (useRequestAnimationFrame) {
+      globalTimerIntV = requestAnimationFrame(intervalFunc);
+    }
 
     if (distance <= 0 && globalCountDown) {
       mytimeout();
       return;
+    }
+
+    function mytimeout () {
+      console.log('timed out');
+
+      if (useRequestAnimationFrame) {
+        cancelAnimationFrame(globalTimerIntV);
+      } else {
+        clearInterval(globalTimerIntV);
+      }
+      globalTimedOut = true;
+      globalTimerRef.innerHTML = '<span style="color:red;font-weight:bold;">00:00</span>';
+      submitClicked();
     }
 
     // let days = Math.floor(distance / (1000 * 60 * 60 * 24));
