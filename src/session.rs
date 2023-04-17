@@ -177,10 +177,10 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                         ctx.spawn(fut);
                     }
                 } else if msg.contains("newsession") {
-                    if let Ok(info) = serde_json::from_str(&msg) {
+                    if let Ok(mut info) = serde_json::from_str(&msg) {
                         let fut = async move {
                             let (mesg, success) = match libhc::hc_insert_session(
-                                &db, user_id, &info, &verbs, timestamp,
+                                &db, user_id, &mut info, &verbs, timestamp,
                             )
                             .await
                             {

@@ -263,8 +263,9 @@ pub struct CreateSessionQuery {
     qtype: String,
     name: Option<String>,
     verbs: Option<String>,
+    units: Option<String>,
     params: Option<String>,
-    unit: Option<i16>,
+    highest_unit: Option<i16>,
     opponent: String,
     countdown: bool,
     practice_reps_per_verb: Option<i16>,
@@ -488,7 +489,7 @@ async fn get_sessions(
 }
 
 async fn create_session(
-    (session, info, req): (Session, web::Form<CreateSessionQuery>, HttpRequest),
+    (session, mut info, req): (Session, web::Form<CreateSessionQuery>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<HcDb>().unwrap();
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
@@ -499,7 +500,7 @@ async fn create_session(
         //let user_agent = get_user_agent(&req).unwrap_or("");
 
         let (mesg, success) =
-            match libhc::hc_insert_session(db, user_id, &info, verbs, timestamp).await {
+            match libhc::hc_insert_session(db, user_id, &mut info, verbs, timestamp).await {
                 Ok(_session_uuid) => ("inserted!".to_string(), true),
                 Err(sqlx::Error::RowNotFound) => ("opponent not found!".to_string(), false),
                 Err(e) => (format!("error inserting: {e:?}"), false),
@@ -1184,8 +1185,9 @@ mod tests {
             qtype: "abc".to_string(),
             name: None,
             verbs: Some("20".to_string()),
+            units: None,
             params: None,
-            unit: None,
+            highest_unit: None,
             opponent: "testuser2".to_string(),
             countdown: true,
             practice_reps_per_verb: Some(4),
@@ -2178,8 +2180,9 @@ mod tests {
             qtype: "abc".to_string(),
             name: None,
             verbs: Some("20".to_string()),
+            units: None,
             params: None,
-            unit: None,
+            highest_unit: None,
             opponent: "".to_string(),
             countdown: true,
             practice_reps_per_verb: Some(4),

@@ -663,10 +663,28 @@ pub async fn hc_get_sessions(
     Ok(res)
 }
 
+fn get_verbs_by_unit(units:&str, verbs: &[Arc<HcGreekVerb>]) -> Option<String> {
+    let u:Vec<u32> = units.split(',').map(|x| x.parse::<u32>().unwrap()).collect();
+    let mut verb_ids:Vec<u32> = vec![];
+    for unit in u {
+        for v in verbs {
+            if v.hq_unit == unit {
+                verb_ids.push(v.id);
+            }
+        }
+    }
+    if verb_ids.len() > 0 {
+        Some(verb_ids.iter().map( |&i| i.to_string() + ",").collect())
+    }
+    else {
+        None
+    }
+}
+
 pub async fn hc_insert_session(
     db: &HcDb,
     user_id: Uuid,
-    info: &CreateSessionQuery,
+    info: &mut CreateSessionQuery,
     verbs: &[Arc<HcGreekVerb>],
     timestamp: i64,
 ) -> Result<Uuid, sqlx::Error> {
@@ -683,7 +701,20 @@ pub async fn hc_insert_session(
         return Err(sqlx::Error::RowNotFound); //todo oops
     }
 
-    let highest_unit = match info.unit {
+    // if custom verbs are set, use them, else change units into verbs
+    if info.verbs.is_none() {
+        match &info.units {
+            Some(u) => info.verbs = get_verbs_by_unit(u, verbs),
+            None => return Err(sqlx::Error::RowNotFound),
+        }
+    }
+
+    // if still no verbs, abort
+    if info.verbs.is_none() {
+        return Err(sqlx::Error::RowNotFound);
+    }
+
+    let highest_unit = match info.highest_unit {
         Some(r) => {
             if r < 2 {
                 Some(2)
