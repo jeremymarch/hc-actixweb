@@ -98,6 +98,10 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
   bottom: 0; */
 }
 
+#verblist .game-type-radio label {
+  text-align: left;
+}
+
 .game-type-radio input[type="radio"] {
   opacity: 0.01;
   z-index: 100;
@@ -435,7 +439,7 @@ a {color:blue;}
     margin-left:1.5rem;
 }
 .verbunitrow { font-family: Helvetica, Arial, sans-serif;line-height: 1.5;}
-#verbscontainer { margin-top:-482px; }
+
 #closebutton {    float: left;
     width: 2rem;
     height: 2rem;display:none;
@@ -463,6 +467,9 @@ a {color:blue;}
   .gamerow {
     line-height: 2;
     height:44px;
+  }
+  #menubar { 
+    padding:0px;
   }
 }
 </style>
@@ -602,7 +609,29 @@ a {color:blue;}
                 </div>
                   </div>
                   <div id="customverbsandparams">
-                  <div id="verblist"></div>
+                  <div id="verblist">
+<!--
+<div class="verbunitrow"><span class="verbunitrowlabel">H&amp;Q verbs</span></div>
+<ul class="game-type-radio flex-vertical">
+  <li class="verbunitrow"><input class="verblistck verblistckunit" id="ckuall" type="checkbox">all</li>
+  <li class="verbunitrow"><input class="verblistck verblistckunit" id="cku2" value="2" type="checkbox">
+    <label for'cku2'="" class="verbunitrowlabel">unit 2</label></li>
+  <li class="expand-container">
+    <div id="unitdiv2" class="expand-contract expanded">
+      <ul class="game-type-radio flex-vertical">
+        <li class="verbrow"><input class="verblistck verblistckverb" id="ckv1" value="1" type="checkbox">
+          <label for'ckv1'="">παιδεύω</label></li>
+        <li class="verbrow"><input class="verblistck verblistckverb" id="ckv2" value="2" type="checkbox">
+          <label for'ckv2'="">πέμπω</label></li>
+        <li class="verbrow"><input class="verblistck verblistckverb" id="ckv3" value="3" type="checkbox">
+          <label for'ckv3'="">κελεύω</label></li>
+        <li class="verbrow"><input class="verblistck verblistckverb" id="ckv4" value="4" type="checkbox">
+          <label for'ckv4'="">λῡ́ω</label></li></ul></div></li>
+        <li class="verbunitrow"><input class="verblistck verblistckunit" id="cku3" value="3" type="checkbox">
+          <label for'cku3'="" class="verbunitrowlabel">unit 3</label></li>
+        <li class="expand-container"><div id="unitdiv3" class="expand-contract"><ul class="game-type-radio flex-vertical"><li class="verbrow"><input class="verblistck verblistckverb" id="ckv5" value="5" type="checkbox"><label for'ckv5'="">γράφω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv6" value="6" type="checkbox"><label for'ckv6'="">θῡ́ω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv7" value="7" type="checkbox"><label for'ckv7'="">παύω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv8" value="8" type="checkbox"><label for'ckv8'="">φυλάττω</label></li></ul></div></li><li class="verbunitrow"><input class="verblistck verblistckunit" id="cku4" value="4" type="checkbox"><label for'cku4'="" class="verbunitrowlabel">unit 4</label></li><li class="expand-container"><div id="unitdiv4" class="expand-contract"><ul class="game-type-radio flex-vertical"><li class="verbrow"><input class="verblistck verblistckverb" id="ckv9" value="9" type="checkbox"><label for'ckv9'="">διδάσκω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv10" value="10" type="checkbox"><label for'ckv10'="">ἐθέλω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv11" value="11" type="checkbox"><label for'ckv11'="">θάπτω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv12" value="12" type="checkbox"><label for'ckv12'="">τάττω</label></li></ul></div></li><li class="verbunitrow"><input class="verblistck verblistckunit" id="cku5" value="5" type="checkbox"><label for'cku5'="" class="verbunitrowlabel">unit 5</label></li><li class="expand-container"><div id="unitdiv5" class="expand-contract expanded"><ul class="game-type-radio flex-vertical"><li class="verbrow"><input class="verblistck verblistckverb" id="ckv13" value="13" type="checkbox"><label for'ckv13'="">ἄρχω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv14" value="14" type="checkbox"><label for'ckv14'="">βλάπτω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv15" value="15" type="checkbox"><label for'ckv15'="">πείθω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv16" value="16" type="checkbox"><label for'ckv16'="">πρᾱ́ττω</label></li></ul></div></li><li class="verbunitrow"><input class="verblistck verblistckunit" id="cku6" value="6" type="checkbox"><label for'cku6'="" class="verbunitrowlabel">unit 6</label></li><li class="expand-container"><div id="unitdiv6" class="expand-contract"><ul class="game-type-radio flex-vertical"><li class="verbrow"><input class="verblistck verblistckverb" id="ckv17" value="17" type="checkbox"><label for'ckv17'="">δουλεύω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv18" value="18" type="checkbox"><label for'ckv18'="">κωλῡ́ω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv19" value="19" type="checkbox"><label for'ckv19'="">πολῑτεύω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv20" value="20" type="checkbox"><label for'ckv20'="">χορεύω</label></li></ul></div></li><li class="verbunitrow"><input class="verblistck verblistckunit" id="cku7" value="7" type="checkbox"><label for'cku7'="" class="verbunitrowlabel">unit 7</label></li><li class="expand-container"><div id="unitdiv7" class="expand-contract"><ul class="game-type-radio flex-vertical"><li class="verbrow"><input class="verblistck verblistckverb" id="ckv21" value="21" type="checkbox"><label for'ckv21'="">κλέπτω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv22" value="22" type="checkbox"><label for'ckv22'="">λείπω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv23" value="23" type="checkbox"><label for'ckv23'="">σῴζω</label></li></ul></div></li><li class="verbunitrow"><input class="verblistck verblistckunit" id="cku8" value="8" type="checkbox"><label for'cku8'="" class="verbunitrowlabel">unit 8</label></li><li class="expand-container"><div id="unitdiv8" class="expand-contract expanded"><ul class="game-type-radio flex-vertical"><li class="verbrow"><input class="verblistck verblistckverb" id="ckv24" value="24" type="checkbox"><label for'ckv24'="">ἄγω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv25" value="25" type="checkbox"><label for'ckv25'="">ἥκω</label></li></ul></div></li><li class="verbunitrow"><input class="verblistck verblistckunit" id="cku9" value="9" type="checkbox"><label for'cku9'="" class="verbunitrowlabel">unit 9</label></li><li class="expand-container"><div id="unitdiv9" class="expand-contract expanded"><ul class="game-type-radio flex-vertical"><li class="verbrow"><input class="verblistck verblistckverb" id="ckv26" value="26" type="checkbox"><label for'ckv26'="">ἀδικέω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv27" value="27" type="checkbox"><label for'ckv27'="">νῑκάω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv28" value="28" type="checkbox"><label for'ckv28'="">ποιέω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv29" value="29" type="checkbox"><label for'ckv29'="">τῑμάω</label></li></ul></div></li><li class="verbunitrow"><input class="verblistck verblistckunit" id="cku10" value="10" type="checkbox"><label for'cku10'="" class="verbunitrowlabel">unit 10</label></li><li class="expand-container"><div id="unitdiv10" class="expand-contract"><ul class="game-type-radio flex-vertical"><li class="verbrow"><input class="verblistck verblistckverb" id="ckv30" value="30" type="checkbox"><label for'ckv30'="">ἀγγέλλω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv31" value="31" type="checkbox"><label for'ckv31'="">ἀξιόω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv32" value="32" type="checkbox"><label for'ckv32'="">δηλόω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv33" value="33" type="checkbox"><label for'ckv33'="">καλέω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv34" value="34" type="checkbox"><label for'ckv34'="">μένω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv35" value="35" type="checkbox"><label for'ckv35'="">τελευτάω</label></li></ul></div></li><li class="verbunitrow"><input class="verblistck verblistckunit" id="cku11" value="11" type="checkbox"><label for'cku11'="" class="verbunitrowlabel">unit 11</label></li><li class="expand-container"><div id="unitdiv11" class="expand-contract"><ul class="game-type-radio flex-vertical"><li class="verbrow"><input class="verblistck verblistckverb" id="ckv36" value="36" type="checkbox"><label for'ckv36'="">ἀκούω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv37" value="37" type="checkbox"><label for'ckv37'="">ἀποδέχομαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv38" value="38" type="checkbox"><label for'ckv38'="">βάλλω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv39" value="39" type="checkbox"><label for'ckv39'="">βούλομαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv40" value="40" type="checkbox"><label for'ckv40'="">δέχομαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv41" value="41" type="checkbox"><label for'ckv41'="">λαμβάνω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv42" value="42" type="checkbox"><label for'ckv42'="">πάσχω</label></li></ul></div></li><li class="verbunitrow"><input class="verblistck verblistckunit" id="cku12" value="12" type="checkbox"><label for'cku12'="" class="verbunitrowlabel">unit 12</label></li><li class="expand-container"><div id="unitdiv12" class="expand-contract"><ul class="game-type-radio flex-vertical"><li class="verbrow"><input class="verblistck verblistckverb" id="ckv43" value="43" type="checkbox"><label for'ckv43'="">ἀνατίθημι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv44" value="44" type="checkbox"><label for'ckv44'="">ἀποδίδωμι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv45" value="45" type="checkbox"><label for'ckv45'="">ἀφίστημι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv46" value="46" type="checkbox"><label for'ckv46'="">δίδωμι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv47" value="47" type="checkbox"><label for'ckv47'="">ἵστημι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv48" value="48" type="checkbox"><label for'ckv48'="">καθίστημι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv49" value="49" type="checkbox"><label for'ckv49'="">καταλῡ́ω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv50" value="50" type="checkbox"><label for'ckv50'="">τίθημι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv51" value="51" type="checkbox"><label for'ckv51'="">φιλέω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv52" value="52" type="checkbox"><label for'ckv52'="">φοβέομαι</label></li></ul></div></li><li class="verbunitrow"><input class="verblistck verblistckunit" id="cku13" value="13" type="checkbox"><label for'cku13'="" class="verbunitrowlabel">unit 13</label></li><li class="expand-container"><div id="unitdiv13" class="expand-contract"><ul class="game-type-radio flex-vertical"><li class="verbrow"><input class="verblistck verblistckverb" id="ckv53" value="53" type="checkbox"><label for'ckv53'="">γίγνομαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv54" value="54" type="checkbox"><label for'ckv54'="">ἔρχομαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv55" value="55" type="checkbox"><label for'ckv55'="">μανθάνω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv56" value="56" type="checkbox"><label for'ckv56'="">μάχομαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv57" value="57" type="checkbox"><label for'ckv57'="">μεταδίδωμι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv58" value="58" type="checkbox"><label for'ckv58'="">μετανίσταμαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv59" value="59" type="checkbox"><label for'ckv59'="">μηχανάομαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv60" value="60" type="checkbox"><label for'ckv60'="">φεύγω</label></li></ul></div></li><li class="verbunitrow"><input class="verblistck verblistckunit" id="cku14" value="14" type="checkbox"><label for'cku14'="" class="verbunitrowlabel">unit 14</label></li><li class="expand-container"><div id="unitdiv14" class="expand-contract"><ul class="game-type-radio flex-vertical"><li class="verbrow"><input class="verblistck verblistckverb" id="ckv61" value="61" type="checkbox"><label for'ckv61'="">δείκνῡμι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv62" value="62" type="checkbox"><label for'ckv62'="">ἐπανίσταμαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv63" value="63" type="checkbox"><label for'ckv63'="">ἐπιδείκνυμαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv64" value="64" type="checkbox"><label for'ckv64'="">ἐρωτάω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv65" value="65" type="checkbox"><label for'ckv65'="">λανθάνω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv66" value="66" type="checkbox"><label for'ckv66'="">παραγίγνομαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv67" value="67" type="checkbox"><label for'ckv67'="">παραδίδωμι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv68" value="68" type="checkbox"><label for'ckv68'="">παραμένω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv69" value="69" type="checkbox"><label for'ckv69'="">τυγχάνω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv70" value="70" type="checkbox"><label for'ckv70'="">ὑπακούω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv71" value="71" type="checkbox"><label for'ckv71'="">ὑπομένω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv72" value="72" type="checkbox"><label for'ckv72'="">φθάνω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv73" value="73" type="checkbox"><label for'ckv73'="">χαίρω</label></li></ul></div></li><li class="verbunitrow"><input class="verblistck verblistckunit" id="cku15" value="15" type="checkbox"><label for'cku15'="" class="verbunitrowlabel">unit 15</label></li><li class="expand-container"><div id="unitdiv15" class="expand-contract"><ul class="game-type-radio flex-vertical"><li class="verbrow"><input class="verblistck verblistckverb" id="ckv74" value="74" type="checkbox"><label for'ckv74'="">αἱρέω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv75" value="75" type="checkbox"><label for'ckv75'="">αἰσθάνομαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv76" value="76" type="checkbox"><label for'ckv76'="">διαφέρω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv77" value="77" type="checkbox"><label for'ckv77'="">εἰμί</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv80" value="80" type="checkbox"><label for'ckv80'="">ἕπομαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv81" value="81" type="checkbox"><label for'ckv81'="">ὁράω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv82" value="82" type="checkbox"><label for'ckv82'="">συμφέρω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv83" value="83" type="checkbox"><label for'ckv83'="">φέρω</label></li></ul></div></li><li class="verbunitrow"><input class="verblistck verblistckunit" id="cku16" value="16" type="checkbox"><label for'cku16'="" class="verbunitrowlabel">unit 16</label></li><li class="expand-container"><div id="unitdiv16" class="expand-contract"><ul class="game-type-radio flex-vertical"><li class="verbrow"><input class="verblistck verblistckverb" id="ckv84" value="84" type="checkbox"><label for'ckv84'="">ἀναβαίνω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv85" value="85" type="checkbox"><label for'ckv85'="">βαίνω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv86" value="86" type="checkbox"><label for'ckv86'="">γιγνώσκω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv87" value="87" type="checkbox"><label for'ckv87'="">ἐκπῑ́πτω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv88" value="88" type="checkbox"><label for'ckv88'="">λέγω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv89" value="89" type="checkbox"><label for'ckv89'="">νομίζω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv90" value="90" type="checkbox"><label for'ckv90'="">πῑ́πτω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv91" value="91" type="checkbox"><label for'ckv91'="">προδίδωμι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv92" value="92" type="checkbox"><label for'ckv92'="">φημί</label></li></ul></div></li><li class="verbunitrow"><input class="verblistck verblistckunit" id="cku17" value="17" type="checkbox"><label for'cku17'="" class="verbunitrowlabel">unit 17</label></li><li class="expand-container"><div id="unitdiv17" class="expand-contract"><ul class="game-type-radio flex-vertical"><li class="verbrow"><input class="verblistck verblistckverb" id="ckv93" value="93" type="checkbox"><label for'ckv93'="">ἁμαρτάνω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv94" value="94" type="checkbox"><label for'ckv94'="">δοκέω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv95" value="95" type="checkbox"><label for'ckv95'="">δύναμαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv96" value="96" type="checkbox"><label for'ckv96'="">εἶμι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv97" value="97" type="checkbox"><label for'ckv97'="">ἐλαύνω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv98" value="98" type="checkbox"><label for'ckv98'="">ἐπίσταμαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv99" value="99" type="checkbox"><label for'ckv99'="">ἔχω</label></li></ul></div></li><li class="verbunitrow"><input class="verblistck verblistckunit" id="cku18" value="18" type="checkbox"><label for'cku18'="" class="verbunitrowlabel">unit 18</label></li><li class="expand-container"><div id="unitdiv18" class="expand-contract"><ul class="game-type-radio flex-vertical"><li class="verbrow"><input class="verblistck verblistckverb" id="ckv100" value="100" type="checkbox"><label for'ckv100'="">ἀποθνῄσκω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv101" value="101" type="checkbox"><label for'ckv101'="">ἀποκτείνω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv102" value="102" type="checkbox"><label for'ckv102'="">ἀφῑ́ημι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv103" value="103" type="checkbox"><label for'ckv103'="">βουλεύω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv104" value="104" type="checkbox"><label for'ckv104'="">ἐπιβουλεύω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv105" value="105" type="checkbox"><label for'ckv105'="">ζητέω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv106" value="106" type="checkbox"><label for'ckv106'="">ῑ̔́ημι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv107" value="107" type="checkbox"><label for'ckv107'="">μέλλω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv108" value="108" type="checkbox"><label for'ckv108'="">πιστεύω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv109" value="109" type="checkbox"><label for'ckv109'="">συμβουλεύω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv110" value="110" type="checkbox"><label for'ckv110'="">συνῑ́ημι</label></li></ul></div></li><li class="verbunitrow"><input class="verblistck verblistckunit" id="cku19" value="19" type="checkbox"><label for'cku19'="" class="verbunitrowlabel">unit 19</label></li><li class="expand-container"><div id="unitdiv19" class="expand-contract"><ul class="game-type-radio flex-vertical"><li class="verbrow"><input class="verblistck verblistckverb" id="ckv111" value="111" type="checkbox"><label for'ckv111'="">αἰσχῡ́νομαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv112" value="112" type="checkbox"><label for'ckv112'="">ἀποκρῑ́νομαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv113" value="113" type="checkbox"><label for'ckv113'="">ἀπόλλῡμι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv114" value="114" type="checkbox"><label for'ckv114'="">—, ἀνερήσομαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv115" value="115" type="checkbox"><label for'ckv115'="">—, ἐρήσομαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv116" value="116" type="checkbox"><label for'ckv116'="">εὑρίσκω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv117" value="117" type="checkbox"><label for'ckv117'="">ἡγέομαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv118" value="118" type="checkbox"><label for'ckv118'="">κρῑ́νω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv119" value="119" type="checkbox"><label for'ckv119'="">οἶδα</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv120" value="120" type="checkbox"><label for'ckv120'="">σύνοιδα</label></li></ul></div></li><li class="verbunitrow"><input class="verblistck verblistckunit" id="cku20" value="20" type="checkbox"><label for'cku20'="" class="verbunitrowlabel">unit 20</label></li><li class="expand-container"><div id="unitdiv20" class="expand-contract"><ul class="game-type-radio flex-vertical"><li class="verbrow"><input class="verblistck verblistckverb" id="ckv121" value="121" type="checkbox"><label for'ckv121'="">ἀφικνέομαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv123" value="123" type="checkbox"><label for'ckv123'="">κεῖμαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv124" value="124" type="checkbox"><label for'ckv124'="">πυνθάνομαι</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv125" value="125" type="checkbox"><label for'ckv125'="">τρέπω</label></li><li class="verbrow"><input class="verblistck verblistckverb" id="ckv126" value="126" type="checkbox"><label for'ckv126'="">φαίνω</label></li></ul></div></li></ul>
+        -->
+                  </div>
                   <div id="customparams">
                     <div>Customize Parameters</div>
                     <ul class="game-type-radio flex-vertical">
@@ -2241,38 +2270,102 @@ a {color:blue;}
   updateConnectionStatus();
 
   function verbList () {
-    const list = q('#verblist');
-    let rows = "<div class='verbunitrow'><span class='verbunitrowlabel'>H&Q verbs</span></div><div class='expand-container'><div id='verbscontainer' class='expand-contract'>";
-    rows += "<div class='verbunitrow'><input class='verblistck verblistckunit' id='ckuall' type='checkbox'/>all</div>";
-    let i = 0;
-    let lastUnit = null;
-    for (; i < verbs.length; i++) {
-      if (verbs[i].i === 122 || verbs[i].i === 127 || verbs[i].i === 78 || verbs[i].i === 79) {
-        continue;
-      }
-      let end = ',';
-      let plus = 0;
-      if (verbs[i].pp[0] === '—') { // -, erhsomai and -, anerhsomai
-        end = 'ι,';
-        plus = 1;
-      }
-      if (verbs[i].u !== lastUnit) {
-        if (lastUnit !== null) {
-          rows += '</div></div>';
+    const listContainer = q('#verblist');
+    const sortUnit = false;
+    if (sortUnit) {
+      let rows = "<div class='verbunitrow'><span class='verbunitrowlabel'>H&Q verbs</span></div>";
+      rows += "<ul class='game-type-radio flex-vertical'><li class='verbunitrow'><input class='verblistck verblistckunit' id='ckuall' type='checkbox'/><label for='ckuall'>all</label></li>";
+      let i = 0;
+      let lastUnit = null;
+      for (; i < verbs.length; i++) {
+        if (verbs[i].i === 122 || verbs[i].i === 127 || verbs[i].i === 78 || verbs[i].i === 79) {
+          continue;
         }
-        lastUnit = verbs[i].u;
+        let end = ',';
+        let plus = 0;
+        if (verbs[i].pp[0] === '—') { // -, erhsomai and -, anerhsomai
+          end = 'ι,';
+          plus = 1;
+        }
+        if (verbs[i].u !== lastUnit) {
+          if (lastUnit !== null) {
+            rows += '</ul></div></li>';
+          }
+          lastUnit = verbs[i].u;
 
-        rows += "<div class='verbunitrow'><input class='verblistck verblistckunit' id='cku" + verbs[i].u + "' value='" + verbs[i].u + "' type='checkbox'/><span class='verbunitrowlabel'>unit " + verbs[i].u + '</span></div>';
-        rows += "<div class='expand-container'><div id='unitdiv" + verbs[i].u + "' class='expand-contract'>";
+          rows += "<li class='verbunitrow'><input class='verblistck verblistckunit' id='cku" + verbs[i].u + "' value='" + verbs[i].u + "' type='checkbox'/><label for='cku" + verbs[i].u + "' class='verbunitrowlabel'>unit " + verbs[i].u + '</label></li>';
+          rows += "<li class='expand-container'><div id='unitdiv" + verbs[i].u + "' class='expand-contract'><ul class='game-type-radio flex-vertical'>";
+        }
+        rows += "<li class='verbrow'><input class='verblistck verblistckverb' id='ckv" + verbs[i].i + "' value='" + verbs[i].i + "' type='checkbox'/><label for='ckv" + verbs[i].i + "'>" + verbs[i].pp.substring(0, (verbs[i].pp.indexOf(end) + plus)) + '</label></li>';
       }
-      rows += "<div class='verbrow'><input class='verblistck verblistckverb' id='ckv" + verbs[i].i + "' value='" + verbs[i].i + "' type='checkbox'/>" + verbs[i].pp.substring(0, (verbs[i].pp.indexOf(end) + plus)) + '</div>';
-    }
-    rows += '</div></div></div></div>';
-    list.innerHTML = rows;
+      rows += '</ul></div></li></ul>';
+      listContainer.innerHTML = rows;
 
-    const rowItems = document.querySelectorAll('.verbunitrowlabel');
-    for (let i = 0; i < rowItems.length; i++) {
-      rowItems[i].addEventListener('click', expandContractGames, false);
+      const rowItems = document.querySelectorAll('.verbunitrowlabel');
+      for (let i = 0; i < rowItems.length; i++) {
+        rowItems[i].addEventListener('click', expandContractGames, false);
+      }
+    } else {
+      let i = 0;
+      const fragment = document.createDocumentFragment();
+      const list = document.createElement('ul');
+      list.classList.add('game-type-radio');
+      list.classList.add('flex-vertical');
+
+      const li = document.createElement('li');
+      li.classList.add('verbrow');
+
+      const input = document.createElement('input');
+      input.classList.add('verblistck');
+      input.classList.add('verblistckverb');
+      input.type = 'checkbox';
+      input.id = 'ckuall';
+      input.value = '0';
+      li.appendChild(input);
+
+      const label = document.createElement('label');
+      label.innerText = 'all';
+      label.setAttribute('for', 'ckuall');
+      li.appendChild(label);
+      list.appendChild(li);
+
+      verbs.sort(function (a, b) { return a.s - b.s; });
+  
+      for (; i < verbs.length; i++) {
+        if (verbs[i].i === 122 || verbs[i].i === 127 || verbs[i].i === 78 || verbs[i].i === 79) {
+          continue;
+        }
+        let end = ',';
+        let plus = 0;
+        if (verbs[i].pp[0] === '—') { // -, erhsomai and -, anerhsomai
+          end = 'ι,';
+          plus = 1;
+        }
+        const li = document.createElement('li');
+        li.classList.add('verbrow');
+  
+        const input = document.createElement('input');
+        input.classList.add('verblistck');
+        input.classList.add('verblistckverb');
+        input.type = 'checkbox';
+        input.id = 'ckv' + verbs[i].i;
+        input.value = verbs[i].i;
+        li.appendChild(input);
+
+        const label = document.createElement('label');
+        label.innerText = verbs[i].pp.substring(0, (verbs[i].pp.indexOf(end) + plus));
+        label.setAttribute('for', 'ckv' + verbs[i].i);
+        li.appendChild(label);
+        list.appendChild(li);
+      }
+      fragment.appendChild(list);
+      listContainer.innerHTML = '';
+      listContainer.append(fragment);
+
+      // const rowItems = document.querySelectorAll('.verbunitrowlabel');
+      // for (let i = 0; i < rowItems.length; i++) {
+      //   rowItems[i].addEventListener('click', expandContractGames, false);
+      // }
     }
 
     const all = document.querySelector('#ckuall');
@@ -2300,7 +2393,7 @@ a {color:blue;}
       vv[k].addEventListener('click', function () {
         if (!this.checked) {
           all.checked = false;
-          this.parentNode.parentNode.parentNode.previousSibling.firstChild.checked = false;
+          // this.parentNode.parentNode.parentNode.previousSibling.firstChild.checked = false;
         }
       });
     }
@@ -2350,133 +2443,133 @@ a {color:blue;}
   }
 
   const verbs = [
-    { i: 1, pp: 'παιδεύω, παιδεύσω, ἐπαίδευσα, πεπαίδευκα, πεπαίδευμαι, ἐπαιδεύθην', u: 2 },
-    { i: 2, pp: 'πέμπω, πέμψω, ἔπεμψα, πέπομφα, πέπεμμαι, ἐπέμφθην', u: 2 },
-    { i: 3, pp: 'κελεύω, κελεύσω, ἐκέλευσα, κεκέλευκα, κεκέλευσμαι, ἐκελεύσθην', u: 2 },
-    { i: 4, pp: 'λῡ́ω, λῡ́σω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην', u: 2 },
-    { i: 5, pp: 'γράφω, γράψω, ἔγραψα, γέγραφα, γέγραμμαι, ἐγράφην', u: 3 },
-    { i: 6, pp: 'θῡ́ω, θῡ́σω, ἔθῡσα, τέθυκα, τέθυμαι, ἐτύθην', u: 3 },
-    { i: 7, pp: 'παύω, παύσω, ἔπαυσα, πέπαυκα, πέπαυμαι, ἐπαύθην', u: 3 },
-    { i: 8, pp: 'φυλάττω, φυλάξω, ἐφύλαξα, πεφύλαχα, πεφύλαγμαι, ἐφυλάχθην', u: 3 },
-    { i: 9, pp: 'διδάσκω, διδάξω, ἐδίδαξα, δεδίδαχα, δεδίδαγμαι, ἐδιδάχθην', u: 4 },
-    { i: 10, pp: 'ἐθέλω, ἐθελήσω, ἠθέλησα, ἠθέληκα, —, —', u: 4 },
-    { i: 11, pp: 'θάπτω, θάψω, ἔθαψα, —, τέθαμμαι, ἐτάφην', u: 4 },
-    { i: 12, pp: 'τάττω, τάξω, ἔταξα, τέταχα, τέταγμαι, ἐτάχθην', u: 4 },
-    { i: 13, pp: 'ἄρχω, ἄρξω, ἦρξα, ἦρχα, ἦργμαι, ἤρχθην', u: 5 },
-    { i: 14, pp: 'βλάπτω, βλάψω, ἔβλαψα, βέβλαφα, βέβλαμμαι, ἐβλάβην / ἐβλάφθην', u: 5 },
-    { i: 15, pp: 'πείθω, πείσω, ἔπεισα, πέπεικα, πέπεισμαι, ἐπείσθην', u: 5 },
-    { i: 16, pp: 'πρᾱ́ττω, πρᾱ́ξω, ἔπρᾱξα, πέπρᾱχα / πέπρᾱγα, πέπρᾱγμαι, ἐπρᾱ́χθην', u: 5 },
-    { i: 17, pp: 'δουλεύω, δουλεύσω, ἐδούλευσα, δεδούλευκα, —, —', u: 6 },
-    { i: 18, pp: 'κωλῡ́ω, κωλῡ́σω, ἐκώλῡσα, κεκώλῡκα, κεκώλῡμαι, ἐκωλῡ́θην', u: 6 },
-    { i: 19, pp: 'πολῑτεύω, πολῑτεύσω, ἐπολῑ́τευσα, πεπολῑ́τευκα, πεπολῑ́τευμαι, ἐπολῑτεύθην', u: 6 },
-    { i: 20, pp: 'χορεύω, χορεύσω, ἐχόρευσα, κεχόρευκα, κεχόρευμαι, ἐχορεύθην', u: 6 },
-    { i: 21, pp: 'κλέπτω, κλέψω, ἔκλεψα, κέκλοφα, κέκλεμμαι, ἐκλάπην', u: 7 },
-    { i: 22, pp: 'λείπω, λείψω, ἔλιπον, λέλοιπα, λέλειμμαι, ἐλείφθην', u: 7 },
-    { i: 23, pp: 'σῴζω, σώσω, ἔσωσα, σέσωκα, σέσωσμαι / σέσωμαι, ἐσώθην', u: 7 },
-    { i: 24, pp: 'ἄγω, ἄξω, ἤγαγον, ἦχα, ἦγμαι, ἤχθην', u: 8 },
-    { i: 25, pp: 'ἥκω, ἥξω, —, —, —, —', u: 8 },
-    { i: 26, pp: 'ἀδικέω, ἀδικήσω, ἠδίκησα, ἠδίκηκα, ἠδίκημαι, ἠδικήθην', u: 9 },
-    { i: 27, pp: 'νῑκάω, νῑκήσω, ἐνῑ́κησα, νενῑ́κηκα, νενῑ́κημαι, ἐνῑκήθην', u: 9 },
-    { i: 28, pp: 'ποιέω, ποιήσω, ἐποίησα, πεποίηκα, πεποίημαι, ἐποιήθην', u: 9 },
-    { i: 29, pp: 'τῑμάω, τῑμήσω, ἐτῑ́μησα, τετῑ́μηκα, τετῑ́μημαι, ἐτῑμήθην', u: 9 },
-    { i: 30, pp: 'ἀγγέλλω, ἀγγελῶ, ἤγγειλα, ἤγγελκα, ἤγγελμαι, ἠγγέλθην', u: 10 },
-    { i: 31, pp: 'ἀξιόω, ἀξιώσω, ἠξίωσα, ἠξίωκα, ἠξίωμαι, ἠξιώθην', u: 10 },
-    { i: 32, pp: 'δηλόω, δηλώσω, ἐδήλωσα, δεδήλωκα, δεδήλωμαι, ἐδηλώθην', u: 10 },
-    { i: 33, pp: 'καλέω, καλῶ, ἐκάλεσα, κέκληκα, κέκλημαι, ἐκλήθην', u: 10 },
-    { i: 34, pp: 'μένω, μενῶ, ἔμεινα, μεμένηκα, —, —', u: 10 },
-    { i: 35, pp: 'τελευτάω, τελευτήσω, ἐτελεύτησα, τετελεύτηκα, τετελεύτημαι, ἐτελευτήθην', u: 10 },
-    { i: 36, pp: 'ἀκούω, ἀκούσομαι, ἤκουσα, ἀκήκοα, —, ἠκούσθην', u: 11 },
-    { i: 37, pp: 'ἀποδέχομαι, ἀποδέξομαι, ἀπεδεξάμην, —, ἀποδέδεγμαι, —', u: 11 },
-    { i: 38, pp: 'βάλλω, βαλῶ, ἔβαλον, βέβληκα, βέβλημαι, ἐβλήθην', u: 11 },
-    { i: 39, pp: 'βούλομαι, βουλήσομαι, —, —, βεβούλημαι, ἐβουλήθην', u: 11 },
-    { i: 40, pp: 'δέχομαι, δέξομαι, ἐδεξάμην, —, δέδεγμαι, —', u: 11 },
-    { i: 41, pp: 'λαμβάνω, λήψομαι, ἔλαβον, εἴληφα, εἴλημμαι, ἐλήφθην', u: 11 },
-    { i: 42, pp: 'πάσχω, πείσομαι, ἔπαθον, πέπονθα, —, —', u: 11 },
-    { i: 43, pp: 'ἀνατίθημι, ἀναθήσω, ἀνέθηκα, ἀνατέθηκα, ἀνατέθειμαι, ἀνετέθην', u: 12 },
-    { i: 44, pp: 'ἀποδίδωμι, ἀποδώσω, ἀπέδωκα, ἀποδέδωκα, ἀποδέδομαι, ἀπεδόθην', u: 12 },
-    { i: 45, pp: 'ἀφίστημι, ἀποστήσω, ἀπέστησα / ἀπέστην, ἀφέστηκα, ἀφέσταμαι, ἀπεστάθην', u: 12 },
-    { i: 46, pp: 'δίδωμι, δώσω, ἔδωκα, δέδωκα, δέδομαι, ἐδόθην', u: 12 },
-    { i: 47, pp: 'ἵστημι, στήσω, ἔστησα / ἔστην, ἕστηκα, ἕσταμαι, ἐστάθην', u: 12 },
-    { i: 48, pp: 'καθίστημι, καταστήσω, κατέστησα / κατέστην, καθέστηκα, καθέσταμαι, κατεστάθην', u: 12 },
-    { i: 49, pp: 'καταλῡ́ω, καταλῡ́σω, κατέλῡσα, καταλέλυκα, καταλέλυμαι, κατελύθην', u: 12 },
-    { i: 50, pp: 'τίθημι, θήσω, ἔθηκα, τέθηκα, τέθειμαι, ἐτέθην', u: 12 },
-    { i: 51, pp: 'φιλέω, φιλήσω, ἐφίλησα, πεφίληκα, πεφίλημαι, ἐφιλήθην', u: 12 },
-    { i: 52, pp: 'φοβέομαι, φοβήσομαι, —, —, πεφόβημαι, ἐφοβήθην', u: 12 },
-    { i: 53, pp: 'γίγνομαι, γενήσομαι, ἐγενόμην, γέγονα, γεγένημαι, —', u: 13 },
-    { i: 54, pp: 'ἔρχομαι, ἐλεύσομαι, ἦλθον, ἐλήλυθα, —, —', u: 13 },
-    { i: 55, pp: 'μανθάνω, μαθήσομαι, ἔμαθον, μεμάθηκα, —, —', u: 13 },
-    { i: 56, pp: 'μάχομαι, μαχοῦμαι, ἐμαχεσάμην, —, μεμάχημαι, —', u: 13 },
-    { i: 57, pp: 'μεταδίδωμι, μεταδώσω, μετέδωκα, μεταδέδωκα, μεταδέδομαι, μετεδόθην', u: 13 },
-    { i: 58, pp: 'μετανίσταμαι, μεταναστήσομαι, μετανέστην, μετανέστηκα, —, —', u: 13 },
-    { i: 59, pp: 'μηχανάομαι, μηχανήσομαι, ἐμηχανησάμην, —, μεμηχάνημαι, —', u: 13 },
-    { i: 60, pp: 'φεύγω, φεύξομαι, ἔφυγον, πέφευγα, —, —', u: 13 },
-    { i: 61, pp: 'δείκνῡμι, δείξω, ἔδειξα, δέδειχα, δέδειγμαι, ἐδείχθην', u: 14 },
-    { i: 62, pp: 'ἐπανίσταμαι, ἐπαναστήσομαι, ἐπανέστην, ἐπανέστηκα, —, —', u: 14 },
-    { i: 63, pp: 'ἐπιδείκνυμαι, ἐπιδείξομαι, ἐπεδειξάμην, —, ἐπιδέδειγμαι, —', u: 14 },
-    { i: 64, pp: 'ἐρωτάω, ἐρωτήσω, ἠρώτησα, ἠρώτηκα, ἠρώτημαι, ἠρωτήθην', u: 14 },
-    { i: 65, pp: 'λανθάνω, λήσω, ἔλαθον, λέληθα, —, —', u: 14 },
-    { i: 66, pp: 'παραγίγνομαι, παραγενήσομαι, παρεγενόμην, παραγέγονα, παραγεγένημαι, —', u: 14 },
-    { i: 67, pp: 'παραδίδωμι, παραδώσω, παρέδωκα, παραδέδωκα, παραδέδομαι, παρεδόθην', u: 14 },
-    { i: 68, pp: 'παραμένω, παραμενῶ, παρέμεινα, παραμεμένηκα, —, —', u: 14 },
-    { i: 69, pp: 'τυγχάνω, τεύξομαι, ἔτυχον, τετύχηκα, —, —', u: 14 },
-    { i: 70, pp: 'ὑπακούω, ὑπακούσομαι, ὑπηκουσα, ὑπακήκοα, —, ὑπηκούσθην', u: 14 },
-    { i: 71, pp: 'ὑπομένω, ὑπομενῶ, ὑπέμεινα, ὑπομεμένηκα, —, —', u: 14 },
-    { i: 72, pp: 'φθάνω, φθήσομαι, ἔφθασα / ἔφθην, —, —, —', u: 14 },
-    { i: 73, pp: 'χαίρω, χαιρήσω, —, κεχάρηκα, —, ἐχάρην', u: 14 },
-    { i: 74, pp: 'αἱρέω, αἱρήσω, εἷλον, ᾕρηκα, ᾕρημαι, ᾑρέθην', u: 15 },
-    { i: 75, pp: 'αἰσθάνομαι, αἰσθήσομαι, ᾐσθόμην, —, ᾔσθημαι, —', u: 15 },
-    { i: 76, pp: 'διαφέρω, διοίσω, διήνεγκα / διήνεγκον, διενήνοχα, διενήνεγμαι, διηνέχθην', u: 15 },
-    { i: 77, pp: 'εἰμί, ἔσομαι, —, —, —, —', u: 15 },
-    { i: 78, pp: 'ἔστι(ν), ἔσται, —, —, —, —', u: 15 },
-    { i: 79, pp: 'ἔξεστι(ν), ἐξέσται, —, —, —, —', u: 15 },
-    { i: 80, pp: 'ἕπομαι, ἕψομαι, ἑσπόμην, —, —, —', u: 15 },
-    { i: 81, pp: 'ὁράω, ὄψομαι, εἶδον, ἑόρᾱκα / ἑώρᾱκα, ἑώρᾱμαι / ὦμμαι, ὤφθην', u: 15 },
-    { i: 82, pp: 'συμφέρω, συνοίσω, συνήνεγκα / συνήνεγκον, συνενήνοχα, συνενήνεγμαι, συνηνέχθην', u: 15 },
-    { i: 83, pp: 'φέρω, οἴσω, ἤνεγκα / ἤνεγκον, ἐνήνοχα, ἐνήνεγμαι, ἠνέχθην', u: 15 },
-    { i: 84, pp: 'ἀναβαίνω, ἀναβήσομαι, ἀνέβην, ἀναβέβηκα, —, —', u: 16 },
-    { i: 85, pp: 'βαίνω, -βήσομαι, -ἔβην, βέβηκα, —, —', u: 16 },
-    { i: 86, pp: 'γιγνώσκω, γνώσομαι, ἔγνων, ἔγνωκα, ἔγνωσμαι, ἐγνώσθην', u: 16 },
-    { i: 87, pp: 'ἐκπῑ́πτω, ἐκπεσοῦμαι, ἐξέπεσον, ἐκπέπτωκα, —, —', u: 16 },
-    { i: 88, pp: 'λέγω, ἐρῶ / λέξω, εἶπον / ἔλεξα, εἴρηκα, εἴρημαι / λέλεγμαι, ἐλέχθην / ἐρρήθην', u: 16 },
-    { i: 89, pp: 'νομίζω, νομιῶ, ἐνόμισα, νενόμικα, νενόμισμαι, ἐνομίσθην', u: 16 },
-    { i: 90, pp: 'πῑ́πτω, πεσοῦμαι, ἔπεσον, πέπτωκα, —, —', u: 16 },
-    { i: 91, pp: 'προδίδωμι, προδώσω, προέδωκα / προύδωκα, προδέδωκα, προδέδομαι, προεδόθην / προυδόθην', u: 16 },
-    { i: 92, pp: 'φημί, φήσω, ἔφησα, —, —, —', u: 16 },
-    { i: 93, pp: 'ἁμαρτάνω, ἁμαρτήσομαι, ἥμαρτον, ἡμάρτηκα, ἡμάρτημαι, ἡμαρτήθην', u: 17 },
-    { i: 94, pp: 'δοκέω, δόξω, ἔδοξα, —, δέδογμαι, -ἐδόχθην', u: 17 },
-    { i: 95, pp: 'δύναμαι, δυνήσομαι, —, —, δεδύνημαι, ἐδυνήθην', u: 17 },
-    { i: 96, pp: 'εἶμι, —, —, —, —, —', u: 17 },
-    { i: 97, pp: 'ἐλαύνω, ἐλῶ, ἤλασα, -ἐλήλακα, ἐλήλαμαι, ἠλάθην', u: 17 },
-    { i: 98, pp: 'ἐπίσταμαι, ἐπιστήσομαι, —, —, —, ἠπιστήθην', u: 17 },
-    { i: 99, pp: 'ἔχω, ἕξω / σχήσω, ἔσχον, ἔσχηκα, -ἔσχημαι, —', u: 17 },
-    { i: 100, pp: 'ἀποθνῄσκω, ἀποθανοῦμαι, ἀπέθανον, τέθνηκα, —, —', u: 18 },
-    { i: 101, pp: 'ἀποκτείνω, ἀποκτενῶ, ἀπέκτεινα, ἀπέκτονα, —, —', u: 18 },
-    { i: 102, pp: 'ἀφῑ́ημι, ἀφήσω, ἀφῆκα, ἀφεῖκα, ἀφεῖμαι, ἀφείθην', u: 18 },
-    { i: 103, pp: 'βουλεύω, βουλεύσω, ἐβούλευσα, βεβούλευκα, βεβούλευμαι, ἐβουλεύθην', u: 18 },
-    { i: 104, pp: 'ἐπιβουλεύω, ἐπιβουλεύσω, ἐπεβούλευσα, ἐπιβεβούλευκα, ἐπιβεβούλευμαι, ἐπεβουλεύθην', u: 18 },
-    { i: 105, pp: 'ζητέω, ζητήσω, ἐζήτησα, ἐζήτηκα, —, ἐζητήθην', u: 18 },
-    { i: 106, pp: 'ῑ̔́ημι, -ἥσω, -ἧκα, -εἷκα, -εἷμαι, -εἵθην', u: 18 },
-    { i: 107, pp: 'μέλλω, μελλήσω, ἐμέλλησα, —, —, —', u: 18 },
-    { i: 108, pp: 'πιστεύω, πιστεύσω, ἐπίστευσα, πεπίστευκα, πεπίστευμαι, ἐπιστεύθην', u: 18 },
-    { i: 109, pp: 'συμβουλεύω, συμβουλεύσω, συνεβούλευσα, συμβεβούλευκα, συμβεβούλευμαι, συνεβουλεύθην', u: 18 },
-    { i: 110, pp: 'συνῑ́ημι, συνήσω, συνῆκα, συνεῖκα, συνεῖμαι, συνείθην', u: 18 },
-    { i: 111, pp: 'αἰσχῡ́νομαι, αἰσχυνοῦμαι, —, —, ᾔσχυμμαι, ᾐσχύνθην', u: 19 },
-    { i: 112, pp: 'ἀποκρῑ́νομαι, ἀποκρινοῦμαι, ἀπεκρῑνάμην, —, ἀποκέκριμαι, —', u: 19 },
-    { i: 113, pp: 'ἀπόλλῡμι, ἀπολῶ, ἀπώλεσα / ἀπωλόμην, ἀπολώλεκα / ἀπόλωλα, —, —', u: 19 },
-    { i: 114, pp: '—, ἀνερήσομαι, ἀνηρόμην, —, —, —', u: 19 },
-    { i: 115, pp: '—, ἐρήσομαι, ἠρόμην, —, —, —', u: 19 },
-    { i: 116, pp: 'εὑρίσκω, εὑρήσω, ηὗρον, ηὕρηκα, ηὕρημαι, ηὑρέθην', u: 19 },
-    { i: 117, pp: 'ἡγέομαι, ἡγήσομαι, ἡγησάμην, —, ἥγημαι, ἡγήθην', u: 19 },
-    { i: 118, pp: 'κρῑ́νω, κρινῶ, ἔκρῑνα, κέκρικα, κέκριμαι, ἐκρίθην', u: 19 },
-    { i: 119, pp: 'οἶδα, εἴσομαι, —, —, —, —', u: 19 },
-    { i: 120, pp: 'σύνοιδα, συνείσομαι, —, —, —, —', u: 19 },
-    { i: 121, pp: 'ἀφικνέομαι, ἀφίξομαι, ἀφῑκόμην, —, ἀφῖγμαι, —', u: 20 },
-    { i: 122, pp: 'δεῖ, δεήσει, ἐδέησε(ν), —, —, —', u: 20 },
-    { i: 123, pp: 'κεῖμαι, κείσομαι, —, —, —, —', u: 20 },
-    { i: 124, pp: 'πυνθάνομαι, πεύσομαι, ἐπυθόμην, —, πέπυσμαι, —', u: 20 },
-    { i: 125, pp: 'τρέπω, τρέψω, ἔτρεψα / ἐτραπόμην, τέτροφα, τέτραμμαι, ἐτράπην / ἐτρέφθην', u: 20 },
-    { i: 126, pp: 'φαίνω, φανῶ, ἔφηνα, πέφηνα, πέφασμαι, ἐφάνην', u: 20 },
-    { i: 127, pp: 'χρή, χρῆσται, —, —, —, —', u: 20 }
+    { i: 1, s: 88, pp: 'παιδεύω, παιδεύσω, ἐπαίδευσα, πεπαίδευκα, πεπαίδευμαι, ἐπαιδεύθην', u: 2 },
+    { i: 2, s: 95, pp: 'πέμπω, πέμψω, ἔπεμψα, πέπομφα, πέπεμμαι, ἐπέμφθην', u: 2 },
+    { i: 3, s: 68, pp: 'κελεύω, κελεύσω, ἐκέλευσα, κεκέλευκα, κεκέλευσμαι, ἐκελεύσθην', u: 2 },
+    { i: 4, s: 76, pp: 'λῡ́ω, λῡ́σω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην', u: 2 },
+    { i: 5, s: 30, pp: 'γράφω, γράψω, ἔγραψα, γέγραφα, γέγραμμαι, ἐγράφην', u: 3 },
+    { i: 6, s: 61, pp: 'θῡ́ω, θῡ́σω, ἔθῡσα, τέθυκα, τέθυμαι, ἐτύθην', u: 3 },
+    { i: 7, s: 93, pp: 'παύω, παύσω, ἔπαυσα, πέπαυκα, πέπαυμαι, ἐπαύθην', u: 3 },
+    { i: 8, s: 123, pp: 'φυλάττω, φυλάξω, ἐφύλαξα, πεφύλαχα, πεφύλαγμαι, ἐφυλάχθην', u: 3 },
+    { i: 9, s: 36, pp: 'διδάσκω, διδάξω, ἐδίδαξα, δεδίδαχα, δεδίδαγμαι, ἐδιδάχθην', u: 4 },
+    { i: 10, s: 41, pp: 'ἐθέλω, ἐθελήσω, ἠθέλησα, ἠθέληκα, —, —', u: 4 },
+    { i: 11, s: 60, pp: 'θάπτω, θάψω, ἔθαψα, —, τέθαμμαι, ἐτάφην', u: 4 },
+    { i: 12, s: 108, pp: 'τάττω, τάξω, ἔταξα, τέταχα, τέταγμαι, ἐτάχθην', u: 4 },
+    { i: 13, s: 19, pp: 'ἄρχω, ἄρξω, ἦρξα, ἦρχα, ἦργμαι, ἤρχθην', u: 5 },
+    { i: 14, s: 25, pp: 'βλάπτω, βλάψω, ἔβλαψα, βέβλαφα, βέβλαμμαι, ἐβλάβην / ἐβλάφθην', u: 5 },
+    { i: 15, s: 94, pp: 'πείθω, πείσω, ἔπεισα, πέπεικα, πέπεισμαι, ἐπείσθην', u: 5 },
+    { i: 16, s: 100, pp: 'πρᾱ́ττω, πρᾱ́ξω, ἔπρᾱξα, πέπρᾱχα / πέπρᾱγα, πέπρᾱγμαι, ἐπρᾱ́χθην', u: 5 },
+    { i: 17, s: 39, pp: 'δουλεύω, δουλεύσω, ἐδούλευσα, δεδούλευκα, —, —', u: 6 },
+    { i: 18, s: 71, pp: 'κωλῡ́ω, κωλῡ́σω, ἐκώλῡσα, κεκώλῡκα, κεκώλῡμαι, ἐκωλῡ́θην', u: 6 },
+    { i: 19, s: 99, pp: 'πολῑτεύω, πολῑτεύσω, ἐπολῑ́τευσα, πεπολῑ́τευκα, πεπολῑ́τευμαι, ἐπολῑτεύθην', u: 6 },
+    { i: 20, s: 125, pp: 'χορεύω, χορεύσω, ἐχόρευσα, κεχόρευκα, κεχόρευμαι, ἐχορεύθην', u: 6 },
+    { i: 21, s: 69, pp: 'κλέπτω, κλέψω, ἔκλεψα, κέκλοφα, κέκλεμμαι, ἐκλάπην', u: 7 },
+    { i: 22, s: 75, pp: 'λείπω, λείψω, ἔλιπον, λέλοιπα, λέλειμμαι, ἐλείφθην', u: 7 },
+    { i: 23, s: 107, pp: 'σῴζω, σώσω, ἔσωσα, σέσωκα, σέσωσμαι / σέσωμαι, ἐσώθην', u: 7 },
+    { i: 24, s: 2, pp: 'ἄγω, ἄξω, ἤγαγον, ἦχα, ἦγμαι, ἤχθην', u: 8 },
+    { i: 25, s: 59, pp: 'ἥκω, ἥξω, —, —, —, —', u: 8 },
+    { i: 26, s: 3, pp: 'ἀδικέω, ἀδικήσω, ἠδίκησα, ἠδίκηκα, ἠδίκημαι, ἠδικήθην', u: 9 },
+    { i: 27, s: 84, pp: 'νῑκάω, νῑκήσω, ἐνῑ́κησα, νενῑ́κηκα, νενῑ́κημαι, ἐνῑκήθην', u: 9 },
+    { i: 28, s: 98, pp: 'ποιέω, ποιήσω, ἐποίησα, πεποίηκα, πεποίημαι, ἐποιήθην', u: 9 },
+    { i: 29, s: 111, pp: 'τῑμάω, τῑμήσω, ἐτῑ́μησα, τετῑ́μηκα, τετῑ́μημαι, ἐτῑμήθην', u: 9 },
+    { i: 30, s: 1, pp: 'ἀγγέλλω, ἀγγελῶ, ἤγγειλα, ἤγγελκα, ἤγγελμαι, ἠγγέλθην', u: 10 },
+    { i: 31, s: 12, pp: 'ἀξιόω, ἀξιώσω, ἠξίωσα, ἠξίωκα, ἠξίωμαι, ἠξιώθην', u: 10 },
+    { i: 32, s: 34, pp: 'δηλόω, δηλώσω, ἐδήλωσα, δεδήλωκα, δεδήλωμαι, ἐδηλώθην', u: 10 },
+    { i: 33, s: 65, pp: 'καλέω, καλῶ, ἐκάλεσα, κέκληκα, κέκλημαι, ἐκλήθην', u: 10 },
+    { i: 34, s: 80, pp: 'μένω, μενῶ, ἔμεινα, μεμένηκα, —, —', u: 10 },
+    { i: 35, s: 109, pp: 'τελευτάω, τελευτήσω, ἐτελεύτησα, τετελεύτηκα, τετελεύτημαι, ἐτελευτήθην', u: 10 },
+    { i: 36, s: 7, pp: 'ἀκούω, ἀκούσομαι, ἤκουσα, ἀκήκοα, —, ἠκούσθην', u: 11 },
+    { i: 37, s: 13, pp: 'ἀποδέχομαι, ἀποδέξομαι, ἀπεδεξάμην, —, ἀποδέδεγμαι, —', u: 11 },
+    { i: 38, s: 24, pp: 'βάλλω, βαλῶ, ἔβαλον, βέβληκα, βέβλημαι, ἐβλήθην', u: 11 },
+    { i: 39, s: 27, pp: 'βούλομαι, βουλήσομαι, —, —, βεβούλημαι, ἐβουλήθην', u: 11 },
+    { i: 40, s: 33, pp: 'δέχομαι, δέξομαι, ἐδεξάμην, —, δέδεγμαι, —', u: 11 },
+    { i: 41, s: 72, pp: 'λαμβάνω, λήψομαι, ἔλαβον, εἴληφα, εἴλημμαι, ἐλήφθην', u: 11 },
+    { i: 42, s: 92, pp: 'πάσχω, πείσομαι, ἔπαθον, πέπονθα, —, —', u: 11 },
+    { i: 43, s: 10, pp: 'ἀνατίθημι, ἀναθήσω, ἀνέθηκα, ἀνατέθηκα, ἀνατέθειμαι, ἀνετέθην', u: 12 },
+    { i: 44, s: 14, pp: 'ἀποδίδωμι, ἀποδώσω, ἀπέδωκα, ἀποδέδωκα, ἀποδέδομαι, ἀπεδόθην', u: 12 },
+    { i: 45, s: 22, pp: 'ἀφίστημι, ἀποστήσω, ἀπέστησα / ἀπέστην, ἀφέστηκα, ἀφέσταμαι, ἀπεστάθην', u: 12 },
+    { i: 46, s: 37, pp: 'δίδωμι, δώσω, ἔδωκα, δέδωκα, δέδομαι, ἐδόθην', u: 12 },
+    { i: 47, s: 63, pp: 'ἵστημι, στήσω, ἔστησα / ἔστην, ἕστηκα, ἕσταμαι, ἐστάθην', u: 12 },
+    { i: 48, s: 64, pp: 'καθίστημι, καταστήσω, κατέστησα / κατέστην, καθέστηκα, καθέσταμαι, κατεστάθην', u: 12 },
+    { i: 49, s: 66, pp: 'καταλῡ́ω, καταλῡ́σω, κατέλῡσα, καταλέλυκα, καταλέλυμαι, κατελύθην', u: 12 },
+    { i: 50, s: 110, pp: 'τίθημι, θήσω, ἔθηκα, τέθηκα, τέθειμαι, ἐτέθην', u: 12 },
+    { i: 51, s: 121, pp: 'φιλέω, φιλήσω, ἐφίλησα, πεφίληκα, πεφίλημαι, ἐφιλήθην', u: 12 },
+    { i: 52, s: 122, pp: 'φοβέομαι, φοβήσομαι, —, —, πεφόβημαι, ἐφοβήθην', u: 12 },
+    { i: 53, s: 28, pp: 'γίγνομαι, γενήσομαι, ἐγενόμην, γέγονα, γεγένημαι, —', u: 13 },
+    { i: 54, s: 53, pp: 'ἔρχομαι, ἐλεύσομαι, ἦλθον, ἐλήλυθα, —, —', u: 13 },
+    { i: 55, s: 77, pp: 'μανθάνω, μαθήσομαι, ἔμαθον, μεμάθηκα, —, —', u: 13 },
+    { i: 56, s: 78, pp: 'μάχομαι, μαχοῦμαι, ἐμαχεσάμην, —, μεμάχημαι, —', u: 13 },
+    { i: 57, s: 81, pp: 'μεταδίδωμι, μεταδώσω, μετέδωκα, μεταδέδωκα, μεταδέδομαι, μετεδόθην', u: 13 },
+    { i: 58, s: 82, pp: 'μετανίσταμαι, μεταναστήσομαι, μετανέστην, μετανέστηκα, —, —', u: 13 },
+    { i: 59, s: 83, pp: 'μηχανάομαι, μηχανήσομαι, ἐμηχανησάμην, —, μεμηχάνημαι, —', u: 13 },
+    { i: 60, s: 118, pp: 'φεύγω, φεύξομαι, ἔφυγον, πέφευγα, —, —', u: 13 },
+    { i: 61, s: 32, pp: 'δείκνῡμι, δείξω, ἔδειξα, δέδειχα, δέδειγμαι, ἐδείχθην', u: 14 },
+    { i: 62, s: 47, pp: 'ἐπανίσταμαι, ἐπαναστήσομαι, ἐπανέστην, ἐπανέστηκα, —, —', u: 14 },
+    { i: 63, s: 49, pp: 'ἐπιδείκνυμαι, ἐπιδείξομαι, ἐπεδειξάμην, —, ἐπιδέδειγμαι, —', u: 14 },
+    { i: 64, s: 54, pp: 'ἐρωτάω, ἐρωτήσω, ἠρώτησα, ἠρώτηκα, ἠρώτημαι, ἠρωτήθην', u: 14 },
+    { i: 65, s: 73, pp: 'λανθάνω, λήσω, ἔλαθον, λέληθα, —, —', u: 14 },
+    { i: 66, s: 89, pp: 'παραγίγνομαι, παραγενήσομαι, παρεγενόμην, παραγέγονα, παραγεγένημαι, —', u: 14 },
+    { i: 67, s: 90, pp: 'παραδίδωμι, παραδώσω, παρέδωκα, παραδέδωκα, παραδέδομαι, παρεδόθην', u: 14 },
+    { i: 68, s: 91, pp: 'παραμένω, παραμενῶ, παρέμεινα, παραμεμένηκα, —, —', u: 14 },
+    { i: 69, s: 113, pp: 'τυγχάνω, τεύξομαι, ἔτυχον, τετύχηκα, —, —', u: 14 },
+    { i: 70, s: 114, pp: 'ὑπακούω, ὑπακούσομαι, ὑπηκουσα, ὑπακήκοα, —, ὑπηκούσθην', u: 14 },
+    { i: 71, s: 115, pp: 'ὑπομένω, ὑπομενῶ, ὑπέμεινα, ὑπομεμένηκα, —, —', u: 14 },
+    { i: 72, s: 120, pp: 'φθάνω, φθήσομαι, ἔφθασα / ἔφθην, —, —, —', u: 14 },
+    { i: 73, s: 124, pp: 'χαίρω, χαιρήσω, —, κεχάρηκα, —, ἐχάρην', u: 14 },
+    { i: 74, s: 4, pp: 'αἱρέω, αἱρήσω, εἷλον, ᾕρηκα, ᾕρημαι, ᾑρέθην', u: 15 },
+    { i: 75, s: 5, pp: 'αἰσθάνομαι, αἰσθήσομαι, ᾐσθόμην, —, ᾔσθημαι, —', u: 15 },
+    { i: 76, s: 35, pp: 'διαφέρω, διοίσω, διήνεγκα / διήνεγκον, διενήνοχα, διενήνεγμαι, διηνέχθην', u: 15 },
+    { i: 77, s: 42, pp: 'εἰμί, ἔσομαι, —, —, —, —', u: 15 },
+    { i: 78, s: 999, pp: 'ἔστι(ν), ἔσται, —, —, —, —', u: 15 },
+    { i: 79, s: 46, pp: 'ἔξεστι(ν), ἐξέσται, —, —, —, —', u: 15 },
+    { i: 80, s: 51, pp: 'ἕπομαι, ἕψομαι, ἑσπόμην, —, —, —', u: 15 },
+    { i: 81, s: 87, pp: 'ὁράω, ὄψομαι, εἶδον, ἑόρᾱκα / ἑώρᾱκα, ἑώρᾱμαι / ὦμμαι, ὤφθην', u: 15 },
+    { i: 82, s: 104, pp: 'συμφέρω, συνοίσω, συνήνεγκα / συνήνεγκον, συνενήνοχα, συνενήνεγμαι, συνηνέχθην', u: 15 },
+    { i: 83, s: 117, pp: 'φέρω, οἴσω, ἤνεγκα / ἤνεγκον, ἐνήνοχα, ἐνήνεγμαι, ἠνέχθην', u: 15 },
+    { i: 84, s: 9, pp: 'ἀναβαίνω, ἀναβήσομαι, ἀνέβην, ἀναβέβηκα, —, —', u: 16 },
+    { i: 85, s: 23, pp: 'βαίνω, -βήσομαι, -ἔβην, βέβηκα, —, —', u: 16 },
+    { i: 86, s: 29, pp: 'γιγνώσκω, γνώσομαι, ἔγνων, ἔγνωκα, ἔγνωσμαι, ἐγνώσθην', u: 16 },
+    { i: 87, s: 44, pp: 'ἐκπῑ́πτω, ἐκπεσοῦμαι, ἐξέπεσον, ἐκπέπτωκα, —, —', u: 16 },
+    { i: 88, s: 74, pp: 'λέγω, ἐρῶ / λέξω, εἶπον / ἔλεξα, εἴρηκα, εἴρημαι / λέλεγμαι, ἐλέχθην / ἐρρήθην', u: 16 },
+    { i: 89, s: 85, pp: 'νομίζω, νομιῶ, ἐνόμισα, νενόμικα, νενόμισμαι, ἐνομίσθην', u: 16 },
+    { i: 90, s: 96, pp: 'πῑ́πτω, πεσοῦμαι, ἔπεσον, πέπτωκα, —, —', u: 16 },
+    { i: 91, s: 101, pp: 'προδίδωμι, προδώσω, προέδωκα / προύδωκα, προδέδωκα, προδέδομαι, προεδόθην / προυδόθην', u: 16 },
+    { i: 92, s: 119, pp: 'φημί, φήσω, ἔφησα, —, —, —', u: 16 },
+    { i: 93, s: 8, pp: 'ἁμαρτάνω, ἁμαρτήσομαι, ἥμαρτον, ἡμάρτηκα, ἡμάρτημαι, ἡμαρτήθην', u: 17 },
+    { i: 94, s: 38, pp: 'δοκέω, δόξω, ἔδοξα, —, δέδογμαι, -ἐδόχθην', u: 17 },
+    { i: 95, s: 40, pp: 'δύναμαι, δυνήσομαι, —, —, δεδύνημαι, ἐδυνήθην', u: 17 },
+    { i: 96, s: 43, pp: 'εἶμι, —, —, —, —, —', u: 17 },
+    { i: 97, s: 45, pp: 'ἐλαύνω, ἐλῶ, ἤλασα, -ἐλήλακα, ἐλήλαμαι, ἠλάθην', u: 17 },
+    { i: 98, s: 50, pp: 'ἐπίσταμαι, ἐπιστήσομαι, —, —, —, ἠπιστήθην', u: 17 },
+    { i: 99, s: 56, pp: 'ἔχω, ἕξω / σχήσω, ἔσχον, ἔσχηκα, -ἔσχημαι, —', u: 17 },
+    { i: 100, s: 15, pp: 'ἀποθνῄσκω, ἀποθανοῦμαι, ἀπέθανον, τέθνηκα, —, —', u: 18 },
+    { i: 101, s: 17, pp: 'ἀποκτείνω, ἀποκτενῶ, ἀπέκτεινα, ἀπέκτονα, —, —', u: 18 },
+    { i: 102, s: 20, pp: 'ἀφῑ́ημι, ἀφήσω, ἀφῆκα, ἀφεῖκα, ἀφεῖμαι, ἀφείθην', u: 18 },
+    { i: 103, s: 26, pp: 'βουλεύω, βουλεύσω, ἐβούλευσα, βεβούλευκα, βεβούλευμαι, ἐβουλεύθην', u: 18 },
+    { i: 104, s: 48, pp: 'ἐπιβουλεύω, ἐπιβουλεύσω, ἐπεβούλευσα, ἐπιβεβούλευκα, ἐπιβεβούλευμαι, ἐπεβουλεύθην', u: 18 },
+    { i: 105, s: 57, pp: 'ζητέω, ζητήσω, ἐζήτησα, ἐζήτηκα, —, ἐζητήθην', u: 18 },
+    { i: 106, s: 62, pp: 'ῑ̔́ημι, -ἥσω, -ἧκα, -εἷκα, -εἷμαι, -εἵθην', u: 18 },
+    { i: 107, s: 79, pp: 'μέλλω, μελλήσω, ἐμέλλησα, —, —, —', u: 18 },
+    { i: 108, s: 97, pp: 'πιστεύω, πιστεύσω, ἐπίστευσα, πεπίστευκα, πεπίστευμαι, ἐπιστεύθην', u: 18 },
+    { i: 109, s: 103, pp: 'συμβουλεύω, συμβουλεύσω, συνεβούλευσα, συμβεβούλευκα, συμβεβούλευμαι, συνεβουλεύθην', u: 18 },
+    { i: 110, s: 105, pp: 'συνῑ́ημι, συνήσω, συνῆκα, συνεῖκα, συνεῖμαι, συνείθην', u: 18 },
+    { i: 111, s: 6, pp: 'αἰσχῡ́νομαι, αἰσχυνοῦμαι, —, —, ᾔσχυμμαι, ᾐσχύνθην', u: 19 },
+    { i: 112, s: 16, pp: 'ἀποκρῑ́νομαι, ἀποκρινοῦμαι, ἀπεκρῑνάμην, —, ἀποκέκριμαι, —', u: 19 },
+    { i: 113, s: 18, pp: 'ἀπόλλῡμι, ἀπολῶ, ἀπώλεσα / ἀπωλόμην, ἀπολώλεκα / ἀπόλωλα, —, —', u: 19 },
+    { i: 114, s: 11, pp: '—, ἀνερήσομαι, ἀνηρόμην, —, —, —', u: 19 },
+    { i: 115, s: 52, pp: '—, ἐρήσομαι, ἠρόμην, —, —, —', u: 19 },
+    { i: 116, s: 55, pp: 'εὑρίσκω, εὑρήσω, ηὗρον, ηὕρηκα, ηὕρημαι, ηὑρέθην', u: 19 },
+    { i: 117, s: 58, pp: 'ἡγέομαι, ἡγήσομαι, ἡγησάμην, —, ἥγημαι, ἡγήθην', u: 19 },
+    { i: 118, s: 70, pp: 'κρῑ́νω, κρινῶ, ἔκρῑνα, κέκρικα, κέκριμαι, ἐκρίθην', u: 19 },
+    { i: 119, s: 86, pp: 'οἶδα, εἴσομαι, —, —, —, —', u: 19 },
+    { i: 120, s: 106, pp: 'σύνοιδα, συνείσομαι, —, —, —, —', u: 19 },
+    { i: 121, s: 21, pp: 'ἀφικνέομαι, ἀφίξομαι, ἀφῑκόμην, —, ἀφῖγμαι, —', u: 20 },
+    { i: 122, s: 31, pp: 'δεῖ, δεήσει, ἐδέησε(ν), —, —, —', u: 20 },
+    { i: 123, s: 67, pp: 'κεῖμαι, κείσομαι, —, —, —, —', u: 20 },
+    { i: 124, s: 102, pp: 'πυνθάνομαι, πεύσομαι, ἐπυθόμην, —, πέπυσμαι, —', u: 20 },
+    { i: 125, s: 112, pp: 'τρέπω, τρέψω, ἔτρεψα / ἐτραπόμην, τέτροφα, τέτραμμαι, ἐτράπην / ἐτρέφθην', u: 20 },
+    { i: 126, s: 116, pp: 'φαίνω, φανῶ, ἔφηνα, πέφηνα, πέφασμαι, ἐφάνην', u: 20 },
+    { i: 127, s: 126, pp: 'χρή, χρῆσται, —, —, —, —', u: 20 }
   ];
   </script>
 </body>
