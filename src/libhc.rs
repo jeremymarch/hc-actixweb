@@ -663,9 +663,12 @@ pub async fn hc_get_sessions(
     Ok(res)
 }
 
-fn get_verbs_by_unit(units:&str, verbs: &[Arc<HcGreekVerb>]) -> Option<String> {
-    let u:Vec<u32> = units.split(',').map(|x| x.parse::<u32>().unwrap()).collect();
-    let mut verb_ids:Vec<u32> = vec![];
+fn get_verbs_by_unit(units: &str, verbs: &[Arc<HcGreekVerb>]) -> Option<String> {
+    let u: Vec<u32> = units
+        .split(',')
+        .map(|x| x.parse::<u32>().unwrap())
+        .collect();
+    let mut verb_ids: Vec<u32> = vec![];
     for unit in u {
         for v in verbs {
             if v.hq_unit == unit {
@@ -673,10 +676,9 @@ fn get_verbs_by_unit(units:&str, verbs: &[Arc<HcGreekVerb>]) -> Option<String> {
             }
         }
     }
-    if verb_ids.len() > 0 {
-        Some(verb_ids.iter().map( |&i| i.to_string() + ",").collect())
-    }
-    else {
+    if !verb_ids.is_empty() {
+        Some(verb_ids.iter().map(|&i| i.to_string() + ",").collect())
+    } else {
         None
     }
 }

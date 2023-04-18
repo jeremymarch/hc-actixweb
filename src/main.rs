@@ -1181,7 +1181,7 @@ mod tests {
             .await
             .unwrap();
 
-        let csq = CreateSessionQuery {
+        let mut csq = CreateSessionQuery {
             qtype: "abc".to_string(),
             name: None,
             verbs: Some("20".to_string()),
@@ -1195,7 +1195,7 @@ mod tests {
             max_time: 30,
         };
 
-        let session_uuid = hc_insert_session(&db, uuid1, &csq, &verbs, timestamp).await;
+        let session_uuid = hc_insert_session(&db, uuid1, &mut csq, &verbs, timestamp).await;
         //assert!(res.is_ok());
 
         let aq = AskQuery {
@@ -2176,7 +2176,7 @@ mod tests {
             .await
             .unwrap();
 
-        let csq = CreateSessionQuery {
+        let mut csq = CreateSessionQuery {
             qtype: "abc".to_string(),
             name: None,
             verbs: Some("20".to_string()),
@@ -2190,7 +2190,7 @@ mod tests {
             max_time: 30,
         };
 
-        let session_uuid = hc_insert_session(&db, uuid1, &csq, &verbs, timestamp).await;
+        let session_uuid = hc_insert_session(&db, uuid1, &mut csq, &verbs, timestamp).await;
         //assert!(res.is_ok());
 
         let aq = AskQuery {
