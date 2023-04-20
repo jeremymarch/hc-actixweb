@@ -764,7 +764,7 @@ pub async fn hc_insert_session(
                     name: None,
                     highest_unit,
                     custom_verbs: info.verbs.clone(),
-                    custom_params: None,
+                    custom_params: info.params.clone(),
                     max_changes: info.max_changes,
                     challenger_score: None,
                     challenged_score: None,
