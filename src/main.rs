@@ -220,6 +220,14 @@ static PPS: &str = r##"παιδεύω, παιδεύσω, ἐπαίδευσα, π
 //         timestamp: i64) -> Result<Uuid, sqlx::Error>;
 // }
 
+#[derive(Serialize)]
+struct GetMovesResponse {
+    response_to: String,
+    session_id: Uuid,
+    moves: Vec<MoveResult>,
+    success: bool,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum MoveType {
     Practice,
@@ -301,6 +309,12 @@ pub struct SessionsListResponse {
 
 #[derive(Deserialize, Serialize)]
 pub struct GetMoveQuery {
+    qtype: String,
+    session_id: sqlx::types::Uuid,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct GetMovesQuery {
     qtype: String,
     session_id: sqlx::types::Uuid,
 }
@@ -482,6 +496,32 @@ async fn get_sessions(
         let res = StatusResponse {
             response_to: "getsessions".to_string(),
             mesg: "error inserting: not logged in".to_string(),
+            success: false,
+        };
+        Ok(HttpResponse::Ok().json(res))
+    }
+}
+
+async fn get_game_moves(
+    (info, session, req): (web::Form<GetMovesQuery>, Session, HttpRequest),
+) -> Result<HttpResponse, AWError> {
+    let db = req.app_data::<HcDb>().unwrap();
+
+    if let Some(_user_id) = login::get_user_id(session.clone()) {
+        let res = GetMovesResponse {
+            response_to: "getgamemoves".to_string(),
+            session_id: info.session_id,
+            moves: libhc::hc_get_game_moves(db, &info)
+                .await
+                .map_err(map_sqlx_error)?,
+            success: true,
+        };
+
+        Ok(HttpResponse::Ok().json(res))
+    } else {
+        let res = StatusResponse {
+            response_to: "getmoves".to_string(),
+            mesg: "error getting moves: not logged in".to_string(),
             success: false,
         };
         Ok(HttpResponse::Ok().json(res))
@@ -986,6 +1026,7 @@ fn config(cfg: &mut web::ServiceConfig) {
         .service(web::resource("/new").route(web::post().to(create_session)))
         .service(web::resource("/list").route(web::post().to(get_sessions)))
         .service(web::resource("/getmove").route(web::post().to(get_move)))
+        .service(web::resource("/getgamemoves").route(web::post().to(get_game_moves)))
         .service(web::resource("/ask").route(web::post().to(ask)))
         .service(web::resource("/mf").route(web::post().to(mf)))
         .service(

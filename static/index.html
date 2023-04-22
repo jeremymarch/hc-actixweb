@@ -1372,6 +1372,10 @@ a {color:blue;}
         q(".gamerow[data-uuid='" + data.session_id + "']").classList.remove('myturn');
       }
       setUI(data);
+    } else if (data.response_to === 'getgamemoves' && data.success) {
+      for (let i = 0; i < data.moves.length; i++) {
+        console.log(data.moves[i]); // fix me to do
+      }
     } else if (data.response_to === 'getsessions' && data.success) {
       if (data.username) {
         document.body.classList.add('loggedin');
@@ -1430,6 +1434,13 @@ a {color:blue;}
       for (let i = 0; i < rowItems.length; i++) {
         if (rowItems[i].id !== 'newGameRow') {
           rowItems[i].addEventListener('click', getMove, false);
+        }
+      }
+
+      const rowItems2 = document.querySelectorAll('.gamerowtodofixme');
+      for (let i = 0; i < rowItems2.length; i++) {
+        if (rowItems2[i].id !== 'newGameRow') {
+          rowItems2[i].addEventListener('click', getGameMoves, false);
         }
       }
 
@@ -1700,6 +1711,11 @@ a {color:blue;}
       const sendData = { qtype: 'getmove', session_id: globalSessionId };
       genericSendRequest('getmove', sendData, null);
     }
+  }
+
+  function getGameMoves (sessionId) {
+    const sendData = { qtype: 'getgamemoves', session_id: sessionId };
+    genericSendRequest('getgamemoves', sendData, null);
   }
 
   function getSessions (withCurrentGame) {

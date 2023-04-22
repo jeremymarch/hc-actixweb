@@ -152,6 +152,23 @@ impl HcDb {
         Ok(uuid)
     }
 
+    pub async fn get_game_moves(
+        &self,
+        session_id: sqlx::types::Uuid,
+    ) -> Result<Vec<MoveResult>, sqlx::Error> {
+        let query = "SELECT * \
+        FROM moves \
+        where session_id = $1 \
+        ORDER BY asktimestamp DESC;";
+
+        let res: Vec<MoveResult> = sqlx::query_as(query)
+            .bind(session_id)
+            .fetch_all(&self.db)
+            .await?;
+
+        Ok(res)
+    }
+
     pub async fn get_sessions(
         &self,
         user_id: sqlx::types::Uuid,

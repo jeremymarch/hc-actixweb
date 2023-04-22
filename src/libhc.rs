@@ -683,6 +683,15 @@ fn get_verbs_by_unit(units: &str, verbs: &[Arc<HcGreekVerb>]) -> Option<String> 
     }
 }
 
+pub async fn hc_get_game_moves(
+    db: &HcDb,
+    info: &GetMovesQuery,
+) -> Result<Vec<MoveResult>, sqlx::Error> {
+    let res = db.get_game_moves(info.session_id).await?;
+
+    Ok(res)
+}
+
 pub async fn hc_insert_session(
     db: &HcDb,
     user_id: Uuid,
