@@ -509,7 +509,7 @@ a {color:blue;}
                   <div class="newrow">
                     <div class="newcol1">Name:</div>
                     <div class="newcol2">
-                      <input id="gamename" type="text" value="" class="newgameinput" placeholder="(Optional)"/>
+                      <input id="gamename" type="text" value="" class="newgameinput" maxlength="40" placeholder="(Optional)"/>
                     </div>
                   </div>
                     <div class="newrow"><div class="newcol1">Type:</div>
@@ -529,7 +529,7 @@ a {color:blue;}
                     <div class="expand-container">
                         <div id="opponentrow" class="newrow expand-contract">
                           <div class="newcol1">Opponent:</div>
-                          <div class="newcol2"><input id="opponentinput" type="text" class="newgameinput"/></div>
+                          <div class="newcol2"><input id="opponentinput" type="text" class="newgameinput" maxlength="40"/></div>
                         </div>
                     </div>
                     <div class="newrow">
@@ -1582,7 +1582,7 @@ a {color:blue;}
       max_time: maxTime
     };
     if (name !== null) {
-      sendData.name = name;
+      sendData.name = name.substr(0, 40); // max 40 characters
     }
     if (verbs !== null) {
       sendData.verbs = verbs;
