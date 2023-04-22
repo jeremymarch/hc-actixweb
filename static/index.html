@@ -1383,26 +1383,47 @@ a {color:blue;}
         globalUserName = null;
       }
 
-      let rows = '';
+      const frag = new DocumentFragment();
+      const dlist = document.createElement('div');
+      dlist.id = 'list';
+      frag.appendChild(dlist);
       for (let i = 0; i < data.sessions.length; i++) {
+        const d = document.createElement('div');
         const s = data.sessions[i];
         if (s.move_type !== 'FirstMoveTheirTurn') { // do not show if first move not asked yet and I did not start game
-          rows += "<div data-uuid='" + s.session_id + "' ";
-          rows += "data-max-changes='" + s.max_changes + "' ";
-          rows += "data-max-time='" + s.max_time + "' ";
-          rows += "data-countdown='" + (s.countdown !== 0) + "' ";
-          rows += "class='gamerow" + (s.myturn && s.move_type !== 'Practice' ? ' myturn' : '');
-          rows += (s.session_id === globalSessionId ? ' selectedGame' : '') + "' ";
-          rows += (s.opponent_name ? "opponent='" + s.opponent_name + "' " : '');
-          rows += "title='" + s.move_type + "'><span class='gamespan'>";
-          rows += (s.move_type === 'Practice' ? 'Practice' : (globalUserName || 'Game'));
-          rows += (s.opponent_name ? ' vs. ' + s.opponent_name : '');
-          rows += (s.move_type !== 'Practice' ? (' (' + s.my_score + ' - ' + s.their_score + ')') : '');
-          rows += myturnIcon + '</span></div>';
+          d.setAttribute('data-uuid', s.session_id);
+          d.setAttribute('data-max-changes', s.max_changes);
+          d.setAttribute('data-max-time', (s.countdown !== 0));
+          d.classList.add('gamerow');
+          if (s.myturn && s.move_type !== 'Practice') {
+            d.classList.add('myturn');
+          }
+          if (s.session_id === globalSessionId) {
+            d.classList.add('selectedGame');
+          }
+          if (s.opponent_name) {
+            d.setAttribute('opponent', s.opponent_name);
+          }
+          d.setAttribute('title', s.move_type);
+          const sp = document.createElement('span');
+          sp.classList.add('gamespan');
+          if (s.name) {
+            sp.innerText = s.name;
+          } else {
+            sp.innerText = (s.move_type === 'Practice' ? 'Practice' : (globalUserName || 'Game'));
+          }
+          if (s.opponent_name) {
+            sp.innerText += ' vs. ' + s.opponent_name;
+          }
+          if (s.move_type !== 'Practice') {
+            sp.innerText += ' (' + s.my_score + ' - ' + s.their_score + ')';
+          }
+          sp.innerHTML += myturnIcon;
+          d.appendChild(sp);
+          dlist.appendChild(d);
         }
-        // q(".gamerow[data-uuid='b72df91e-3a4c-4f1b-aeda-c14fea61def6']").style.backgroundColor = "blue";
       }
-      q('#list').innerHTML = rows;
+      q('#list').parentNode.replaceChild(frag, q('#list'));
 
       // fix me need to exclude New row from here
       const rowItems = document.querySelectorAll('.gamerow');
@@ -1542,7 +1563,6 @@ a {color:blue;}
 
     const sendData = {
       qtype: 'newsession',
-      name,
       params: verbParams,
       opponent: opponentv,
       practice_reps_per_verb: reps,
@@ -1550,6 +1570,9 @@ a {color:blue;}
       max_changes: maxChanges,
       max_time: maxTime
     };
+    if (name !== null) {
+      sendData.name = name;
+    }
     if (verbs !== null) {
       sendData.verbs = verbs;
     } else if (units !== null) {
