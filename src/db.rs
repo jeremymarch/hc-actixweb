@@ -55,7 +55,7 @@ impl HcDb {
         let _res = sqlx::query(&query)
             .bind(points)
             .bind(session_id)
-            .execute(&mut *tx)
+            .execute(&mut **tx)
             .await?;
 
         Ok(1)
@@ -146,7 +146,7 @@ impl HcDb {
             .bind(info.countdown as i32)
             .bind(info.max_time)
             .bind(timestamp)
-            .execute(&mut *tx)
+            .execute(&mut **tx)
             .await?;
 
         Ok(uuid)
@@ -208,7 +208,7 @@ impl HcDb {
                     max_changes: rec.get("max_changes"),
                 }
             })
-            .fetch_all(&mut tx)
+            .fetch_all(&mut *tx)
             .await?;
 
         /*let res2 = match res {
@@ -246,7 +246,7 @@ impl HcDb {
         let res: MoveResult = sqlx::query_as(query)
             .bind(session_id)
             .bind(1)
-            .fetch_one(&mut *tx)
+            .fetch_one(&mut **tx)
             .await?;
 
         Ok(res)
@@ -268,7 +268,7 @@ impl HcDb {
         let res: Vec<MoveResult> = sqlx::query_as(query)
             .bind(session_id)
             .bind(n as i32)
-            .fetch_all(&mut *tx)
+            .fetch_all(&mut **tx)
             .await?;
 
         Ok(res)
@@ -303,7 +303,7 @@ impl HcDb {
 
         let res: SessionResult = sqlx::query_as(query)
             .bind(session_id)
-            .fetch_one(&mut *tx)
+            .fetch_one(&mut **tx)
             .await?;
 
         Ok(res)
@@ -365,7 +365,7 @@ impl HcDb {
             .bind(info.voice)
             .bind(timestamp)
             //answer timestamp
-            .execute(&mut *tx)
+            .execute(&mut **tx)
             .await?;
 
         Ok(uuid)
@@ -423,7 +423,7 @@ impl HcDb {
             .bind(info.timed_out)
             .bind(timestamp)
             .bind(m.move_id)
-            .execute(&mut *tx)
+            .execute(&mut **tx)
             .await?;
 
         Ok(1)
@@ -473,7 +473,7 @@ impl HcDb {
     UNIQUE(user_name)
     );"#;
 
-        let _res = sqlx::query(query).execute(&mut tx).await?;
+        let _res = sqlx::query(query).execute(&mut *tx).await?;
 
         let query = r#"CREATE TABLE IF NOT EXISTS sessions ( 
     session_id UUID PRIMARY KEY NOT NULL, 
@@ -495,7 +495,7 @@ impl HcDb {
     FOREIGN KEY (challenger_user_id) REFERENCES users(user_id), 
     FOREIGN KEY (challenged_user_id) REFERENCES users(user_id)
     );"#;
-        let _res = sqlx::query(query).execute(&mut tx).await?;
+        let _res = sqlx::query(query).execute(&mut *tx).await?;
 
         let query = r#"CREATE TABLE IF NOT EXISTS moves ( 
     move_id UUID PRIMARY KEY NOT NULL, 
@@ -520,10 +520,10 @@ impl HcDb {
     FOREIGN KEY (answer_user_id) REFERENCES users(user_id), 
     FOREIGN KEY (session_id) REFERENCES sessions(session_id) 
     );"#;
-        let _res = sqlx::query(query).execute(&mut tx).await?;
+        let _res = sqlx::query(query).execute(&mut *tx).await?;
 
         let query = "CREATE INDEX IF NOT EXISTS move_session_id_idx ON moves (session_id);";
-        let _res = sqlx::query(query).execute(&mut tx).await?;
+        let _res = sqlx::query(query).execute(&mut *tx).await?;
 
         tx.commit().await?;
 

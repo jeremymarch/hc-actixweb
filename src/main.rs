@@ -962,7 +962,7 @@ async fn main() -> io::Result<()> {
 
     //4. or load from env
     //e.g. export HCKEY=56d520157194bdab7aec18755508bf6d063be7a203ddb61ebaa203eb1335c2ab3c13ecba7fc548f4563ac1d6af0b94e6720377228230f210ac51707389bf3285
-    let string_key_64_bytes = std::env::var("HCKEY").unwrap_or_else(|_| panic!("Key env not set."));
+    let string_key_64_bytes = std::env::var("HCKEY").unwrap_or_else(|_| panic!("Key env not set: HCKEY."));
     let key = hex::decode(string_key_64_bytes).expect("Decoding key failed");
     let secret_key = Key::from(&key);
 

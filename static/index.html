@@ -449,6 +449,15 @@ a {color:blue;}
 .newcol1 {width:125px;}
 .newgameinput { width:100%;}
 
+.game-expander {
+  display: inline-block;
+  height: 15px;
+  width: 15px;
+  margin-right: 1rem;
+  background-color: red;
+  border-radius:4px;
+}
+
 @media only screen and (max-width: 800px) {
   .hcform {
     width:100%;
@@ -1373,9 +1382,12 @@ a {color:blue;}
       }
       setUI(data);
     } else if (data.response_to === 'getgamemoves' && data.success) {
+      const frag = new DocumentFragment();
+      const d = q(".gamerow[data-uuid='" + data.session_id + "']");
       for (let i = 0; i < data.moves.length; i++) {
-        console.log(data.moves[i]); // fix me to do
+        makeMoveRow(frag, data.moves[i], (i > 0 ? data.moves[i - 1] : null));
       }
+      d.appendChild(frag);
     } else if (data.response_to === 'getsessions' && data.success) {
       if (data.username) {
         document.body.classList.add('loggedin');
@@ -1393,6 +1405,9 @@ a {color:blue;}
       frag.appendChild(dlist);
       for (let i = 0; i < data.sessions.length; i++) {
         const d = document.createElement('div');
+        const arrow = document.createElement('div');
+        arrow.classList.add('game-expander');
+        d.appendChild(arrow);
         const s = data.sessions[i];
         if (s.move_type !== 'FirstMoveTheirTurn') { // do not show if first move not asked yet and I did not start game
           d.setAttribute('data-uuid', s.session_id);
@@ -1427,7 +1442,8 @@ a {color:blue;}
           dlist.appendChild(d);
         }
       }
-      q('#list').parentNode.replaceChild(frag, q('#list'));
+      const list = q('#list');
+      list.parentNode.replaceChild(frag, list);
 
       // fix me need to exclude New row from here
       const rowItems = document.querySelectorAll('.gamerow');
@@ -1437,11 +1453,11 @@ a {color:blue;}
         }
       }
 
-      const rowItems2 = document.querySelectorAll('.gamerowtodofixme');
+      const rowItems2 = document.querySelectorAll('.game-expander');
       for (let i = 0; i < rowItems2.length; i++) {
-        if (rowItems2[i].id !== 'newGameRow') {
-          rowItems2[i].addEventListener('click', getGameMoves, false);
-        }
+        // if (rowItems2[i].parid !== 'newGameRow') {
+        rowItems2[i].addEventListener('click', getGameMoves, false);
+        // }
       }
 
       // q("#refreshbutton").style.display = "block";
@@ -1451,6 +1467,75 @@ a {color:blue;}
         setUI(data.current_session);
       }
     }
+  }
+
+  function makeMoveRow (frag, row, prevRow) {
+    // console.log('moves: ' + row.session_id); // fix me to do
+
+    const params = {};
+    if (row.person === 0) {
+      params.person = '1st';
+    } else if (row.person === 1) {
+      params.person = '2nd';
+    } else if (row.person === 2) {
+      params.person = '3rd';
+    } else {
+      params.person = '';
+    }
+
+    if (row.number === 0) {
+      params.number = 'sing.';
+    } else if (row.number === 1) {
+      params.number = 'pl.';
+    } else {
+      params.number = '';
+    }
+
+    if (row.tense === 0) {
+      params.tense = 'pres.';
+    } else if (row.tense === 1) {
+      params.tense = 'imperf.';
+    } else if (row.tense === 2) {
+      params.tense = 'fut.';
+    } else if (row.tense === 3) {
+      params.tense = 'aor.';
+    } else if (row.tense === 4) {
+      params.tense = 'perf.';
+    } else if (row.tense === 5) {
+      params.tense = 'plup.';
+    } else {
+      params.tense = '';
+    }
+
+    if (row.mood === 0) {
+      params.mood = 'indic.';
+    } else if (row.mood === 1) {
+      params.mood = 'subj.';
+    } else if (row.mood === 2) {
+      params.mood = 'opt.';
+    } else if (row.mood === 3) {
+      params.mood = 'imper.';
+    } else {
+      params.mood = '';
+    }
+
+    if (row.voice === 0) {
+      params.voice = 'act.';
+    } else if (row.voice === 1) {
+      params.voice = 'mid.';
+    } else if (row.voice === 2) {
+      params.voice = 'pass.';
+    } else {
+      params.voice = '';
+    }
+    const dd = document.createElement('div');
+    dd.innerText = params.person + ' ' +
+      params.number + ' ' +
+      params.tense + ' ' +
+      params.mood + ' ' +
+      params.voice + ' ' +
+      row.correct_answer;
+    frag.appendChild(dd);
   }
 
   function serialize (obj) {
@@ -1713,7 +1798,8 @@ a {color:blue;}
     }
   }
 
-  function getGameMoves (sessionId) {
+  function getGameMoves () {
+    const sessionId = this.parentNode.getAttribute('data-uuid');
     const sendData = { qtype: 'getgamemoves', session_id: sessionId };
     genericSendRequest('getgamemoves', sendData, null);
   }
@@ -2102,14 +2188,22 @@ a {color:blue;}
   function addSecondsToTime (secs) {
     globalCountDownDate += (secs * 1000);
   }
-  
+
+  function getMSNow () {
+    if (typeof (performance) === 'object' && typeof (performance.now) === 'function') {
+      return performance.now();
+    } else {
+      return Date.now();
+    }
+  }
+
   const useRequestAnimationFrame = true;
   function startTimer () {
     const session = q('.gamerow.selectedGame');
     globalSeconds = parseInt(session.getAttribute('data-max-time'));
     globalCountDown = (session.getAttribute('data-countdown') === 'true');
     globalTimedOut = false;
-    globalCountDownDate = new Date().getTime();
+    globalCountDownDate = getMSNow();
     if (globalCountDown) {
       globalCountDownDate += (globalSeconds * 1000);
     }
@@ -2131,7 +2225,7 @@ a {color:blue;}
   }
 
   function intervalFunc () {
-    const now = new Date().getTime();
+    const now = getMSNow();
     let distance = 0;
     if (globalCountDown) {
       distance = globalCountDownDate - now;
@@ -2393,8 +2487,7 @@ a {color:blue;}
         list.appendChild(li);
       }
       fragment.appendChild(list);
-      listContainer.innerHTML = '';
-      listContainer.append(fragment);
+      listContainer.replaceChildren(fragment);
 
       // const rowItems = document.querySelectorAll('.verbunitrowlabel');
       // for (let i = 0; i < rowItems.length; i++) {
