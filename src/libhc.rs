@@ -22,6 +22,7 @@ use polytonic_greek::hgk_compare_multiple_forms;
 use polytonic_greek::hgk_compare_sqlite;
 use rand::prelude::SliceRandom;
 use sqlx::Postgres;
+use sqlx::Any;
 use std::collections::HashSet;
 
 pub async fn get_session_state(
@@ -38,7 +39,7 @@ pub async fn get_session_state(
 }
 
 pub async fn get_session_state_tx<'a, 'b>(
-    tx: &'a mut sqlx::Transaction<'b, Postgres>,
+    tx: &'a mut sqlx::Transaction<'b, Any>,
     db: &HcDb,
     user_id: sqlx::types::Uuid,
     session_id: sqlx::types::Uuid,
@@ -474,7 +475,7 @@ pub fn hc_change_verbs(verb_history: &Vec<i32>, reps: usize) -> bool {
 }
 
 async fn ask_practice<'a, 'b>(
-    tx: &'a mut sqlx::Transaction<'b, Postgres>,
+    tx: &'a mut sqlx::Transaction<'b, Any>,
     db: &HcDb,
     mut prev_form: HcGreekVerbForm,
     session: &SessionResult,

@@ -29,7 +29,7 @@ use crate::SessionsListQuery;
 use crate::UserResult;
 use sqlx::types::Uuid;
 use sqlx::Row;
-
+use sqlx::Any;
 use sqlx::postgres::PgRow;
 use sqlx::Postgres;
 
@@ -44,7 +44,7 @@ impl HcDb {
 
     pub async fn add_to_score<'a, 'b>(
         &self,
-        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+        tx: &'a mut sqlx::Transaction<'b, Any>,
         session_id: Uuid,
         user_to_score: &str,
         points: i32,
@@ -107,7 +107,7 @@ impl HcDb {
 
     pub async fn insert_session_tx<'a, 'b>(
         &self,
-        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+        tx: &'a mut sqlx::Transaction<'b, Any>,
         user_id: Uuid,
         highest_unit: Option<i16>,
         opponent_id: Option<Uuid>,
@@ -233,7 +233,7 @@ impl HcDb {
 
     pub async fn get_last_move_tx<'a, 'b>(
         &self,
-        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+        tx: &'a mut sqlx::Transaction<'b, Any>,
         session_id: sqlx::types::Uuid,
     ) -> Result<MoveResult, sqlx::Error> {
         let query = "SELECT * \
@@ -254,7 +254,7 @@ impl HcDb {
 
     pub async fn get_last_n_moves<'a, 'b>(
         &self,
-        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+        tx: &'a mut sqlx::Transaction<'b, Any>,
         session_id: sqlx::types::Uuid,
         n: u8,
     ) -> Result<Vec<MoveResult>, sqlx::Error> {
@@ -293,7 +293,7 @@ impl HcDb {
 
     pub async fn get_session_tx<'a, 'b>(
         &self,
-        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+        tx: &'a mut sqlx::Transaction<'b, Any>,
         session_id: sqlx::types::Uuid,
     ) -> Result<SessionResult, sqlx::Error> {
         let query = "SELECT * \
@@ -345,7 +345,7 @@ impl HcDb {
 
     pub async fn insert_ask_move_tx<'a, 'b>(
         &self,
-        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+        tx: &'a mut sqlx::Transaction<'b, Any>,
         user_id: Option<Uuid>,
         info: &AskQuery,
         timestamp: i64,
@@ -402,7 +402,7 @@ impl HcDb {
     #[allow(clippy::too_many_arguments)]
     pub async fn update_answer_move_tx<'a, 'b>(
         &self,
-        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+        tx: &'a mut sqlx::Transaction<'b, Any>,
         info: &AnswerQuery,
         user_id: Uuid,
         correct_answer: &str,

@@ -63,6 +63,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::types::Uuid;
 use sqlx::FromRow;
+use sqlx::AnyPool;
 
 use hoplite_verbs_rs::*;
 mod db;
@@ -77,7 +78,7 @@ async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
 #[derive(Clone, Debug)]
 pub struct HcDb {
     //db:SqlitePool,
-    db: sqlx::postgres::PgPool,
+    db: sqlx::AnyPool,
 }
 
 static PPS: &str = r##"παιδεύω, παιδεύσω, ἐπαίδευσα, πεπαίδευκα, πεπαίδευμαι, ἐπαιδεύθην % 2
@@ -896,6 +897,11 @@ fn load_verbs(_path: &str) -> Vec<Arc<HcGreekVerb>> {
     verbs
 }
 
+async fn get_db(conn: &str) -> Result<AnyPool, sqlx::Error> {
+    sqlx::any::install_default_drivers(); // https://docs.rs/sqlx/latest/sqlx/type.AnyPool.html
+    AnyPool::connect(conn).await
+}
+
 #[actix_web::main]
 async fn main() -> io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=info");
@@ -928,12 +934,14 @@ async fn main() -> io::Result<()> {
     let db_string = std::env::var("HOPLITE_DB")
         .unwrap_or_else(|_| panic!("Environment variable for db string not set: HOPLITE_DB."));
 
+    //let s = "postgres://jwm:1234@localhost/hctest";
     let hcdb = HcDb {
-        db: PgPoolOptions::new()
-            .max_connections(5)
-            .connect(&db_string)
-            .await
-            .expect("Could not connect to db."),
+        db: get_db(&db_string).await.unwrap()
+        // db: PgPoolOptions::new()
+        //     .max_connections(5)
+        //     .connect(&db_string)
+        //     .await
+        //     .expect("Could not connect to db."),
     };
 
     // let hcdb = HcDb { db: SqlitePool::connect_with(options)
