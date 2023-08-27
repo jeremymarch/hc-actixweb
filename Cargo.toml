@@ -15,14 +15,14 @@ actix-web-flash-messages = { git = "https://github.com/jeremymarch/actix-web-fla
 
 sqlx = { version = "0.7.1", features = ["postgres", "runtime-tokio-rustls", "any", "macros", "uuid"] }
 
-serde = { version = "1.0.173", features = ["derive"] }
-serde_json = "1.0.103"
+serde = { version = "1.0.188", features = ["derive"] }
+serde_json = "1.0.105"
 #serde_repr = "0.1.9"
 
 futures = "0.3.28"
 env_logger = "0.10.0"
-log = "0.4.19"
-thiserror = "1.0.43"
+log = "0.4.20"
+thiserror = "1.0.47"
 secrecy = { version = "0.8.0", features = ["serde"] }
 argon2 = { version = "0.5.1", features = ["std"] }
 #https://www.reddit.com/r/rust/comments/qamgyh/comment/hh3u59e/?utm_source=share&utm_medium=web2x&context=3
@@ -36,7 +36,7 @@ uuid = { version = "1.4.1", features = ["v4", "serde"] }
 hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.3.9" }
 
 [dev-dependencies]
-tokio = "1.29.1"
+tokio = "1.32.0"
 
 [profile.release]
 opt-level = 3

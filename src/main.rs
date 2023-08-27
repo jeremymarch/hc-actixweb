@@ -52,7 +52,7 @@ const SECS_IN_10_YEARS: i64 = 60 * 60 * 24 * 7 * 4 * 12 * 10;
 //use std::fs::File;
 //use std::io::BufReader;
 //use std::io::BufRead;
-
+use rand::Rng;
 use std::io;
 
 //use uuid::Uuid;
@@ -458,6 +458,20 @@ fn _get_ip(req: &HttpRequest) -> Option<String> {
 fn get_timestamp() -> i64 {
     let now = Utc::now();
     now.timestamp()
+}
+
+static INDEX_PAGE: &str = include_str!("index.html");
+static CSP: &str = "style-src 'nonce-%NONCE%';script-src 'nonce-%NONCE%' 'wasm-unsafe-eval' \
+                    'unsafe-inline'; object-src 'none'; base-uri 'none'";
+
+async fn index_page() -> Result<HttpResponse, AWError> {
+    let mut rng = rand::thread_rng();
+    let csp_nonce: String = rng.gen::<u32>().to_string();
+
+    Ok(HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .insert_header((CONTENT_SECURITY_POLICY, CSP.replace("%NONCE%", &csp_nonce)))
+        .body(INDEX_PAGE.replace("%NONCE%", &csp_nonce)))
 }
 
 async fn get_sessions(
@@ -984,12 +998,15 @@ async fn main() -> io::Result<()> {
             .app_data(hcdb.clone())
             .app_data(web::Data::from(app_state.clone()))
             .app_data(web::Data::new(server.clone()))
-            .wrap(middleware::DefaultHeaders::new()
-                .add((CONTENT_SECURITY_POLICY,
-                    HeaderValue::from_static("style-src 'nonce-2726c7f26c';\
-                        script-src 'nonce-2726c7f26c' 'wasm-unsafe-eval' 'unsafe-inline'; object-src 'none'; base-uri 'none'")))
-                .add((STRICT_TRANSPORT_SECURITY,
-                    HeaderValue::from_static("max-age=31536000" /* 1 year */ )))
+            .wrap(
+                middleware::DefaultHeaders::new()
+                    // .add((CONTENT_SECURITY_POLICY,
+                    //     HeaderValue::from_static("style-src 'nonce-2726c7f26c';\
+                    //         script-src 'nonce-2726c7f26c' 'wasm-unsafe-eval' 'unsafe-inline'; object-src 'none'; base-uri 'none'")))
+                    .add((
+                        STRICT_TRANSPORT_SECURITY,
+                        HeaderValue::from_static("max-age=31536000" /* 1 year */),
+                    )),
             )
             .wrap(middleware::Compress::default()) // enable automatic response compression - usually register this first
             .wrap(
@@ -1015,7 +1032,8 @@ async fn main() -> io::Result<()> {
 }
 
 fn config(cfg: &mut web::ServiceConfig) {
-    cfg.route("/login", web::get().to(login::login_get))
+    cfg.route("/", web::get().to(index_page))
+        .route("/login", web::get().to(login::login_get))
         .route("/login", web::post().to(login::login_post))
         .route("/newuser", web::get().to(login::new_user_get))
         .route("/newuser", web::post().to(login::new_user_post))
