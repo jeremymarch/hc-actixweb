@@ -17,12 +17,178 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use super::*;
 use polytonic_greek::hgk_compare_multiple_forms;
 use polytonic_greek::hgk_compare_sqlite;
 use rand::prelude::SliceRandom;
 use sqlx::Postgres;
 use std::collections::HashSet;
+use sqlx::types::Uuid;
+use hoplite_verbs_rs::*;
+pub mod db;
+use db::HcDb;
+use std::sync::Arc;
+use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
+
+#[derive(Deserialize, Serialize, FromRow)]
+pub struct UserResult {
+    user_id: sqlx::types::Uuid,
+    user_name: String,
+    password: String,
+    email: String,
+    user_type: i32,
+    timestamp: i64,
+}
+
+#[derive(Deserialize)]
+pub struct AnswerQuery {
+    #[allow(dead_code)]
+    pub qtype: String,
+    pub answer: String,
+    pub time: String,
+    pub mf_pressed: bool,
+    pub timed_out: bool,
+    pub session_id: Uuid,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct AskQuery {
+    pub qtype: String,
+    pub session_id: Uuid,
+    pub person: i16,
+    pub number: i16,
+    pub tense: i16,
+    pub voice: i16,
+    pub mood: i16,
+    pub verb: i32,
+}
+
+#[derive(Deserialize, Serialize, FromRow)]
+pub struct SessionResult {
+    session_id: Uuid,
+    challenger_user_id: Uuid,
+    challenged_user_id: Option<Uuid>,
+    // current_move is not currently used: it is here to hold a move id in the case that
+    // I pre-populate db with a sequence of practice moves.
+    // this will store the current location in that sequence
+    current_move: Option<Uuid>,
+    name: Option<String>,
+    highest_unit: Option<i16>,
+    custom_verbs: Option<String>,
+    custom_params: Option<String>,
+    max_changes: i16,
+    challenger_score: Option<i32>,
+    challenged_score: Option<i32>,
+    practice_reps_per_verb: Option<i16>,
+    timestamp: i64,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct GetMovesQuery {
+    pub qtype: String,
+    pub session_id: sqlx::types::Uuid,
+}
+
+#[derive(Deserialize, Serialize, Debug, PartialEq, Eq)]
+pub struct SessionState {
+    pub session_id: Uuid,
+    pub move_type: MoveType,
+    pub myturn: bool,
+    pub starting_form: Option<String>,
+    pub answer: Option<String>,
+    pub is_correct: Option<bool>,
+    pub correct_answer: Option<String>,
+    pub verb: Option<i32>,
+    pub person: Option<i16>,
+    pub number: Option<i16>,
+    pub tense: Option<i16>,
+    pub voice: Option<i16>,
+    pub mood: Option<i16>,
+    pub person_prev: Option<i16>,
+    pub number_prev: Option<i16>,
+    pub tense_prev: Option<i16>,
+    pub voice_prev: Option<i16>,
+    pub mood_prev: Option<i16>,
+    pub time: Option<String>, //time for prev answer
+    pub response_to: String,
+    pub success: bool,
+    pub mesg: Option<String>,
+    pub verbs: Option<Vec<HCVerbOption>>,
+}
+
+#[derive(Deserialize, Serialize, FromRow)]
+pub struct MoveResult {
+    move_id: sqlx::types::Uuid,
+    session_id: sqlx::types::Uuid,
+    ask_user_id: Option<sqlx::types::Uuid>,
+    answer_user_id: Option<sqlx::types::Uuid>,
+    verb_id: Option<i32>,
+    person: Option<i16>,
+    number: Option<i16>,
+    tense: Option<i16>,
+    mood: Option<i16>,
+    voice: Option<i16>,
+    answer: Option<String>,
+    correct_answer: Option<String>,
+    is_correct: Option<bool>,
+    time: Option<String>,
+    timed_out: Option<bool>,
+    mf_pressed: Option<bool>,
+    asktimestamp: i64,
+    answeredtimestamp: Option<i64>,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct CreateSessionQuery {
+    pub qtype: String,
+    pub name: Option<String>,
+    pub verbs: Option<String>,
+    pub units: Option<String>,
+    pub params: Option<String>,
+    pub highest_unit: Option<i16>,
+    pub opponent: String,
+    pub countdown: bool,
+    pub practice_reps_per_verb: Option<i16>,
+    pub max_changes: i16,
+    pub max_time: i32,
+}
+
+#[derive(PartialEq, Debug, Eq, Deserialize, Serialize, FromRow)]
+pub struct SessionsListQuery {
+    pub session_id: sqlx::types::Uuid,
+    pub name: Option<String>,
+    pub challenged: Option<sqlx::types::Uuid>, //the one who didn't start the game, or null for practice
+    //pub opponent: Option<sqlx::types::Uuid>,
+    pub opponent_name: Option<String>,
+    pub timestamp: i64,
+    pub myturn: bool,
+    pub move_type: MoveType,
+    pub my_score: Option<i32>,
+    pub their_score: Option<i32>,
+    pub countdown: i32,
+    pub max_time: i32,
+    pub max_changes: i16,
+}
+
+#[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
+pub struct HCVerbOption {
+    pub id: i32,
+    pub verb: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum MoveType {
+    Practice,
+    FirstMoveMyTurn,
+    FirstMoveTheirTurn,
+
+    AnswerMyTurn,
+    AskTheirTurn,
+    AskMyTurn,
+    AnswerTheirTurn,
+
+    GameOver,
+}
 
 pub async fn get_session_state(
     db: &HcDb,

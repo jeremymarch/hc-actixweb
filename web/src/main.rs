@@ -17,6 +17,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use libhc;
+use libhc::db::HcDb;
+use libhc::MoveType;
+use libhc::SessionState;
+use libhc::AskQuery;
+use libhc::AnswerQuery;
+use libhc::CreateSessionQuery;
+use libhc::GetMovesQuery;
+use libhc::SessionsListQuery;
+use libhc::MoveResult;
 use actix_files as fs;
 use actix_session::Session;
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
@@ -62,22 +72,13 @@ use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::types::Uuid;
-use sqlx::FromRow;
 
 use hoplite_verbs_rs::*;
-mod db;
-pub mod libhc;
 mod login;
 
 async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
     //remember that basic authentication blocks this
     Ok(HttpResponse::Ok().finish()) //send 200 with empty body
-}
-
-#[derive(Clone, Debug)]
-pub struct HcDb {
-    //db:SqlitePool,
-    db: sqlx::postgres::PgPool,
 }
 
 static PPS: &str = r##"παιδεύω, παιδεύσω, ἐπαίδευσα, πεπαίδευκα, πεπαίδευμαι, ἐπαιδεύθην % 2
@@ -228,74 +229,11 @@ struct GetMovesResponse {
     success: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub enum MoveType {
-    Practice,
-    FirstMoveMyTurn,
-    FirstMoveTheirTurn,
-
-    AnswerMyTurn,
-    AskTheirTurn,
-    AskMyTurn,
-    AnswerTheirTurn,
-
-    GameOver,
-}
-
-#[derive(Deserialize, Serialize, PartialEq, Eq, Debug)]
-pub struct HCVerbOption {
-    id: i32,
-    verb: String,
-}
-
-#[derive(Deserialize)]
-pub struct AnswerQuery {
-    #[allow(dead_code)]
-    qtype: String,
-    answer: String,
-    time: String,
-    mf_pressed: bool,
-    timed_out: bool,
-    session_id: Uuid,
-}
-
 #[derive(Serialize)]
 pub struct StatusResponse {
     response_to: String,
     mesg: String,
     success: bool,
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct CreateSessionQuery {
-    qtype: String,
-    name: Option<String>,
-    verbs: Option<String>,
-    units: Option<String>,
-    params: Option<String>,
-    highest_unit: Option<i16>,
-    opponent: String,
-    countdown: bool,
-    practice_reps_per_verb: Option<i16>,
-    max_changes: i16,
-    max_time: i32,
-}
-
-#[derive(PartialEq, Debug, Eq, Deserialize, Serialize, FromRow)]
-pub struct SessionsListQuery {
-    session_id: sqlx::types::Uuid,
-    name: Option<String>,
-    challenged: Option<sqlx::types::Uuid>, //the one who didn't start the game, or null for practice
-    //opponent: Option<sqlx::types::Uuid>,
-    opponent_name: Option<String>,
-    timestamp: i64,
-    myturn: bool,
-    move_type: MoveType,
-    my_score: Option<i32>,
-    their_score: Option<i32>,
-    countdown: i32,
-    max_time: i32,
-    max_changes: i16,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -314,106 +252,9 @@ pub struct GetMoveQuery {
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct GetMovesQuery {
-    qtype: String,
-    session_id: sqlx::types::Uuid,
-}
-
-#[derive(Deserialize, Serialize)]
 pub struct GetSessions {
     qtype: String,
     current_session: Option<sqlx::types::Uuid>,
-}
-
-#[derive(Deserialize, Serialize, FromRow)]
-pub struct UserResult {
-    user_id: sqlx::types::Uuid,
-    user_name: String,
-    password: String,
-    email: String,
-    user_type: i32,
-    timestamp: i64,
-}
-
-#[derive(Deserialize, Serialize, FromRow)]
-pub struct SessionResult {
-    session_id: Uuid,
-    challenger_user_id: Uuid,
-    challenged_user_id: Option<Uuid>,
-    // current_move is not currently used: it is here to hold a move id in the case that
-    // I pre-populate db with a sequence of practice moves.
-    // this will store the current location in that sequence
-    current_move: Option<Uuid>,
-    name: Option<String>,
-    highest_unit: Option<i16>,
-    custom_verbs: Option<String>,
-    custom_params: Option<String>,
-    max_changes: i16,
-    challenger_score: Option<i32>,
-    challenged_score: Option<i32>,
-    practice_reps_per_verb: Option<i16>,
-    timestamp: i64,
-}
-
-#[derive(Deserialize, Serialize, FromRow)]
-pub struct MoveResult {
-    move_id: sqlx::types::Uuid,
-    session_id: sqlx::types::Uuid,
-    ask_user_id: Option<sqlx::types::Uuid>,
-    answer_user_id: Option<sqlx::types::Uuid>,
-    verb_id: Option<i32>,
-    person: Option<i16>,
-    number: Option<i16>,
-    tense: Option<i16>,
-    mood: Option<i16>,
-    voice: Option<i16>,
-    answer: Option<String>,
-    correct_answer: Option<String>,
-    is_correct: Option<bool>,
-    time: Option<String>,
-    timed_out: Option<bool>,
-    mf_pressed: Option<bool>,
-    asktimestamp: i64,
-    answeredtimestamp: Option<i64>,
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct AskQuery {
-    qtype: String,
-    session_id: Uuid,
-    person: i16,
-    number: i16,
-    tense: i16,
-    voice: i16,
-    mood: i16,
-    verb: i32,
-}
-
-#[derive(Deserialize, Serialize, Debug, PartialEq, Eq)]
-pub struct SessionState {
-    session_id: Uuid,
-    move_type: MoveType,
-    myturn: bool,
-    starting_form: Option<String>,
-    answer: Option<String>,
-    is_correct: Option<bool>,
-    correct_answer: Option<String>,
-    verb: Option<i32>,
-    person: Option<i16>,
-    number: Option<i16>,
-    tense: Option<i16>,
-    voice: Option<i16>,
-    mood: Option<i16>,
-    person_prev: Option<i16>,
-    number_prev: Option<i16>,
-    tense_prev: Option<i16>,
-    voice_prev: Option<i16>,
-    mood_prev: Option<i16>,
-    time: Option<String>, //time for prev answer
-    response_to: String,
-    success: bool,
-    mesg: Option<String>,
-    verbs: Option<Vec<HCVerbOption>>,
 }
 
 /// Entry point for our websocket route

@@ -17,11 +17,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-//use sqlx::sqlite::SqliteRow;
 use crate::AnswerQuery;
 use crate::AskQuery;
 use crate::CreateSessionQuery;
-use crate::HcDb;
 use crate::MoveResult;
 use crate::MoveType;
 use crate::SessionResult;
@@ -32,6 +30,12 @@ use sqlx::Row;
 
 use sqlx::postgres::PgRow;
 use sqlx::Postgres;
+
+#[derive(Clone, Debug)]
+pub struct HcDb {
+    //db:SqlitePool,
+    pub db: sqlx::postgres::PgPool,
+}
 
 impl HcDb {
     // pub async fn begin_tx(&self) -> Result<Transaction<sqlx::Sqlite>, sqlx::Error> {

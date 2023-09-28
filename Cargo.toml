@@ -1,42 +1,10 @@
-[package]
-name = "hc-actixweb"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+resolver = "2"
 
-[dependencies]
-actix = "0.13"
-actix-web-actors = "4.2.0"
-actix-web = { version = "4.4.0" }
-actix-files = "0.6.2"
-actix-session = { version = "0.7.2", features = ["cookie-session"] }
-actix-web-flash-messages = { git = "https://github.com/jeremymarch/actix-web-flash-messages", rev = "d4d1b851a9cce6f1d2fc142b0131e2360b13db11", features = ["cookies"] }
-#actix-web-flash-messages = { version = "0.4.1", features = ["cookies"] }/
-#actix-web-flash-messages = { path="../actix-web-flash-messages/actix-web-flash-messages", version = "0.4.1", features = ["cookies"] }
-
-sqlx = { version = "0.7.1", features = ["postgres", "runtime-tokio-rustls", "any", "macros", "uuid"] }
-
-serde = { version = "1.0.188", features = ["derive"] }
-serde_json = "1.0.105"
-#serde_repr = "0.1.9"
-
-futures = "0.3.28"
-env_logger = "0.10.0"
-log = "0.4.20"
-thiserror = "1.0.47"
-secrecy = { version = "0.8.0", features = ["serde"] }
-argon2 = { version = "0.5.1", features = ["std"] }
-#https://www.reddit.com/r/rust/comments/qamgyh/comment/hh3u59e/?utm_source=share&utm_medium=web2x&context=3
-chrono = { version = "0.4.26", default-features = false, features=["clock"] }
-hex = "0.4.3"
-rand = "0.8.5"
-
-uuid = { version = "1.4.1", features = ["v4", "serde"] }
-
-#hoplite_verbs_rs = { path = "../hoplite_verbs_rs" }
-hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.3.9" }
-
-[dev-dependencies]
-tokio = "1.32.0"
+members = [
+    "web",
+    "libhc",
+]
 
 [profile.release]
 opt-level = 3
