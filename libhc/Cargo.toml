@@ -8,7 +8,7 @@ name = "libhc"
 path = "src/lib.rs"
 
 [dependencies]
-sqlx = { version = "0.7.1", features = ["postgres", "runtime-tokio-rustls", "any", "macros", "uuid"] }
+sqlx = { version = "0.7.2", features = ["postgres", "runtime-tokio-rustls", "any", "macros", "uuid"] }
 serde = { version = "1.0.188", features = ["derive"] }
 rand = "0.8.5"
 uuid = { version = "1.4.1", features = ["v4", "serde"] }
