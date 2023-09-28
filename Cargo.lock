@@ -1157,7 +1157,6 @@ dependencies = [
  "serde_json",
  "sqlx",
  "thiserror",
- "tokio",
  "uuid",
 ]
 
@@ -1403,10 +1402,12 @@ checksum = "b4668fb0ea861c1df094127ac5f1da3409a82116a4ba74fca2e58ef927159bb3"
 name = "libhc"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "hoplite_verbs_rs",
  "rand",
  "serde",
  "sqlx",
+ "tokio",
  "uuid",
 ]
 
@@ -2493,7 +2494,19 @@ dependencies = [
  "pin-project-lite",
  "signal-hook-registry",
  "socket2 0.5.3",
+ "tokio-macros",
  "windows-sys 0.48.0",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "630bdcf245f78637c13ec01ffae6187cca34625e8c63150d424b59e55af2675e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.29",
 ]
 
 [[package]]
