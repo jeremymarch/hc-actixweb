@@ -331,7 +331,7 @@ pub async fn new_user_post(
     let confirm_password = form.0.confirm_password;
     let email = form.0.email;
 
-    let timestamp = get_timestamp();
+    let timestamp = libhc::get_timestamp();
 
     if username.len() > 1 && password.len() > 3 && email.len() > 6 && password == confirm_password {
         if let Ok(_user_id) = db

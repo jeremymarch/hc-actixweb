@@ -68,10 +68,6 @@ const SECS_IN_10_YEARS: i64 = 60 * 60 * 24 * 7 * 4 * 12 * 10;
 use rand::Rng;
 use std::io;
 
-//use uuid::Uuid;
-
-use chrono::prelude::*;
-
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::types::Uuid;
@@ -163,11 +159,6 @@ fn _get_ip(req: &HttpRequest) -> Option<String> {
     req.peer_addr().map(|addr| addr.ip().to_string())
 }
 
-fn get_timestamp() -> i64 {
-    let now = Utc::now();
-    now.timestamp()
-}
-
 static INDEX_PAGE: &str = include_str!("index.html");
 static CSP: &str = "style-src 'nonce-%NONCE%';script-src 'nonce-%NONCE%' 'wasm-unsafe-eval' \
                     'unsafe-inline'; object-src 'none'; base-uri 'none'";
@@ -191,7 +182,7 @@ async fn get_sessions(
     if let Some(user_id) = login::get_user_id(session.clone()) {
         let username = login::get_username(session);
 
-        //let timestamp = get_timestamp();
+        //let timestamp = libhc::get_timestamp();
         //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
         //let user_agent = get_user_agent(&req).unwrap_or("");
 
@@ -257,7 +248,7 @@ async fn create_session(
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     if let Some(user_id) = login::get_user_id(session) {
-        let timestamp = get_timestamp();
+        let timestamp = libhc::get_timestamp();
         //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
         //let user_agent = get_user_agent(&req).unwrap_or("");
 
@@ -335,7 +326,7 @@ async fn enter(
     let db = req.app_data::<HcDb>().unwrap();
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
-    let timestamp = get_timestamp();
+    let timestamp = libhc::get_timestamp();
     //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
     //let user_agent = get_user_agent(&req).unwrap_or("");
 
@@ -380,7 +371,7 @@ async fn ask(
     let db = req.app_data::<HcDb>().unwrap();
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
-    let timestamp = get_timestamp();
+    let timestamp = libhc::get_timestamp();
     //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
     //let user_agent = get_user_agent(&req).unwrap_or("");
 
@@ -426,7 +417,7 @@ async fn mf(
     let db = req.app_data::<HcDb>().unwrap();
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
-    let timestamp = get_timestamp();
+    let timestamp = libhc::get_timestamp();
     //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
     //let user_agent = get_user_agent(&req).unwrap_or("");
 

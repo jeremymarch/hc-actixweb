@@ -8,6 +8,7 @@ name = "libhc"
 path = "src/lib.rs"
 
 [dependencies]
+chrono = { version = "0.4.26", default-features = false, features=["clock"] }
 sqlx = { version = "0.7.2", features = ["postgres", "runtime-tokio-rustls", "any", "macros", "uuid"] }
 serde = { version = "1.0.188", features = ["derive"] }
 rand = "0.8.5"
@@ -17,7 +18,6 @@ uuid = { version = "1.4.1", features = ["v4", "serde"] }
 hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.3.9" }
 
 [dev-dependencies]
-chrono = { version = "0.4.26", default-features = false, features=["clock"] }
 tokio = { version = "1.32.0", features = ["rt", "macros"] }
 
 [profile.release]

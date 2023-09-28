@@ -7,7 +7,6 @@ use actix_web_actors::ws;
 use crate::GetMoveQuery;
 use sqlx::types::Uuid;
 
-use crate::get_timestamp;
 use crate::GetSessions;
 use crate::HcDb;
 use crate::MoveType;
@@ -153,7 +152,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                 //let oid = self.id.clone();
                 //let room = self.room.clone();
                 let addr = ctx.address(); //self.addr.clone();
-                let timestamp = get_timestamp();
+                let timestamp = libhc::get_timestamp();
                 let username = self.username.clone();
                 if msg.contains("getmove") {
                     if let Ok(info) = serde_json::from_str::<GetMoveQuery>(&msg) {

@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use chrono::prelude::*;
 use hoplite_verbs_rs::*;
 use polytonic_greek::hgk_compare_multiple_forms;
 use polytonic_greek::hgk_compare_sqlite;
@@ -29,6 +30,11 @@ use db::HcDb;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::sync::Arc;
+
+pub fn get_timestamp() -> i64 {
+    let now = Utc::now();
+    now.timestamp()
+}
 
 #[derive(Deserialize, Serialize, FromRow)]
 pub struct UserResult {
@@ -1181,16 +1187,10 @@ static PPS: &str = r##"παιδεύω, παιδεύσω, ἐπαίδευσα, π
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::prelude::*;
     use sqlx::postgres::PgPoolOptions;
     use sqlx::Executor;
     use tokio::sync::OnceCell;
     static ONCE: OnceCell<()> = OnceCell::const_new();
-
-    fn get_timestamp() -> i64 {
-        let now = Utc::now();
-        now.timestamp()
-    }
 
     async fn setup_test_db() {
         let db = HcDb {
