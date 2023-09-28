@@ -36,7 +36,7 @@ use actix_web::{
 };
 use actix_web_flash_messages::storage::CookieMessageStore;
 use actix_web_flash_messages::FlashMessagesFramework;
-use libhc;
+
 use libhc::db::HcDb;
 use libhc::AnswerQuery;
 use libhc::AskQuery;
@@ -900,8 +900,8 @@ fn config(cfg: &mut web::ServiceConfig) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::libhc::*;
     use actix_web::test;
+    use libhc::HCVerbOption;
     use sqlx::Executor;
     use tokio::sync::OnceCell;
     static ONCE: OnceCell<()> = OnceCell::const_new();
@@ -931,33 +931,35 @@ mod tests {
 
     #[test]
     async fn test_available() {
-        let mut a = hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![], 1);
+        let mut a = libhc::hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![], 1);
         a.sort();
         assert_eq!(vec![1, 2, 3], a);
-        let mut a = hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![1], 1);
+        let mut a = libhc::hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![1], 1);
         a.sort();
         assert_eq!(vec![2, 3], a);
-        let mut a = hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![1, 2], 1);
+        let mut a =
+            libhc::hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![1, 2], 1);
         a.sort();
         assert_eq!(vec![3], a);
-        let mut a = hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![3, 1, 2], 1); //skip 3
+        let mut a =
+            libhc::hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![3, 1, 2], 1); //skip 3
         a.sort();
         assert_eq!(vec![1, 2], a);
-        let mut a = hc_get_available_verbs_practice(
+        let mut a = libhc::hc_get_available_verbs_practice(
             &Some("1,2,3".to_string()),
             &vec![2, 1, 2, 3, 2, 1, 3, 2, 3, 1, 3, 1, 2],
             1,
         );
         a.sort();
         assert_eq!(vec![1, 3], a);
-        let mut a = hc_get_available_verbs_practice(
+        let mut a = libhc::hc_get_available_verbs_practice(
             &Some("1,2,3".to_string()),
             &vec![1, 3, 2, 1, 3, 2, 1, 3, 2, 3, 1, 3, 1, 2],
             1,
         );
         a.sort();
         assert_eq!(vec![2], a);
-        let mut a = hc_get_available_verbs_practice(
+        let mut a = libhc::hc_get_available_verbs_practice(
             &Some("1,2,3".to_string()),
             &vec![2, 1, 3, 2, 1, 3, 2, 3, 1, 3, 1, 2],
             1,
@@ -965,22 +967,29 @@ mod tests {
         a.sort();
         assert_eq!(vec![1, 3], a);
 
-        let mut a = hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![], 2);
+        let mut a = libhc::hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![], 2);
         a.sort();
         assert_eq!(vec![1, 2, 3], a);
-        let mut a = hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![1, 1], 2);
+        let mut a =
+            libhc::hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![1, 1], 2);
         a.sort();
         assert_eq!(vec![2, 3], a);
-        let mut a =
-            hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![1, 1, 2, 2], 2);
+        let mut a = libhc::hc_get_available_verbs_practice(
+            &Some("1,2,3".to_string()),
+            &vec![1, 1, 2, 2],
+            2,
+        );
         a.sort();
         assert_eq!(vec![3], a);
 
-        let mut a =
-            hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![3, 3, 1, 1, 2, 2], 2); //skip 3
+        let mut a = libhc::hc_get_available_verbs_practice(
+            &Some("1,2,3".to_string()),
+            &vec![3, 3, 1, 1, 2, 2],
+            2,
+        ); //skip 3
         a.sort();
         assert_eq!(vec![1, 2], a);
-        let mut a = hc_get_available_verbs_practice(
+        let mut a = libhc::hc_get_available_verbs_practice(
             &Some("1,2,3".to_string()),
             &vec![
                 3, 3, 2, 2, 1, 1, 3, 3, 2, 2, 1, 1, 3, 3, 2, 2, 3, 3, 1, 1, 3, 3, 1, 1, 2, 2,
@@ -989,7 +998,7 @@ mod tests {
         );
         a.sort();
         assert_eq!(vec![1, 2], a);
-        let mut a = hc_get_available_verbs_practice(
+        let mut a = libhc::hc_get_available_verbs_practice(
             &Some("1,2,3".to_string()),
             &vec![
                 1, 1, 2, 2, 2, 2, 1, 1, 3, 3, 2, 2, 1, 1, 3, 3, 2, 2, 1, 1, 3, 3, 3, 3, 1, 1, 2, 2,
@@ -998,7 +1007,7 @@ mod tests {
         );
         a.sort();
         assert_eq!(vec![3], a);
-        let mut a = hc_get_available_verbs_practice(
+        let mut a = libhc::hc_get_available_verbs_practice(
             &Some("1,2,3".to_string()),
             &vec![
                 2, 2, 1, 1, 3, 3, 2, 2, 1, 1, 3, 3, 2, 2, 3, 3, 1, 1, 3, 3, 1, 1, 2, 2,
@@ -1008,17 +1017,19 @@ mod tests {
         a.sort();
         assert_eq!(vec![1, 3], a);
 
-        let mut a = hc_get_available_verbs_practice(&Some("1,2".to_string()), &vec![], 2);
+        let mut a = libhc::hc_get_available_verbs_practice(&Some("1,2".to_string()), &vec![], 2);
         a.sort();
         assert_eq!(vec![1, 2], a);
-        let mut a = hc_get_available_verbs_practice(&Some("1,2".to_string()), &vec![1, 1], 2);
+        let mut a =
+            libhc::hc_get_available_verbs_practice(&Some("1,2".to_string()), &vec![1, 1], 2);
         a.sort();
         assert_eq!(vec![2], a);
-        let mut a = hc_get_available_verbs_practice(&Some("1,2".to_string()), &vec![1, 1, 2, 2], 2);
+        let mut a =
+            libhc::hc_get_available_verbs_practice(&Some("1,2".to_string()), &vec![1, 1, 2, 2], 2);
         a.sort();
         assert_eq!(vec![2], a);
 
-        let mut a = hc_get_available_verbs_practice(
+        let mut a = libhc::hc_get_available_verbs_practice(
             &Some("1,2".to_string()),
             &vec![2, 2, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2],
             2,
@@ -1026,17 +1037,18 @@ mod tests {
         a.sort();
         assert_eq!(vec![1], a);
 
-        let mut a = hc_get_available_verbs_practice(&Some("1".to_string()), &vec![], 1);
+        let mut a = libhc::hc_get_available_verbs_practice(&Some("1".to_string()), &vec![], 1);
         a.sort();
         assert_eq!(vec![1], a);
-        let mut a = hc_get_available_verbs_practice(&Some("1".to_string()), &vec![1, 1], 1);
+        let mut a = libhc::hc_get_available_verbs_practice(&Some("1".to_string()), &vec![1, 1], 1);
         a.sort();
         assert_eq!(vec![1], a);
-        let mut a = hc_get_available_verbs_practice(&Some("1".to_string()), &vec![1, 1, 1], 1);
+        let mut a =
+            libhc::hc_get_available_verbs_practice(&Some("1".to_string()), &vec![1, 1, 1], 1);
         a.sort();
         assert_eq!(vec![1], a);
 
-        let mut a = hc_get_available_verbs_practice(
+        let mut a = libhc::hc_get_available_verbs_practice(
             &Some("1".to_string()),
             &vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
             1,
@@ -1047,11 +1059,14 @@ mod tests {
 
     #[test]
     async fn test_change_verb() {
-        assert!(hc_change_verbs(&vec![], 2));
-        assert!(hc_change_verbs(&vec![1, 1, 2, 2], 2));
-        assert!(!hc_change_verbs(&vec![1, 1, 2, 2, 2], 3));
-        assert!(hc_change_verbs(&vec![1, 1, 1, 1, 1, 2, 2, 2, 2, 2], 5));
-        assert!(!hc_change_verbs(&vec![1, 1, 1, 1, 2, 2, 2, 2, 2], 5));
+        assert!(libhc::hc_change_verbs(&vec![], 2));
+        assert!(libhc::hc_change_verbs(&vec![1, 1, 2, 2], 2));
+        assert!(!libhc::hc_change_verbs(&vec![1, 1, 2, 2, 2], 3));
+        assert!(libhc::hc_change_verbs(
+            &vec![1, 1, 1, 1, 1, 2, 2, 2, 2, 2],
+            5
+        ));
+        assert!(!libhc::hc_change_verbs(&vec![1, 1, 1, 1, 2, 2, 2, 2, 2], 5));
     }
 
     #[test]
@@ -1097,7 +1112,7 @@ mod tests {
             max_time: 30,
         };
 
-        let session_uuid = hc_insert_session(&db, uuid1, &mut csq, &verbs, timestamp).await;
+        let session_uuid = libhc::hc_insert_session(&db, uuid1, &mut csq, &verbs, timestamp).await;
         //assert!(res.is_ok());
 
         let aq = AskQuery {
@@ -1112,17 +1127,17 @@ mod tests {
         };
 
         //ask from invalid user should be blocked
-        let ask = hc_ask(&db, invalid_uuid, &aq, timestamp, &verbs).await;
+        let ask = libhc::hc_ask(&db, invalid_uuid, &aq, timestamp, &verbs).await;
         assert!(ask.is_err());
 
         //a valid ask
-        let ask = hc_ask(&db, uuid1, &aq, timestamp, &verbs).await;
+        let ask = libhc::hc_ask(&db, uuid1, &aq, timestamp, &verbs).await;
         if ask.is_err() {
             println!("error {ask:?}");
         }
         assert!(ask.is_ok());
 
-        let s = hc_get_sessions(&db, uuid1).await;
+        let s = libhc::hc_get_sessions(&db, uuid1).await;
         // let s_res = Ok([SessionsListQuery { session_id: 75d08792-ea12-40f6-a903-bd4e6aae2aad,
         //     challenged: Some(cffd0d33-6aab-45c0-9dc1-279ae4ecaafa),
         //     opponent: Some(cffd0d33-6aab-45c0-9dc1-279ae4ecaafa),
@@ -1139,7 +1154,7 @@ mod tests {
         assert_eq!(s.as_ref().unwrap()[0].their_score, Some(0));
 
         //check that we are preventing out-of-sequence asks
-        let ask = hc_ask(&db, uuid1, &aq, timestamp, &verbs).await;
+        let ask = libhc::hc_ask(&db, uuid1, &aq, timestamp, &verbs).await;
         assert!(ask.is_err());
 
         let m = GetMoveQuery {
@@ -1147,7 +1162,7 @@ mod tests {
             session_id: *session_uuid.as_ref().unwrap(),
         };
 
-        let ss = hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
+        let ss = libhc::hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
 
         let ss_res = SessionState {
             session_id: *session_uuid.as_ref().unwrap(),
@@ -1178,7 +1193,7 @@ mod tests {
         //println!("{:?}", ss.as_ref().unwrap());
         assert!(ss.unwrap() == ss_res);
 
-        let ss2 = hc_get_move(&db, uuid2, false, m.session_id, &verbs).await;
+        let ss2 = libhc::hc_get_move(&db, uuid2, false, m.session_id, &verbs).await;
 
         let ss_res2 = SessionState {
             session_id: *session_uuid.as_ref().unwrap(),
@@ -1219,19 +1234,19 @@ mod tests {
         };
 
         //answer from invalid user should be blocked
-        let answer = hc_answer(&db, invalid_uuid, &answerq, timestamp, &verbs).await;
+        let answer = libhc::hc_answer(&db, invalid_uuid, &answerq, timestamp, &verbs).await;
         assert!(answer.is_err());
 
         //a valid answer
-        let answer = hc_answer(&db, uuid2, &answerq, timestamp, &verbs).await;
+        let answer = libhc::hc_answer(&db, uuid2, &answerq, timestamp, &verbs).await;
         assert!(answer.is_ok());
         assert!(answer.unwrap().is_correct.unwrap());
 
         //check that we are preventing out-of-sequence answers
-        let answer = hc_answer(&db, uuid2, &answerq, timestamp, &verbs).await;
+        let answer = libhc::hc_answer(&db, uuid2, &answerq, timestamp, &verbs).await;
         assert!(answer.is_err());
 
-        let ss = hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
+        let ss = libhc::hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
 
         let ss_res = SessionState {
             session_id: *session_uuid.as_ref().unwrap(),
@@ -1261,7 +1276,7 @@ mod tests {
         //println!("{:?}", ss.as_ref().unwrap());
         assert!(ss.unwrap() == ss_res);
 
-        let ss2 = hc_get_move(&db, uuid2, false, m.session_id, &verbs).await;
+        let ss2 = libhc::hc_get_move(&db, uuid2, false, m.session_id, &verbs).await;
 
         let ss_res2 = SessionState {
             session_id: *session_uuid.as_ref().unwrap(),
@@ -1305,10 +1320,10 @@ mod tests {
 
         timestamp += 1;
         //a valid ask
-        let ask = hc_ask(&db, uuid2, &aq2, timestamp, &verbs).await;
+        let ask = libhc::hc_ask(&db, uuid2, &aq2, timestamp, &verbs).await;
         assert!(ask.is_ok());
 
-        let ss = hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
+        let ss = libhc::hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
         assert!(ss.is_ok());
         let ss_res = SessionState {
             session_id: *session_uuid.as_ref().unwrap(),
@@ -1339,7 +1354,7 @@ mod tests {
         //println!("2: {:?}", ss_res);
         assert!(ss.unwrap() == ss_res);
 
-        let ss2 = hc_get_move(&db, uuid2, false, m.session_id, &verbs).await;
+        let ss2 = libhc::hc_get_move(&db, uuid2, false, m.session_id, &verbs).await;
 
         let ss_res2 = SessionState {
             session_id: *session_uuid.as_ref().unwrap(),
@@ -1380,11 +1395,11 @@ mod tests {
         };
 
         //a valid answer
-        let answer = hc_answer(&db, uuid1, &answerq, timestamp, &verbs).await;
+        let answer = libhc::hc_answer(&db, uuid1, &answerq, timestamp, &verbs).await;
         assert!(answer.is_ok());
         assert!(!answer.unwrap().is_correct.unwrap());
 
-        let s = hc_get_sessions(&db, uuid1).await;
+        let s = libhc::hc_get_sessions(&db, uuid1).await;
         // let s_res = Ok([SessionsListQuery {
         // session_id: c152c43f-d52c-496b-ab34-da44ab61275c,
         // challenged: Some(0faa61fe-b89a-4f76-b1f3-1c39da26903f),
@@ -1401,13 +1416,13 @@ mod tests {
         assert_eq!(s.as_ref().unwrap()[0].my_score, Some(0));
         assert_eq!(s.as_ref().unwrap()[0].their_score, Some(1));
 
-        let s = hc_get_sessions(&db, uuid2).await;
+        let s = libhc::hc_get_sessions(&db, uuid2).await;
         //println!("s: {:?}", s);
         assert_eq!(s.as_ref().unwrap()[0].move_type, MoveType::AskTheirTurn);
         assert_eq!(s.as_ref().unwrap()[0].my_score, Some(1));
         assert_eq!(s.as_ref().unwrap()[0].their_score, Some(0));
 
-        let ss = hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
+        let ss = libhc::hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
 
         let ss_res = SessionState {
             session_id: *session_uuid.as_ref().unwrap(),
@@ -1943,7 +1958,7 @@ mod tests {
         //println!("{:?}\n\n{:?}", ss_res, ss.as_ref().unwrap());
         assert!(ss.unwrap() == ss_res);
 
-        let ss2 = hc_get_move(&db, uuid2, false, m.session_id, &verbs).await;
+        let ss2 = libhc::hc_get_move(&db, uuid2, false, m.session_id, &verbs).await;
 
         let ss_res2 = SessionState {
             session_id: *session_uuid.as_ref().unwrap(),
@@ -1988,10 +2003,10 @@ mod tests {
 
         timestamp += 1;
         //a valid ask
-        let ask = hc_ask(&db, uuid1, &aq3, timestamp, &verbs).await;
+        let ask = libhc::hc_ask(&db, uuid1, &aq3, timestamp, &verbs).await;
         assert!(ask.is_ok());
 
-        let ss = hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
+        let ss = libhc::hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
         assert!(ss.is_ok());
         let ss_res = SessionState {
             session_id: *session_uuid.as_ref().unwrap(),
@@ -2022,7 +2037,7 @@ mod tests {
         //println!("2: {:?}", ss_res);
         assert!(ss.unwrap() == ss_res);
 
-        let ss2 = hc_get_move(&db, uuid2, false, m.session_id, &verbs).await;
+        let ss2 = libhc::hc_get_move(&db, uuid2, false, m.session_id, &verbs).await;
 
         let ss_res2 = SessionState {
             session_id: *session_uuid.as_ref().unwrap(),
@@ -2092,7 +2107,7 @@ mod tests {
             max_time: 30,
         };
 
-        let session_uuid = hc_insert_session(&db, uuid1, &mut csq, &verbs, timestamp).await;
+        let session_uuid = libhc::hc_insert_session(&db, uuid1, &mut csq, &verbs, timestamp).await;
         //assert!(res.is_ok());
 
         let aq = AskQuery {
@@ -2107,14 +2122,14 @@ mod tests {
         };
 
         //ask from invalid user should be blocked
-        let ask = hc_ask(&db, invalid_uuid, &aq, timestamp, &verbs).await;
+        let ask = libhc::hc_ask(&db, invalid_uuid, &aq, timestamp, &verbs).await;
         assert!(ask.is_err());
 
         //a valid ask
-        let ask = hc_ask(&db, uuid1, &aq, timestamp, &verbs).await;
+        let ask = libhc::hc_ask(&db, uuid1, &aq, timestamp, &verbs).await;
         assert!(ask.is_err());
 
-        let s = hc_get_sessions(&db, uuid1).await;
+        let s = libhc::hc_get_sessions(&db, uuid1).await;
         // let s_res = Ok([SessionsListQuery { session_id: 75d08792-ea12-40f6-a903-bd4e6aae2aad,
         //     challenged: Some(cffd0d33-6aab-45c0-9dc1-279ae4ecaafa),
         //     opponent: Some(cffd0d33-6aab-45c0-9dc1-279ae4ecaafa),
@@ -2135,7 +2150,7 @@ mod tests {
             session_id: *session_uuid.as_ref().unwrap(),
         };
 
-        let ss = hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
+        let ss = libhc::hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
 
         assert_eq!(ss.as_ref().unwrap().move_type, MoveType::Practice);
         assert!(ss.as_ref().unwrap().myturn);
@@ -2176,11 +2191,11 @@ mod tests {
         };
 
         //answer from invalid user should be blocked
-        let answer = hc_answer(&db, invalid_uuid, &answerq, timestamp, &verbs).await;
+        let answer = libhc::hc_answer(&db, invalid_uuid, &answerq, timestamp, &verbs).await;
         assert!(answer.is_err());
 
         //a valid answer
-        let answer = hc_answer(&db, uuid1, &answerq, timestamp, &verbs).await;
+        let answer = libhc::hc_answer(&db, uuid1, &answerq, timestamp, &verbs).await;
         assert!(answer.is_ok());
         // Ok(SessionState { session_id: 1835f2a1-c896-4e7d-b526-b46855b95e23,
         //     move_type: Practice,
@@ -2197,9 +2212,9 @@ mod tests {
         assert_eq!(answer.as_ref().unwrap().move_type, MoveType::Practice);
         assert!(answer.as_ref().unwrap().myturn);
 
-        let answer = hc_answer(&db, uuid1, &answerq, timestamp, &verbs).await;
+        let answer = libhc::hc_answer(&db, uuid1, &answerq, timestamp, &verbs).await;
         assert!(answer.is_ok());
-        let answer = hc_answer(&db, uuid1, &answerq, timestamp, &verbs).await;
+        let answer = libhc::hc_answer(&db, uuid1, &answerq, timestamp, &verbs).await;
         assert!(answer.is_ok());
 
         //let ss = hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;

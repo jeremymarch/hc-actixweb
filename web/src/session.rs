@@ -8,7 +8,6 @@ use crate::GetMoveQuery;
 use sqlx::types::Uuid;
 
 use crate::get_timestamp;
-use crate::libhc;
 use crate::GetSessions;
 use crate::HcDb;
 use crate::MoveType;
