@@ -17,16 +17,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use libhc;
-use libhc::db::HcDb;
-use libhc::MoveType;
-use libhc::SessionState;
-use libhc::AskQuery;
-use libhc::AnswerQuery;
-use libhc::CreateSessionQuery;
-use libhc::GetMovesQuery;
-use libhc::SessionsListQuery;
-use libhc::MoveResult;
+mod login;
+mod server;
+mod session;
+
 use actix_files as fs;
 use actix_session::Session;
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
@@ -42,6 +36,16 @@ use actix_web::{
 };
 use actix_web_flash_messages::storage::CookieMessageStore;
 use actix_web_flash_messages::FlashMessagesFramework;
+use libhc;
+use libhc::db::HcDb;
+use libhc::AnswerQuery;
+use libhc::AskQuery;
+use libhc::CreateSessionQuery;
+use libhc::GetMovesQuery;
+use libhc::MoveResult;
+use libhc::MoveType;
+use libhc::SessionState;
+use libhc::SessionsListQuery;
 use thiserror::Error;
 
 use actix::Actor;
@@ -52,8 +56,6 @@ use std::{
     sync::{atomic::AtomicUsize, Arc},
     time::Instant,
 };
-mod server;
-mod session;
 
 use actix_session::config::PersistentSession;
 use actix_web::cookie::time::Duration;
@@ -74,7 +76,6 @@ use sqlx::postgres::PgPoolOptions;
 use sqlx::types::Uuid;
 
 use hoplite_verbs_rs::*;
-mod login;
 
 async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
     //remember that basic authentication blocks this

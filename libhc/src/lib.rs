@@ -17,18 +17,18 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use hoplite_verbs_rs::*;
 use polytonic_greek::hgk_compare_multiple_forms;
 use polytonic_greek::hgk_compare_sqlite;
 use rand::prelude::SliceRandom;
+use sqlx::types::Uuid;
 use sqlx::Postgres;
 use std::collections::HashSet;
-use sqlx::types::Uuid;
-use hoplite_verbs_rs::*;
 pub mod db;
 use db::HcDb;
-use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use std::sync::Arc;
 
 #[derive(Deserialize, Serialize, FromRow)]
 pub struct UserResult {

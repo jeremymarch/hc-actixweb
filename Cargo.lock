@@ -1406,9 +1406,7 @@ dependencies = [
  "hoplite_verbs_rs",
  "rand",
  "serde",
- "serde_json",
  "sqlx",
- "tokio",
  "uuid",
 ]
 
