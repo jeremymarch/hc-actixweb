@@ -31,6 +31,7 @@ use sqlx::Row;
 
 use sqlx::postgres::PgRow;
 use sqlx::Postgres;
+use sqlx::Transaction;
 
 #[derive(Clone, Debug)]
 pub struct HcDb {
@@ -42,11 +43,12 @@ use async_trait::async_trait;
 
 #[async_trait]
 impl HcDbTrait for HcDb {
-    // pub async fn begin_tx(&self) -> Result<Transaction<sqlx::Sqlite>, sqlx::Error> {
-    //     let mut tx = self.db.begin().await?;
-    //     Ok(tx)
-    // }
-    // pub async fn commit_tx<'a, 'b>(&mut self, tx: &'a mut sqlx::Transaction<'b, sqlx::Sqlite>) -> Result<(), sqlx::Error> {
+    async fn begin_tx(&self) -> Result<Transaction<Postgres>, sqlx::Error> {
+        let tx = self.db.begin().await?;
+        Ok(tx)
+    }
+
+    // async fn commit_tx<'a, 'b>(&mut self, tx: &'a mut sqlx::Transaction<'b, Postgres>) -> Result<(), sqlx::Error> {
     //     tx.commit().await
     // }
 

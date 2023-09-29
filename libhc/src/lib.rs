@@ -24,9 +24,10 @@ use polytonic_greek::hgk_compare_sqlite;
 use rand::prelude::SliceRandom;
 use sqlx::types::Uuid;
 use sqlx::Postgres;
+use sqlx::Transaction;
 use std::collections::HashSet;
 pub mod db;
-use db::HcDb;
+
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::sync::Arc;
@@ -205,6 +206,9 @@ pub enum MoveType {
 use async_trait::async_trait;
 #[async_trait]
 pub trait HcDbTrait {
+    async fn begin_tx(&self) -> Result<Transaction<Postgres>, sqlx::Error>;
+    //async fn commit_tx<'a, 'b>(&mut self, tx: &'a mut sqlx::Transaction<'b, Postgres>) -> Result<(), sqlx::Error>;
+
     async fn add_to_score<'a, 'b>(
         &self,
         tx: &'a mut sqlx::Transaction<'b, Postgres>,
@@ -324,11 +328,12 @@ pub trait HcDbTrait {
 }
 
 pub async fn get_session_state(
-    db: &HcDb,
+    db: &dyn HcDbTrait,
     user_id: sqlx::types::Uuid,
     session_id: sqlx::types::Uuid,
 ) -> Result<SessionState, sqlx::Error> {
-    let mut tx = db.db.begin().await?;
+    //let mut tx = db.db.begin().await?;
+    let mut tx = db.begin_tx().await?;
 
     let r = get_session_state_tx(&mut tx, db, user_id, session_id).await?;
 
@@ -338,7 +343,7 @@ pub async fn get_session_state(
 
 pub async fn get_session_state_tx<'a, 'b>(
     tx: &'a mut sqlx::Transaction<'b, Postgres>,
-    db: &HcDb,
+    db: &dyn HcDbTrait,
     user_id: sqlx::types::Uuid,
     session_id: sqlx::types::Uuid,
 ) -> Result<SessionState, sqlx::Error> {
@@ -421,7 +426,7 @@ pub async fn get_session_state_tx<'a, 'b>(
 }
 
 pub async fn hc_ask(
-    db: &HcDb,
+    db: &dyn HcDbTrait,
     user_id: Uuid,
     info: &AskQuery,
     timestamp: i64,
@@ -480,14 +485,15 @@ pub async fn hc_ask(
 }
 
 pub async fn hc_answer(
-    db: &HcDb,
+    db: &dyn HcDbTrait,
     user_id: Uuid,
     info: &AnswerQuery,
     timestamp: i64,
     verbs: &Vec<Arc<HcGreekVerb>>,
 ) -> Result<SessionState, sqlx::Error> {
     //todo check that user_id is either challenger_user_id or challenged_user_id
-    let mut tx = db.db.begin().await?;
+    //let mut tx = db.db.begin().await?;
+    let mut tx = db.begin_tx().await?;
 
     let s = db.get_session_tx(&mut tx, info.session_id).await?;
     if user_id != s.challenger_user_id && Some(user_id) != s.challenged_user_id {
@@ -601,13 +607,14 @@ pub async fn hc_answer(
 }
 
 pub async fn hc_mf_pressed(
-    db: &HcDb,
+    db: &dyn HcDbTrait,
     user_id: Uuid,
     info: &AnswerQuery,
     timestamp: i64,
     verbs: &Vec<Arc<HcGreekVerb>>,
 ) -> Result<SessionState, sqlx::Error> {
-    let mut tx = db.db.begin().await?;
+    //let mut tx = db.db.begin().await?;
+    let mut tx = db.begin_tx().await?;
 
     let s = db.get_session_tx(&mut tx, info.session_id).await?;
     if user_id != s.challenger_user_id && Some(user_id) != s.challenged_user_id {
@@ -774,7 +781,7 @@ pub fn hc_change_verbs(verb_history: &Vec<i32>, reps: usize) -> bool {
 
 async fn ask_practice<'a, 'b>(
     tx: &'a mut sqlx::Transaction<'b, Postgres>,
-    db: &HcDb,
+    db: &dyn HcDbTrait,
     mut prev_form: HcGreekVerbForm,
     session: &SessionResult,
     timestamp: i64,
@@ -841,7 +848,7 @@ async fn ask_practice<'a, 'b>(
 //opponent_id gets move status for opponent rather than user_id when true:
 //we handle the case of s.challenged_user_id.is_none() here, but opponent_id should always be false for practice games
 pub async fn hc_get_move(
-    db: &HcDb,
+    db: &dyn HcDbTrait,
     user_id: Uuid,
     opponent_id: bool,
     session_id: Uuid,
@@ -944,7 +951,7 @@ fn move_get_type(
 }
 
 pub async fn hc_get_sessions(
-    db: &HcDb,
+    db: &dyn HcDbTrait,
     user_id: Uuid,
 ) -> Result<Vec<SessionsListQuery>, sqlx::Error> {
     let mut res = db.get_sessions(user_id).await?;
@@ -983,7 +990,7 @@ fn get_verbs_by_unit(units: &str, verbs: &[Arc<HcGreekVerb>]) -> Option<String> 
 }
 
 pub async fn hc_get_game_moves(
-    db: &HcDb,
+    db: &dyn HcDbTrait,
     info: &GetMovesQuery,
 ) -> Result<Vec<MoveResult>, sqlx::Error> {
     let res = db.get_game_moves(info.session_id).await?;
@@ -992,7 +999,7 @@ pub async fn hc_get_game_moves(
 }
 
 pub async fn hc_insert_session(
-    db: &HcDb,
+    db: &dyn HcDbTrait,
     user_id: Uuid,
     info: &mut CreateSessionQuery,
     verbs: &[Arc<HcGreekVerb>],
@@ -1037,8 +1044,8 @@ pub async fn hc_insert_session(
         _ => None,
     };
 
-    let mut tx = db.db.begin().await?;
-
+    //let mut tx = db.db.begin().await?;
+    let mut tx = db.begin_tx().await.unwrap();
     match db
         .insert_session_tx(
             &mut tx,
@@ -1089,7 +1096,7 @@ pub async fn hc_insert_session(
 }
 
 pub async fn hc_get_available_verbs(
-    db: &HcDb,
+    db: &dyn HcDbTrait,
     _user_id: Uuid,
     session_id: Uuid,
     top_unit: Option<i16>,
@@ -1185,6 +1192,7 @@ mod tests {
     use sqlx::Executor;
     use tokio::sync::OnceCell;
     static ONCE: OnceCell<()> = OnceCell::const_new();
+    use db::HcDb;
 
     async fn setup_test_db() {
         let db = HcDb {
