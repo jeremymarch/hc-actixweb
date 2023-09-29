@@ -9,10 +9,11 @@ path = "src/lib.rs"
 
 [dependencies]
 chrono = { version = "0.4.26", default-features = false, features=["clock"] }
-sqlx = { version = "0.7.2", features = ["postgres", "runtime-tokio-rustls", "any", "macros", "uuid"] }
+sqlx = { version = "0.7.2", features = ["sqlite", "postgres", "runtime-tokio-rustls", "any", "macros", "uuid"] }
 serde = { version = "1.0.188", features = ["derive"] }
 rand = "0.8.5"
 uuid = { version = "1.4.1", features = ["v4", "serde"] }
+async-trait = "0.1.73"
 
 #hoplite_verbs_rs = { path = "../hoplite_verbs_rs" }
 hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.3.9" }

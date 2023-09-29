@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 use crate::AnswerQuery;
 use crate::AskQuery;
 use crate::CreateSessionQuery;
+use crate::HcDbTrait;
 use crate::MoveResult;
 use crate::MoveType;
 use crate::SessionResult;
@@ -37,7 +38,10 @@ pub struct HcDb {
     pub db: sqlx::postgres::PgPool,
 }
 
-impl HcDb {
+use async_trait::async_trait;
+
+#[async_trait]
+impl HcDbTrait for HcDb {
     // pub async fn begin_tx(&self) -> Result<Transaction<sqlx::Sqlite>, sqlx::Error> {
     //     let mut tx = self.db.begin().await?;
     //     Ok(tx)
@@ -46,7 +50,7 @@ impl HcDb {
     //     tx.commit().await
     // }
 
-    pub async fn add_to_score<'a, 'b>(
+    async fn add_to_score<'a, 'b>(
         &self,
         tx: &'a mut sqlx::Transaction<'b, Postgres>,
         session_id: Uuid,
@@ -65,11 +69,7 @@ impl HcDb {
         Ok(1)
     }
 
-    pub async fn validate_login_db(
-        &self,
-        username: &str,
-        password: &str,
-    ) -> Result<Uuid, sqlx::Error> {
+    async fn validate_login_db(&self, username: &str, password: &str) -> Result<Uuid, sqlx::Error> {
         let query = "SELECT user_id,user_name,password,email,user_type,timestamp FROM users WHERE user_name = $1 AND password = $2 LIMIT 1;";
         let res: UserResult = sqlx::query_as(query)
             .bind(username)
@@ -80,7 +80,7 @@ impl HcDb {
         Ok(res.user_id)
     }
 
-    pub async fn get_user_id(&self, username: &str) -> Result<UserResult, sqlx::Error> {
+    async fn get_user_id(&self, username: &str) -> Result<UserResult, sqlx::Error> {
         let query = "SELECT user_id,user_name,password,email,user_type,timestamp FROM users WHERE user_name = $1 LIMIT 1;";
         let res: UserResult = sqlx::query_as(query)
             .bind(username)
@@ -90,7 +90,7 @@ impl HcDb {
         Ok(res)
     }
 
-    pub async fn insert_session(
+    async fn insert_session(
         &self,
         user_id: Uuid,
         highest_unit: Option<i16>,
@@ -109,7 +109,7 @@ impl HcDb {
         Ok(uuid)
     }
 
-    pub async fn insert_session_tx<'a, 'b>(
+    async fn insert_session_tx<'a, 'b>(
         &self,
         tx: &'a mut sqlx::Transaction<'b, Postgres>,
         user_id: Uuid,
@@ -156,7 +156,7 @@ impl HcDb {
         Ok(uuid)
     }
 
-    pub async fn get_game_moves(
+    async fn get_game_moves(
         &self,
         session_id: sqlx::types::Uuid,
     ) -> Result<Vec<MoveResult>, sqlx::Error> {
@@ -173,7 +173,7 @@ impl HcDb {
         Ok(res)
     }
 
-    pub async fn get_sessions(
+    async fn get_sessions(
         &self,
         user_id: sqlx::types::Uuid,
     ) -> Result<Vec<SessionsListQuery>, sqlx::Error> {
@@ -225,7 +225,7 @@ impl HcDb {
         Ok(res)
     }
 
-    pub async fn get_last_move(
+    async fn get_last_move(
         &self,
         session_id: sqlx::types::Uuid,
     ) -> Result<MoveResult, sqlx::Error> {
@@ -235,7 +235,7 @@ impl HcDb {
         Ok(res)
     }
 
-    pub async fn get_last_move_tx<'a, 'b>(
+    async fn get_last_move_tx<'a, 'b>(
         &self,
         tx: &'a mut sqlx::Transaction<'b, Postgres>,
         session_id: sqlx::types::Uuid,
@@ -256,7 +256,7 @@ impl HcDb {
         Ok(res)
     }
 
-    pub async fn get_last_n_moves<'a, 'b>(
+    async fn get_last_n_moves<'a, 'b>(
         &self,
         tx: &'a mut sqlx::Transaction<'b, Postgres>,
         session_id: sqlx::types::Uuid,
@@ -278,7 +278,7 @@ impl HcDb {
         Ok(res)
     }
 
-    pub async fn get_session(
+    async fn get_session(
         &self,
         session_id: sqlx::types::Uuid,
     ) -> Result<SessionResult, sqlx::Error> {
@@ -295,7 +295,7 @@ impl HcDb {
         Ok(res)
     }
 
-    pub async fn get_session_tx<'a, 'b>(
+    async fn get_session_tx<'a, 'b>(
         &self,
         tx: &'a mut sqlx::Transaction<'b, Postgres>,
         session_id: sqlx::types::Uuid,
@@ -313,10 +313,7 @@ impl HcDb {
         Ok(res)
     }
 
-    pub async fn get_used_verbs(
-        &self,
-        session_id: sqlx::types::Uuid,
-    ) -> Result<Vec<i32>, sqlx::Error> {
+    async fn get_used_verbs(&self, session_id: sqlx::types::Uuid) -> Result<Vec<i32>, sqlx::Error> {
         let query = "SELECT verb_id \
         FROM moves \
         where verb_id IS NOT NULL AND session_id = $1;";
@@ -330,7 +327,7 @@ impl HcDb {
         Ok(res)
     }
 
-    pub async fn insert_ask_move(
+    async fn insert_ask_move(
         &self,
         user_id: Option<Uuid>,
         info: &AskQuery,
@@ -347,7 +344,7 @@ impl HcDb {
         Ok(uuid)
     }
 
-    pub async fn insert_ask_move_tx<'a, 'b>(
+    async fn insert_ask_move_tx<'a, 'b>(
         &self,
         tx: &'a mut sqlx::Transaction<'b, Postgres>,
         user_id: Option<Uuid>,
@@ -375,7 +372,7 @@ impl HcDb {
         Ok(uuid)
     }
 
-    pub async fn update_answer_move(
+    async fn update_answer_move(
         &self,
         info: &AnswerQuery,
         user_id: Uuid,
@@ -404,7 +401,7 @@ impl HcDb {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub async fn update_answer_move_tx<'a, 'b>(
+    async fn update_answer_move_tx<'a, 'b>(
         &self,
         tx: &'a mut sqlx::Transaction<'b, Postgres>,
         info: &AnswerQuery,
@@ -433,7 +430,7 @@ impl HcDb {
         Ok(1)
     }
 
-    pub async fn create_user(
+    async fn create_user(
         &self,
         username: &str,
         password: &str,
@@ -464,7 +461,7 @@ impl HcDb {
         Ok(uuid)
     }
 
-    pub async fn create_db(&self) -> Result<u32, sqlx::Error> {
+    async fn create_db(&self) -> Result<u32, sqlx::Error> {
         let mut tx = self.db.begin().await?;
 
         let query = r#"CREATE TABLE IF NOT EXISTS users ( 

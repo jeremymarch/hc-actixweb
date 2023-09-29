@@ -21,6 +21,7 @@ use super::*;
 
 use actix_web_flash_messages::FlashMessage;
 use actix_web_flash_messages::{IncomingFlashMessages, Level};
+use libhc::HcDbTrait;
 use secrecy::ExposeSecret;
 use secrecy::Secret;
 use std::fmt::Write;

@@ -202,6 +202,127 @@ pub enum MoveType {
     GameOver,
 }
 
+use async_trait::async_trait;
+#[async_trait]
+pub trait HcDbTrait {
+    async fn add_to_score<'a, 'b>(
+        &self,
+        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+        session_id: Uuid,
+        user_to_score: &str,
+        points: i32,
+    ) -> Result<u32, sqlx::Error>;
+
+    async fn validate_login_db(&self, username: &str, password: &str) -> Result<Uuid, sqlx::Error>;
+
+    async fn get_user_id(&self, username: &str) -> Result<UserResult, sqlx::Error>;
+
+    async fn insert_session(
+        &self,
+        user_id: Uuid,
+        highest_unit: Option<i16>,
+        opponent_id: Option<Uuid>,
+        info: &CreateSessionQuery,
+        timestamp: i64,
+    ) -> Result<Uuid, sqlx::Error>;
+
+    async fn insert_session_tx<'a, 'b>(
+        &self,
+        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+        user_id: Uuid,
+        highest_unit: Option<i16>,
+        opponent_id: Option<Uuid>,
+        info: &CreateSessionQuery,
+        timestamp: i64,
+    ) -> Result<Uuid, sqlx::Error>;
+
+    async fn get_game_moves(
+        &self,
+        session_id: sqlx::types::Uuid,
+    ) -> Result<Vec<MoveResult>, sqlx::Error>;
+
+    async fn get_sessions(
+        &self,
+        user_id: sqlx::types::Uuid,
+    ) -> Result<Vec<SessionsListQuery>, sqlx::Error>;
+
+    async fn get_last_move(&self, session_id: sqlx::types::Uuid)
+        -> Result<MoveResult, sqlx::Error>;
+
+    async fn get_last_move_tx<'a, 'b>(
+        &self,
+        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+        session_id: sqlx::types::Uuid,
+    ) -> Result<MoveResult, sqlx::Error>;
+
+    async fn get_last_n_moves<'a, 'b>(
+        &self,
+        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+        session_id: sqlx::types::Uuid,
+        n: u8,
+    ) -> Result<Vec<MoveResult>, sqlx::Error>;
+
+    async fn get_session(
+        &self,
+        session_id: sqlx::types::Uuid,
+    ) -> Result<SessionResult, sqlx::Error>;
+
+    async fn get_session_tx<'a, 'b>(
+        &self,
+        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+        session_id: sqlx::types::Uuid,
+    ) -> Result<SessionResult, sqlx::Error>;
+
+    async fn get_used_verbs(&self, session_id: sqlx::types::Uuid) -> Result<Vec<i32>, sqlx::Error>;
+
+    async fn insert_ask_move(
+        &self,
+        user_id: Option<Uuid>,
+        info: &AskQuery,
+        timestamp: i64,
+    ) -> Result<Uuid, sqlx::Error>;
+
+    async fn insert_ask_move_tx<'a, 'b>(
+        &self,
+        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+        user_id: Option<Uuid>,
+        info: &AskQuery,
+        timestamp: i64,
+    ) -> Result<Uuid, sqlx::Error>;
+
+    async fn update_answer_move(
+        &self,
+        info: &AnswerQuery,
+        user_id: Uuid,
+        correct_answer: &str,
+        is_correct: bool,
+        mf_pressed: bool,
+        timestamp: i64,
+    ) -> Result<u32, sqlx::Error>;
+
+    #[allow(clippy::too_many_arguments)]
+    async fn update_answer_move_tx<'a, 'b>(
+        &self,
+        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+        info: &AnswerQuery,
+        user_id: Uuid,
+        correct_answer: &str,
+        is_correct: bool,
+        mf_pressed: bool,
+        timestamp: i64,
+    ) -> Result<u32, sqlx::Error>;
+
+    async fn create_user(
+        &self,
+        username: &str,
+        password: &str,
+        email: &str,
+        timestamp: i64,
+    ) -> Result<Uuid, sqlx::Error>;
+
+    async fn create_db(&self) -> Result<u32, sqlx::Error>;
+}
+
 pub async fn get_session_state(
     db: &HcDb,
     user_id: sqlx::types::Uuid,
