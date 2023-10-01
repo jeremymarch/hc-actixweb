@@ -205,9 +205,15 @@ pub enum MoveType {
 
 use async_trait::async_trait;
 #[async_trait]
+pub trait HcTrx {
+    async fn commit_tx(mut self) -> Result<(), sqlx::Error>;
+    async fn rollback_tx(mut self) -> Result<(), sqlx::Error>;
+    //async fn get_tx(mut self) -> &dyn
+}
+
+#[async_trait]
 pub trait HcDbTrait {
-    async fn begin_tx(&self) -> Result<Transaction<Postgres>, sqlx::Error>;
-    //async fn commit_tx<'a, 'b>(&mut self, tx: &'a mut sqlx::Transaction<'b, Postgres>) -> Result<(), sqlx::Error>;
+    async fn begin_tx(&self) -> Result<Transaction<Postgres>/* &dyn HcTrx */, sqlx::Error>;
 
     async fn add_to_score<'a, 'b>(
         &self,

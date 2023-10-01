@@ -32,6 +32,7 @@ use sqlx::Row;
 use sqlx::postgres::PgRow;
 use sqlx::Postgres;
 use sqlx::Transaction;
+use crate::HcTrx;
 
 #[derive(Clone, Debug)]
 pub struct HcDb {
@@ -39,13 +40,34 @@ pub struct HcDb {
     pub db: sqlx::postgres::PgPool,
 }
 
+pub struct HcDbPostgresTrx<'a> {
+    //db:SqlitePool,
+    pub tx: Transaction<'a, Postgres>
+}
+
 use async_trait::async_trait;
 
 #[async_trait]
+impl HcTrx for HcDbPostgresTrx<'_> {
+    async fn commit_tx(mut self) -> Result<(), sqlx::Error> {
+        let res = self.tx.commit().await?;
+        Ok(res)
+    }
+    async fn rollback_tx(mut self) -> Result<(), sqlx::Error> {
+        let res = self.tx.rollback().await?;
+        Ok(res)
+    }
+}
+
+#[async_trait]
 impl HcDbTrait for HcDb {
-    async fn begin_tx(&self) -> Result<Transaction<Postgres>, sqlx::Error> {
+    async fn begin_tx(&self) -> Result<Transaction<Postgres>/* &dyn HcTrx */, sqlx::Error> {
         let tx = self.db.begin().await?;
         Ok(tx)
+
+        // Ok(&HcDbPostgresTrx {
+        //     tx: self.db.begin().await?
+        //  })
     }
 
     // async fn commit_tx<'a, 'b>(&mut self, tx: &'a mut sqlx::Transaction<'b, Postgres>) -> Result<(), sqlx::Error> {
