@@ -23,8 +23,6 @@ use polytonic_greek::hgk_compare_multiple_forms;
 use polytonic_greek::hgk_compare_sqlite;
 use rand::prelude::SliceRandom;
 use sqlx::types::Uuid;
-use sqlx::Postgres;
-use sqlx::Transaction;
 use std::collections::HashSet;
 pub mod db;
 
@@ -35,6 +33,21 @@ use std::sync::Arc;
 pub fn get_timestamp() -> i64 {
     let now = Utc::now();
     now.timestamp()
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct GetSessions {
+    pub qtype: String,
+    pub current_session: Option<sqlx::types::Uuid>,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct SessionsListResponse {
+    pub response_to: String,
+    pub sessions: Vec<SessionsListQuery>,
+    pub success: bool,
+    pub username: Option<String>,
+    pub current_session: Option<SessionState>,
 }
 
 #[derive(Deserialize, Serialize, FromRow)]
@@ -205,40 +218,42 @@ pub enum MoveType {
 
 use async_trait::async_trait;
 #[async_trait]
-pub trait HcTrx {
-    async fn commit_tx(mut self) -> Result<(), sqlx::Error>;
-    async fn rollback_tx(mut self) -> Result<(), sqlx::Error>;
-    //async fn get_tx(mut self) -> &dyn
+pub trait HcDbTrait {
+    async fn begin_tx(&self) -> Result<Box<dyn HcTrx>, sqlx::Error>;
 }
 
 #[async_trait]
-pub trait HcDbTrait {
-    async fn begin_tx(&self) -> Result<Transaction<Postgres>/* &dyn HcTrx */, sqlx::Error>;
+pub trait HcTrx {
+    async fn commit_tx(self: Box<Self>) -> Result<(), sqlx::Error>;
+    async fn rollback_tx(self: Box<Self>) -> Result<(), sqlx::Error>;
+    //async fn get_tx(mut self) -> &dyn
 
     async fn add_to_score<'a, 'b>(
-        &self,
-        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+        &mut self,
         session_id: Uuid,
         user_to_score: &str,
         points: i32,
     ) -> Result<u32, sqlx::Error>;
 
-    async fn validate_login_db(&self, username: &str, password: &str) -> Result<Uuid, sqlx::Error>;
-
-    async fn get_user_id(&self, username: &str) -> Result<UserResult, sqlx::Error>;
-
-    async fn insert_session(
-        &self,
-        user_id: Uuid,
-        highest_unit: Option<i16>,
-        opponent_id: Option<Uuid>,
-        info: &CreateSessionQuery,
-        timestamp: i64,
+    async fn validate_login_db(
+        &mut self,
+        username: &str,
+        password: &str,
     ) -> Result<Uuid, sqlx::Error>;
 
-    async fn insert_session_tx<'a, 'b>(
-        &self,
-        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+    async fn get_user_id(&mut self, username: &str) -> Result<UserResult, sqlx::Error>;
+
+    // async fn insert_session(
+    //     &mut self,
+    //     user_id: Uuid,
+    //     highest_unit: Option<i16>,
+    //     opponent_id: Option<Uuid>,
+    //     info: &CreateSessionQuery,
+    //     timestamp: i64,
+    // ) -> Result<Uuid, sqlx::Error>;
+
+    async fn insert_session_tx(
+        &mut self,
         user_id: Uuid,
         highest_unit: Option<i16>,
         opponent_id: Option<Uuid>,
@@ -247,73 +262,71 @@ pub trait HcDbTrait {
     ) -> Result<Uuid, sqlx::Error>;
 
     async fn get_game_moves(
-        &self,
+        &mut self,
         session_id: sqlx::types::Uuid,
     ) -> Result<Vec<MoveResult>, sqlx::Error>;
 
     async fn get_sessions(
-        &self,
+        &mut self,
         user_id: sqlx::types::Uuid,
     ) -> Result<Vec<SessionsListQuery>, sqlx::Error>;
 
-    async fn get_last_move(&self, session_id: sqlx::types::Uuid)
-        -> Result<MoveResult, sqlx::Error>;
+    // async fn get_last_move(&mut self, session_id: sqlx::types::Uuid)
+    //     -> Result<MoveResult, sqlx::Error>;
 
-    async fn get_last_move_tx<'a, 'b>(
-        &self,
-        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+    async fn get_last_move_tx(
+        &mut self,
         session_id: sqlx::types::Uuid,
     ) -> Result<MoveResult, sqlx::Error>;
 
-    async fn get_last_n_moves<'a, 'b>(
-        &self,
-        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+    async fn get_last_n_moves(
+        &mut self,
         session_id: sqlx::types::Uuid,
         n: u8,
     ) -> Result<Vec<MoveResult>, sqlx::Error>;
 
-    async fn get_session(
-        &self,
+    // async fn get_session(
+    //     &mut self,
+    //     session_id: sqlx::types::Uuid,
+    // ) -> Result<SessionResult, sqlx::Error>;
+
+    async fn get_session_tx(
+        &mut self,
         session_id: sqlx::types::Uuid,
     ) -> Result<SessionResult, sqlx::Error>;
 
-    async fn get_session_tx<'a, 'b>(
-        &self,
-        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+    async fn get_used_verbs(
+        &mut self,
         session_id: sqlx::types::Uuid,
-    ) -> Result<SessionResult, sqlx::Error>;
+    ) -> Result<Vec<i32>, sqlx::Error>;
 
-    async fn get_used_verbs(&self, session_id: sqlx::types::Uuid) -> Result<Vec<i32>, sqlx::Error>;
+    // async fn insert_ask_move(
+    //     &mut self,
+    //     user_id: Option<Uuid>,
+    //     info: &AskQuery,
+    //     timestamp: i64,
+    // ) -> Result<Uuid, sqlx::Error>;
 
-    async fn insert_ask_move(
-        &self,
+    async fn insert_ask_move_tx(
+        &mut self,
         user_id: Option<Uuid>,
         info: &AskQuery,
         timestamp: i64,
     ) -> Result<Uuid, sqlx::Error>;
 
-    async fn insert_ask_move_tx<'a, 'b>(
-        &self,
-        tx: &'a mut sqlx::Transaction<'b, Postgres>,
-        user_id: Option<Uuid>,
-        info: &AskQuery,
-        timestamp: i64,
-    ) -> Result<Uuid, sqlx::Error>;
-
-    async fn update_answer_move(
-        &self,
-        info: &AnswerQuery,
-        user_id: Uuid,
-        correct_answer: &str,
-        is_correct: bool,
-        mf_pressed: bool,
-        timestamp: i64,
-    ) -> Result<u32, sqlx::Error>;
+    // async fn update_answer_move(
+    //     &self,
+    //     info: &AnswerQuery,
+    //     user_id: Uuid,
+    //     correct_answer: &str,
+    //     is_correct: bool,
+    //     mf_pressed: bool,
+    //     timestamp: i64,
+    // ) -> Result<u32, sqlx::Error>;
 
     #[allow(clippy::too_many_arguments)]
     async fn update_answer_move_tx<'a, 'b>(
-        &self,
-        tx: &'a mut sqlx::Transaction<'b, Postgres>,
+        &mut self,
         info: &AnswerQuery,
         user_id: Uuid,
         correct_answer: &str,
@@ -323,38 +336,39 @@ pub trait HcDbTrait {
     ) -> Result<u32, sqlx::Error>;
 
     async fn create_user(
-        &self,
+        &mut self,
         username: &str,
         password: &str,
         email: &str,
         timestamp: i64,
     ) -> Result<Uuid, sqlx::Error>;
 
-    async fn create_db(&self) -> Result<u32, sqlx::Error>;
+    async fn create_db(&mut self) -> Result<u32, sqlx::Error>;
 }
 
-pub async fn get_session_state(
-    db: &dyn HcDbTrait,
+// pub async fn get_session_state(
+//     db: &dyn HcDbTrait,
+//     user_id: sqlx::types::Uuid,
+//     session_id: sqlx::types::Uuid,
+// ) -> Result<SessionState, sqlx::Error> {
+//     //let mut tx = db.db.begin().await?;
+//     let mut tx = db.begin_tx().await?;
+
+//     let r = get_session_state_tx(&mut tx, db, user_id, session_id).await?;
+
+//     tx.commit().await?;
+//     Ok(r)
+// }
+
+pub async fn get_session_state_tx(
+    tx: &mut Box<dyn HcTrx>,
     user_id: sqlx::types::Uuid,
     session_id: sqlx::types::Uuid,
 ) -> Result<SessionState, sqlx::Error> {
-    //let mut tx = db.db.begin().await?;
-    let mut tx = db.begin_tx().await?;
+    //let mut tx = self.db.begin_tx().await?;
 
-    let r = get_session_state_tx(&mut tx, db, user_id, session_id).await?;
-
-    tx.commit().await?;
-    Ok(r)
-}
-
-pub async fn get_session_state_tx<'a, 'b>(
-    tx: &'a mut sqlx::Transaction<'b, Postgres>,
-    db: &dyn HcDbTrait,
-    user_id: sqlx::types::Uuid,
-    session_id: sqlx::types::Uuid,
-) -> Result<SessionState, sqlx::Error> {
-    let res = db.get_session_tx(&mut *tx, session_id).await?;
-    let m = db.get_last_n_moves(&mut *tx, session_id, 2).await?;
+    let res = tx.get_session_tx(session_id).await?;
+    let m = tx.get_last_n_moves(session_id, 2).await?;
 
     let first = if !m.is_empty() { Some(&m[0]) } else { None };
     let (myturn, move_type) = move_get_type(first, user_id, res.challenged_user_id);
@@ -440,14 +454,15 @@ pub async fn hc_ask(
 ) -> Result<SessionState, sqlx::Error> {
     //todo check that user_id is either challenger_user_id or challenged_user_id
     //todo check that user_id == challenger_user_id if this is first move
+    let mut tx = db.begin_tx().await?;
 
-    let s = db.get_session(info.session_id).await?;
+    let s = tx.get_session_tx(info.session_id).await?;
     if user_id != s.challenger_user_id && Some(user_id) != s.challenged_user_id {
         return Err(sqlx::Error::RowNotFound);
     }
 
     //prevent out-of-sequence asks
-    let m = match db.get_last_move(info.session_id).await {
+    let m = match tx.get_last_move_tx(info.session_id).await {
         Ok(m) => {
             if m.ask_user_id == Some(user_id)
                 || m.answer_user_id != Some(user_id)
@@ -470,11 +485,11 @@ pub async fn hc_ask(
 
     //get move seq and add one?
 
-    let _ = db
-        .insert_ask_move(Some(user_id), info, new_time_stamp)
+    let _ = tx
+        .insert_ask_move_tx(Some(user_id), info, new_time_stamp)
         .await?;
 
-    let mut res = get_session_state(db, user_id, info.session_id).await?;
+    let mut res = get_session_state_tx(&mut tx, user_id, info.session_id).await?;
 
     if res.starting_form.is_none()
         && res.verb.is_some()
@@ -486,6 +501,8 @@ pub async fn hc_ask(
     res.success = true;
     res.mesg = None;
     res.verbs = None;
+
+    tx.commit_tx().await?;
 
     Ok(res)
 }
@@ -501,13 +518,13 @@ pub async fn hc_answer(
     //let mut tx = db.db.begin().await?;
     let mut tx = db.begin_tx().await?;
 
-    let s = db.get_session_tx(&mut tx, info.session_id).await?;
+    let s = tx.get_session_tx(info.session_id).await?;
     if user_id != s.challenger_user_id && Some(user_id) != s.challenged_user_id {
         return Err(sqlx::Error::RowNotFound);
     }
 
     //pull prev move from db to get verb and params and to prevent out-of-sequence answers
-    let m = match db.get_last_move_tx(&mut tx, info.session_id).await {
+    let m = match tx.get_last_move_tx(info.session_id).await {
         Ok(m) => {
             if m.ask_user_id == Some(user_id) || m.is_correct.is_some() {
                 return Err(sqlx::Error::RowNotFound); //same user cannot answer question they asked and previous question must not already be answered
@@ -547,9 +564,8 @@ pub async fn hc_answer(
 
     let is_correct = hgk_compare_multiple_forms(&correct_answer, &info.answer.replace("---", "—"));
 
-    let _res = db
+    let _res = tx
         .update_answer_move_tx(
-            &mut tx,
             info,
             user_id,
             &correct_answer,
@@ -561,7 +577,7 @@ pub async fn hc_answer(
 
     //if practice session, ask the next here
     if s.challenged_user_id.is_none() {
-        ask_practice(&mut tx, db, prev_form, &s, timestamp, m.asktimestamp, verbs).await?;
+        ask_practice(&mut tx, prev_form, &s, timestamp, m.asktimestamp, verbs).await?;
     } else {
         //add to other player's score if not practice and not correct
         if !is_correct {
@@ -571,13 +587,13 @@ pub async fn hc_answer(
                 "challenger_score"
             };
             let points = 1;
-            let _ = db
-                .add_to_score(&mut tx, info.session_id, user_to_score, points)
+            let _ = tx
+                .add_to_score(info.session_id, user_to_score, points)
                 .await?;
         }
     }
 
-    let mut res = get_session_state_tx(&mut tx, db, user_id, info.session_id).await?;
+    let mut res = get_session_state_tx(&mut tx, user_id, info.session_id).await?;
     //starting_form is 1st pp if new verb
     if res.starting_form.is_none()
         && res.verb.is_some()
@@ -585,8 +601,6 @@ pub async fn hc_answer(
     {
         res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
     }
-
-    tx.commit().await?;
 
     //if practice session, add in is_correct and correct_answer back into session state here
     if s.challenged_user_id.is_none() {
@@ -601,13 +615,15 @@ pub async fn hc_answer(
     res.mesg = None;
     res.verbs = if res.move_type == MoveType::FirstMoveMyTurn && !is_correct {
         Some(
-            hc_get_available_verbs(db, user_id, info.session_id, s.highest_unit, verbs)
+            hc_get_available_verbs(&mut tx, user_id, info.session_id, s.highest_unit, verbs)
                 .await
                 .unwrap(),
         )
     } else {
         None
     };
+
+    tx.commit_tx().await?;
 
     Ok(res)
 }
@@ -622,13 +638,13 @@ pub async fn hc_mf_pressed(
     //let mut tx = db.db.begin().await?;
     let mut tx = db.begin_tx().await?;
 
-    let s = db.get_session_tx(&mut tx, info.session_id).await?;
+    let s = tx.get_session_tx(info.session_id).await?;
     if user_id != s.challenger_user_id && Some(user_id) != s.challenged_user_id {
         return Err(sqlx::Error::RowNotFound);
     }
 
     //pull prev move from db to get verb and params and to prevent out-of-sequence answers
-    let m = match db.get_last_move_tx(&mut tx, info.session_id).await {
+    let m = match tx.get_last_move_tx(info.session_id).await {
         Ok(m) => {
             if m.ask_user_id == Some(user_id) || m.is_correct.is_some() {
                 return Err(sqlx::Error::RowNotFound); //same user cannot answer question they asked and previous question must not already be answered
@@ -669,7 +685,7 @@ pub async fn hc_mf_pressed(
         .replace(" /", ",");
 
     if correct_answer.contains(',') {
-        let mut res = get_session_state(db, user_id, info.session_id).await?;
+        let mut res = get_session_state_tx(&mut tx, user_id, info.session_id).await?;
         if res.starting_form.is_none()
             && res.verb.is_some()
             && (res.verb.unwrap() as usize) < verbs.len()
@@ -681,18 +697,18 @@ pub async fn hc_mf_pressed(
         res.mesg = Some("verb *does* have multiple forms".to_string());
         res.verbs = None;
 
-        tx.rollback().await?;
+        tx.rollback_tx().await?;
 
         Ok(res)
     } else {
         let is_correct = false;
-        let _res = db
-            .update_answer_move(info, user_id, &correct_answer, is_correct, true, timestamp)
+        let _res = tx
+            .update_answer_move_tx(info, user_id, &correct_answer, is_correct, true, timestamp)
             .await?;
 
         //if practice session, ask the next here
         if s.challenged_user_id.is_none() {
-            ask_practice(&mut tx, db, prev_form, &s, timestamp, m.asktimestamp, verbs).await?;
+            ask_practice(&mut tx, prev_form, &s, timestamp, m.asktimestamp, verbs).await?;
         } else {
             //add to other player's score if not practice and not correct
             if !is_correct {
@@ -702,13 +718,13 @@ pub async fn hc_mf_pressed(
                     "challenger_score"
                 };
                 let points = 1;
-                let _ = db
-                    .add_to_score(&mut tx, info.session_id, user_to_score, points)
+                let _ = tx
+                    .add_to_score(info.session_id, user_to_score, points)
                     .await?;
             }
         }
 
-        let mut res = get_session_state_tx(&mut tx, db, user_id, info.session_id).await?;
+        let mut res = get_session_state_tx(&mut tx, user_id, info.session_id).await?;
         //starting_form is 1st pp if new verb
         if res.starting_form.is_none()
             && res.verb.is_some()
@@ -716,8 +732,6 @@ pub async fn hc_mf_pressed(
         {
             res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
         }
-
-        tx.commit().await?;
 
         //if practice session, add in is_correct and correct_answer back into session state here
         if s.challenged_user_id.is_none() {
@@ -732,13 +746,14 @@ pub async fn hc_mf_pressed(
         res.mesg = Some("verb does not have multiple forms".to_string());
         res.verbs = if res.move_type == MoveType::FirstMoveMyTurn && !is_correct {
             Some(
-                hc_get_available_verbs(db, user_id, info.session_id, s.highest_unit, verbs)
+                hc_get_available_verbs(&mut tx, user_id, info.session_id, s.highest_unit, verbs)
                     .await
                     .unwrap(),
             )
         } else {
             None
         };
+        tx.commit_tx().await?;
 
         Ok(res)
     }
@@ -785,9 +800,8 @@ pub fn hc_change_verbs(verb_history: &Vec<i32>, reps: usize) -> bool {
     len == 0 || (len >= reps && verb_history[0] == verb_history[reps - 1])
 }
 
-async fn ask_practice<'a, 'b>(
-    tx: &'a mut sqlx::Transaction<'b, Postgres>,
-    db: &dyn HcDbTrait,
+async fn ask_practice(
+    tx: &mut Box<dyn HcTrx>,
     mut prev_form: HcGreekVerbForm,
     session: &SessionResult,
     timestamp: i64,
@@ -801,7 +815,7 @@ async fn ask_practice<'a, 'b>(
         _ => 4,
     };
 
-    let moves = db.get_last_n_moves(tx, session.session_id, 100).await?;
+    let moves = tx.get_last_n_moves(session.session_id, 100).await?;
     let last_verb_ids = moves
         .iter()
         .filter_map(|m| m.verb_id.map(|_| m.verb_id.unwrap()))
@@ -847,20 +861,43 @@ async fn ask_practice<'a, 'b>(
         mood: pf.mood.to_i16(),
         verb: verb_id,
     };
-    let _ = db.insert_ask_move_tx(tx, None, &aq, new_time_stamp).await?;
+    let _ = tx.insert_ask_move_tx(None, &aq, new_time_stamp).await?;
     Ok(())
+}
+
+pub async fn get_sessions_real(
+    db: &dyn HcDbTrait,
+    user_id: Uuid,
+    verbs: &Vec<Arc<HcGreekVerb>>,
+    username: Option<String>,
+    info: &GetSessions,
+) -> Result<SessionsListResponse, sqlx::Error> {
+    let mut tx = db.begin_tx().await?;
+    let current_session = match info.current_session {
+        Some(r) => Some(hc_get_move(&mut tx, user_id, false, r, verbs).await?),
+        _ => None,
+    };
+
+    Ok(SessionsListResponse {
+        response_to: "getsessions".to_string(),
+        sessions: hc_get_sessions(&mut tx, user_id).await?,
+        success: true,
+        username,
+        current_session,
+    })
 }
 
 //opponent_id gets move status for opponent rather than user_id when true:
 //we handle the case of s.challenged_user_id.is_none() here, but opponent_id should always be false for practice games
 pub async fn hc_get_move(
-    db: &dyn HcDbTrait,
+    tx: &mut Box<dyn HcTrx>,
     user_id: Uuid,
     opponent_id: bool,
     session_id: Uuid,
     verbs: &Vec<Arc<HcGreekVerb>>,
 ) -> Result<SessionState, sqlx::Error> {
-    let s = db.get_session(session_id).await?;
+    //let mut tx = db.begin_tx().await?;
+    let s = tx.get_session_tx(session_id).await?;
 
     let real_user_id = if !opponent_id || s.challenged_user_id.is_none() {
         user_id
@@ -870,7 +907,7 @@ pub async fn hc_get_move(
         s.challenger_user_id
     };
 
-    let mut res = get_session_state(db, real_user_id, session_id).await?;
+    let mut res = get_session_state_tx(tx, real_user_id, session_id).await?;
 
     //set starting_form to 1st pp of verb if verb is set, but starting form is None (i.e. we just changed verbs)
     if res.starting_form.is_none()
@@ -885,7 +922,7 @@ pub async fn hc_get_move(
     res.mesg = None;
     res.verbs = if res.move_type == MoveType::FirstMoveMyTurn {
         Some(
-            hc_get_available_verbs(db, real_user_id, session_id, s.highest_unit, verbs)
+            hc_get_available_verbs(tx, real_user_id, session_id, s.highest_unit, verbs)
                 .await
                 .unwrap(),
         )
@@ -957,13 +994,14 @@ fn move_get_type(
 }
 
 pub async fn hc_get_sessions(
-    db: &dyn HcDbTrait,
+    tx: &mut Box<dyn HcTrx>,
     user_id: Uuid,
 ) -> Result<Vec<SessionsListQuery>, sqlx::Error> {
-    let mut res = db.get_sessions(user_id).await?;
+    //let mut db.begin_tx().await?;
+    let mut res = tx.get_sessions(user_id).await?;
 
     for r in &mut res {
-        if let Ok(m) = db.get_last_move(r.session_id).await {
+        if let Ok(m) = tx.get_last_move_tx(r.session_id).await {
             (r.myturn, r.move_type) = move_get_type(Some(&m), user_id, r.challenged);
         } else {
             (r.myturn, r.move_type) = move_get_type(None, user_id, r.challenged);
@@ -999,7 +1037,8 @@ pub async fn hc_get_game_moves(
     db: &dyn HcDbTrait,
     info: &GetMovesQuery,
 ) -> Result<Vec<MoveResult>, sqlx::Error> {
-    let res = db.get_game_moves(info.session_id).await?;
+    let mut tx = db.begin_tx().await?;
+    let res = tx.get_game_moves(info.session_id).await?;
 
     Ok(res)
 }
@@ -1011,9 +1050,11 @@ pub async fn hc_insert_session(
     verbs: &[Arc<HcGreekVerb>],
     timestamp: i64,
 ) -> Result<Uuid, sqlx::Error> {
+    let mut tx = db.begin_tx().await?;
+
     let opponent_user_id: Option<Uuid>;
     if !info.opponent.is_empty() {
-        let o = db.get_user_id(&info.opponent).await?; //we want to return an error if len of info.opponent > 0 and not found, else it is practice game
+        let o = tx.get_user_id(&info.opponent).await?; //we want to return an error if len of info.opponent > 0 and not found, else it is practice game
         opponent_user_id = Some(o.user_id);
     } else {
         opponent_user_id = None;
@@ -1051,16 +1092,9 @@ pub async fn hc_insert_session(
     };
 
     //let mut tx = db.db.begin().await?;
-    let mut tx = db.begin_tx().await.unwrap();
-    match db
-        .insert_session_tx(
-            &mut tx,
-            user_id,
-            highest_unit,
-            opponent_user_id,
-            info,
-            timestamp,
-        )
+    //let mut tx = db.begin_tx().await.unwrap();
+    match tx
+        .insert_session_tx(user_id, highest_unit, opponent_user_id, info, timestamp)
         .await
     {
         Ok(session_uuid) => {
@@ -1092,9 +1126,9 @@ pub async fn hc_insert_session(
                     practice_reps_per_verb: info.practice_reps_per_verb,
                     timestamp,
                 };
-                ask_practice(&mut tx, db, prev_form, &sesh, timestamp, 0, verbs).await?;
+                ask_practice(&mut tx, prev_form, &sesh, timestamp, 0, verbs).await?;
             }
-            tx.commit().await?;
+            tx.commit_tx().await?;
             Ok(session_uuid)
         }
         Err(e) => Err(e),
@@ -1102,15 +1136,16 @@ pub async fn hc_insert_session(
 }
 
 pub async fn hc_get_available_verbs(
-    db: &dyn HcDbTrait,
+    tx: &mut Box<dyn HcTrx>,
     _user_id: Uuid,
     session_id: Uuid,
     top_unit: Option<i16>,
     verbs: &Vec<Arc<HcGreekVerb>>,
 ) -> Result<Vec<HCVerbOption>, sqlx::Error> {
     let mut res_verbs: Vec<HCVerbOption> = vec![];
+    //let mut tx = db.begin_tx().await?;
 
-    let used_verbs = db.get_used_verbs(session_id).await?;
+    let used_verbs = tx.get_used_verbs(session_id).await?;
     //println!("used_verbs: {:?}", used_verbs);
     for v in verbs {
         if v.id == 0 {
@@ -1213,7 +1248,10 @@ mod tests {
         let _ = db.db.execute("DROP TABLE IF EXISTS sessions;").await;
         let _ = db.db.execute("DROP TABLE IF EXISTS users;").await;
 
-        let res = db.create_db().await;
+        let mut tx = db.begin_tx().await.unwrap();
+        let res = tx.create_db().await;
+        tx.commit_tx().await.unwrap();
+
         if res.is_err() {
             println!("error: {res:?}");
         }
@@ -1364,18 +1402,20 @@ mod tests {
 
         let mut timestamp = get_timestamp();
 
-        let uuid1 = db
+        let mut tx = db.begin_tx().await.unwrap();
+        let uuid1 = tx
             .create_user("testuser1", "abcdabcd", "user1@blah.com", timestamp)
             .await
             .unwrap();
-        let uuid2 = db
+        let uuid2 = tx
             .create_user("testuser2", "abcdabcd", "user2@blah.com", timestamp)
             .await
             .unwrap();
-        let invalid_uuid = db
+        let invalid_uuid = tx
             .create_user("testuser3", "abcdabcd", "user3@blah.com", timestamp)
             .await
             .unwrap();
+        tx.commit_tx().await.unwrap();
 
         let mut csq = CreateSessionQuery {
             qtype: "abc".to_string(),
@@ -1416,7 +1456,9 @@ mod tests {
         }
         assert!(ask.is_ok());
 
-        let s = hc_get_sessions(&db, uuid1).await;
+        let mut tx = db.begin_tx().await.unwrap();
+        let s = hc_get_sessions(&mut tx, uuid1).await;
+        tx.commit_tx().await.unwrap();
         // let s_res = Ok([SessionsListQuery { session_id: 75d08792-ea12-40f6-a903-bd4e6aae2aad,
         //     challenged: Some(cffd0d33-6aab-45c0-9dc1-279ae4ecaafa),
         //     opponent: Some(cffd0d33-6aab-45c0-9dc1-279ae4ecaafa),
@@ -1441,7 +1483,9 @@ mod tests {
             session_id: *session_uuid.as_ref().unwrap(),
         };
 
-        let ss = hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
+        let mut tx = db.begin_tx().await.unwrap();
+        let ss = hc_get_move(&mut tx, uuid1, false, m.session_id, &verbs).await;
+        tx.commit_tx().await.unwrap();
 
         let ss_res = SessionState {
             session_id: *session_uuid.as_ref().unwrap(),
@@ -1472,7 +1516,9 @@ mod tests {
         //println!("{:?}", ss.as_ref().unwrap());
         assert!(ss.unwrap() == ss_res);
 
-        let ss2 = hc_get_move(&db, uuid2, false, m.session_id, &verbs).await;
+        let mut tx = db.begin_tx().await.unwrap();
+        let ss2 = hc_get_move(&mut tx, uuid2, false, m.session_id, &verbs).await;
+        tx.commit_tx().await.unwrap();
 
         let ss_res2 = SessionState {
             session_id: *session_uuid.as_ref().unwrap(),
@@ -1525,7 +1571,9 @@ mod tests {
         let answer = hc_answer(&db, uuid2, &answerq, timestamp, &verbs).await;
         assert!(answer.is_err());
 
-        let ss = hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
+        let mut tx = db.begin_tx().await.unwrap();
+        let ss = hc_get_move(&mut tx, uuid1, false, m.session_id, &verbs).await;
+        tx.commit_tx().await.unwrap();
 
         let ss_res = SessionState {
             session_id: *session_uuid.as_ref().unwrap(),
@@ -1555,7 +1603,9 @@ mod tests {
         //println!("{:?}", ss.as_ref().unwrap());
         assert!(ss.unwrap() == ss_res);
 
-        let ss2 = hc_get_move(&db, uuid2, false, m.session_id, &verbs).await;
+        let mut tx = db.begin_tx().await.unwrap();
+        let ss2 = hc_get_move(&mut tx, uuid2, false, m.session_id, &verbs).await;
+        tx.commit_tx().await.unwrap();
 
         let ss_res2 = SessionState {
             session_id: *session_uuid.as_ref().unwrap(),
@@ -1602,7 +1652,10 @@ mod tests {
         let ask = hc_ask(&db, uuid2, &aq2, timestamp, &verbs).await;
         assert!(ask.is_ok());
 
-        let ss = hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
+        let mut tx = db.begin_tx().await.unwrap();
+        let ss = hc_get_move(&mut tx, uuid1, false, m.session_id, &verbs).await;
+        tx.commit_tx().await.unwrap();
+
         assert!(ss.is_ok());
         let ss_res = SessionState {
             session_id: *session_uuid.as_ref().unwrap(),
@@ -1633,7 +1686,9 @@ mod tests {
         //println!("2: {:?}", ss_res);
         assert!(ss.unwrap() == ss_res);
 
-        let ss2 = hc_get_move(&db, uuid2, false, m.session_id, &verbs).await;
+        let mut tx = db.begin_tx().await.unwrap();
+        let ss2 = hc_get_move(&mut tx, uuid2, false, m.session_id, &verbs).await;
+        tx.commit_tx().await.unwrap();
 
         let ss_res2 = SessionState {
             session_id: *session_uuid.as_ref().unwrap(),
@@ -1678,7 +1733,9 @@ mod tests {
         assert!(answer.is_ok());
         assert!(!answer.unwrap().is_correct.unwrap());
 
-        let s = hc_get_sessions(&db, uuid1).await;
+        let mut tx = db.begin_tx().await.unwrap();
+        let s = hc_get_sessions(&mut tx, uuid1).await;
+        tx.commit_tx().await.unwrap();
         // let s_res = Ok([SessionsListQuery {
         // session_id: c152c43f-d52c-496b-ab34-da44ab61275c,
         // challenged: Some(0faa61fe-b89a-4f76-b1f3-1c39da26903f),
@@ -1695,13 +1752,18 @@ mod tests {
         assert_eq!(s.as_ref().unwrap()[0].my_score, Some(0));
         assert_eq!(s.as_ref().unwrap()[0].their_score, Some(1));
 
-        let s = hc_get_sessions(&db, uuid2).await;
+        let mut tx = db.begin_tx().await.unwrap();
+        let s = hc_get_sessions(&mut tx, uuid2).await;
+        tx.commit_tx().await.unwrap();
+
         //println!("s: {:?}", s);
         assert_eq!(s.as_ref().unwrap()[0].move_type, MoveType::AskTheirTurn);
         assert_eq!(s.as_ref().unwrap()[0].my_score, Some(1));
         assert_eq!(s.as_ref().unwrap()[0].their_score, Some(0));
 
-        let ss = hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
+        let mut tx = db.begin_tx().await.unwrap();
+        let ss = hc_get_move(&mut tx, uuid1, false, m.session_id, &verbs).await;
+        tx.commit_tx().await.unwrap();
 
         let ss_res = SessionState {
             session_id: *session_uuid.as_ref().unwrap(),
@@ -2237,7 +2299,9 @@ mod tests {
         //println!("{:?}\n\n{:?}", ss_res, ss.as_ref().unwrap());
         assert!(ss.unwrap() == ss_res);
 
-        let ss2 = hc_get_move(&db, uuid2, false, m.session_id, &verbs).await;
+        let mut tx = db.begin_tx().await.unwrap();
+        let ss2 = hc_get_move(&mut tx, uuid2, false, m.session_id, &verbs).await;
+        tx.commit_tx().await.unwrap();
 
         let ss_res2 = SessionState {
             session_id: *session_uuid.as_ref().unwrap(),
@@ -2285,7 +2349,10 @@ mod tests {
         let ask = hc_ask(&db, uuid1, &aq3, timestamp, &verbs).await;
         assert!(ask.is_ok());
 
-        let ss = hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
+        let mut tx = db.begin_tx().await.unwrap();
+        let ss = hc_get_move(&mut tx, uuid1, false, m.session_id, &verbs).await;
+        tx.commit_tx().await.unwrap();
+
         assert!(ss.is_ok());
         let ss_res = SessionState {
             session_id: *session_uuid.as_ref().unwrap(),
@@ -2316,7 +2383,9 @@ mod tests {
         //println!("2: {:?}", ss_res);
         assert!(ss.unwrap() == ss_res);
 
-        let ss2 = hc_get_move(&db, uuid2, false, m.session_id, &verbs).await;
+        let mut tx = db.begin_tx().await.unwrap();
+        let ss2 = hc_get_move(&mut tx, uuid2, false, m.session_id, &verbs).await;
+        tx.commit_tx().await.unwrap();
 
         let ss_res2 = SessionState {
             session_id: *session_uuid.as_ref().unwrap(),
@@ -2363,14 +2432,16 @@ mod tests {
 
         let timestamp = get_timestamp();
 
-        let uuid1 = db
+        let mut tx = db.begin_tx().await.unwrap();
+        let uuid1 = tx
             .create_user("testuser4", "abcdabcd", "user1@blah.com", timestamp)
             .await
             .unwrap();
-        let invalid_uuid = db
+        let invalid_uuid = tx
             .create_user("testuser6", "abcdabcd", "user3@blah.com", timestamp)
             .await
             .unwrap();
+        tx.commit_tx().await.unwrap();
 
         let mut csq = CreateSessionQuery {
             qtype: "abc".to_string(),
@@ -2408,7 +2479,10 @@ mod tests {
         let ask = hc_ask(&db, uuid1, &aq, timestamp, &verbs).await;
         assert!(ask.is_err());
 
-        let s = hc_get_sessions(&db, uuid1).await;
+        let mut tx = db.begin_tx().await.unwrap();
+        let s = hc_get_sessions(&mut tx, uuid1).await;
+        tx.commit_tx().await.unwrap();
+
         // let s_res = Ok([SessionsListQuery { session_id: 75d08792-ea12-40f6-a903-bd4e6aae2aad,
         //     challenged: Some(cffd0d33-6aab-45c0-9dc1-279ae4ecaafa),
         //     opponent: Some(cffd0d33-6aab-45c0-9dc1-279ae4ecaafa),
@@ -2428,8 +2502,9 @@ mod tests {
             qtype: "getmove".to_string(),
             session_id: *session_uuid.as_ref().unwrap(),
         };
-
-        let ss = hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
+        let mut tx = db.begin_tx().await.unwrap();
+        let ss = hc_get_move(&mut tx, uuid1, false, m.session_id, &verbs).await;
+        tx.commit_tx().await.unwrap();
 
         assert_eq!(ss.as_ref().unwrap().move_type, MoveType::Practice);
         assert!(ss.as_ref().unwrap().myturn);

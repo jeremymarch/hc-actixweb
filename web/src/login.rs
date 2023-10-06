@@ -171,12 +171,13 @@ pub async fn login_post(
         username: form.0.username,
         password: form.0.password,
     };
-
-    if let Ok(user_id) = db
+    let mut tx = db.begin_tx().await.unwrap();
+    if let Ok(user_id) = tx
         .validate_login_db(&credentials.username, credentials.password.expose_secret())
         .await
         .map_err(map_sqlx_error)
     {
+        tx.commit_tx().await.unwrap();
         session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
         if session.insert("user_id", user_id).is_ok()
             && session.insert("username", credentials.username).is_ok()
@@ -335,11 +336,13 @@ pub async fn new_user_post(
     let timestamp = libhc::get_timestamp();
 
     if username.len() > 1 && password.len() > 3 && email.len() > 6 && password == confirm_password {
-        if let Ok(_user_id) = db
+        let mut tx = db.begin_tx().await.unwrap();
+        if let Ok(_user_id) = tx
             .create_user(&username, &password, &email, timestamp)
             .await
             .map_err(map_sqlx_error)
         {
+            tx.commit_tx().await.unwrap();
             //session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
             //if session.insert("user_id", user_id).is_ok() {
             return Ok(HttpResponse::SeeOther()

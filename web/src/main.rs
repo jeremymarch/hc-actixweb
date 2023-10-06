@@ -43,11 +43,12 @@ use libhc::AskQuery;
 use libhc::CreateSessionQuery;
 use libhc::GetMoveQuery;
 use libhc::GetMovesQuery;
+use libhc::GetSessions;
 use libhc::HcDbTrait;
 use libhc::MoveResult;
 use libhc::MoveType;
 use libhc::SessionState;
-use libhc::SessionsListQuery;
+use libhc::SessionsListResponse;
 use thiserror::Error;
 
 use actix::Actor;
@@ -69,7 +70,7 @@ const SECS_IN_10_YEARS: i64 = 60 * 60 * 24 * 7 * 4 * 12 * 10;
 use rand::Rng;
 use std::io;
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::types::Uuid;
 
@@ -104,21 +105,6 @@ pub struct StatusResponse {
     response_to: String,
     mesg: String,
     success: bool,
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct SessionsListResponse {
-    response_to: String,
-    sessions: Vec<SessionsListQuery>,
-    success: bool,
-    username: Option<String>,
-    current_session: Option<SessionState>,
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct GetSessions {
-    qtype: String,
-    current_session: Option<sqlx::types::Uuid>,
 }
 
 /// Entry point for our websocket route
@@ -187,24 +173,9 @@ async fn get_sessions(
         //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
         //let user_agent = get_user_agent(&req).unwrap_or("");
 
-        let current_session = match info.current_session {
-            Some(r) => Some(
-                libhc::hc_get_move(db, user_id, false, r, verbs)
-                    .await
-                    .map_err(map_sqlx_error)?,
-            ),
-            _ => None,
-        };
-        let res = SessionsListResponse {
-            response_to: "getsessions".to_string(),
-            sessions: libhc::hc_get_sessions(db, user_id)
-                .await
-                .map_err(map_sqlx_error)?,
-            success: true,
-            username,
-            current_session,
-        };
-
+        let res = libhc::get_sessions_real(db, user_id, verbs, username, &info)
+            .await
+            .map_err(map_sqlx_error)?;
         Ok(HttpResponse::Ok().json(res))
     } else {
         let res = StatusResponse {
@@ -284,9 +255,11 @@ async fn get_move(
     //"ask", prev form to start from or null, prev answer and is_correct, correct answer
 
     if let Some(user_id) = login::get_user_id(session) {
-        let res = libhc::hc_get_move(db, user_id, false, info.session_id, verbs)
+        let mut tx = db.begin_tx().await.unwrap();
+        let res = libhc::hc_get_move(&mut tx, user_id, false, info.session_id, verbs)
             .await
             .map_err(map_sqlx_error)?;
+        tx.commit_tx().await.unwrap();
 
         Ok(HttpResponse::Ok().json(res))
     } else {
@@ -624,11 +597,9 @@ async fn main() -> io::Result<()> {
     //     .await
     //     .expect("Could not connect to db.")
     // };
-
-    let res = hcdb.create_db().await;
-    if res.is_err() {
-        println!("error: {res:?}");
-    }
+    let mut tx = hcdb.begin_tx().await.expect("error creating db");
+    tx.create_db().await.expect("error creating db");
+    tx.commit_tx().await.unwrap();
 
     //1. to make a new key:
     // let secret_key = Key::generate(); // only for testing: should use same key from .env file/variable, else have to login again on each restart
