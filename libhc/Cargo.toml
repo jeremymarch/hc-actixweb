@@ -18,6 +18,11 @@ async-trait = "0.1.73"
 #hoplite_verbs_rs = { path = "../hoplite_verbs_rs" }
 hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.3.9" }
 
+[features]
+# default = ["postgres"]
+sqlite = []
+postgres = []
+
 [dev-dependencies]
 tokio = { version = "1.32.0", features = ["rt", "macros"] }
 

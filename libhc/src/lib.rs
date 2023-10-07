@@ -17,6 +17,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#[cfg(not(any(feature = "sqlite", feature = "postgres")))]
+compile_error!("Either feature \"sqlite\" or \"postgres\" must be enabled for this crate.");
+
 use chrono::prelude::*;
 use hoplite_verbs_rs::*;
 use polytonic_greek::hgk_compare_multiple_forms;
@@ -24,7 +27,9 @@ use polytonic_greek::hgk_compare_sqlite;
 use rand::prelude::SliceRandom;
 use sqlx::types::Uuid;
 use std::collections::HashSet;
+#[cfg(feature = "postgres")]
 pub mod dbpostgres;
+#[cfg(feature = "sqlite")]
 pub mod dbsqlite;
 
 use serde::{Deserialize, Serialize};
@@ -1240,27 +1245,39 @@ pub async fn hc_get_verbs(db: &HcDb, _user_id:Uuid, session_id:Uuid, top_unit:Op
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sqlx::postgres::PgPoolOptions;
     use sqlx::Executor;
     use tokio::sync::OnceCell;
     static ONCE: OnceCell<()> = OnceCell::const_new();
-    use crate::dbsqlite::HcDbSqlite;
+
+    //if both postgres AND sqlite are set, test with postgres
+    //at least one or the other MUST be set, or both
+    #[cfg(feature = "postgres")]
     use dbpostgres::HcDbPostgres;
+    #[cfg(feature = "postgres")]
+    use sqlx::postgres::PgPoolOptions;
+
+    #[cfg(not(feature = "postgres"))]
+    use crate::dbsqlite::HcDbSqlite;
+    #[cfg(not(feature = "postgres"))]
     use sqlx::sqlite::SqliteConnectOptions;
+    #[cfg(not(feature = "postgres"))]
     use sqlx::SqlitePool;
+    #[cfg(not(feature = "postgres"))]
     use std::str::FromStr;
 
-    async fn get_postgres() -> HcDbPostgres {
+    #[cfg(feature = "postgres")]
+    async fn get_db() -> HcDbPostgres {
         HcDbPostgres {
             db: PgPoolOptions::new()
                 .max_connections(5)
-                .connect("postgres://jwm:1234@localhost/hctest")
+                .connect("poxstgres://jwm:1234@localhost/hctest")
                 .await
                 .expect("Could not connect to db."),
         }
     }
 
-    async fn _get_sqlite() -> HcDbSqlite {
+    #[cfg(not(feature = "postgres"))]
+    async fn get_db() -> HcDbSqlite {
         let db_path = ":memory:";
         let options = SqliteConnectOptions::from_str(db_path)
             .expect("Could not connect to db.")
@@ -1291,8 +1308,9 @@ mod tests {
     }
 
     async fn setup_test_db() {
-        let db = get_postgres().await;
+        //let db = get_postgres().await;
         //let db = get_sqlite().await;
+        let db = get_db().await;
 
         let _ = db.db.execute("DROP TABLE IF EXISTS moves;").await;
         let _ = db.db.execute("DROP TABLE IF EXISTS sessions;").await;
@@ -1439,8 +1457,9 @@ mod tests {
     async fn test_two_player() {
         initialize_db_once().await;
 
-        let db = get_postgres().await;
+        //let db = get_postgres().await;
         //let db = get_sqlite().await;
+        let db = get_db().await;
 
         let verbs = load_verbs("pp.txt");
 
@@ -2466,8 +2485,9 @@ mod tests {
         initialize_db_once().await;
         let verbs = load_verbs("pp.txt");
 
-        let db = get_postgres().await;
+        //let db = get_postgres().await;
         //let db = get_sqlite().await;
+        let db = get_db().await;
 
         let timestamp = get_timestamp();
 

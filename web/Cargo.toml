@@ -8,7 +8,7 @@ name = "main"
 path = "src/main.rs"
 
 [dependencies]
-libhc = { path = "../libhc" }
+libhc = { path = "../libhc", features= ["postgres"]}
 actix = "0.13.1"
 actix-web-actors = "4.2.0"
 actix-web = { version = "4.4.0" }
