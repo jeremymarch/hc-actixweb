@@ -35,20 +35,18 @@ use sqlx::Postgres;
 use sqlx::Transaction;
 
 #[derive(Clone, Debug)]
-pub struct HcDb {
-    //db:SqlitePool,
+pub struct HcDbPostgres {
     pub db: sqlx::postgres::PgPool,
 }
 
 pub struct HcDbPostgresTrx<'a> {
-    //db:SqlitePool,
     pub tx: Transaction<'a, Postgres>,
 }
 
 use async_trait::async_trait;
 
 #[async_trait]
-impl HcDbTrait for HcDb {
+impl HcDbTrait for HcDbPostgres {
     async fn begin_tx(&self) -> Result<Box<dyn HcTrx>, sqlx::Error> {
         Ok(Box::new(HcDbPostgresTrx {
             tx: self.db.begin().await?,

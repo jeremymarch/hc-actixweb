@@ -8,7 +8,7 @@ use crate::GetMoveQuery;
 use sqlx::types::Uuid;
 
 use crate::GetSessions;
-use crate::HcDb;
+use crate::HcDbPostgres;
 use crate::MoveType;
 use crate::SessionsListResponse;
 use crate::StatusResponse;
@@ -39,7 +39,7 @@ pub struct WsHcGameSession {
 
     pub addr: Addr<server::HcGameServer>,
     pub verbs: Vec<Arc<HcGreekVerb>>,
-    pub db: HcDb,
+    pub db: HcDbPostgres,
     pub username: Option<String>,
 }
 

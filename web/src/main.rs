@@ -37,7 +37,7 @@ use actix_web::{
 use actix_web_flash_messages::storage::CookieMessageStore;
 use actix_web_flash_messages::FlashMessagesFramework;
 
-use libhc::db::HcDb;
+use libhc::dbpostgres::HcDbPostgres;
 use libhc::AnswerQuery;
 use libhc::AskQuery;
 use libhc::CreateSessionQuery;
@@ -116,7 +116,7 @@ async fn ws_route(
 ) -> Result<HttpResponse, Error> {
     if let Some(uuid) = login::get_user_id(session.clone()) {
         //println!("uuid {:?}", uuid);
-        let db = req.app_data::<HcDb>().unwrap();
+        let db = req.app_data::<HcDbPostgres>().unwrap();
         let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
         let username = login::get_username(session);
         ws::start(
@@ -163,7 +163,7 @@ async fn index_page() -> Result<HttpResponse, AWError> {
 async fn get_sessions(
     (info, session, req): (web::Form<GetSessions>, Session, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
-    let db = req.app_data::<HcDb>().unwrap();
+    let db = req.app_data::<HcDbPostgres>().unwrap();
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     if let Some(user_id) = login::get_user_id(session.clone()) {
@@ -190,7 +190,7 @@ async fn get_sessions(
 async fn get_game_moves(
     (info, session, req): (web::Form<GetMovesQuery>, Session, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
-    let db = req.app_data::<HcDb>().unwrap();
+    let db = req.app_data::<HcDbPostgres>().unwrap();
 
     if let Some(_user_id) = login::get_user_id(session.clone()) {
         let res = GetMovesResponse {
@@ -216,7 +216,7 @@ async fn get_game_moves(
 async fn create_session(
     (session, mut info, req): (Session, web::Form<CreateSessionQuery>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
-    let db = req.app_data::<HcDb>().unwrap();
+    let db = req.app_data::<HcDbPostgres>().unwrap();
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     if let Some(user_id) = login::get_user_id(session) {
@@ -249,7 +249,7 @@ async fn create_session(
 async fn get_move(
     (info, req, session): (web::Form<GetMoveQuery>, HttpRequest, Session),
 ) -> Result<HttpResponse, AWError> {
-    let db = req.app_data::<HcDb>().unwrap();
+    let db = req.app_data::<HcDbPostgres>().unwrap();
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     //"ask", prev form to start from or null, prev answer and is_correct, correct answer
@@ -297,7 +297,7 @@ async fn get_move(
 async fn enter(
     (info, req, session): (web::Form<AnswerQuery>, HttpRequest, Session),
 ) -> Result<HttpResponse, AWError> {
-    let db = req.app_data::<HcDb>().unwrap();
+    let db = req.app_data::<HcDbPostgres>().unwrap();
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     let timestamp = libhc::get_timestamp();
@@ -342,7 +342,7 @@ async fn enter(
 async fn ask(
     (info, req, session): (web::Form<AskQuery>, HttpRequest, Session),
 ) -> Result<HttpResponse, AWError> {
-    let db = req.app_data::<HcDb>().unwrap();
+    let db = req.app_data::<HcDbPostgres>().unwrap();
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     let timestamp = libhc::get_timestamp();
@@ -388,7 +388,7 @@ async fn ask(
 async fn mf(
     (info, req, session): (web::Form<AnswerQuery>, HttpRequest, Session),
 ) -> Result<HttpResponse, AWError> {
-    let db = req.app_data::<HcDb>().unwrap();
+    let db = req.app_data::<HcDbPostgres>().unwrap();
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     let timestamp = libhc::get_timestamp();
@@ -585,7 +585,7 @@ async fn main() -> io::Result<()> {
     let db_string = std::env::var("HOPLITE_DB")
         .unwrap_or_else(|_| panic!("Environment variable for db string not set: HOPLITE_DB."));
 
-    let hcdb = HcDb {
+    let hcdb = HcDbPostgres {
         db: PgPoolOptions::new()
             .max_connections(5)
             .connect(&db_string)
@@ -593,7 +593,7 @@ async fn main() -> io::Result<()> {
             .expect("Could not connect to db."),
     };
 
-    // let hcdb = HcDb { db: SqlitePool::connect_with(options)
+    // let hcdb = HcDbPostgres { db: SqlitePool::connect_with(options)
     //     .await
     //     .expect("Could not connect to db.")
     // };

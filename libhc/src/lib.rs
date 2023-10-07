@@ -24,7 +24,7 @@ use polytonic_greek::hgk_compare_sqlite;
 use rand::prelude::SliceRandom;
 use sqlx::types::Uuid;
 use std::collections::HashSet;
-pub mod db;
+pub mod dbpostgres;
 pub mod dbsqlite;
 
 use serde::{Deserialize, Serialize};
@@ -1245,13 +1245,13 @@ mod tests {
     use tokio::sync::OnceCell;
     static ONCE: OnceCell<()> = OnceCell::const_new();
     use crate::dbsqlite::HcDbSqlite;
-    use db::HcDb;
+    use dbpostgres::HcDbPostgres;
     use sqlx::sqlite::SqliteConnectOptions;
     use sqlx::SqlitePool;
     use std::str::FromStr;
 
-    async fn get_postgres() -> HcDb {
-        HcDb {
+    async fn get_postgres() -> HcDbPostgres {
+        HcDbPostgres {
             db: PgPoolOptions::new()
                 .max_connections(5)
                 .connect("postgres://jwm:1234@localhost/hctest")
