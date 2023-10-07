@@ -1260,11 +1260,24 @@ mod tests {
             .collation("PolytonicGreek", |l, r| {
                 l.to_lowercase().cmp(&r.to_lowercase())
             });
-        HcDbSqlite {
+        let db = HcDbSqlite {
             db: SqlitePool::connect_with(options)
                 .await
                 .expect("Could not connect to db."),
+        };
+
+        //need to call these here, setup_test_db() doesn't work for sqlite
+        let _ = db.db.execute("DROP TABLE IF EXISTS moves;").await;
+        let _ = db.db.execute("DROP TABLE IF EXISTS sessions;").await;
+        let _ = db.db.execute("DROP TABLE IF EXISTS users;").await;
+
+        let mut tx = db.begin_tx().await.unwrap();
+        let res = tx.create_db().await;
+        if res.is_err() {
+            println!("error: {res:?}");
         }
+        tx.commit_tx().await.unwrap();
+        db
     }
 
     async fn setup_test_db() {
@@ -1277,11 +1290,10 @@ mod tests {
 
         let mut tx = db.begin_tx().await.unwrap();
         let res = tx.create_db().await;
-        tx.commit_tx().await.unwrap();
-
         if res.is_err() {
             println!("error: {res:?}");
         }
+        tx.commit_tx().await.unwrap();
     }
 
     pub async fn initialize_db_once() {
