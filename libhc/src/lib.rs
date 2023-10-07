@@ -25,6 +25,7 @@ use rand::prelude::SliceRandom;
 use sqlx::types::Uuid;
 use std::collections::HashSet;
 pub mod db;
+pub mod dbsqlite;
 
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -1233,16 +1234,42 @@ mod tests {
     use sqlx::Executor;
     use tokio::sync::OnceCell;
     static ONCE: OnceCell<()> = OnceCell::const_new();
+    use crate::dbsqlite::HcDbSqlite;
     use db::HcDb;
+    use sqlx::sqlite::SqliteConnectOptions;
+    use sqlx::SqlitePool;
+    use std::str::FromStr;
 
-    async fn setup_test_db() {
-        let db = HcDb {
+    async fn get_postgres() -> HcDb {
+        HcDb {
             db: PgPoolOptions::new()
                 .max_connections(5)
                 .connect("postgres://jwm:1234@localhost/hctest")
                 .await
                 .expect("Could not connect to db."),
-        };
+        }
+    }
+
+    async fn _get_sqlite() -> HcDbSqlite {
+        let db_path = ":memory:";
+        let options = SqliteConnectOptions::from_str(db_path)
+            .expect("Could not connect to db.")
+            .foreign_keys(true)
+            .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
+            .read_only(false)
+            .collation("PolytonicGreek", |l, r| {
+                l.to_lowercase().cmp(&r.to_lowercase())
+            });
+        HcDbSqlite {
+            db: SqlitePool::connect_with(options)
+                .await
+                .expect("Could not connect to db."),
+        }
+    }
+
+    async fn setup_test_db() {
+        let db = get_postgres().await;
+        //let db = get_sqlite().await;
 
         let _ = db.db.execute("DROP TABLE IF EXISTS moves;").await;
         let _ = db.db.execute("DROP TABLE IF EXISTS sessions;").await;
@@ -1390,13 +1417,8 @@ mod tests {
     async fn test_two_player() {
         initialize_db_once().await;
 
-        let db = HcDb {
-            db: PgPoolOptions::new()
-                .max_connections(5)
-                .connect("postgres://jwm:1234@localhost/hctest")
-                .await
-                .expect("Could not connect to db."),
-        };
+        let db = get_postgres().await;
+        //let db = get_sqlite().await;
 
         let verbs = load_verbs("pp.txt");
 
@@ -2422,13 +2444,8 @@ mod tests {
         initialize_db_once().await;
         let verbs = load_verbs("pp.txt");
 
-        let db = HcDb {
-            db: PgPoolOptions::new()
-                .max_connections(5)
-                .connect("postgres://jwm:1234@localhost/hctest")
-                .await
-                .expect("Could not connect to db."),
-        };
+        let db = get_postgres().await;
+        //let db = get_sqlite().await;
 
         let timestamp = get_timestamp();
 
