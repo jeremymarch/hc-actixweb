@@ -478,10 +478,20 @@ pub async fn hc_ask(
     };
 
     //be sure this asktimestamp is at least one greater than previous, if there was a previous one
-    let new_time_stamp = if m.is_ok() && timestamp <= m.as_ref().unwrap().asktimestamp {
-        m.unwrap().asktimestamp + 1
-    } else {
-        timestamp
+    // let new_time_stamp = if m.is_ok() && timestamp <= m.as_ref().unwrap().asktimestamp {
+    //     m.unwrap().asktimestamp + 1
+    // } else {
+    //     timestamp
+    // };
+    let new_time_stamp = match m {
+        Ok(m) => {
+            if timestamp <= m.asktimestamp {
+                m.asktimestamp + 1
+            } else {
+                timestamp
+            }
+        }
+        _ => timestamp,
     };
 
     //get move seq and add one?

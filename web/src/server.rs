@@ -135,7 +135,8 @@ impl Handler<Connect> for HcGameServer {
         // auto join session to main room
         self.rooms
             .entry(MAIN_ROOM.to_owned())
-            .or_insert_with(HashSet::new)
+            //.or_insert_with(HashSet::new)
+            .or_default()
             .insert(msg.id);
 
         //let count = self.visitor_count.fetch_add(1, Ordering::SeqCst);
@@ -223,7 +224,8 @@ impl Handler<Join> for HcGameServer {
 
         self.rooms
             .entry(game_uuid)
-            .or_insert_with(HashSet::new)
+            //.or_insert_with(HashSet::new)
+            .or_default()
             .insert(user_uuid);
 
         //self.send_message(&name, "Someone connected", id);
