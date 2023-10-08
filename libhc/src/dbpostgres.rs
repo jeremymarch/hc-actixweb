@@ -65,7 +65,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         Ok(res)
     }
 
-    async fn add_to_score<'a, 'b>(
+    async fn add_to_score(
         &mut self,
         session_id: Uuid,
         user_to_score: &str,
@@ -416,8 +416,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
     //     Ok(a)
     // }
 
-    #[allow(clippy::too_many_arguments)]
-    async fn update_answer_move_tx<'a, 'b>(
+    async fn update_answer_move_tx(
         &mut self,
         info: &AnswerQuery,
         user_id: Uuid,

@@ -234,7 +234,7 @@ pub trait HcTrx {
     async fn rollback_tx(self: Box<Self>) -> Result<(), sqlx::Error>;
     //async fn get_tx(mut self) -> &dyn
 
-    async fn add_to_score<'a, 'b>(
+    async fn add_to_score(
         &mut self,
         session_id: Uuid,
         user_to_score: &str,
@@ -331,7 +331,7 @@ pub trait HcTrx {
     // ) -> Result<u32, sqlx::Error>;
 
     #[allow(clippy::too_many_arguments)]
-    async fn update_answer_move_tx<'a, 'b>(
+    async fn update_answer_move_tx(
         &mut self,
         info: &AnswerQuery,
         user_id: Uuid,
