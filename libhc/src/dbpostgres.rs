@@ -20,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 use crate::AnswerQuery;
 use crate::AskQuery;
 use crate::CreateSessionQuery;
-use crate::HcDbTrait;
+use crate::HcDb;
 use crate::MoveResult;
 use crate::MoveType;
 use crate::SessionResult;
@@ -46,7 +46,7 @@ pub struct HcDbPostgresTrx<'a> {
 use async_trait::async_trait;
 
 #[async_trait]
-impl HcDbTrait for HcDbPostgres {
+impl HcDb for HcDbPostgres {
     async fn begin_tx(&self) -> Result<Box<dyn HcTrx>, sqlx::Error> {
         Ok(Box::new(HcDbPostgresTrx {
             tx: self.db.begin().await?,

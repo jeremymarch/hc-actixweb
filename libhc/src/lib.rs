@@ -224,7 +224,7 @@ pub enum MoveType {
 
 use async_trait::async_trait;
 #[async_trait]
-pub trait HcDbTrait {
+pub trait HcDb {
     async fn begin_tx(&self) -> Result<Box<dyn HcTrx>, sqlx::Error>;
 }
 
@@ -232,7 +232,6 @@ pub trait HcDbTrait {
 pub trait HcTrx {
     async fn commit_tx(self: Box<Self>) -> Result<(), sqlx::Error>;
     async fn rollback_tx(self: Box<Self>) -> Result<(), sqlx::Error>;
-    //async fn get_tx(mut self) -> &dyn
 
     async fn add_to_score(
         &mut self,
@@ -248,15 +247,6 @@ pub trait HcTrx {
     ) -> Result<Uuid, sqlx::Error>;
 
     async fn get_user_id(&mut self, username: &str) -> Result<UserResult, sqlx::Error>;
-
-    // async fn insert_session(
-    //     &mut self,
-    //     user_id: Uuid,
-    //     highest_unit: Option<i16>,
-    //     opponent_id: Option<Uuid>,
-    //     info: &CreateSessionQuery,
-    //     timestamp: i64,
-    // ) -> Result<Uuid, sqlx::Error>;
 
     async fn insert_session_tx(
         &mut self,
@@ -277,9 +267,6 @@ pub trait HcTrx {
         user_id: sqlx::types::Uuid,
     ) -> Result<Vec<SessionsListQuery>, sqlx::Error>;
 
-    // async fn get_last_move(&mut self, session_id: sqlx::types::Uuid)
-    //     -> Result<MoveResult, sqlx::Error>;
-
     async fn get_last_move_tx(
         &mut self,
         session_id: sqlx::types::Uuid,
@@ -291,11 +278,6 @@ pub trait HcTrx {
         n: u8,
     ) -> Result<Vec<MoveResult>, sqlx::Error>;
 
-    // async fn get_session(
-    //     &mut self,
-    //     session_id: sqlx::types::Uuid,
-    // ) -> Result<SessionResult, sqlx::Error>;
-
     async fn get_session_tx(
         &mut self,
         session_id: sqlx::types::Uuid,
@@ -306,29 +288,12 @@ pub trait HcTrx {
         session_id: sqlx::types::Uuid,
     ) -> Result<Vec<i32>, sqlx::Error>;
 
-    // async fn insert_ask_move(
-    //     &mut self,
-    //     user_id: Option<Uuid>,
-    //     info: &AskQuery,
-    //     timestamp: i64,
-    // ) -> Result<Uuid, sqlx::Error>;
-
     async fn insert_ask_move_tx(
         &mut self,
         user_id: Option<Uuid>,
         info: &AskQuery,
         timestamp: i64,
     ) -> Result<Uuid, sqlx::Error>;
-
-    // async fn update_answer_move(
-    //     &self,
-    //     info: &AnswerQuery,
-    //     user_id: Uuid,
-    //     correct_answer: &str,
-    //     is_correct: bool,
-    //     mf_pressed: bool,
-    //     timestamp: i64,
-    // ) -> Result<u32, sqlx::Error>;
 
     #[allow(clippy::too_many_arguments)]
     async fn update_answer_move_tx(
@@ -352,27 +317,11 @@ pub trait HcTrx {
     async fn create_db(&mut self) -> Result<u32, sqlx::Error>;
 }
 
-// pub async fn get_session_state(
-//     db: &dyn HcDbTrait,
-//     user_id: sqlx::types::Uuid,
-//     session_id: sqlx::types::Uuid,
-// ) -> Result<SessionState, sqlx::Error> {
-//     //let mut tx = db.db.begin().await?;
-//     let mut tx = db.begin_tx().await?;
-
-//     let r = get_session_state_tx(&mut tx, db, user_id, session_id).await?;
-
-//     tx.commit().await?;
-//     Ok(r)
-// }
-
 pub async fn get_session_state_tx(
     tx: &mut Box<dyn HcTrx>,
     user_id: sqlx::types::Uuid,
     session_id: sqlx::types::Uuid,
 ) -> Result<SessionState, sqlx::Error> {
-    //let mut tx = self.db.begin_tx().await?;
-
     let res = tx.get_session_tx(session_id).await?;
     let m = tx.get_last_n_moves(session_id, 2).await?;
 
@@ -452,7 +401,7 @@ pub async fn get_session_state_tx(
 }
 
 pub async fn hc_ask(
-    db: &dyn HcDbTrait,
+    db: &dyn HcDb,
     user_id: Uuid,
     info: &AskQuery,
     timestamp: i64,
@@ -524,14 +473,13 @@ pub async fn hc_ask(
 }
 
 pub async fn hc_answer(
-    db: &dyn HcDbTrait,
+    db: &dyn HcDb,
     user_id: Uuid,
     info: &AnswerQuery,
     timestamp: i64,
     verbs: &Vec<Arc<HcGreekVerb>>,
 ) -> Result<SessionState, sqlx::Error> {
     //todo check that user_id is either challenger_user_id or challenged_user_id
-    //let mut tx = db.db.begin().await?;
     let mut tx = db.begin_tx().await?;
 
     let s = tx.get_session_tx(info.session_id).await?;
@@ -645,13 +593,12 @@ pub async fn hc_answer(
 }
 
 pub async fn hc_mf_pressed(
-    db: &dyn HcDbTrait,
+    db: &dyn HcDb,
     user_id: Uuid,
     info: &AnswerQuery,
     timestamp: i64,
     verbs: &Vec<Arc<HcGreekVerb>>,
 ) -> Result<SessionState, sqlx::Error> {
-    //let mut tx = db.db.begin().await?;
     let mut tx = db.begin_tx().await?;
 
     let s = tx.get_session_tx(info.session_id).await?;
@@ -882,7 +829,7 @@ async fn ask_practice(
 }
 
 pub async fn get_sessions_real(
-    db: &dyn HcDbTrait,
+    db: &dyn HcDb,
     user_id: Uuid,
     verbs: &Vec<Arc<HcGreekVerb>>,
     username: Option<String>,
@@ -912,7 +859,6 @@ pub async fn hc_get_move(
     session_id: Uuid,
     verbs: &Vec<Arc<HcGreekVerb>>,
 ) -> Result<SessionState, sqlx::Error> {
-    //let mut tx = db.begin_tx().await?;
     let s = tx.get_session_tx(session_id).await?;
 
     let real_user_id = if !opponent_id || s.challenged_user_id.is_none() {
@@ -1013,7 +959,6 @@ pub async fn hc_get_sessions(
     tx: &mut Box<dyn HcTrx>,
     user_id: Uuid,
 ) -> Result<Vec<SessionsListQuery>, sqlx::Error> {
-    //let mut db.begin_tx().await?;
     let mut res = tx.get_sessions(user_id).await?;
 
     for r in &mut res {
@@ -1050,7 +995,7 @@ fn get_verbs_by_unit(units: &str, verbs: &[Arc<HcGreekVerb>]) -> Option<String> 
 }
 
 pub async fn hc_get_game_moves(
-    db: &dyn HcDbTrait,
+    db: &dyn HcDb,
     info: &GetMovesQuery,
 ) -> Result<Vec<MoveResult>, sqlx::Error> {
     let mut tx = db.begin_tx().await?;
@@ -1060,7 +1005,7 @@ pub async fn hc_get_game_moves(
 }
 
 pub async fn hc_insert_session(
-    db: &dyn HcDbTrait,
+    db: &dyn HcDb,
     user_id: Uuid,
     info: &mut CreateSessionQuery,
     verbs: &[Arc<HcGreekVerb>],
@@ -1107,8 +1052,6 @@ pub async fn hc_insert_session(
         _ => None,
     };
 
-    //let mut tx = db.db.begin().await?;
-    //let mut tx = db.begin_tx().await.unwrap();
     match tx
         .insert_session_tx(user_id, highest_unit, opponent_user_id, info, timestamp)
         .await
@@ -1159,7 +1102,6 @@ pub async fn hc_get_available_verbs(
     verbs: &Vec<Arc<HcGreekVerb>>,
 ) -> Result<Vec<HCVerbOption>, sqlx::Error> {
     let mut res_verbs: Vec<HCVerbOption> = vec![];
-    //let mut tx = db.begin_tx().await?;
 
     let used_verbs = tx.get_used_verbs(session_id).await?;
     //println!("used_verbs: {:?}", used_verbs);

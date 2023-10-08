@@ -45,7 +45,7 @@ use libhc::CreateSessionQuery;
 use libhc::GetMoveQuery;
 use libhc::GetMovesQuery;
 use libhc::GetSessions;
-use libhc::HcDbTrait;
+use libhc::HcDb;
 use libhc::MoveResult;
 use libhc::MoveType;
 use libhc::SessionState;

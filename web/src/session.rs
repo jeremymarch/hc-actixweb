@@ -13,7 +13,7 @@ use crate::MoveType;
 use crate::SessionsListResponse;
 use crate::StatusResponse;
 use hoplite_verbs_rs::HcGreekVerb;
-use libhc::HcDbTrait;
+use libhc::HcDb;
 use std::sync::Arc;
 
 /// How often heartbeat pings are sent

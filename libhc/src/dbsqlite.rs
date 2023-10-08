@@ -20,7 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 use crate::AnswerQuery;
 use crate::AskQuery;
 use crate::CreateSessionQuery;
-use crate::HcDbTrait;
+use crate::HcDb;
 use crate::HcTrx;
 use crate::MoveResult;
 use crate::MoveType;
@@ -44,7 +44,7 @@ pub struct HcDbSqliteTrx<'a> {
 use async_trait::async_trait;
 
 #[async_trait]
-impl HcDbTrait for HcDbSqlite {
+impl HcDb for HcDbSqlite {
     async fn begin_tx(&self) -> Result<Box<dyn HcTrx>, sqlx::Error> {
         Ok(Box::new(HcDbSqliteTrx {
             tx: self.db.begin().await?,
