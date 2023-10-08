@@ -38,6 +38,7 @@ use actix_web_flash_messages::storage::CookieMessageStore;
 use actix_web_flash_messages::FlashMessagesFramework;
 
 use libhc::dbpostgres::HcDbPostgres;
+//use libhc::dbsqlite::HcDbSqlite;
 use libhc::AnswerQuery;
 use libhc::AskQuery;
 use libhc::CreateSessionQuery;
@@ -72,6 +73,11 @@ use std::io;
 
 use serde::Serialize;
 use sqlx::postgres::PgPoolOptions;
+//sqlite
+// use sqlx::sqlite::SqliteConnectOptions;
+// use sqlx::SqlitePool;
+// use std::str::FromStr;
+
 use sqlx::types::Uuid;
 
 use hoplite_verbs_rs::*;
@@ -592,6 +598,21 @@ async fn main() -> io::Result<()> {
             .await
             .expect("Could not connect to db."),
     };
+    /*
+    let options = SqliteConnectOptions::from_str(":memory:")
+        .expect("Could not connect to db.")
+        .foreign_keys(true)
+        .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
+        .read_only(false)
+        .collation("PolytonicGreek", |l, r| {
+            l.to_lowercase().cmp(&r.to_lowercase())
+        });
+    let hcdb = HcDbSqlite {
+        db: SqlitePool::connect_with(options)
+            .await
+            .expect("Could not connect to db."),
+    };
+    */
 
     // let hcdb = HcDbPostgres { db: SqlitePool::connect_with(options)
     //     .await
