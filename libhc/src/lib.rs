@@ -1270,7 +1270,7 @@ mod tests {
         HcDbPostgres {
             db: PgPoolOptions::new()
                 .max_connections(5)
-                .connect("poxstgres://jwm:1234@localhost/hctest")
+                .connect("postgres://jwm:1234@localhost/hctest")
                 .await
                 .expect("Could not connect to db."),
         }
@@ -1308,8 +1308,6 @@ mod tests {
     }
 
     async fn setup_test_db() {
-        //let db = get_postgres().await;
-        //let db = get_sqlite().await;
         let db = get_db().await;
 
         let _ = db.db.execute("DROP TABLE IF EXISTS moves;").await;
@@ -1329,7 +1327,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_available() {
+    async fn test_get_available_verbs() {
         let mut a = hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![], 1);
         a.sort();
         assert_eq!(vec![1, 2, 3], a);
@@ -1455,12 +1453,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_two_player() {
-        initialize_db_once().await;
-
-        //let db = get_postgres().await;
-        //let db = get_sqlite().await;
+        initialize_db_once().await; //only works for postgres, sqlite initialized in get_db()
         let db = get_db().await;
-
         let verbs = load_verbs("pp.txt");
 
         let mut timestamp = get_timestamp();
@@ -2482,12 +2476,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_practice() {
-        initialize_db_once().await;
-        let verbs = load_verbs("pp.txt");
-
-        //let db = get_postgres().await;
-        //let db = get_sqlite().await;
+        initialize_db_once().await; //only works for postgres, sqlite initialized in get_db()
         let db = get_db().await;
+        let verbs = load_verbs("pp.txt");
 
         let timestamp = get_timestamp();
 

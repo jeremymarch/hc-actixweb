@@ -105,26 +105,7 @@ impl HcTrx for HcDbSqliteTrx<'_> {
 
         Ok(res)
     }
-    /*
-        async fn insert_session(
-            &mut self,
-            user_id: Uuid,
-            highest_unit: Option<i16>,
-            opponent_id: Option<Uuid>,
-            info: &CreateSessionQuery,
-            timestamp: i64,
-        ) -> Result<Uuid, sqlx::Error> {
-            //let mut tx = self.db.begin().await?;
 
-            let uuid = self
-                .insert_session_tx(user_id, highest_unit, opponent_id, info, timestamp)
-                .await?;
-
-            tx.commit().await?;
-
-            Ok(uuid)
-        }
-    */
     async fn insert_session_tx(
         &mut self,
         user_id: Uuid,
@@ -192,8 +173,6 @@ impl HcTrx for HcDbSqliteTrx<'_> {
         &mut self,
         user_id: sqlx::types::Uuid,
     ) -> Result<Vec<SessionsListQuery>, sqlx::Error> {
-        //let mut tx = self.db.begin().await?;
-
         //strftime('%Y-%m-%d %H:%M:%S', DATETIME(timestamp, 'unixepoch')) as timestamp,
         //    ORDER BY updated DESC \
         let query = "SELECT session_id AS session_id, name, challenged_user_id AS challenged, b.user_name AS username, challenger_score as myscore, challenged_score as theirscore, \
@@ -235,20 +214,8 @@ impl HcTrx for HcDbSqliteTrx<'_> {
             Err(e) => {println!("error: {:?}", e); return Err(e); },
         };*/
 
-        //tx.commit().await?;
-
         Ok(res)
     }
-
-    // async fn get_last_move(
-    //     &mut self,
-    //     session_id: sqlx::types::Uuid,
-    // ) -> Result<MoveResult, sqlx::Error> {
-    //     let mut tx = self.db.begin().await?;
-    //     let res = self.get_last_move_tx(&mut tx, session_id).await?;
-    //     tx.commit().await?;
-    //     Ok(res)
-    // }
 
     async fn get_last_move_tx(
         &mut self,
@@ -291,23 +258,6 @@ impl HcTrx for HcDbSqliteTrx<'_> {
         Ok(res)
     }
 
-    // async fn get_session(
-    //     &self,
-    //     session_id: sqlx::types::Uuid,
-    // ) -> Result<SessionResult, sqlx::Error> {
-    //     let query = "SELECT * \
-    //     FROM sessions \
-    //     where session_id = $1 \
-    //     LIMIT 1;";
-
-    //     let res: SessionResult = sqlx::query_as(query)
-    //         .bind(session_id)
-    //         .fetch_one(&mut *self.tx)
-    //         .await?;
-
-    //     Ok(res)
-    // }
-
     async fn get_session_tx(
         &mut self,
         session_id: sqlx::types::Uuid,
@@ -342,23 +292,6 @@ impl HcTrx for HcDbSqliteTrx<'_> {
         Ok(res)
     }
 
-    // async fn insert_ask_move(
-    //     &self,
-    //     user_id: Option<Uuid>,
-    //     info: &AskQuery,
-    //     timestamp: i64,
-    // ) -> Result<Uuid, sqlx::Error> {
-    //     let mut tx = self.db.begin().await?;
-
-    //     let uuid = self
-    //         .insert_ask_move_tx(&mut tx, user_id, info, timestamp)
-    //         .await?;
-
-    //     tx.commit().await?;
-
-    //     Ok(uuid)
-    // }
-
     async fn insert_ask_move_tx(
         &mut self,
         user_id: Option<Uuid>,
@@ -385,34 +318,6 @@ impl HcTrx for HcDbSqliteTrx<'_> {
 
         Ok(uuid)
     }
-
-    // async fn update_answer_move(
-    //     &self,
-    //     info: &AnswerQuery,
-    //     user_id: Uuid,
-    //     correct_answer: &str,
-    //     is_correct: bool,
-    //     mf_pressed: bool,
-    //     timestamp: i64,
-    // ) -> Result<u32, sqlx::Error> {
-    //     let mut tx = self.db.begin().await?;
-
-    //     let a = self
-    //         .update_answer_move_tx(
-    //             &mut tx,
-    //             info,
-    //             user_id,
-    //             correct_answer,
-    //             is_correct,
-    //             mf_pressed,
-    //             timestamp,
-    //         )
-    //         .await?;
-
-    //     tx.commit().await?;
-
-    //     Ok(a)
-    // }
 
     #[allow(clippy::too_many_arguments)]
     async fn update_answer_move_tx<'a, 'b>(
@@ -475,71 +380,67 @@ impl HcTrx for HcDbSqliteTrx<'_> {
     }
 
     async fn create_db(&mut self) -> Result<u32, sqlx::Error> {
-        //let mut tx = self.db.begin().await?;
-
         let query = r#"CREATE TABLE IF NOT EXISTS users ( 
-    user_id UUID PRIMARY KEY NOT NULL, 
+    user_id BLOB PRIMARY KEY NOT NULL, 
     user_name TEXT, 
     password TEXT, 
     email TEXT,
     user_type INT NOT NULL DEFAULT 0,
-    timestamp BIGINT NOT NULL DEFAULT 0,
+    timestamp INT NOT NULL DEFAULT 0,
     UNIQUE(user_name)
-    );"#;
+    ) STRICT;"#;
 
         let _res = sqlx::query(query).execute(&mut *self.tx).await?;
 
         let query = r#"CREATE TABLE IF NOT EXISTS sessions ( 
-    session_id UUID PRIMARY KEY NOT NULL, 
-    challenger_user_id UUID NOT NULL, 
-    challenged_user_id UUID DEFAULT NULL, 
-    current_move UUID DEFAULT NULL,
+    session_id BLOB PRIMARY KEY NOT NULL, 
+    challenger_user_id BLOB NOT NULL, 
+    challenged_user_id BLOB DEFAULT NULL, 
+    current_move BLOB DEFAULT NULL,
     name TEXT DEFAULT NULL,
-    highest_unit SMALLINT,
+    highest_unit INT,
     custom_verbs TEXT, 
     custom_params TEXT, 
-    max_changes SMALLINT,
+    max_changes INT,
     challenger_score INT,
     challenged_score INT,
-    practice_reps_per_verb SMALLINT,
+    practice_reps_per_verb INT,
     countdown INT,
     max_time INT,
-    timestamp BIGINT NOT NULL DEFAULT 0,
+    timestamp INT NOT NULL DEFAULT 0,
     status INT NOT NULL DEFAULT 1,
     FOREIGN KEY (challenger_user_id) REFERENCES users(user_id), 
     FOREIGN KEY (challenged_user_id) REFERENCES users(user_id)
-    );"#;
+    ) STRICT;"#;
         let _res = sqlx::query(query).execute(&mut *self.tx).await?;
 
-        let query = r#"CREATE TABLE IF NOT EXISTS moves ( 
-    move_id UUID PRIMARY KEY NOT NULL, 
-    session_id UUID NOT NULL,
-    ask_user_id UUID, 
-    answer_user_id UUID, 
+        let query = r#"CREATE TABLE IF NOT EXISTS moves (
+    move_id BLOB PRIMARY KEY NOT NULL, 
+    session_id BLOB NOT NULL,
+    ask_user_id BLOB, 
+    answer_user_id BLOB, 
     verb_id INT, 
-    person SMALLINT, 
-    number SMALLINT, 
-    tense SMALLINT, 
-    mood SMALLINT, 
-    voice SMALLINT, 
-    answer VARCHAR(1024),
-    correct_answer VARCHAR(1024),
-    is_correct BOOL,
-    time VARCHAR(255), 
-    timed_out BOOL, 
-    mf_pressed BOOL, 
-    asktimestamp BIGINT NOT NULL DEFAULT 0, 
-    answeredtimestamp BIGINT, 
+    person INT, 
+    number INT, 
+    tense INT, 
+    mood INT, 
+    voice INT, 
+    answer TEXT,
+    correct_answer TEXT,
+    is_correct INT,
+    time TEXT, 
+    timed_out INT, 
+    mf_pressed INT, 
+    asktimestamp INT NOT NULL DEFAULT 0, 
+    answeredtimestamp INT, 
     FOREIGN KEY (ask_user_id) REFERENCES users(user_id), 
     FOREIGN KEY (answer_user_id) REFERENCES users(user_id), 
     FOREIGN KEY (session_id) REFERENCES sessions(session_id) 
-    );"#;
+    ) STRICT;"#;
         let _res = sqlx::query(query).execute(&mut *self.tx).await?;
 
         let query = "CREATE INDEX IF NOT EXISTS move_session_id_idx ON moves (session_id);";
         let _res = sqlx::query(query).execute(&mut *self.tx).await?;
-
-        //tx.commit().await?;
 
         Ok(1)
     }
