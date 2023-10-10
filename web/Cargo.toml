@@ -18,7 +18,7 @@ actix-web-flash-messages = { git = "https://github.com/jeremymarch/actix-web-fla
 #actix-web-flash-messages = { version = "0.4.1", features = ["cookies"] }/
 #actix-web-flash-messages = { path="../actix-web-flash-messages/actix-web-flash-messages", version = "0.4.1", features = ["cookies"] }
 
-sqlx = { version = "0.7.2", features = ["postgres", "runtime-tokio-rustls", "any", "macros", "uuid"] }
+sqlx = { version = "0.7.2", features = ["postgres", "runtime-tokio-rustls", "uuid"] }
 
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.107"

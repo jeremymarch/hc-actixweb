@@ -6,10 +6,11 @@ edition = "2021"
 [lib]
 name = "libhc"
 path = "src/lib.rs"
+doctest = false
 
 [dependencies]
 chrono = { version = "0.4.26", default-features = false, features=["clock"] }
-sqlx = { version = "0.7.2", features = ["sqlite", "postgres", "runtime-tokio-rustls", "any", "macros", "uuid"] }
+sqlx = { version = "0.7.2", features = ["sqlite", "postgres", "runtime-tokio-rustls", "uuid"] }
 serde = { version = "1.0.188", features = ["derive"] }
 rand = "0.8.5"
 uuid = { version = "1.4.1", features = ["v4", "serde"] }
