@@ -180,7 +180,7 @@ async fn get_sessions(
         //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
         //let user_agent = get_user_agent(&req).unwrap_or("");
 
-        let res = libhc::get_sessions_real(db, user_id, verbs, username, &info)
+        let res = libhc::hc_get_sessions_real(db, user_id, verbs, username, &info)
             .await
             .map_err(map_hc_error)?;
         Ok(HttpResponse::Ok().json(res))
@@ -587,7 +587,7 @@ async fn main() -> io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .app_data(libhc::load_verbs("pp.txt"))
+            .app_data(libhc::hc_load_verbs("pp.txt"))
             .app_data(hcdb.clone())
             .app_data(web::Data::from(app_state.clone()))
             .app_data(web::Data::new(server.clone()))

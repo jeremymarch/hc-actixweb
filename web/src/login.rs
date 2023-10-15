@@ -21,6 +21,7 @@ use super::*;
 
 use actix_web_flash_messages::FlashMessage;
 use actix_web_flash_messages::{IncomingFlashMessages, Level};
+use libhc::hc_create_user;
 use libhc::HcDb;
 use secrecy::ExposeSecret;
 use secrecy::Secret;
@@ -336,27 +337,33 @@ pub async fn new_user_post(
     let timestamp = libhc::get_timestamp();
 
     if username.len() > 1 && password.len() > 3 && email.len() > 6 && password == confirm_password {
-        let mut tx = db.begin_tx().await.unwrap();
-        if let Ok(_user_id) = tx
-            .create_user(&username, &password, &email, timestamp)
+        match hc_create_user(db, &username, &password, &email, timestamp)
             .await
             .map_err(map_hc_error)
         {
-            tx.commit_tx().await.unwrap();
-            //session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-            //if session.insert("user_id", user_id).is_ok() {
-            return Ok(HttpResponse::SeeOther()
-                .insert_header((LOCATION, "/login"))
-                .finish());
-            //}
+            Ok(_user_id) => {
+                //session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+                //if session.insert("user_id", user_id).is_ok() {
+                Ok(HttpResponse::SeeOther()
+                    .insert_header((LOCATION, "/login"))
+                    .finish())
+                //}
+            }
+            Err(_e) => {
+                //session.purge();
+                FlashMessage::error("Create user error".to_string()).send();
+                Ok(HttpResponse::SeeOther()
+                    .insert_header((LOCATION, "/newuser"))
+                    .finish())
+            }
         }
+    } else {
+        //session.purge();
+        FlashMessage::error("Create user error".to_string()).send();
+        Ok(HttpResponse::SeeOther()
+            .insert_header((LOCATION, "/newuser"))
+            .finish())
     }
-
-    //session.purge();
-    FlashMessage::error("Create user error".to_string()).send();
-    Ok(HttpResponse::SeeOther()
-        .insert_header((LOCATION, "/newuser"))
-        .finish())
 }
 
 pub fn get_user_id(session: Session) -> Option<uuid::Uuid> {

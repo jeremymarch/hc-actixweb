@@ -313,7 +313,30 @@ pub trait HcTrx {
     async fn create_db(&mut self) -> Result<u32, HcError>;
 }
 
-pub async fn get_session_state_tx(
+pub async fn hc_create_user(
+    db: &dyn HcDb,
+    username: &str,
+    password: &str,
+    email: &str,
+    timestamp: i64,
+) -> Result<Uuid, HcError> {
+    if username.len() < 2
+        || username.len() > 30
+        || password.len() < 8
+        || password.len() > 60
+        || email.len() < 6
+        || email.len() > 120
+    {
+        return Err(HcError::UnknownError);
+    }
+
+    let mut tx = db.begin_tx().await?;
+    let user_id = tx.create_user(username, password, email, timestamp).await?;
+    tx.commit_tx().await?;
+    Ok(user_id)
+}
+
+async fn hc_get_session_state_tx(
     tx: &mut Box<dyn HcTrx>,
     user_id: Uuid,
     session_id: Uuid,
@@ -322,7 +345,7 @@ pub async fn get_session_state_tx(
     let m = tx.get_last_n_moves(session_id, 2).await?;
 
     let first = if !m.is_empty() { Some(&m[0]) } else { None };
-    let (myturn, move_type) = move_get_type(first, user_id, res.challenged_user_id);
+    let (myturn, move_type) = hc_move_get_type(first, user_id, res.challenged_user_id);
 
     let asking_new_verb: bool = move_type == MoveType::FirstMoveMyTurn; //don't old show desc when *asking* a new verb
     let answering_new_verb = m.len() > 1 && m[0].verb_id != m[1].verb_id; //don't show old desc when *answering* a new verb
@@ -450,7 +473,7 @@ pub async fn hc_ask(
         .insert_ask_move_tx(Some(user_id), info, new_time_stamp)
         .await?;
 
-    let mut res = get_session_state_tx(&mut tx, user_id, info.session_id).await?;
+    let mut res = hc_get_session_state_tx(&mut tx, user_id, info.session_id).await?;
 
     if res.starting_form.is_none()
         && res.verb.is_some()
@@ -537,7 +560,7 @@ pub async fn hc_answer(
 
     //if practice session, ask the next here
     if s.challenged_user_id.is_none() {
-        ask_practice(&mut tx, prev_form, &s, timestamp, m.asktimestamp, verbs).await?;
+        hc_ask_practice(&mut tx, prev_form, &s, timestamp, m.asktimestamp, verbs).await?;
     } else {
         //add to other player's score if not practice and not correct
         if !is_correct {
@@ -553,7 +576,7 @@ pub async fn hc_answer(
         }
     }
 
-    let mut res = get_session_state_tx(&mut tx, user_id, info.session_id).await?;
+    let mut res = hc_get_session_state_tx(&mut tx, user_id, info.session_id).await?;
     //starting_form is 1st pp if new verb
     if res.starting_form.is_none()
         && res.verb.is_some()
@@ -644,7 +667,7 @@ pub async fn hc_mf_pressed(
         .replace(" /", ",");
 
     if correct_answer.contains(',') {
-        let mut res = get_session_state_tx(&mut tx, user_id, info.session_id).await?;
+        let mut res = hc_get_session_state_tx(&mut tx, user_id, info.session_id).await?;
         if res.starting_form.is_none()
             && res.verb.is_some()
             && (res.verb.unwrap() as usize) < verbs.len()
@@ -667,7 +690,7 @@ pub async fn hc_mf_pressed(
 
         //if practice session, ask the next here
         if s.challenged_user_id.is_none() {
-            ask_practice(&mut tx, prev_form, &s, timestamp, m.asktimestamp, verbs).await?;
+            hc_ask_practice(&mut tx, prev_form, &s, timestamp, m.asktimestamp, verbs).await?;
         } else {
             //add to other player's score if not practice and not correct
             if !is_correct {
@@ -683,7 +706,7 @@ pub async fn hc_mf_pressed(
             }
         }
 
-        let mut res = get_session_state_tx(&mut tx, user_id, info.session_id).await?;
+        let mut res = hc_get_session_state_tx(&mut tx, user_id, info.session_id).await?;
         //starting_form is 1st pp if new verb
         if res.starting_form.is_none()
             && res.verb.is_some()
@@ -718,7 +741,7 @@ pub async fn hc_mf_pressed(
     }
 }
 
-pub fn hc_get_available_verbs_practice(
+fn hc_get_available_verbs_practice(
     available_verbs_str: &Option<String>,
     used_verbs: &Vec<i32>,
     reps: usize,
@@ -754,12 +777,12 @@ pub fn hc_get_available_verbs_practice(
         .collect::<Vec<i32>>()
 }
 
-pub fn hc_change_verbs(verb_history: &Vec<i32>, reps: usize) -> bool {
+fn hc_change_verbs(verb_history: &Vec<i32>, reps: usize) -> bool {
     let len = verb_history.len();
     len == 0 || (len >= reps && verb_history[0] == verb_history[reps - 1])
 }
 
-async fn ask_practice(
+async fn hc_ask_practice(
     tx: &mut Box<dyn HcTrx>,
     mut prev_form: HcGreekVerbForm,
     session: &SessionResult,
@@ -824,7 +847,7 @@ async fn ask_practice(
     Ok(())
 }
 
-pub async fn get_sessions_real(
+pub async fn hc_get_sessions_real(
     db: &dyn HcDb,
     user_id: Uuid,
     verbs: &Vec<Arc<HcGreekVerb>>,
@@ -865,7 +888,7 @@ pub async fn hc_get_move(
         s.challenger_user_id
     };
 
-    let mut res = get_session_state_tx(tx, real_user_id, session_id).await?;
+    let mut res = hc_get_session_state_tx(tx, real_user_id, session_id).await?;
 
     //set starting_form to 1st pp of verb if verb is set, but starting form is None (i.e. we just changed verbs)
     if res.starting_form.is_none()
@@ -891,7 +914,7 @@ pub async fn hc_get_move(
     Ok(res)
 }
 
-fn move_get_type(
+fn hc_move_get_type(
     s: Option<&MoveResult>,
     user_id: Uuid,
     challenged_id: Option<Uuid>,
@@ -959,9 +982,9 @@ pub async fn hc_get_sessions(
 
     for r in &mut res {
         if let Ok(m) = tx.get_last_move_tx(r.session_id).await {
-            (r.myturn, r.move_type) = move_get_type(Some(&m), user_id, r.challenged);
+            (r.myturn, r.move_type) = hc_move_get_type(Some(&m), user_id, r.challenged);
         } else {
-            (r.myturn, r.move_type) = move_get_type(None, user_id, r.challenged);
+            (r.myturn, r.move_type) = hc_move_get_type(None, user_id, r.challenged);
         }
         //these were needed to tell whose turn, but no need to send these out to client
         r.challenged = None;
@@ -970,7 +993,7 @@ pub async fn hc_get_sessions(
     Ok(res)
 }
 
-fn get_verbs_by_unit(units: &str, verbs: &[Arc<HcGreekVerb>]) -> Option<String> {
+fn hc_get_verbs_by_unit(units: &str, verbs: &[Arc<HcGreekVerb>]) -> Option<String> {
     let u: Vec<u32> = units
         .split(',')
         .map(|x| x.parse::<u32>().unwrap())
@@ -1025,7 +1048,7 @@ pub async fn hc_insert_session(
     // if custom verbs are set, use them, else change units into verbs
     if info.verbs.is_none() {
         match &info.units {
-            Some(u) => info.verbs = get_verbs_by_unit(u, verbs),
+            Some(u) => info.verbs = hc_get_verbs_by_unit(u, verbs),
             None => return Err(HcError::UnknownError),
         }
     }
@@ -1081,7 +1104,7 @@ pub async fn hc_insert_session(
                     practice_reps_per_verb: info.practice_reps_per_verb,
                     timestamp,
                 };
-                ask_practice(&mut tx, prev_form, &sesh, timestamp, 0, verbs).await?;
+                hc_ask_practice(&mut tx, prev_form, &sesh, timestamp, 0, verbs).await?;
             }
             tx.commit_tx().await?;
             Ok(session_uuid)
@@ -1090,7 +1113,7 @@ pub async fn hc_insert_session(
     }
 }
 
-pub async fn hc_get_available_verbs(
+async fn hc_get_available_verbs(
     tx: &mut Box<dyn HcTrx>,
     _user_id: Uuid,
     session_id: Uuid,
@@ -1127,7 +1150,7 @@ pub async fn hc_get_available_verbs(
 
 static PPS: &str = include_str!("pp.txt");
 
-pub fn load_verbs(_path: &str) -> Vec<Arc<HcGreekVerb>> {
+pub fn hc_load_verbs(_path: &str) -> Vec<Arc<HcGreekVerb>> {
     let mut verbs = vec![];
     // if let Ok(pp_file) = File::open(path) {
     //     let pp_reader = BufReader::new(pp_file);
@@ -1391,24 +1414,20 @@ mod tests {
     async fn test_two_player() {
         initialize_db_once().await; //only works for postgres, sqlite initialized in get_db()
         let db = get_db().await;
-        let verbs = load_verbs("pp.txt");
+        let verbs = hc_load_verbs("pp.txt");
 
         let mut timestamp = get_timestamp();
 
-        let mut tx = db.begin_tx().await.unwrap();
-        let uuid1 = tx
-            .create_user("testuser1", "abcdabcd", "user1@blah.com", timestamp)
+        let uuid1 = hc_create_user(&db, "testuser1", "abcdabcd", "user1@blah.com", timestamp)
             .await
             .unwrap();
-        let uuid2 = tx
-            .create_user("testuser2", "abcdabcd", "user2@blah.com", timestamp)
+        let uuid2 = hc_create_user(&db, "testuser2", "abcdabcd", "user2@blah.com", timestamp)
             .await
             .unwrap();
-        let invalid_uuid = tx
-            .create_user("testuser3", "abcdabcd", "user3@blah.com", timestamp)
-            .await
-            .unwrap();
-        tx.commit_tx().await.unwrap();
+        let invalid_uuid =
+            hc_create_user(&db, "testuser3", "abcdabcd", "user3@blah.com", timestamp)
+                .await
+                .unwrap();
 
         let mut csq = CreateSessionQuery {
             qtype: "abc".to_string(),
@@ -2414,20 +2433,17 @@ mod tests {
     async fn test_practice() {
         initialize_db_once().await; //only works for postgres, sqlite initialized in get_db()
         let db = get_db().await;
-        let verbs = load_verbs("pp.txt");
+        let verbs = hc_load_verbs("pp.txt");
 
         let timestamp = get_timestamp();
 
-        let mut tx = db.begin_tx().await.unwrap();
-        let uuid1 = tx
-            .create_user("testuser4", "abcdabcd", "user1@blah.com", timestamp)
+        let uuid1 = hc_create_user(&db, "testuser4", "abcdabcd", "user1@blah.com", timestamp)
             .await
             .unwrap();
-        let invalid_uuid = tx
-            .create_user("testuser6", "abcdabcd", "user3@blah.com", timestamp)
-            .await
-            .unwrap();
-        tx.commit_tx().await.unwrap();
+        let invalid_uuid =
+            hc_create_user(&db, "testuser6", "abcdabcd", "user3@blah.com", timestamp)
+                .await
+                .unwrap();
 
         let mut csq = CreateSessionQuery {
             qtype: "abc".to_string(),

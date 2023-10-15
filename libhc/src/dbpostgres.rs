@@ -478,18 +478,8 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         email: &str,
         timestamp: i64,
     ) -> Result<Uuid, HcError> {
-        if username.len() < 2
-            || username.len() > 30
-            || password.len() < 8
-            || password.len() > 60
-            || email.len() < 6
-            || email.len() > 120
-        {
-            return Err(HcError::UnknownError);
-        }
-
         let uuid = sqlx::types::Uuid::new_v4();
-        let query = "INSERT INTO users VALUES ($1,$2,$3,$4,0,$5);";
+        let query = "INSERT INTO users VALUES ($1, $2, $3, $4, 0, $5);";
         let _res = sqlx::query(query)
             .bind(uuid)
             .bind(username)
