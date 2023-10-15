@@ -21,6 +21,7 @@ use crate::AnswerQuery;
 use crate::AskQuery;
 use crate::CreateSessionQuery;
 use crate::HcDb;
+use crate::HcError;
 use crate::MoveResult;
 use crate::MoveType;
 use crate::SessionResult;
@@ -33,6 +34,29 @@ use crate::HcTrx;
 use sqlx::postgres::PgRow;
 use sqlx::Postgres;
 use sqlx::Transaction;
+
+fn map_sqlx_error(err: sqlx::Error) -> HcError {
+    match err {
+        sqlx::Error::Configuration(e) => HcError::Database(format!("sqlx Configuration: {}", e)),
+        sqlx::Error::Database(e) => HcError::Database(format!("sqlx Database: {}", e)),
+        sqlx::Error::Io(e) => HcError::Database(format!("sqlx Io: {}", e)),
+        sqlx::Error::Tls(e) => HcError::Database(format!("sqlx Tls: {}", e)),
+        sqlx::Error::Protocol(e) => HcError::Database(format!("sqlx Protocol: {}", e)),
+        sqlx::Error::RowNotFound => HcError::Database(String::from("sqlx RowNotFound")),
+        sqlx::Error::TypeNotFound { .. } => HcError::Database(String::from("sqlx TypeNotFound")),
+        sqlx::Error::ColumnIndexOutOfBounds { .. } => {
+            HcError::Database(String::from("sqlx ColumnIndexOutOfBounds"))
+        }
+        sqlx::Error::ColumnNotFound(e) => HcError::Database(format!("sqlx ColumnNotFound: {}", e)),
+        sqlx::Error::ColumnDecode { .. } => HcError::Database(String::from("sqlx ColumnDecode")),
+        sqlx::Error::Decode(e) => HcError::Database(format!("sqlx Decode: {}", e)),
+        sqlx::Error::PoolTimedOut => HcError::Database(String::from("sqlx PoolTimedOut")),
+        sqlx::Error::PoolClosed => HcError::Database(String::from("sqlx PoolClosed")),
+        sqlx::Error::WorkerCrashed => HcError::Database(String::from("sqlx WorkerCrashed")),
+        sqlx::Error::Migrate(e) => HcError::Database(format!("sqlx Migrate: {}", e)),
+        _ => HcError::Database(String::from("sqlx unknown error")),
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct HcDbPostgres {
@@ -47,21 +71,21 @@ use async_trait::async_trait;
 
 #[async_trait]
 impl HcDb for HcDbPostgres {
-    async fn begin_tx(&self) -> Result<Box<dyn HcTrx>, sqlx::Error> {
+    async fn begin_tx(&self) -> Result<Box<dyn HcTrx>, HcError> {
         Ok(Box::new(HcDbPostgresTrx {
-            tx: self.db.begin().await?,
+            tx: self.db.begin().await.map_err(map_sqlx_error)?,
         }))
     }
 }
 
 #[async_trait]
 impl HcTrx for HcDbPostgresTrx<'_> {
-    async fn commit_tx(self: Box<Self>) -> Result<(), sqlx::Error> {
-        let res = self.tx.commit().await?;
+    async fn commit_tx(self: Box<Self>) -> Result<(), HcError> {
+        let res = self.tx.commit().await.map_err(map_sqlx_error)?;
         Ok(res)
     }
-    async fn rollback_tx(self: Box<Self>) -> Result<(), sqlx::Error> {
-        let res = self.tx.rollback().await?;
+    async fn rollback_tx(self: Box<Self>) -> Result<(), HcError> {
+        let res = self.tx.rollback().await.map_err(map_sqlx_error)?;
         Ok(res)
     }
 
@@ -70,7 +94,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         session_id: Uuid,
         user_to_score: &str,
         points: i32,
-    ) -> Result<u32, sqlx::Error> {
+    ) -> Result<u32, HcError> {
         let query = format!(
             "UPDATE sessions SET {user_to_score} = {user_to_score} + $1 WHERE session_id = $2;"
         );
@@ -78,55 +102,35 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             .bind(points)
             .bind(session_id)
             .execute(&mut *self.tx)
-            .await?;
+            .await
+            .map_err(map_sqlx_error)?;
 
         Ok(1)
     }
 
-    async fn validate_login_db(
-        &mut self,
-        username: &str,
-        password: &str,
-    ) -> Result<Uuid, sqlx::Error> {
+    async fn validate_login_db(&mut self, username: &str, password: &str) -> Result<Uuid, HcError> {
         let query = "SELECT user_id,user_name,password,email,user_type,timestamp FROM users WHERE user_name = $1 AND password = $2 LIMIT 1;";
         let res: UserResult = sqlx::query_as(query)
             .bind(username)
             .bind(password)
             .fetch_one(&mut *self.tx)
-            .await?;
+            .await
+            .map_err(map_sqlx_error)?;
 
         Ok(res.user_id)
     }
 
-    async fn get_user_id(&mut self, username: &str) -> Result<UserResult, sqlx::Error> {
+    async fn get_user_id(&mut self, username: &str) -> Result<UserResult, HcError> {
         let query = "SELECT user_id,user_name,password,email,user_type,timestamp FROM users WHERE user_name = $1 LIMIT 1;";
         let res: UserResult = sqlx::query_as(query)
             .bind(username)
             .fetch_one(&mut *self.tx)
-            .await?;
+            .await
+            .map_err(map_sqlx_error)?;
 
         Ok(res)
     }
-    /*
-        async fn insert_session(
-            &mut self,
-            user_id: Uuid,
-            highest_unit: Option<i16>,
-            opponent_id: Option<Uuid>,
-            info: &CreateSessionQuery,
-            timestamp: i64,
-        ) -> Result<Uuid, sqlx::Error> {
-            //let mut tx = self.db.begin().await?;
 
-            let uuid = self
-                .insert_session_tx(user_id, highest_unit, opponent_id, info, timestamp)
-                .await?;
-
-            tx.commit().await?;
-
-            Ok(uuid)
-        }
-    */
     async fn insert_session_tx(
         &mut self,
         user_id: Uuid,
@@ -134,7 +138,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         opponent_id: Option<Uuid>,
         info: &CreateSessionQuery,
         timestamp: i64,
-    ) -> Result<Uuid, sqlx::Error> {
+    ) -> Result<Uuid, HcError> {
         let uuid = sqlx::types::Uuid::new_v4();
 
         let query = r#"INSERT INTO sessions (
@@ -168,7 +172,8 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             .bind(info.max_time)
             .bind(timestamp)
             .execute(&mut *self.tx)
-            .await?;
+            .await
+            .map_err(map_sqlx_error)?;
 
         Ok(uuid)
     }
@@ -176,7 +181,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
     async fn get_game_moves(
         &mut self,
         session_id: sqlx::types::Uuid,
-    ) -> Result<Vec<MoveResult>, sqlx::Error> {
+    ) -> Result<Vec<MoveResult>, HcError> {
         let query = "SELECT * \
         FROM moves \
         where session_id = $1 \
@@ -185,7 +190,8 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         let res: Vec<MoveResult> = sqlx::query_as(query)
             .bind(session_id)
             .fetch_all(&mut *self.tx)
-            .await?;
+            .await
+            .map_err(map_sqlx_error)?;
 
         Ok(res)
     }
@@ -193,7 +199,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
     async fn get_sessions(
         &mut self,
         user_id: sqlx::types::Uuid,
-    ) -> Result<Vec<SessionsListQuery>, sqlx::Error> {
+    ) -> Result<Vec<SessionsListQuery>, HcError> {
         //let mut tx = self.db.begin().await?;
 
         //strftime('%Y-%m-%d %H:%M:%S', DATETIME(timestamp, 'unixepoch')) as timestamp,
@@ -230,7 +236,8 @@ impl HcTrx for HcDbPostgresTrx<'_> {
                 }
             })
             .fetch_all(&mut *self.tx)
-            .await?;
+            .await
+            .map_err(map_sqlx_error)?;
 
         /*let res2 = match res {
             Ok(e) => e,
@@ -242,20 +249,10 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         Ok(res)
     }
 
-    // async fn get_last_move(
-    //     &mut self,
-    //     session_id: sqlx::types::Uuid,
-    // ) -> Result<MoveResult, sqlx::Error> {
-    //     let mut tx = self.db.begin().await?;
-    //     let res = self.get_last_move_tx(&mut tx, session_id).await?;
-    //     tx.commit().await?;
-    //     Ok(res)
-    // }
-
     async fn get_last_move_tx(
         &mut self,
         session_id: sqlx::types::Uuid,
-    ) -> Result<MoveResult, sqlx::Error> {
+    ) -> Result<MoveResult, HcError> {
         let query = "SELECT * \
         FROM moves \
         where session_id = $1 \
@@ -267,7 +264,8 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             .bind(session_id)
             .bind(1)
             .fetch_one(&mut *self.tx)
-            .await?;
+            .await
+            .map_err(map_sqlx_error)?;
 
         Ok(res)
     }
@@ -276,7 +274,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         &mut self,
         session_id: sqlx::types::Uuid,
         n: u8,
-    ) -> Result<Vec<MoveResult>, sqlx::Error> {
+    ) -> Result<Vec<MoveResult>, HcError> {
         let query = "SELECT * \
             FROM moves \
             where session_id = $1 \
@@ -288,32 +286,16 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             .bind(session_id)
             .bind(n as i32)
             .fetch_all(&mut *self.tx)
-            .await?;
+            .await
+            .map_err(map_sqlx_error)?;
 
         Ok(res)
     }
 
-    // async fn get_session(
-    //     &self,
-    //     session_id: sqlx::types::Uuid,
-    // ) -> Result<SessionResult, sqlx::Error> {
-    //     let query = "SELECT * \
-    //     FROM sessions \
-    //     where session_id = $1 \
-    //     LIMIT 1;";
-
-    //     let res: SessionResult = sqlx::query_as(query)
-    //         .bind(session_id)
-    //         .fetch_one(&mut *self.tx)
-    //         .await?;
-
-    //     Ok(res)
-    // }
-
     async fn get_session_tx(
         &mut self,
         session_id: sqlx::types::Uuid,
-    ) -> Result<SessionResult, sqlx::Error> {
+    ) -> Result<SessionResult, HcError> {
         let query = "SELECT * \
         FROM sessions \
         where session_id = $1 \
@@ -322,15 +304,13 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         let res: SessionResult = sqlx::query_as(query)
             .bind(session_id)
             .fetch_one(&mut *self.tx)
-            .await?;
+            .await
+            .map_err(map_sqlx_error)?;
 
         Ok(res)
     }
 
-    async fn get_used_verbs(
-        &mut self,
-        session_id: sqlx::types::Uuid,
-    ) -> Result<Vec<i32>, sqlx::Error> {
+    async fn get_used_verbs(&mut self, session_id: sqlx::types::Uuid) -> Result<Vec<i32>, HcError> {
         let query = "SELECT verb_id \
         FROM moves \
         where verb_id IS NOT NULL AND session_id = $1;";
@@ -339,34 +319,18 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             .bind(session_id)
             .map(|rec: PgRow| rec.get("verb_id"))
             .fetch_all(&mut *self.tx)
-            .await?;
+            .await
+            .map_err(map_sqlx_error)?;
 
         Ok(res)
     }
-
-    // async fn insert_ask_move(
-    //     &self,
-    //     user_id: Option<Uuid>,
-    //     info: &AskQuery,
-    //     timestamp: i64,
-    // ) -> Result<Uuid, sqlx::Error> {
-    //     let mut tx = self.db.begin().await?;
-
-    //     let uuid = self
-    //         .insert_ask_move_tx(&mut tx, user_id, info, timestamp)
-    //         .await?;
-
-    //     tx.commit().await?;
-
-    //     Ok(uuid)
-    // }
 
     async fn insert_ask_move_tx(
         &mut self,
         user_id: Option<Uuid>,
         info: &AskQuery,
         timestamp: i64,
-    ) -> Result<Uuid, sqlx::Error> {
+    ) -> Result<Uuid, HcError> {
         let uuid = sqlx::types::Uuid::new_v4();
 
         let query = "INSERT INTO moves VALUES ($1,$2,$3,NULL,$4,$5,$6,$7,$8,$9,NULL,NULL,NULL,NULL,NULL,NULL,$10, NULL);";
@@ -383,38 +347,11 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             .bind(timestamp)
             //answer timestamp
             .execute(&mut *self.tx)
-            .await?;
+            .await
+            .map_err(map_sqlx_error)?;
 
         Ok(uuid)
     }
-
-    // async fn update_answer_move(
-    //     &self,
-    //     info: &AnswerQuery,
-    //     user_id: Uuid,
-    //     correct_answer: &str,
-    //     is_correct: bool,
-    //     mf_pressed: bool,
-    //     timestamp: i64,
-    // ) -> Result<u32, sqlx::Error> {
-    //     let mut tx = self.db.begin().await?;
-
-    //     let a = self
-    //         .update_answer_move_tx(
-    //             &mut tx,
-    //             info,
-    //             user_id,
-    //             correct_answer,
-    //             is_correct,
-    //             mf_pressed,
-    //             timestamp,
-    //         )
-    //         .await?;
-
-    //     tx.commit().await?;
-
-    //     Ok(a)
-    // }
 
     async fn update_answer_move_tx(
         &mut self,
@@ -424,7 +361,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         is_correct: bool,
         mf_pressed: bool,
         timestamp: i64,
-    ) -> Result<u32, sqlx::Error> {
+    ) -> Result<u32, HcError> {
         let m = self.get_last_move_tx(info.session_id).await?;
 
         let query = "UPDATE moves SET answer_user_id=$1, answer=$2, correct_answer=$3, is_correct=$4, time=$5, mf_pressed=$6, timed_out=$7, answeredtimestamp=$8 WHERE move_id=$9;";
@@ -439,7 +376,8 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             .bind(timestamp)
             .bind(m.move_id)
             .execute(&mut *self.tx)
-            .await?;
+            .await
+            .map_err(map_sqlx_error)?;
 
         Ok(1)
     }
@@ -450,7 +388,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         password: &str,
         email: &str,
         timestamp: i64,
-    ) -> Result<Uuid, sqlx::Error> {
+    ) -> Result<Uuid, HcError> {
         if username.len() < 2
             || username.len() > 30
             || password.len() < 8
@@ -458,7 +396,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             || email.len() < 6
             || email.len() > 120
         {
-            return Err(sqlx::Error::RowNotFound);
+            return Err(HcError::UnknownError);
         }
 
         let uuid = sqlx::types::Uuid::new_v4();
@@ -470,14 +408,13 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             .bind(email)
             .bind(timestamp)
             .execute(&mut *self.tx)
-            .await?;
+            .await
+            .map_err(map_sqlx_error)?;
 
         Ok(uuid)
     }
 
-    async fn create_db(&mut self) -> Result<u32, sqlx::Error> {
-        //let mut tx = self.db.begin().await?;
-
+    async fn create_db(&mut self) -> Result<u32, HcError> {
         let query = r#"CREATE TABLE IF NOT EXISTS users ( 
     user_id UUID PRIMARY KEY NOT NULL, 
     user_name TEXT, 
@@ -488,7 +425,10 @@ impl HcTrx for HcDbPostgresTrx<'_> {
     UNIQUE(user_name)
     );"#;
 
-        let _res = sqlx::query(query).execute(&mut *self.tx).await?;
+        let _res = sqlx::query(query)
+            .execute(&mut *self.tx)
+            .await
+            .map_err(map_sqlx_error)?;
 
         let query = r#"CREATE TABLE IF NOT EXISTS sessions ( 
     session_id UUID PRIMARY KEY NOT NULL, 
@@ -510,7 +450,10 @@ impl HcTrx for HcDbPostgresTrx<'_> {
     FOREIGN KEY (challenger_user_id) REFERENCES users(user_id), 
     FOREIGN KEY (challenged_user_id) REFERENCES users(user_id)
     );"#;
-        let _res = sqlx::query(query).execute(&mut *self.tx).await?;
+        let _res = sqlx::query(query)
+            .execute(&mut *self.tx)
+            .await
+            .map_err(map_sqlx_error)?;
 
         let query = r#"CREATE TABLE IF NOT EXISTS moves ( 
     move_id UUID PRIMARY KEY NOT NULL, 
@@ -535,12 +478,16 @@ impl HcTrx for HcDbPostgresTrx<'_> {
     FOREIGN KEY (answer_user_id) REFERENCES users(user_id), 
     FOREIGN KEY (session_id) REFERENCES sessions(session_id) 
     );"#;
-        let _res = sqlx::query(query).execute(&mut *self.tx).await?;
+        let _res = sqlx::query(query)
+            .execute(&mut *self.tx)
+            .await
+            .map_err(map_sqlx_error)?;
 
         let query = "CREATE INDEX IF NOT EXISTS move_session_id_idx ON moves (session_id);";
-        let _res = sqlx::query(query).execute(&mut *self.tx).await?;
-
-        //tx.commit().await?;
+        let _res = sqlx::query(query)
+            .execute(&mut *self.tx)
+            .await
+            .map_err(map_sqlx_error)?;
 
         Ok(1)
     }

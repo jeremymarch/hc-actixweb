@@ -1,8 +1,7 @@
-use std::time::{Duration, Instant};
-
 use crate::server;
 use actix::prelude::*;
 use actix_web_actors::ws;
+use std::time::{Duration, Instant};
 
 use crate::GetMoveQuery;
 use sqlx::types::Uuid;
@@ -14,6 +13,7 @@ use crate::SessionsListResponse;
 use crate::StatusResponse;
 use hoplite_verbs_rs::HcGreekVerb;
 use libhc::HcDb;
+use libhc::HcError;
 use std::sync::Arc;
 
 /// How often heartbeat pings are sent
@@ -186,7 +186,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                             .await
                             {
                                 Ok(_session_uuid) => ("inserted!".to_string(), true),
-                                Err(sqlx::Error::RowNotFound) => {
+                                Err(HcError::UnknownError) => {
                                     ("opponent not found!".to_string(), false)
                                 }
                                 Err(e) => (format!("error inserting: {e:?}"), false),

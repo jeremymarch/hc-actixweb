@@ -175,7 +175,7 @@ pub async fn login_post(
     if let Ok(user_id) = tx
         .validate_login_db(&credentials.username, credentials.password.expose_secret())
         .await
-        .map_err(map_sqlx_error)
+        .map_err(map_hc_error)
     {
         tx.commit_tx().await.unwrap();
         session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
@@ -340,7 +340,7 @@ pub async fn new_user_post(
         if let Ok(_user_id) = tx
             .create_user(&username, &password, &email, timestamp)
             .await
-            .map_err(map_sqlx_error)
+            .map_err(map_hc_error)
         {
             tx.commit_tx().await.unwrap();
             //session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session

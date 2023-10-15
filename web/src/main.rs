@@ -46,6 +46,7 @@ use libhc::GetMoveQuery;
 use libhc::GetMovesQuery;
 use libhc::GetSessions;
 use libhc::HcDb;
+use libhc::HcError;
 use libhc::MoveResult;
 use libhc::MoveType;
 use libhc::SessionState;
@@ -181,7 +182,7 @@ async fn get_sessions(
 
         let res = libhc::get_sessions_real(db, user_id, verbs, username, &info)
             .await
-            .map_err(map_sqlx_error)?;
+            .map_err(map_hc_error)?;
         Ok(HttpResponse::Ok().json(res))
     } else {
         let res = StatusResponse {
@@ -204,7 +205,7 @@ async fn get_game_moves(
             session_id: info.session_id,
             moves: libhc::hc_get_game_moves(db, &info)
                 .await
-                .map_err(map_sqlx_error)?,
+                .map_err(map_hc_error)?,
             success: true,
         };
 
@@ -233,7 +234,7 @@ async fn create_session(
         let (mesg, success) =
             match libhc::hc_insert_session(db, user_id, &mut info, verbs, timestamp).await {
                 Ok(_session_uuid) => ("inserted!".to_string(), true),
-                Err(sqlx::Error::RowNotFound) => ("opponent not found!".to_string(), false),
+                Err(HcError::UnknownError) => ("opponent not found!".to_string(), false),
                 Err(e) => (format!("error inserting: {e:?}"), false),
             };
         let res = StatusResponse {
@@ -264,7 +265,7 @@ async fn get_move(
         let mut tx = db.begin_tx().await.unwrap();
         let res = libhc::hc_get_move(&mut tx, user_id, false, info.session_id, verbs)
             .await
-            .map_err(map_sqlx_error)?;
+            .map_err(map_hc_error)?;
         tx.commit_tx().await.unwrap();
 
         Ok(HttpResponse::Ok().json(res))
@@ -313,7 +314,7 @@ async fn enter(
     if let Some(user_id) = login::get_user_id(session) {
         let res = libhc::hc_answer(db, user_id, &info, timestamp, verbs)
             .await
-            .map_err(map_sqlx_error)?;
+            .map_err(map_hc_error)?;
 
         return Ok(HttpResponse::Ok().json(res));
     }
@@ -358,7 +359,7 @@ async fn ask(
     if let Some(user_id) = login::get_user_id(session) {
         let res = libhc::hc_ask(db, user_id, &info, timestamp, verbs)
             .await
-            .map_err(map_sqlx_error)?;
+            .map_err(map_hc_error)?;
 
         Ok(HttpResponse::Ok().json(res))
     } else {
@@ -404,7 +405,7 @@ async fn mf(
     if let Some(user_id) = login::get_user_id(session) {
         let res = libhc::hc_mf_pressed(db, user_id, &info, timestamp, verbs)
             .await
-            .map_err(map_sqlx_error)?;
+            .map_err(map_hc_error)?;
 
         Ok(HttpResponse::Ok().json(res))
     } else {
@@ -474,87 +475,32 @@ impl ResponseError for PhilologusError {
     }
 }
 
-fn map_sqlx_error(e: sqlx::Error) -> PhilologusError {
+pub fn map_hc_error(e: HcError) -> PhilologusError {
     match e {
-        sqlx::Error::Configuration(e) => PhilologusError {
+        HcError::Database(e) => PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,
-            name: "sqlx error".to_string(),
-            error: format!("sqlx Configuration: {e}"),
+            name: String::from("sqlx error"),
+            error: format!("sqlx Configuration: {}", e),
         },
-        sqlx::Error::Database(e) => PhilologusError {
+        HcError::XmlError(e) => PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,
-            name: "sqlx error".to_string(),
-            error: format!("sqlx Database: {e}"),
+            name: String::from("xml error"),
+            error: format!("xml error: {}", e),
         },
-        sqlx::Error::Io(e) => PhilologusError {
+        HcError::JsonError(e) => PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,
-            name: "sqlx error".to_string(),
-            error: format!("sqlx Io: {e}"),
+            name: String::from("json error"),
+            error: format!("json error: {}", e),
         },
-        sqlx::Error::Tls(e) => PhilologusError {
+        HcError::ImportError(e) => PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,
-            name: "sqlx error".to_string(),
-            error: format!("sqlx Tls: {e}"),
+            name: String::from("import error"),
+            error: format!("import error: {}", e),
         },
-        sqlx::Error::Protocol(e) => PhilologusError {
+        HcError::UnknownError => PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,
-            name: "sqlx error".to_string(),
-            error: format!("sqlx Protocol: {e}"),
-        },
-        sqlx::Error::RowNotFound => PhilologusError {
-            code: StatusCode::INTERNAL_SERVER_ERROR,
-            name: "sqlx error".to_string(),
-            error: "sqlx RowNotFound".to_string(),
-        },
-        sqlx::Error::TypeNotFound { .. } => PhilologusError {
-            code: StatusCode::INTERNAL_SERVER_ERROR,
-            name: "sqlx error".to_string(),
-            error: "sqlx TypeNotFound".to_string(),
-        },
-        sqlx::Error::ColumnIndexOutOfBounds { .. } => PhilologusError {
-            code: StatusCode::INTERNAL_SERVER_ERROR,
-            name: "sqlx error".to_string(),
-            error: "sqlx ColumnIndexOutOfBounds".to_string(),
-        },
-        sqlx::Error::ColumnNotFound(e) => PhilologusError {
-            code: StatusCode::INTERNAL_SERVER_ERROR,
-            name: "sqlx error".to_string(),
-            error: format!("sqlx ColumnNotFound: {e}"),
-        },
-        sqlx::Error::ColumnDecode { .. } => PhilologusError {
-            code: StatusCode::INTERNAL_SERVER_ERROR,
-            name: "sqlx error".to_string(),
-            error: "sqlx ColumnDecode".to_string(),
-        },
-        sqlx::Error::Decode(e) => PhilologusError {
-            code: StatusCode::INTERNAL_SERVER_ERROR,
-            name: "sqlx error".to_string(),
-            error: format!("sqlx Decode: {e}"),
-        },
-        sqlx::Error::PoolTimedOut => PhilologusError {
-            code: StatusCode::INTERNAL_SERVER_ERROR,
-            name: "sqlx error".to_string(),
-            error: "sqlx PoolTimeOut".to_string(),
-        },
-        sqlx::Error::PoolClosed => PhilologusError {
-            code: StatusCode::INTERNAL_SERVER_ERROR,
-            name: "sqlx error".to_string(),
-            error: "sqlx PoolClosed".to_string(),
-        },
-        sqlx::Error::WorkerCrashed => PhilologusError {
-            code: StatusCode::INTERNAL_SERVER_ERROR,
-            name: "sqlx error".to_string(),
-            error: "sqlx WorkerCrashed".to_string(),
-        },
-        sqlx::Error::Migrate(e) => PhilologusError {
-            code: StatusCode::INTERNAL_SERVER_ERROR,
-            name: "sqlx error".to_string(),
-            error: format!("sqlx Migrate: {e}"),
-        },
-        _ => PhilologusError {
-            code: StatusCode::INTERNAL_SERVER_ERROR,
-            name: "sqlx error".to_string(),
-            error: "sqlx Unknown error".to_string(),
+            name: String::from("unknown error"),
+            error: String::from("unknown error"),
         },
     }
 }

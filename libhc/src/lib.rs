@@ -17,24 +17,46 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+//must set feature sqlite or postgres or both
 #[cfg(not(any(feature = "sqlite", feature = "postgres")))]
 compile_error!("Either feature \"sqlite\" or \"postgres\" must be enabled for this crate.");
 
 use chrono::prelude::*;
 use hoplite_verbs_rs::*;
 use polytonic_greek::hgk_compare_multiple_forms;
-use polytonic_greek::hgk_compare_sqlite;
+use polytonic_greek::hgk_compare_sqlite; //note: this does not actually depend on sqlite
 use rand::prelude::SliceRandom;
-use sqlx::types::Uuid;
 use std::collections::HashSet;
+use uuid::Uuid;
 #[cfg(feature = "postgres")]
 pub mod dbpostgres;
 #[cfg(feature = "sqlite")]
 pub mod dbsqlite;
 
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
+use sqlx::FromRow; //fix me: can we eliminate this dependency on sqlx?
 use std::sync::Arc;
+
+#[derive(Debug, thiserror::Error)]
+pub enum HcError {
+    Database(String),
+    XmlError(String),
+    JsonError(String),
+    ImportError(String),
+    UnknownError,
+}
+
+impl std::fmt::Display for HcError {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        match self {
+            HcError::Database(s) => write!(fmt, "HcError: database: {}", s),
+            HcError::XmlError(s) => write!(fmt, "HcError: xml: {}", s),
+            HcError::JsonError(s) => write!(fmt, "HcError: json error: {}", s),
+            HcError::ImportError(s) => write!(fmt, "HcError: import error: {}", s),
+            HcError::UnknownError => write!(fmt, "HcError: unknown error"),
+        }
+    }
+}
 
 pub fn get_timestamp() -> i64 {
     let now = Utc::now();
@@ -225,28 +247,24 @@ pub enum MoveType {
 use async_trait::async_trait;
 #[async_trait]
 pub trait HcDb {
-    async fn begin_tx(&self) -> Result<Box<dyn HcTrx>, sqlx::Error>;
+    async fn begin_tx(&self) -> Result<Box<dyn HcTrx>, HcError>;
 }
 
 #[async_trait]
 pub trait HcTrx {
-    async fn commit_tx(self: Box<Self>) -> Result<(), sqlx::Error>;
-    async fn rollback_tx(self: Box<Self>) -> Result<(), sqlx::Error>;
+    async fn commit_tx(self: Box<Self>) -> Result<(), HcError>;
+    async fn rollback_tx(self: Box<Self>) -> Result<(), HcError>;
 
     async fn add_to_score(
         &mut self,
         session_id: Uuid,
         user_to_score: &str,
         points: i32,
-    ) -> Result<u32, sqlx::Error>;
+    ) -> Result<u32, HcError>;
 
-    async fn validate_login_db(
-        &mut self,
-        username: &str,
-        password: &str,
-    ) -> Result<Uuid, sqlx::Error>;
+    async fn validate_login_db(&mut self, username: &str, password: &str) -> Result<Uuid, HcError>;
 
-    async fn get_user_id(&mut self, username: &str) -> Result<UserResult, sqlx::Error>;
+    async fn get_user_id(&mut self, username: &str) -> Result<UserResult, HcError>;
 
     async fn insert_session_tx(
         &mut self,
@@ -255,45 +273,42 @@ pub trait HcTrx {
         opponent_id: Option<Uuid>,
         info: &CreateSessionQuery,
         timestamp: i64,
-    ) -> Result<Uuid, sqlx::Error>;
+    ) -> Result<Uuid, HcError>;
 
     async fn get_game_moves(
         &mut self,
         session_id: sqlx::types::Uuid,
-    ) -> Result<Vec<MoveResult>, sqlx::Error>;
+    ) -> Result<Vec<MoveResult>, HcError>;
 
     async fn get_sessions(
         &mut self,
         user_id: sqlx::types::Uuid,
-    ) -> Result<Vec<SessionsListQuery>, sqlx::Error>;
+    ) -> Result<Vec<SessionsListQuery>, HcError>;
 
     async fn get_last_move_tx(
         &mut self,
         session_id: sqlx::types::Uuid,
-    ) -> Result<MoveResult, sqlx::Error>;
+    ) -> Result<MoveResult, HcError>;
 
     async fn get_last_n_moves(
         &mut self,
         session_id: sqlx::types::Uuid,
         n: u8,
-    ) -> Result<Vec<MoveResult>, sqlx::Error>;
+    ) -> Result<Vec<MoveResult>, HcError>;
 
     async fn get_session_tx(
         &mut self,
         session_id: sqlx::types::Uuid,
-    ) -> Result<SessionResult, sqlx::Error>;
+    ) -> Result<SessionResult, HcError>;
 
-    async fn get_used_verbs(
-        &mut self,
-        session_id: sqlx::types::Uuid,
-    ) -> Result<Vec<i32>, sqlx::Error>;
+    async fn get_used_verbs(&mut self, session_id: sqlx::types::Uuid) -> Result<Vec<i32>, HcError>;
 
     async fn insert_ask_move_tx(
         &mut self,
         user_id: Option<Uuid>,
         info: &AskQuery,
         timestamp: i64,
-    ) -> Result<Uuid, sqlx::Error>;
+    ) -> Result<Uuid, HcError>;
 
     #[allow(clippy::too_many_arguments)]
     async fn update_answer_move_tx(
@@ -304,7 +319,7 @@ pub trait HcTrx {
         is_correct: bool,
         mf_pressed: bool,
         timestamp: i64,
-    ) -> Result<u32, sqlx::Error>;
+    ) -> Result<u32, HcError>;
 
     async fn create_user(
         &mut self,
@@ -312,16 +327,16 @@ pub trait HcTrx {
         password: &str,
         email: &str,
         timestamp: i64,
-    ) -> Result<Uuid, sqlx::Error>;
+    ) -> Result<Uuid, HcError>;
 
-    async fn create_db(&mut self) -> Result<u32, sqlx::Error>;
+    async fn create_db(&mut self) -> Result<u32, HcError>;
 }
 
 pub async fn get_session_state_tx(
     tx: &mut Box<dyn HcTrx>,
     user_id: sqlx::types::Uuid,
     session_id: sqlx::types::Uuid,
-) -> Result<SessionState, sqlx::Error> {
+) -> Result<SessionState, HcError> {
     let res = tx.get_session_tx(session_id).await?;
     let m = tx.get_last_n_moves(session_id, 2).await?;
 
@@ -406,14 +421,14 @@ pub async fn hc_ask(
     info: &AskQuery,
     timestamp: i64,
     verbs: &Vec<Arc<HcGreekVerb>>,
-) -> Result<SessionState, sqlx::Error> {
+) -> Result<SessionState, HcError> {
     //todo check that user_id is either challenger_user_id or challenged_user_id
     //todo check that user_id == challenger_user_id if this is first move
     let mut tx = db.begin_tx().await?;
 
     let s = tx.get_session_tx(info.session_id).await?;
     if user_id != s.challenger_user_id && Some(user_id) != s.challenged_user_id {
-        return Err(sqlx::Error::RowNotFound);
+        return Err(HcError::UnknownError);
     }
 
     //prevent out-of-sequence asks
@@ -423,7 +438,7 @@ pub async fn hc_ask(
                 || m.answer_user_id != Some(user_id)
                 || m.is_correct.is_none()
             {
-                return Err(sqlx::Error::RowNotFound); //same user cannot ask twice in a row and ask user must be same as previous answer user and previous answer must be marked correct or incorrect
+                return Err(HcError::UnknownError); //same user cannot ask twice in a row and ask user must be same as previous answer user and previous answer must be marked correct or incorrect
             } else {
                 Ok(m)
             }
@@ -478,26 +493,26 @@ pub async fn hc_answer(
     info: &AnswerQuery,
     timestamp: i64,
     verbs: &Vec<Arc<HcGreekVerb>>,
-) -> Result<SessionState, sqlx::Error> {
+) -> Result<SessionState, HcError> {
     //todo check that user_id is either challenger_user_id or challenged_user_id
     let mut tx = db.begin_tx().await?;
 
     let s = tx.get_session_tx(info.session_id).await?;
     if user_id != s.challenger_user_id && Some(user_id) != s.challenged_user_id {
-        return Err(sqlx::Error::RowNotFound);
+        return Err(HcError::UnknownError);
     }
 
     //pull prev move from db to get verb and params and to prevent out-of-sequence answers
     let m = match tx.get_last_move_tx(info.session_id).await {
         Ok(m) => {
             if m.ask_user_id == Some(user_id) || m.is_correct.is_some() {
-                return Err(sqlx::Error::RowNotFound); //same user cannot answer question they asked and previous question must not already be answered
+                return Err(HcError::UnknownError); //same user cannot answer question they asked and previous question must not already be answered
             } else {
                 m
             }
         }
         Err(_) => {
-            return Err(sqlx::Error::RowNotFound);
+            return Err(HcError::UnknownError);
         } //this is first move, nothing to answer
     };
 
@@ -598,25 +613,25 @@ pub async fn hc_mf_pressed(
     info: &AnswerQuery,
     timestamp: i64,
     verbs: &Vec<Arc<HcGreekVerb>>,
-) -> Result<SessionState, sqlx::Error> {
+) -> Result<SessionState, HcError> {
     let mut tx = db.begin_tx().await?;
 
     let s = tx.get_session_tx(info.session_id).await?;
     if user_id != s.challenger_user_id && Some(user_id) != s.challenged_user_id {
-        return Err(sqlx::Error::RowNotFound);
+        return Err(HcError::UnknownError);
     }
 
     //pull prev move from db to get verb and params and to prevent out-of-sequence answers
     let m = match tx.get_last_move_tx(info.session_id).await {
         Ok(m) => {
             if m.ask_user_id == Some(user_id) || m.is_correct.is_some() {
-                return Err(sqlx::Error::RowNotFound); //same user cannot answer question they asked and previous question must not already be answered
+                return Err(HcError::UnknownError); //same user cannot answer question they asked and previous question must not already be answered
             } else {
                 m
             }
         }
         Err(_) => {
-            return Err(sqlx::Error::RowNotFound);
+            return Err(HcError::UnknownError);
         } //this is first move, nothing to answer
     };
 
@@ -770,7 +785,7 @@ async fn ask_practice(
     timestamp: i64,
     asktimestamp: i64,
     verbs: &[Arc<HcGreekVerb>],
-) -> Result<(), sqlx::Error> {
+) -> Result<(), HcError> {
     let verb_params = VerbParameters::from_option(session.custom_params.clone());
 
     let max_per_verb = match session.practice_reps_per_verb {
@@ -834,7 +849,7 @@ pub async fn get_sessions_real(
     verbs: &Vec<Arc<HcGreekVerb>>,
     username: Option<String>,
     info: &GetSessions,
-) -> Result<SessionsListResponse, sqlx::Error> {
+) -> Result<SessionsListResponse, HcError> {
     let mut tx = db.begin_tx().await?;
     let current_session = match info.current_session {
         Some(r) => Some(hc_get_move(&mut tx, user_id, false, r, verbs).await?),
@@ -858,7 +873,7 @@ pub async fn hc_get_move(
     opponent_id: bool,
     session_id: Uuid,
     verbs: &Vec<Arc<HcGreekVerb>>,
-) -> Result<SessionState, sqlx::Error> {
+) -> Result<SessionState, HcError> {
     let s = tx.get_session_tx(session_id).await?;
 
     let real_user_id = if !opponent_id || s.challenged_user_id.is_none() {
@@ -958,7 +973,7 @@ fn move_get_type(
 pub async fn hc_get_sessions(
     tx: &mut Box<dyn HcTrx>,
     user_id: Uuid,
-) -> Result<Vec<SessionsListQuery>, sqlx::Error> {
+) -> Result<Vec<SessionsListQuery>, HcError> {
     let mut res = tx.get_sessions(user_id).await?;
 
     for r in &mut res {
@@ -997,7 +1012,7 @@ fn get_verbs_by_unit(units: &str, verbs: &[Arc<HcGreekVerb>]) -> Option<String> 
 pub async fn hc_get_game_moves(
     db: &dyn HcDb,
     info: &GetMovesQuery,
-) -> Result<Vec<MoveResult>, sqlx::Error> {
+) -> Result<Vec<MoveResult>, HcError> {
     let mut tx = db.begin_tx().await?;
     let res = tx.get_game_moves(info.session_id).await?;
 
@@ -1010,7 +1025,7 @@ pub async fn hc_insert_session(
     info: &mut CreateSessionQuery,
     verbs: &[Arc<HcGreekVerb>],
     timestamp: i64,
-) -> Result<Uuid, sqlx::Error> {
+) -> Result<Uuid, HcError> {
     let mut tx = db.begin_tx().await?;
 
     let opponent_user_id: Option<Uuid>;
@@ -1023,20 +1038,20 @@ pub async fn hc_insert_session(
 
     //failed to find opponent or opponent is self
     if opponent_user_id.is_some() && opponent_user_id.unwrap() == user_id {
-        return Err(sqlx::Error::RowNotFound); //todo oops
+        return Err(HcError::UnknownError); //todo oops
     }
 
     // if custom verbs are set, use them, else change units into verbs
     if info.verbs.is_none() {
         match &info.units {
             Some(u) => info.verbs = get_verbs_by_unit(u, verbs),
-            None => return Err(sqlx::Error::RowNotFound),
+            None => return Err(HcError::UnknownError),
         }
     }
 
     // if still no verbs, abort
     if info.verbs.is_none() {
-        return Err(sqlx::Error::RowNotFound);
+        return Err(HcError::UnknownError);
     }
 
     let highest_unit = match info.highest_unit {
@@ -1100,7 +1115,7 @@ pub async fn hc_get_available_verbs(
     session_id: Uuid,
     top_unit: Option<i16>,
     verbs: &Vec<Arc<HcGreekVerb>>,
-) -> Result<Vec<HCVerbOption>, sqlx::Error> {
+) -> Result<Vec<HCVerbOption>, HcError> {
     let mut res_verbs: Vec<HCVerbOption> = vec![];
 
     let used_verbs = tx.get_used_verbs(session_id).await?;
@@ -1162,9 +1177,7 @@ pub fn load_verbs(_path: &str) -> Vec<Arc<HcGreekVerb>> {
 }
 
 /*
-text_id, gloss_id, count
-
-pub async fn hc_get_verbs(db: &HcDb, _user_id:Uuid, session_id:Uuid, top_unit:Option<i16>, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<Vec<HCVerbOption>, sqlx::Error> {
+pub async fn hc_get_verbs(db: &HcDb, _user_id:Uuid, session_id:Uuid, top_unit:Option<i16>, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<Vec<HCVerbOption>, HcError> {
     let mut res_verbs:Vec<HCVerbOption> = vec![];
 
     let used_verbs = db.get_used_verbs(session_id).await?;

@@ -15,6 +15,7 @@ serde = { version = "1.0.188", features = ["derive"] }
 rand = "0.8.5"
 uuid = { version = "1.4.1", features = ["v4", "serde"] }
 async-trait = "0.1.73"
+thiserror = "1.0.48"
 
 #hoplite_verbs_rs = { path = "../hoplite_verbs_rs" }
 hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.3.9" }
