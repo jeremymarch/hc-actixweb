@@ -34,7 +34,6 @@ pub mod dbpostgres;
 pub mod dbsqlite;
 
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow; //fix me: can we eliminate this dependency on sqlx?
 use std::sync::Arc;
 
 #[derive(Debug, thiserror::Error)]
@@ -60,7 +59,7 @@ pub fn get_timestamp() -> i64 {
 #[derive(Deserialize, Serialize)]
 pub struct GetSessions {
     pub qtype: String,
-    pub current_session: Option<sqlx::types::Uuid>,
+    pub current_session: Option<Uuid>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -72,9 +71,9 @@ pub struct SessionsListResponse {
     pub current_session: Option<SessionState>,
 }
 
-#[derive(Deserialize, Serialize, FromRow)]
+#[derive(Deserialize, Serialize)]
 pub struct UserResult {
-    user_id: sqlx::types::Uuid,
+    user_id: Uuid,
     user_name: String,
     password: String,
     email: String,
@@ -105,7 +104,7 @@ pub struct AskQuery {
     pub verb: i32,
 }
 
-#[derive(Deserialize, Serialize, FromRow)]
+#[derive(Deserialize, Serialize)]
 pub struct SessionResult {
     session_id: Uuid,
     challenger_user_id: Uuid,
@@ -128,13 +127,13 @@ pub struct SessionResult {
 #[derive(Deserialize, Serialize)]
 pub struct GetMoveQuery {
     pub qtype: String,
-    pub session_id: sqlx::types::Uuid,
+    pub session_id: Uuid,
 }
 
 #[derive(Deserialize, Serialize)]
 pub struct GetMovesQuery {
     pub qtype: String,
-    pub session_id: sqlx::types::Uuid,
+    pub session_id: Uuid,
 }
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Eq)]
@@ -164,12 +163,12 @@ pub struct SessionState {
     pub verbs: Option<Vec<HCVerbOption>>,
 }
 
-#[derive(Deserialize, Serialize, FromRow)]
+#[derive(Deserialize, Serialize)]
 pub struct MoveResult {
-    move_id: sqlx::types::Uuid,
-    session_id: sqlx::types::Uuid,
-    ask_user_id: Option<sqlx::types::Uuid>,
-    answer_user_id: Option<sqlx::types::Uuid>,
+    move_id: Uuid,
+    session_id: Uuid,
+    ask_user_id: Option<Uuid>,
+    answer_user_id: Option<Uuid>,
     verb_id: Option<i32>,
     person: Option<i16>,
     number: Option<i16>,
@@ -203,10 +202,10 @@ pub struct CreateSessionQuery {
 
 #[derive(PartialEq, Debug, Eq, Deserialize, Serialize)]
 pub struct SessionsListQuery {
-    pub session_id: sqlx::types::Uuid,
+    pub session_id: Uuid,
     pub name: Option<String>,
-    pub challenged: Option<sqlx::types::Uuid>, //the one who didn't start the game, or null for practice
-    //pub opponent: Option<sqlx::types::Uuid>,
+    pub challenged: Option<Uuid>, //the one who didn't start the game, or null for practice
+    //pub opponent: Option<Uuid>,
     pub opponent_name: Option<String>,
     pub timestamp: i64,
     pub myturn: bool,
@@ -269,33 +268,21 @@ pub trait HcTrx {
         timestamp: i64,
     ) -> Result<Uuid, HcError>;
 
-    async fn get_game_moves(
-        &mut self,
-        session_id: sqlx::types::Uuid,
-    ) -> Result<Vec<MoveResult>, HcError>;
+    async fn get_game_moves(&mut self, session_id: Uuid) -> Result<Vec<MoveResult>, HcError>;
 
-    async fn get_sessions(
-        &mut self,
-        user_id: sqlx::types::Uuid,
-    ) -> Result<Vec<SessionsListQuery>, HcError>;
+    async fn get_sessions(&mut self, user_id: Uuid) -> Result<Vec<SessionsListQuery>, HcError>;
 
-    async fn get_last_move_tx(
-        &mut self,
-        session_id: sqlx::types::Uuid,
-    ) -> Result<MoveResult, HcError>;
+    async fn get_last_move_tx(&mut self, session_id: Uuid) -> Result<MoveResult, HcError>;
 
     async fn get_last_n_moves(
         &mut self,
-        session_id: sqlx::types::Uuid,
+        session_id: Uuid,
         n: u8,
     ) -> Result<Vec<MoveResult>, HcError>;
 
-    async fn get_session_tx(
-        &mut self,
-        session_id: sqlx::types::Uuid,
-    ) -> Result<SessionResult, HcError>;
+    async fn get_session_tx(&mut self, session_id: Uuid) -> Result<SessionResult, HcError>;
 
-    async fn get_used_verbs(&mut self, session_id: sqlx::types::Uuid) -> Result<Vec<i32>, HcError>;
+    async fn get_used_verbs(&mut self, session_id: Uuid) -> Result<Vec<i32>, HcError>;
 
     async fn insert_ask_move_tx(
         &mut self,
@@ -328,8 +315,8 @@ pub trait HcTrx {
 
 pub async fn get_session_state_tx(
     tx: &mut Box<dyn HcTrx>,
-    user_id: sqlx::types::Uuid,
-    session_id: sqlx::types::Uuid,
+    user_id: Uuid,
+    session_id: Uuid,
 ) -> Result<SessionState, HcError> {
     let res = tx.get_session_tx(session_id).await?;
     let m = tx.get_last_n_moves(session_id, 2).await?;

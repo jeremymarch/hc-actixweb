@@ -106,9 +106,17 @@ impl HcTrx for HcDbSqliteTrx<'_> {
 
     async fn validate_login_db(&mut self, username: &str, password: &str) -> Result<Uuid, HcError> {
         let query = "SELECT user_id,user_name,password,email,user_type,timestamp FROM users WHERE user_name = $1 AND password = $2 LIMIT 1;";
-        let res: UserResult = sqlx::query_as(query)
+        let res: UserResult = sqlx::query(query)
             .bind(username)
             .bind(password)
+            .map(|rec: SqliteRow| UserResult {
+                user_id: rec.get("user_id"),
+                user_name: rec.get("user_name"),
+                password: rec.get("password"),
+                email: rec.get("email"),
+                user_type: rec.get("user_type"),
+                timestamp: rec.get("timestamp"),
+            })
             .fetch_one(&mut *self.tx)
             .await
             .map_err(map_sqlx_error)?;
@@ -118,8 +126,16 @@ impl HcTrx for HcDbSqliteTrx<'_> {
 
     async fn get_user_id(&mut self, username: &str) -> Result<UserResult, HcError> {
         let query = "SELECT user_id,user_name,password,email,user_type,timestamp FROM users WHERE user_name = $1 LIMIT 1;";
-        let res: UserResult = sqlx::query_as(query)
+        let res: UserResult = sqlx::query(query)
             .bind(username)
+            .map(|rec: SqliteRow| UserResult {
+                user_id: rec.get("user_id"),
+                user_name: rec.get("user_name"),
+                password: rec.get("password"),
+                email: rec.get("email"),
+                user_type: rec.get("user_type"),
+                timestamp: rec.get("timestamp"),
+            })
             .fetch_one(&mut *self.tx)
             .await
             .map_err(map_sqlx_error)?;
@@ -183,8 +199,28 @@ impl HcTrx for HcDbSqliteTrx<'_> {
         where session_id = $1 \
         ORDER BY asktimestamp DESC;";
 
-        let res: Vec<MoveResult> = sqlx::query_as(query)
+        let res: Vec<MoveResult> = sqlx::query(query)
             .bind(session_id)
+            .map(|rec: SqliteRow| MoveResult {
+                move_id: rec.get("move_id"),
+                session_id: rec.get("session_id"),
+                ask_user_id: rec.get("ask_user_id"),
+                answer_user_id: rec.get("answer_user_id"),
+                verb_id: rec.get("verb_id"),
+                person: rec.get("person"),
+                number: rec.get("number"),
+                tense: rec.get("tense"),
+                mood: rec.get("mood"),
+                voice: rec.get("voice"),
+                answer: rec.get("answer"),
+                correct_answer: rec.get("correct_answer"),
+                is_correct: rec.get("is_correct"),
+                time: rec.get("time"),
+                timed_out: rec.get("timed_out"),
+                mf_pressed: rec.get("mf_pressed"),
+                asktimestamp: rec.get("asktimestamp"),
+                answeredtimestamp: rec.get("answeredtimestamp"),
+            })
             .fetch_all(&mut *self.tx)
             .await
             .map_err(map_sqlx_error)?;
@@ -252,9 +288,29 @@ impl HcTrx for HcDbSqliteTrx<'_> {
         LIMIT $2;";
 
         //println!("query: {} {:?}", query, user_id);
-        let res: MoveResult = sqlx::query_as(query)
+        let res: MoveResult = sqlx::query(query)
             .bind(session_id)
             .bind(1)
+            .map(|rec: SqliteRow| MoveResult {
+                move_id: rec.get("move_id"),
+                session_id: rec.get("session_id"),
+                ask_user_id: rec.get("ask_user_id"),
+                answer_user_id: rec.get("answer_user_id"),
+                verb_id: rec.get("verb_id"),
+                person: rec.get("person"),
+                number: rec.get("number"),
+                tense: rec.get("tense"),
+                mood: rec.get("mood"),
+                voice: rec.get("voice"),
+                answer: rec.get("answer"),
+                correct_answer: rec.get("correct_answer"),
+                is_correct: rec.get("is_correct"),
+                time: rec.get("time"),
+                timed_out: rec.get("timed_out"),
+                mf_pressed: rec.get("mf_pressed"),
+                asktimestamp: rec.get("asktimestamp"),
+                answeredtimestamp: rec.get("answeredtimestamp"),
+            })
             .fetch_one(&mut *self.tx)
             .await
             .map_err(map_sqlx_error)?;
@@ -274,9 +330,29 @@ impl HcTrx for HcDbSqliteTrx<'_> {
             LIMIT $2;";
 
         //println!("query: {} {:?}", query, user_id);
-        let res: Vec<MoveResult> = sqlx::query_as(query)
+        let res: Vec<MoveResult> = sqlx::query(query)
             .bind(session_id)
             .bind(n as i32)
+            .map(|rec: SqliteRow| MoveResult {
+                move_id: rec.get("move_id"),
+                session_id: rec.get("session_id"),
+                ask_user_id: rec.get("ask_user_id"),
+                answer_user_id: rec.get("answer_user_id"),
+                verb_id: rec.get("verb_id"),
+                person: rec.get("person"),
+                number: rec.get("number"),
+                tense: rec.get("tense"),
+                mood: rec.get("mood"),
+                voice: rec.get("voice"),
+                answer: rec.get("answer"),
+                correct_answer: rec.get("correct_answer"),
+                is_correct: rec.get("is_correct"),
+                time: rec.get("time"),
+                timed_out: rec.get("timed_out"),
+                mf_pressed: rec.get("mf_pressed"),
+                asktimestamp: rec.get("asktimestamp"),
+                answeredtimestamp: rec.get("answeredtimestamp"),
+            })
             .fetch_all(&mut *self.tx)
             .await
             .map_err(map_sqlx_error)?;
@@ -293,8 +369,23 @@ impl HcTrx for HcDbSqliteTrx<'_> {
         where session_id = $1 \
         LIMIT 1;";
 
-        let res: SessionResult = sqlx::query_as(query)
+        let res: SessionResult = sqlx::query(query)
             .bind(session_id)
+            .map(|rec: SqliteRow| SessionResult {
+                session_id: rec.get("session_id"),
+                challenger_user_id: rec.get("challenger_user_id"),
+                challenged_user_id: rec.get("challenged_user_id"),
+                current_move: rec.get("current_move"),
+                name: rec.get("name"),
+                highest_unit: rec.get("highest_unit"),
+                custom_verbs: rec.get("custom_verbs"),
+                custom_params: rec.get("custom_params"),
+                max_changes: rec.get("max_changes"),
+                challenger_score: rec.get("challenger_score"),
+                challenged_score: rec.get("challenged_score"),
+                practice_reps_per_verb: rec.get("practice_reps_per_verb"),
+                timestamp: rec.get("timestamp"),
+            })
             .fetch_one(&mut *self.tx)
             .await
             .map_err(map_sqlx_error)?;
