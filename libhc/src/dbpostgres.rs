@@ -81,12 +81,10 @@ impl HcDb for HcDbPostgres {
 #[async_trait]
 impl HcTrx for HcDbPostgresTrx<'_> {
     async fn commit_tx(self: Box<Self>) -> Result<(), HcError> {
-        let res = self.tx.commit().await.map_err(map_sqlx_error)?;
-        Ok(res)
+        self.tx.commit().await.map_err(map_sqlx_error)
     }
     async fn rollback_tx(self: Box<Self>) -> Result<(), HcError> {
-        let res = self.tx.rollback().await.map_err(map_sqlx_error)?;
-        Ok(res)
+        self.tx.rollback().await.map_err(map_sqlx_error)
     }
 
     async fn add_to_score(
