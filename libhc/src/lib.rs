@@ -201,7 +201,7 @@ pub struct CreateSessionQuery {
     pub max_time: i32,
 }
 
-#[derive(PartialEq, Debug, Eq, Deserialize, Serialize, FromRow)]
+#[derive(PartialEq, Debug, Eq, Deserialize, Serialize)]
 pub struct SessionsListQuery {
     pub session_id: sqlx::types::Uuid,
     pub name: Option<String>,
