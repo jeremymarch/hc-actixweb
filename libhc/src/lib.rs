@@ -40,9 +40,6 @@ use std::sync::Arc;
 #[derive(Debug, thiserror::Error)]
 pub enum HcError {
     Database(String),
-    XmlError(String),
-    JsonError(String),
-    ImportError(String),
     UnknownError,
 }
 
@@ -50,9 +47,6 @@ impl std::fmt::Display for HcError {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         match self {
             HcError::Database(s) => write!(fmt, "HcError: database: {}", s),
-            HcError::XmlError(s) => write!(fmt, "HcError: xml: {}", s),
-            HcError::JsonError(s) => write!(fmt, "HcError: json error: {}", s),
-            HcError::ImportError(s) => write!(fmt, "HcError: import error: {}", s),
             HcError::UnknownError => write!(fmt, "HcError: unknown error"),
         }
     }

@@ -482,21 +482,6 @@ pub fn map_hc_error(e: HcError) -> PhilologusError {
             name: String::from("sqlx error"),
             error: format!("sqlx Configuration: {}", e),
         },
-        HcError::XmlError(e) => PhilologusError {
-            code: StatusCode::INTERNAL_SERVER_ERROR,
-            name: String::from("xml error"),
-            error: format!("xml error: {}", e),
-        },
-        HcError::JsonError(e) => PhilologusError {
-            code: StatusCode::INTERNAL_SERVER_ERROR,
-            name: String::from("json error"),
-            error: format!("json error: {}", e),
-        },
-        HcError::ImportError(e) => PhilologusError {
-            code: StatusCode::INTERNAL_SERVER_ERROR,
-            name: String::from("import error"),
-            error: format!("import error: {}", e),
-        },
         HcError::UnknownError => PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,
             name: String::from("unknown error"),
