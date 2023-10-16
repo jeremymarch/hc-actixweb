@@ -26,9 +26,7 @@ use actix_session::Session;
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::cookie::Key;
 use actix_web::cookie::SameSite;
-use actix_web::http::header::ContentType;
 use actix_web::http::header::HeaderValue;
-use actix_web::http::header::LOCATION;
 use actix_web::http::header::{CONTENT_SECURITY_POLICY, STRICT_TRANSPORT_SECURITY};
 use actix_web::{http::StatusCode, ResponseError};
 use actix_web::{
@@ -48,7 +46,6 @@ use libhc::GetSessions;
 use libhc::HcError;
 use libhc::MoveResult;
 use libhc::MoveType;
-use libhc::SessionsListResponse;
 use thiserror::Error;
 
 use actix::Actor;

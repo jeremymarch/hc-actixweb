@@ -16,12 +16,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-
-use super::*;
-
+use crate::map_hc_error;
+use actix_session::Session;
+use actix_web::http::header::ContentType;
+use actix_web::http::header::LOCATION;
+use actix_web::web;
+use actix_web::Error as AWError;
+use actix_web::HttpRequest;
+use actix_web::HttpResponse;
 use actix_web_flash_messages::FlashMessage;
 use actix_web_flash_messages::{IncomingFlashMessages, Level};
-use libhc::hc_create_user;
+use libhc::dbpostgres::HcDbPostgres;
 use libhc::HcDb;
 use secrecy::ExposeSecret;
 use secrecy::Secret;
@@ -337,7 +342,7 @@ pub async fn new_user_post(
     let timestamp = libhc::get_timestamp();
 
     if username.len() > 1 && password.len() > 3 && email.len() > 6 && password == confirm_password {
-        match hc_create_user(db, &username, &password, &email, timestamp)
+        match libhc::hc_create_user(db, &username, &password, &email, timestamp)
             .await
             .map_err(map_hc_error)
         {

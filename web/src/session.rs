@@ -4,12 +4,11 @@ use actix_web_actors::ws;
 use std::time::{Duration, Instant};
 
 use crate::GetMoveQuery;
-use sqlx::types::Uuid;
+use uuid::Uuid;
 
 use crate::GetSessions;
 use crate::HcDbPostgres;
 use crate::MoveType;
-use crate::SessionsListResponse;
 use crate::StatusResponse;
 use hoplite_verbs_rs::HcGreekVerb;
 use libhc::HcDb;
@@ -345,20 +344,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                             });
                         }
                         let fut = async move {
+                            /*
                             let current_session = match info.current_session {
                                 Some(r) => {
-                                    let mut tx = db.begin_tx().await.unwrap();
-                                    match libhc::hc_get_move_tr(&mut tx, user_id, false, r, &verbs)
+                                    match libhc::hc_get_move(&db, user_id, false, r, &verbs)
                                         .await
                                     {
-                                        Ok(res) => {
-                                            tx.commit_tx().await.unwrap();
-                                            Some(res)
-                                        }
-                                        Err(_) => {
-                                            tx.commit_tx().await.unwrap();
-                                            None
-                                        }
+                                        Ok(res) => Some(res),
+                                        Err(_) => None,
                                     }
                                 }
                                 _ => None,
@@ -378,6 +371,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                                 }
                             }
                             tx.commit_tx().await.unwrap();
+                            */
+                            if let Ok(res) =
+                                libhc::hc_get_sessions(&db, user_id, &verbs, username, &info).await
+                            {
+                                if let Ok(resjson) = serde_json::to_string(&res) {
+                                    let _ = addr.send(server::Message(resjson)).await;
+                                }
+                            }
                         };
                         let fut = actix::fut::wrap_future::<_, Self>(fut);
                         ctx.spawn(fut);
