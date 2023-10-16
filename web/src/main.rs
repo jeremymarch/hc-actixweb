@@ -48,7 +48,6 @@ use libhc::GetSessions;
 use libhc::HcError;
 use libhc::MoveResult;
 use libhc::MoveType;
-use libhc::SessionState;
 use libhc::SessionsListResponse;
 use thiserror::Error;
 
@@ -130,10 +129,11 @@ async fn ws_route(
     }
 }
 
+//let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
+//let user_agent = get_user_agent(&req).unwrap_or("");
 fn _get_user_agent(req: &HttpRequest) -> Option<&str> {
     req.headers().get("user-agent")?.to_str().ok()
 }
-
 fn _get_ip(req: &HttpRequest) -> Option<String> {
     req.peer_addr().map(|addr| addr.ip().to_string())
 }
@@ -161,21 +161,12 @@ async fn get_sessions(
     if let Some(user_id) = login::get_user_id(session.clone()) {
         let username = login::get_username(session);
 
-        //let timestamp = libhc::get_timestamp();
-        //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
-        //let user_agent = get_user_agent(&req).unwrap_or("");
-
         let res = libhc::hc_get_sessions(db, user_id, verbs, username, &info)
             .await
             .map_err(map_hc_error)?;
         Ok(HttpResponse::Ok().json(res))
     } else {
-        let res = StatusResponse {
-            response_to: "getsessions".to_string(),
-            mesg: "error inserting: not logged in".to_string(),
-            success: false,
-        };
-        Ok(HttpResponse::Ok().json(res))
+        not_logged_in_response()
     }
 }
 
@@ -196,12 +187,7 @@ async fn get_game_moves(
 
         Ok(HttpResponse::Ok().json(res))
     } else {
-        let res = StatusResponse {
-            response_to: "getmoves".to_string(),
-            mesg: "error getting moves: not logged in".to_string(),
-            success: false,
-        };
-        Ok(HttpResponse::Ok().json(res))
+        not_logged_in_response()
     }
 }
 
@@ -213,8 +199,6 @@ async fn create_session(
 
     if let Some(user_id) = login::get_user_id(session) {
         let timestamp = libhc::get_timestamp();
-        //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
-        //let user_agent = get_user_agent(&req).unwrap_or("");
 
         let (mesg, success) =
             match libhc::hc_insert_session(db, user_id, &mut info, verbs, timestamp).await {
@@ -229,12 +213,7 @@ async fn create_session(
         };
         Ok(HttpResponse::Ok().json(res))
     } else {
-        let res = StatusResponse {
-            response_to: "newsession".to_string(),
-            mesg: "error inserting: not logged in".to_string(),
-            success: false,
-        };
-        Ok(HttpResponse::Ok().json(res))
+        not_logged_in_response()
     }
 }
 
@@ -253,34 +232,7 @@ async fn get_move(
 
         Ok(HttpResponse::Ok().json(res))
     } else {
-        let res = SessionState {
-            session_id: info.session_id,
-            move_type: MoveType::Practice,
-            myturn: false,
-            starting_form: None,
-            answer: None,
-            is_correct: None,
-            correct_answer: None,
-            verb: None,
-            person: None,
-            number: None,
-            tense: None,
-            voice: None,
-            mood: None,
-            person_prev: None,
-            number_prev: None,
-            tense_prev: None,
-            voice_prev: None,
-            mood_prev: None,
-            time: None, //time for prev answer
-            response_to: "ask".to_string(),
-            success: false,
-            mesg: Some("not logged in".to_string()),
-            verbs: None,
-        };
-        //let res = ("abc","def",);
-        //Ok(HttpResponse::InternalServerError().finish())
-        Ok(HttpResponse::Ok().json(res))
+        not_logged_in_response()
     }
 }
 
@@ -291,42 +243,16 @@ async fn enter(
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     let timestamp = libhc::get_timestamp();
-    //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
-    //let user_agent = get_user_agent(&req).unwrap_or("");
 
     if let Some(user_id) = login::get_user_id(session) {
         let res = libhc::hc_answer(db, user_id, &info, timestamp, verbs)
             .await
             .map_err(map_hc_error)?;
 
-        return Ok(HttpResponse::Ok().json(res));
+        Ok(HttpResponse::Ok().json(res))
+    } else {
+        not_logged_in_response()
     }
-    let res = SessionState {
-        session_id: info.session_id,
-        move_type: MoveType::Practice,
-        myturn: false,
-        starting_form: None,
-        answer: None,
-        is_correct: None,
-        correct_answer: None,
-        verb: None,
-        person: None,
-        number: None,
-        tense: None,
-        voice: None,
-        mood: None,
-        person_prev: None,
-        number_prev: None,
-        tense_prev: None,
-        voice_prev: None,
-        mood_prev: None,
-        time: None, //time for prev answer
-        response_to: "ask".to_string(),
-        success: false,
-        mesg: Some("not logged in".to_string()),
-        verbs: None,
-    };
-    Ok(HttpResponse::Ok().json(res))
 }
 
 async fn ask(
@@ -336,8 +262,6 @@ async fn ask(
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     let timestamp = libhc::get_timestamp();
-    //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
-    //let user_agent = get_user_agent(&req).unwrap_or("");
 
     if let Some(user_id) = login::get_user_id(session) {
         let res = libhc::hc_ask(db, user_id, &info, timestamp, verbs)
@@ -346,32 +270,7 @@ async fn ask(
 
         Ok(HttpResponse::Ok().json(res))
     } else {
-        let res = SessionState {
-            session_id: info.session_id,
-            move_type: MoveType::Practice,
-            myturn: false,
-            starting_form: None,
-            answer: None,
-            is_correct: None,
-            correct_answer: None,
-            verb: None,
-            person: None,
-            number: None,
-            tense: None,
-            voice: None,
-            mood: None,
-            person_prev: None,
-            number_prev: None,
-            tense_prev: None,
-            voice_prev: None,
-            mood_prev: None,
-            time: None, //time for prev answer
-            response_to: "ask".to_string(),
-            success: false,
-            mesg: Some("not logged in".to_string()),
-            verbs: None,
-        };
-        Ok(HttpResponse::Ok().json(res))
+        not_logged_in_response()
     }
 }
 
@@ -382,8 +281,6 @@ async fn mf(
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     let timestamp = libhc::get_timestamp();
-    //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
-    //let user_agent = get_user_agent(&req).unwrap_or("");
 
     if let Some(user_id) = login::get_user_id(session) {
         let res = libhc::hc_mf_pressed(db, user_id, &info, timestamp, verbs)
@@ -392,33 +289,12 @@ async fn mf(
 
         Ok(HttpResponse::Ok().json(res))
     } else {
-        let res = SessionState {
-            session_id: info.session_id,
-            move_type: MoveType::Practice,
-            myturn: false,
-            starting_form: None,
-            answer: None,
-            is_correct: None,
-            correct_answer: None,
-            verb: None,
-            person: None,
-            number: None,
-            tense: None,
-            voice: None,
-            mood: None,
-            person_prev: None,
-            number_prev: None,
-            tense_prev: None,
-            voice_prev: None,
-            mood_prev: None,
-            time: None, //time for prev answer
-            response_to: "ask".to_string(),
-            success: false,
-            mesg: Some("not logged in".to_string()),
-            verbs: None,
-        };
-        Ok(HttpResponse::Ok().json(res))
+        not_logged_in_response()
     }
+}
+
+fn not_logged_in_response() -> Result<HttpResponse, AWError> {
+    Ok(HttpResponse::Unauthorized().finish())
 }
 
 #[derive(Serialize)]
