@@ -417,7 +417,7 @@ async fn hc_get_session_state_tx(
         } else {
             None
         },
-        response_to: "".to_string(),
+        response_to: String::from(""),
         success: true,
         mesg: None,
         verbs: None,
@@ -488,7 +488,7 @@ pub async fn hc_ask(
     {
         res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
     }
-    res.response_to = "ask".to_string();
+    res.response_to = String::from("ask");
     res.success = true;
     res.mesg = None;
     res.verbs = None;
@@ -549,7 +549,7 @@ pub async fn hc_answer(
     let correct_answer_result = prev_form.get_form(false);
     let correct_answer = match correct_answer_result {
         Ok(a) => a.last().unwrap().form.replace(" /", ","),
-        Err(_) => "—".to_string(),
+        Err(_) => String::from("—"),
     };
 
     let is_correct = hgk_compare_multiple_forms(&correct_answer, &info.answer.replace("---", "—"));
@@ -596,9 +596,9 @@ pub async fn hc_answer(
     if s.challenged_user_id.is_none() {
         res.is_correct = Some(is_correct);
         res.correct_answer = Some(correct_answer);
-        res.response_to = "answerresponsepractice".to_string();
+        res.response_to = String::from("answerresponsepractice");
     } else {
-        res.response_to = "answerresponse".to_string();
+        res.response_to = String::from("answerresponse");
     }
 
     res.success = true;
@@ -681,9 +681,9 @@ pub async fn hc_mf_pressed(
         {
             res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
         }
-        res.response_to = "mfpressedresponse".to_string();
+        res.response_to = String::from("mfpressedresponse");
         res.success = true;
-        res.mesg = Some("verb *does* have multiple forms".to_string());
+        res.mesg = Some(String::from("verb *does* have multiple forms"));
         res.verbs = None;
 
         tx.rollback_tx().await?;
@@ -726,13 +726,13 @@ pub async fn hc_mf_pressed(
         if s.challenged_user_id.is_none() {
             res.is_correct = Some(is_correct);
             res.correct_answer = Some(correct_answer);
-            res.response_to = "mfpressedresponsepractice".to_string();
+            res.response_to = String::from("mfpressedresponsepractice");
         } else {
-            res.response_to = "mfpressedresponse".to_string();
+            res.response_to = String::from("mfpressedresponse");
         }
 
         res.success = true;
-        res.mesg = Some("verb does not have multiple forms".to_string());
+        res.mesg = Some(String::from("verb does not have multiple forms"));
         res.verbs = if res.move_type == MoveType::FirstMoveMyTurn && !is_correct {
             Some(
                 hc_get_available_verbs(&mut tx, user_id, info.session_id, s.highest_unit, verbs)
@@ -841,7 +841,7 @@ async fn hc_ask_practice(
     };
     //ask
     let aq = AskQuery {
-        qtype: "ask".to_string(),
+        qtype: String::from("ask"),
         session_id: session.session_id,
         person: pf.person.to_i16(),
         number: pf.number.to_i16(),
@@ -868,7 +868,7 @@ pub async fn hc_get_sessions(
     };
 
     let res = Ok(SessionsListResponse {
-        response_to: "getsessions".to_string(),
+        response_to: String::from("getsessions"),
         sessions: hc_get_sessions_tr(&mut tx, user_id).await?,
         success: true,
         username,
@@ -920,7 +920,7 @@ pub async fn hc_get_move_tr(
         res.starting_form = Some(verbs[res.verb.unwrap() as usize].pps[0].to_string());
     }
 
-    res.response_to = "getmoves".to_string();
+    res.response_to = String::from("getmoves");
     res.success = true;
     res.mesg = None;
     res.verbs = if res.move_type == MoveType::FirstMoveMyTurn {
@@ -1309,57 +1309,61 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_available_verbs() {
-        let mut a = hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![], 1);
+        let mut a = hc_get_available_verbs_practice(&Some(String::from("1,2,3")), &vec![], 1);
         a.sort();
         assert_eq!(vec![1, 2, 3], a);
-        let mut a = hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![1], 1);
+        let mut a = hc_get_available_verbs_practice(&Some(String::from("1,2,3")), &vec![1], 1);
         a.sort();
         assert_eq!(vec![2, 3], a);
-        let mut a = hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![1, 2], 1);
+        let mut a = hc_get_available_verbs_practice(&Some(String::from("1,2,3")), &vec![1, 2], 1);
         a.sort();
         assert_eq!(vec![3], a);
-        let mut a = hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![3, 1, 2], 1); //skip 3
+        let mut a =
+            hc_get_available_verbs_practice(&Some(String::from("1,2,3")), &vec![3, 1, 2], 1); //skip 3
         a.sort();
         assert_eq!(vec![1, 2], a);
         let mut a = hc_get_available_verbs_practice(
-            &Some("1,2,3".to_string()),
+            &Some(String::from("1,2,3")),
             &vec![2, 1, 2, 3, 2, 1, 3, 2, 3, 1, 3, 1, 2],
             1,
         );
         a.sort();
         assert_eq!(vec![1, 3], a);
         let mut a = hc_get_available_verbs_practice(
-            &Some("1,2,3".to_string()),
+            &Some(String::from("1,2,3")),
             &vec![1, 3, 2, 1, 3, 2, 1, 3, 2, 3, 1, 3, 1, 2],
             1,
         );
         a.sort();
         assert_eq!(vec![2], a);
         let mut a = hc_get_available_verbs_practice(
-            &Some("1,2,3".to_string()),
+            &Some(String::from("1,2,3")),
             &vec![2, 1, 3, 2, 1, 3, 2, 3, 1, 3, 1, 2],
             1,
         ); //skip 2
         a.sort();
         assert_eq!(vec![1, 3], a);
 
-        let mut a = hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![], 2);
+        let mut a = hc_get_available_verbs_practice(&Some(String::from("1,2,3")), &vec![], 2);
         a.sort();
         assert_eq!(vec![1, 2, 3], a);
-        let mut a = hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![1, 1], 2);
+        let mut a = hc_get_available_verbs_practice(&Some(String::from("1,2,3")), &vec![1, 1], 2);
         a.sort();
         assert_eq!(vec![2, 3], a);
         let mut a =
-            hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![1, 1, 2, 2], 2);
+            hc_get_available_verbs_practice(&Some(String::from("1,2,3")), &vec![1, 1, 2, 2], 2);
         a.sort();
         assert_eq!(vec![3], a);
 
-        let mut a =
-            hc_get_available_verbs_practice(&Some("1,2,3".to_string()), &vec![3, 3, 1, 1, 2, 2], 2); //skip 3
+        let mut a = hc_get_available_verbs_practice(
+            &Some(String::from("1,2,3")),
+            &vec![3, 3, 1, 1, 2, 2],
+            2,
+        ); //skip 3
         a.sort();
         assert_eq!(vec![1, 2], a);
         let mut a = hc_get_available_verbs_practice(
-            &Some("1,2,3".to_string()),
+            &Some(String::from("1,2,3")),
             &vec![
                 3, 3, 2, 2, 1, 1, 3, 3, 2, 2, 1, 1, 3, 3, 2, 2, 3, 3, 1, 1, 3, 3, 1, 1, 2, 2,
             ],
@@ -1368,7 +1372,7 @@ mod tests {
         a.sort();
         assert_eq!(vec![1, 2], a);
         let mut a = hc_get_available_verbs_practice(
-            &Some("1,2,3".to_string()),
+            &Some(String::from("1,2,3")),
             &vec![
                 1, 1, 2, 2, 2, 2, 1, 1, 3, 3, 2, 2, 1, 1, 3, 3, 2, 2, 1, 1, 3, 3, 3, 3, 1, 1, 2, 2,
             ],
@@ -1377,7 +1381,7 @@ mod tests {
         a.sort();
         assert_eq!(vec![3], a);
         let mut a = hc_get_available_verbs_practice(
-            &Some("1,2,3".to_string()),
+            &Some(String::from("1,2,3")),
             &vec![
                 2, 2, 1, 1, 3, 3, 2, 2, 1, 1, 3, 3, 2, 2, 3, 3, 1, 1, 3, 3, 1, 1, 2, 2,
             ],
@@ -1386,36 +1390,37 @@ mod tests {
         a.sort();
         assert_eq!(vec![1, 3], a);
 
-        let mut a = hc_get_available_verbs_practice(&Some("1,2".to_string()), &vec![], 2);
+        let mut a = hc_get_available_verbs_practice(&Some(String::from("1,2")), &vec![], 2);
         a.sort();
         assert_eq!(vec![1, 2], a);
-        let mut a = hc_get_available_verbs_practice(&Some("1,2".to_string()), &vec![1, 1], 2);
+        let mut a = hc_get_available_verbs_practice(&Some(String::from("1,2")), &vec![1, 1], 2);
         a.sort();
         assert_eq!(vec![2], a);
-        let mut a = hc_get_available_verbs_practice(&Some("1,2".to_string()), &vec![1, 1, 2, 2], 2);
+        let mut a =
+            hc_get_available_verbs_practice(&Some(String::from("1,2")), &vec![1, 1, 2, 2], 2);
         a.sort();
         assert_eq!(vec![2], a);
 
         let mut a = hc_get_available_verbs_practice(
-            &Some("1,2".to_string()),
+            &Some(String::from("1,2")),
             &vec![2, 2, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2],
             2,
         );
         a.sort();
         assert_eq!(vec![1], a);
 
-        let mut a = hc_get_available_verbs_practice(&Some("1".to_string()), &vec![], 1);
+        let mut a = hc_get_available_verbs_practice(&Some(String::from("1")), &vec![], 1);
         a.sort();
         assert_eq!(vec![1], a);
-        let mut a = hc_get_available_verbs_practice(&Some("1".to_string()), &vec![1, 1], 1);
+        let mut a = hc_get_available_verbs_practice(&Some(String::from("1")), &vec![1, 1], 1);
         a.sort();
         assert_eq!(vec![1], a);
-        let mut a = hc_get_available_verbs_practice(&Some("1".to_string()), &vec![1, 1, 1], 1);
+        let mut a = hc_get_available_verbs_practice(&Some(String::from("1")), &vec![1, 1, 1], 1);
         a.sort();
         assert_eq!(vec![1], a);
 
         let mut a = hc_get_available_verbs_practice(
-            &Some("1".to_string()),
+            &Some(String::from("1")),
             &vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
             1,
         );
@@ -1452,13 +1457,13 @@ mod tests {
                 .unwrap();
 
         let mut csq = CreateSessionQuery {
-            qtype: "abc".to_string(),
+            qtype: String::from("abc"),
             name: None,
-            verbs: Some("20".to_string()),
+            verbs: Some(String::from("20")),
             units: None,
             params: None,
             highest_unit: None,
-            opponent: "testuser2".to_string(),
+            opponent: String::from("testuser2"),
             countdown: true,
             practice_reps_per_verb: Some(4),
             max_changes: 4,
@@ -1469,7 +1474,7 @@ mod tests {
         //assert!(res.is_ok());
 
         let aq = AskQuery {
-            qtype: "ask".to_string(),
+            qtype: String::from("ask"),
             session_id: *session_uuid.as_ref().unwrap(),
             person: 0,
             number: 0,
@@ -1513,7 +1518,7 @@ mod tests {
         assert!(ask.is_err());
 
         let m = GetMoveQuery {
-            qtype: "getmove".to_string(),
+            qtype: String::from("getmove"),
             session_id: *session_uuid.as_ref().unwrap(),
         };
 
@@ -1525,7 +1530,7 @@ mod tests {
             session_id: *session_uuid.as_ref().unwrap(),
             move_type: MoveType::AnswerTheirTurn,
             myturn: false,
-            starting_form: Some("παιδεύω".to_string()),
+            starting_form: Some(String::from("παιδεύω")),
             answer: None,
             is_correct: None,
             correct_answer: None,
@@ -1541,7 +1546,7 @@ mod tests {
             voice_prev: None,
             mood_prev: None,
             time: None,
-            response_to: "getmoves".to_string(),
+            response_to: String::from("getmoves"),
             success: true,
             mesg: None,
             verbs: None,
@@ -1558,7 +1563,7 @@ mod tests {
             session_id: *session_uuid.as_ref().unwrap(),
             move_type: MoveType::AnswerMyTurn,
             myturn: true,
-            starting_form: Some("παιδεύω".to_string()),
+            starting_form: Some(String::from("παιδεύω")),
             answer: None,
             is_correct: None,
             correct_answer: None,
@@ -1574,7 +1579,7 @@ mod tests {
             voice_prev: None,
             mood_prev: None,
             time: None,
-            response_to: "getmoves".to_string(),
+            response_to: String::from("getmoves"),
             success: true,
             mesg: None,
             verbs: None,
@@ -1584,9 +1589,9 @@ mod tests {
         assert!(ss2.unwrap() == ss_res2);
 
         let answerq = AnswerQuery {
-            qtype: "abc".to_string(),
-            answer: "παιδεύω".to_string(),
-            time: "25:01".to_string(),
+            qtype: String::from("abc"),
+            answer: String::from("παιδεύω"),
+            time: String::from("25:01"),
             mf_pressed: false,
             timed_out: false,
             session_id: *session_uuid.as_ref().unwrap(),
@@ -1613,10 +1618,10 @@ mod tests {
             session_id: *session_uuid.as_ref().unwrap(),
             move_type: MoveType::AskTheirTurn,
             myturn: false,
-            starting_form: Some("παιδεύω".to_string()),
-            answer: Some("παιδεύω".to_string()),
+            starting_form: Some(String::from("παιδεύω")),
+            answer: Some(String::from("παιδεύω")),
             is_correct: Some(true),
-            correct_answer: Some("παιδεύω".to_string()),
+            correct_answer: Some(String::from("παιδεύω")),
             verb: Some(1),
             person: Some(0),
             number: Some(0),
@@ -1628,8 +1633,8 @@ mod tests {
             tense_prev: None,
             voice_prev: None,
             mood_prev: None,
-            time: Some("25:01".to_string()),
-            response_to: "getmoves".to_string(),
+            time: Some(String::from("25:01")),
+            response_to: String::from("getmoves"),
             success: true,
             mesg: None,
             verbs: None,
@@ -1645,10 +1650,10 @@ mod tests {
             session_id: *session_uuid.as_ref().unwrap(),
             move_type: MoveType::AskMyTurn,
             myturn: true,
-            starting_form: Some("παιδεύω".to_string()),
-            answer: Some("παιδεύω".to_string()),
+            starting_form: Some(String::from("παιδεύω")),
+            answer: Some(String::from("παιδεύω")),
             is_correct: Some(true),
-            correct_answer: Some("παιδεύω".to_string()),
+            correct_answer: Some(String::from("παιδεύω")),
             verb: Some(1),
             person: Some(0),
             number: Some(0),
@@ -1660,8 +1665,8 @@ mod tests {
             tense_prev: None,
             voice_prev: None,
             mood_prev: None,
-            time: Some("25:01".to_string()),
-            response_to: "getmoves".to_string(),
+            time: Some(String::from("25:01")),
+            response_to: String::from("getmoves"),
             success: true,
             mesg: None,
             verbs: None,
@@ -1671,7 +1676,7 @@ mod tests {
         assert!(ss2.unwrap() == ss_res2);
 
         let aq2 = AskQuery {
-            qtype: "ask".to_string(),
+            qtype: String::from("ask"),
             session_id: *session_uuid.as_ref().unwrap(),
             person: 1,
             number: 1,
@@ -1695,7 +1700,7 @@ mod tests {
             session_id: *session_uuid.as_ref().unwrap(),
             move_type: MoveType::AnswerMyTurn,
             myturn: true,
-            starting_form: Some("παιδεύω".to_string()),
+            starting_form: Some(String::from("παιδεύω")),
             answer: None,
             is_correct: None,
             correct_answer: None,
@@ -1711,7 +1716,7 @@ mod tests {
             voice_prev: Some(0),
             mood_prev: Some(0),
             time: None,
-            response_to: "getmoves".to_string(),
+            response_to: String::from("getmoves"),
             success: true,
             mesg: None,
             verbs: None,
@@ -1728,7 +1733,7 @@ mod tests {
             session_id: *session_uuid.as_ref().unwrap(),
             move_type: MoveType::AnswerTheirTurn,
             myturn: false,
-            starting_form: Some("παιδεύω".to_string()),
+            starting_form: Some(String::from("παιδεύω")),
             answer: None,
             is_correct: None,
             correct_answer: None,
@@ -1744,7 +1749,7 @@ mod tests {
             voice_prev: Some(0),
             mood_prev: Some(0),
             time: None,
-            response_to: "getmoves".to_string(),
+            response_to: String::from("getmoves"),
             success: true,
             mesg: None,
             verbs: None,
@@ -1754,9 +1759,9 @@ mod tests {
         //an incorrect answer
         timestamp += 1;
         let answerq = AnswerQuery {
-            qtype: "abc".to_string(),
-            answer: "παιδ".to_string(),
-            time: "25:01".to_string(),
+            qtype: String::from("abc"),
+            answer: String::from("παιδ"),
+            time: String::from("25:01"),
             mf_pressed: false,
             timed_out: false,
             session_id: *session_uuid.as_ref().unwrap(),
@@ -1803,10 +1808,10 @@ mod tests {
             session_id: *session_uuid.as_ref().unwrap(),
             move_type: MoveType::FirstMoveMyTurn,
             myturn: true,
-            starting_form: Some("παιδεύω".to_string()),
-            answer: Some("παιδ".to_string()),
+            starting_form: Some(String::from("παιδεύω")),
+            answer: Some(String::from("παιδ")),
             is_correct: Some(false),
-            correct_answer: Some("παιδεύετε".to_string()),
+            correct_answer: Some(String::from("παιδεύετε")),
             verb: Some(1),
             person: Some(1),
             number: Some(1),
@@ -1818,515 +1823,515 @@ mod tests {
             tense_prev: None,
             voice_prev: None,
             mood_prev: None,
-            time: Some("25:01".to_string()),
-            response_to: "getmoves".to_string(),
+            time: Some(String::from("25:01")),
+            response_to: String::from("getmoves"),
             success: true,
             mesg: None,
             verbs: Some(vec![
-                /* take out paideuw: HCVerbOption { id: 1, verb: "παιδεύω".to_string() },*/
+                /* take out paideuw: HCVerbOption { id: 1, verb: String::from("παιδεύω") },*/
                 HCVerbOption {
                     id: 114,
-                    verb: "—, ἀνερήσομαι".to_string(),
+                    verb: String::from("—, ἀνερήσομαι"),
                 },
                 HCVerbOption {
                     id: 115,
-                    verb: "—, ἐρήσομαι".to_string(),
+                    verb: String::from("—, ἐρήσομαι"),
                 },
                 HCVerbOption {
                     id: 30,
-                    verb: "ἀγγέλλω".to_string(),
+                    verb: String::from("ἀγγέλλω"),
                 },
                 HCVerbOption {
                     id: 24,
-                    verb: "ἄγω".to_string(),
+                    verb: String::from("ἄγω"),
                 },
                 HCVerbOption {
                     id: 26,
-                    verb: "ἀδικέω".to_string(),
+                    verb: String::from("ἀδικέω"),
                 },
                 HCVerbOption {
                     id: 74,
-                    verb: "αἱρέω".to_string(),
+                    verb: String::from("αἱρέω"),
                 },
                 HCVerbOption {
                     id: 75,
-                    verb: "αἰσθάνομαι".to_string(),
+                    verb: String::from("αἰσθάνομαι"),
                 },
                 HCVerbOption {
                     id: 111,
-                    verb: "αἰσχῡ\u{301}νομαι".to_string(),
+                    verb: String::from("αἰσχῡ\u{301}νομαι"),
                 },
                 HCVerbOption {
                     id: 36,
-                    verb: "ἀκούω".to_string(),
+                    verb: String::from("ἀκούω"),
                 },
                 HCVerbOption {
                     id: 93,
-                    verb: "ἁμαρτάνω".to_string(),
+                    verb: String::from("ἁμαρτάνω"),
                 },
                 HCVerbOption {
                     id: 84,
-                    verb: "ἀναβαίνω".to_string(),
+                    verb: String::from("ἀναβαίνω"),
                 },
                 HCVerbOption {
                     id: 43,
-                    verb: "ἀνατίθημι".to_string(),
+                    verb: String::from("ἀνατίθημι"),
                 },
                 HCVerbOption {
                     id: 31,
-                    verb: "ἀξιόω".to_string(),
+                    verb: String::from("ἀξιόω"),
                 },
                 HCVerbOption {
                     id: 37,
-                    verb: "ἀποδέχομαι".to_string(),
+                    verb: String::from("ἀποδέχομαι"),
                 },
                 HCVerbOption {
                     id: 44,
-                    verb: "ἀποδίδωμι".to_string(),
+                    verb: String::from("ἀποδίδωμι"),
                 },
                 HCVerbOption {
                     id: 100,
-                    verb: "ἀποθνῄσκω".to_string(),
+                    verb: String::from("ἀποθνῄσκω"),
                 },
                 HCVerbOption {
                     id: 112,
-                    verb: "ἀποκρῑ\u{301}νομαι".to_string(),
+                    verb: String::from("ἀποκρῑ\u{301}νομαι"),
                 },
                 HCVerbOption {
                     id: 101,
-                    verb: "ἀποκτείνω".to_string(),
+                    verb: String::from("ἀποκτείνω"),
                 },
                 HCVerbOption {
                     id: 113,
-                    verb: "ἀπόλλῡμι".to_string(),
+                    verb: String::from("ἀπόλλῡμι"),
                 },
                 HCVerbOption {
                     id: 13,
-                    verb: "ἄρχω".to_string(),
+                    verb: String::from("ἄρχω"),
                 },
                 HCVerbOption {
                     id: 102,
-                    verb: "ἀφῑ\u{301}ημι".to_string(),
+                    verb: String::from("ἀφῑ\u{301}ημι"),
                 },
                 HCVerbOption {
                     id: 121,
-                    verb: "ἀφικνέομαι".to_string(),
+                    verb: String::from("ἀφικνέομαι"),
                 },
                 HCVerbOption {
                     id: 45,
-                    verb: "ἀφίστημι".to_string(),
+                    verb: String::from("ἀφίστημι"),
                 },
                 HCVerbOption {
                     id: 85,
-                    verb: "βαίνω".to_string(),
+                    verb: String::from("βαίνω"),
                 },
                 HCVerbOption {
                     id: 38,
-                    verb: "βάλλω".to_string(),
+                    verb: String::from("βάλλω"),
                 },
                 HCVerbOption {
                     id: 14,
-                    verb: "βλάπτω".to_string(),
+                    verb: String::from("βλάπτω"),
                 },
                 HCVerbOption {
                     id: 103,
-                    verb: "βουλεύω".to_string(),
+                    verb: String::from("βουλεύω"),
                 },
                 HCVerbOption {
                     id: 39,
-                    verb: "βούλομαι".to_string(),
+                    verb: String::from("βούλομαι"),
                 },
                 HCVerbOption {
                     id: 53,
-                    verb: "γίγνομαι".to_string(),
+                    verb: String::from("γίγνομαι"),
                 },
                 HCVerbOption {
                     id: 86,
-                    verb: "γιγνώσκω".to_string(),
+                    verb: String::from("γιγνώσκω"),
                 },
                 HCVerbOption {
                     id: 5,
-                    verb: "γράφω".to_string(),
+                    verb: String::from("γράφω"),
                 },
                 HCVerbOption {
                     id: 122,
-                    verb: "δεῖ".to_string(),
+                    verb: String::from("δεῖ"),
                 },
                 HCVerbOption {
                     id: 61,
-                    verb: "δείκνῡμι".to_string(),
+                    verb: String::from("δείκνῡμι"),
                 },
                 HCVerbOption {
                     id: 40,
-                    verb: "δέχομαι".to_string(),
+                    verb: String::from("δέχομαι"),
                 },
                 HCVerbOption {
                     id: 32,
-                    verb: "δηλόω".to_string(),
+                    verb: String::from("δηλόω"),
                 },
                 HCVerbOption {
                     id: 76,
-                    verb: "διαφέρω".to_string(),
+                    verb: String::from("διαφέρω"),
                 },
                 HCVerbOption {
                     id: 9,
-                    verb: "διδάσκω".to_string(),
+                    verb: String::from("διδάσκω"),
                 },
                 HCVerbOption {
                     id: 46,
-                    verb: "δίδωμι".to_string(),
+                    verb: String::from("δίδωμι"),
                 },
                 HCVerbOption {
                     id: 94,
-                    verb: "δοκέω".to_string(),
+                    verb: String::from("δοκέω"),
                 },
                 HCVerbOption {
                     id: 17,
-                    verb: "δουλεύω".to_string(),
+                    verb: String::from("δουλεύω"),
                 },
                 HCVerbOption {
                     id: 95,
-                    verb: "δύναμαι".to_string(),
+                    verb: String::from("δύναμαι"),
                 },
                 HCVerbOption {
                     id: 10,
-                    verb: "ἐθέλω".to_string(),
+                    verb: String::from("ἐθέλω"),
                 },
                 HCVerbOption {
                     id: 77,
-                    verb: "εἰμί".to_string(),
+                    verb: String::from("εἰμί"),
                 },
                 HCVerbOption {
                     id: 96,
-                    verb: "εἶμι".to_string(),
+                    verb: String::from("εἶμι"),
                 },
                 HCVerbOption {
                     id: 87,
-                    verb: "ἐκπῑ\u{301}πτω".to_string(),
+                    verb: String::from("ἐκπῑ\u{301}πτω"),
                 },
                 HCVerbOption {
                     id: 97,
-                    verb: "ἐλαύνω".to_string(),
+                    verb: String::from("ἐλαύνω"),
                 },
                 HCVerbOption {
                     id: 79,
-                    verb: "ἔξεστι(ν)".to_string(),
+                    verb: String::from("ἔξεστι(ν)"),
                 },
                 HCVerbOption {
                     id: 62,
-                    verb: "ἐπανίσταμαι".to_string(),
+                    verb: String::from("ἐπανίσταμαι"),
                 },
                 HCVerbOption {
                     id: 104,
-                    verb: "ἐπιβουλεύω".to_string(),
+                    verb: String::from("ἐπιβουλεύω"),
                 },
                 HCVerbOption {
                     id: 63,
-                    verb: "ἐπιδείκνυμαι".to_string(),
+                    verb: String::from("ἐπιδείκνυμαι"),
                 },
                 HCVerbOption {
                     id: 98,
-                    verb: "ἐπίσταμαι".to_string(),
+                    verb: String::from("ἐπίσταμαι"),
                 },
                 HCVerbOption {
                     id: 80,
-                    verb: "ἕπομαι".to_string(),
+                    verb: String::from("ἕπομαι"),
                 },
                 HCVerbOption {
                     id: 54,
-                    verb: "ἔρχομαι".to_string(),
+                    verb: String::from("ἔρχομαι"),
                 },
                 HCVerbOption {
                     id: 64,
-                    verb: "ἐρωτάω".to_string(),
+                    verb: String::from("ἐρωτάω"),
                 },
                 HCVerbOption {
                     id: 78,
-                    verb: "ἔστι(ν)".to_string(),
+                    verb: String::from("ἔστι(ν)"),
                 },
                 HCVerbOption {
                     id: 116,
-                    verb: "εὑρίσκω".to_string(),
+                    verb: String::from("εὑρίσκω"),
                 },
                 HCVerbOption {
                     id: 99,
-                    verb: "ἔχω".to_string(),
+                    verb: String::from("ἔχω"),
                 },
                 HCVerbOption {
                     id: 105,
-                    verb: "ζητέω".to_string(),
+                    verb: String::from("ζητέω"),
                 },
                 HCVerbOption {
                     id: 117,
-                    verb: "ἡγέομαι".to_string(),
+                    verb: String::from("ἡγέομαι"),
                 },
                 HCVerbOption {
                     id: 25,
-                    verb: "ἥκω".to_string(),
+                    verb: String::from("ἥκω"),
                 },
                 HCVerbOption {
                     id: 11,
-                    verb: "θάπτω".to_string(),
+                    verb: String::from("θάπτω"),
                 },
                 HCVerbOption {
                     id: 6,
-                    verb: "θῡ\u{301}ω".to_string(),
+                    verb: String::from("θῡ\u{301}ω"),
                 },
                 HCVerbOption {
                     id: 106,
-                    verb: "ῑ\u{314}\u{301}ημι".to_string(),
+                    verb: String::from("ῑ\u{314}\u{301}ημι"),
                 },
                 HCVerbOption {
                     id: 47,
-                    verb: "ἵστημι".to_string(),
+                    verb: String::from("ἵστημι"),
                 },
                 HCVerbOption {
                     id: 48,
-                    verb: "καθίστημι".to_string(),
+                    verb: String::from("καθίστημι"),
                 },
                 HCVerbOption {
                     id: 33,
-                    verb: "καλέω".to_string(),
+                    verb: String::from("καλέω"),
                 },
                 HCVerbOption {
                     id: 49,
-                    verb: "καταλῡ\u{301}ω".to_string(),
+                    verb: String::from("καταλῡ\u{301}ω"),
                 },
                 HCVerbOption {
                     id: 123,
-                    verb: "κεῖμαι".to_string(),
+                    verb: String::from("κεῖμαι"),
                 },
                 HCVerbOption {
                     id: 3,
-                    verb: "κελεύω".to_string(),
+                    verb: String::from("κελεύω"),
                 },
                 HCVerbOption {
                     id: 21,
-                    verb: "κλέπτω".to_string(),
+                    verb: String::from("κλέπτω"),
                 },
                 HCVerbOption {
                     id: 118,
-                    verb: "κρῑ\u{301}νω".to_string(),
+                    verb: String::from("κρῑ\u{301}νω"),
                 },
                 HCVerbOption {
                     id: 18,
-                    verb: "κωλῡ\u{301}ω".to_string(),
+                    verb: String::from("κωλῡ\u{301}ω"),
                 },
                 HCVerbOption {
                     id: 41,
-                    verb: "λαμβάνω".to_string(),
+                    verb: String::from("λαμβάνω"),
                 },
                 HCVerbOption {
                     id: 65,
-                    verb: "λανθάνω".to_string(),
+                    verb: String::from("λανθάνω"),
                 },
                 HCVerbOption {
                     id: 88,
-                    verb: "λέγω".to_string(),
+                    verb: String::from("λέγω"),
                 },
                 HCVerbOption {
                     id: 22,
-                    verb: "λείπω".to_string(),
+                    verb: String::from("λείπω"),
                 },
                 HCVerbOption {
                     id: 4,
-                    verb: "λῡ\u{301}ω".to_string(),
+                    verb: String::from("λῡ\u{301}ω"),
                 },
                 HCVerbOption {
                     id: 55,
-                    verb: "μανθάνω".to_string(),
+                    verb: String::from("μανθάνω"),
                 },
                 HCVerbOption {
                     id: 56,
-                    verb: "μάχομαι".to_string(),
+                    verb: String::from("μάχομαι"),
                 },
                 HCVerbOption {
                     id: 107,
-                    verb: "μέλλω".to_string(),
+                    verb: String::from("μέλλω"),
                 },
                 HCVerbOption {
                     id: 34,
-                    verb: "μένω".to_string(),
+                    verb: String::from("μένω"),
                 },
                 HCVerbOption {
                     id: 57,
-                    verb: "μεταδίδωμι".to_string(),
+                    verb: String::from("μεταδίδωμι"),
                 },
                 HCVerbOption {
                     id: 58,
-                    verb: "μετανίσταμαι".to_string(),
+                    verb: String::from("μετανίσταμαι"),
                 },
                 HCVerbOption {
                     id: 59,
-                    verb: "μηχανάομαι".to_string(),
+                    verb: String::from("μηχανάομαι"),
                 },
                 HCVerbOption {
                     id: 27,
-                    verb: "νῑκάω".to_string(),
+                    verb: String::from("νῑκάω"),
                 },
                 HCVerbOption {
                     id: 89,
-                    verb: "νομίζω".to_string(),
+                    verb: String::from("νομίζω"),
                 },
                 HCVerbOption {
                     id: 119,
-                    verb: "οἶδα".to_string(),
+                    verb: String::from("οἶδα"),
                 },
                 HCVerbOption {
                     id: 81,
-                    verb: "ὁράω".to_string(),
+                    verb: String::from("ὁράω"),
                 },
                 HCVerbOption {
                     id: 66,
-                    verb: "παραγίγνομαι".to_string(),
+                    verb: String::from("παραγίγνομαι"),
                 },
                 HCVerbOption {
                     id: 67,
-                    verb: "παραδίδωμι".to_string(),
+                    verb: String::from("παραδίδωμι"),
                 },
                 HCVerbOption {
                     id: 68,
-                    verb: "παραμένω".to_string(),
+                    verb: String::from("παραμένω"),
                 },
                 HCVerbOption {
                     id: 42,
-                    verb: "πάσχω".to_string(),
+                    verb: String::from("πάσχω"),
                 },
                 HCVerbOption {
                     id: 7,
-                    verb: "παύω".to_string(),
+                    verb: String::from("παύω"),
                 },
                 HCVerbOption {
                     id: 15,
-                    verb: "πείθω".to_string(),
+                    verb: String::from("πείθω"),
                 },
                 HCVerbOption {
                     id: 2,
-                    verb: "πέμπω".to_string(),
+                    verb: String::from("πέμπω"),
                 },
                 HCVerbOption {
                     id: 90,
-                    verb: "πῑ\u{301}πτω".to_string(),
+                    verb: String::from("πῑ\u{301}πτω"),
                 },
                 HCVerbOption {
                     id: 108,
-                    verb: "πιστεύω".to_string(),
+                    verb: String::from("πιστεύω"),
                 },
                 HCVerbOption {
                     id: 28,
-                    verb: "ποιέω".to_string(),
+                    verb: String::from("ποιέω"),
                 },
                 HCVerbOption {
                     id: 19,
-                    verb: "πολῑτεύω".to_string(),
+                    verb: String::from("πολῑτεύω"),
                 },
                 HCVerbOption {
                     id: 16,
-                    verb: "πρᾱ\u{301}ττω".to_string(),
+                    verb: String::from("πρᾱ\u{301}ττω"),
                 },
                 HCVerbOption {
                     id: 91,
-                    verb: "προδίδωμι".to_string(),
+                    verb: String::from("προδίδωμι"),
                 },
                 HCVerbOption {
                     id: 124,
-                    verb: "πυνθάνομαι".to_string(),
+                    verb: String::from("πυνθάνομαι"),
                 },
                 HCVerbOption {
                     id: 109,
-                    verb: "συμβουλεύω".to_string(),
+                    verb: String::from("συμβουλεύω"),
                 },
                 HCVerbOption {
                     id: 82,
-                    verb: "συμφέρω".to_string(),
+                    verb: String::from("συμφέρω"),
                 },
                 HCVerbOption {
                     id: 110,
-                    verb: "συνῑ\u{301}ημι".to_string(),
+                    verb: String::from("συνῑ\u{301}ημι"),
                 },
                 HCVerbOption {
                     id: 120,
-                    verb: "σύνοιδα".to_string(),
+                    verb: String::from("σύνοιδα"),
                 },
                 HCVerbOption {
                     id: 23,
-                    verb: "σῴζω".to_string(),
+                    verb: String::from("σῴζω"),
                 },
                 HCVerbOption {
                     id: 12,
-                    verb: "τάττω".to_string(),
+                    verb: String::from("τάττω"),
                 },
                 HCVerbOption {
                     id: 35,
-                    verb: "τελευτάω".to_string(),
+                    verb: String::from("τελευτάω"),
                 },
                 HCVerbOption {
                     id: 50,
-                    verb: "τίθημι".to_string(),
+                    verb: String::from("τίθημι"),
                 },
                 HCVerbOption {
                     id: 29,
-                    verb: "τῑμάω".to_string(),
+                    verb: String::from("τῑμάω"),
                 },
                 HCVerbOption {
                     id: 125,
-                    verb: "τρέπω".to_string(),
+                    verb: String::from("τρέπω"),
                 },
                 HCVerbOption {
                     id: 69,
-                    verb: "τυγχάνω".to_string(),
+                    verb: String::from("τυγχάνω"),
                 },
                 HCVerbOption {
                     id: 70,
-                    verb: "ὑπακούω".to_string(),
+                    verb: String::from("ὑπακούω"),
                 },
                 HCVerbOption {
                     id: 71,
-                    verb: "ὑπομένω".to_string(),
+                    verb: String::from("ὑπομένω"),
                 },
                 HCVerbOption {
                     id: 126,
-                    verb: "φαίνω".to_string(),
+                    verb: String::from("φαίνω"),
                 },
                 HCVerbOption {
                     id: 83,
-                    verb: "φέρω".to_string(),
+                    verb: String::from("φέρω"),
                 },
                 HCVerbOption {
                     id: 60,
-                    verb: "φεύγω".to_string(),
+                    verb: String::from("φεύγω"),
                 },
                 HCVerbOption {
                     id: 92,
-                    verb: "φημί".to_string(),
+                    verb: String::from("φημί"),
                 },
                 HCVerbOption {
                     id: 72,
-                    verb: "φθάνω".to_string(),
+                    verb: String::from("φθάνω"),
                 },
                 HCVerbOption {
                     id: 51,
-                    verb: "φιλέω".to_string(),
+                    verb: String::from("φιλέω"),
                 },
                 HCVerbOption {
                     id: 52,
-                    verb: "φοβέομαι".to_string(),
+                    verb: String::from("φοβέομαι"),
                 },
                 HCVerbOption {
                     id: 8,
-                    verb: "φυλάττω".to_string(),
+                    verb: String::from("φυλάττω"),
                 },
                 HCVerbOption {
                     id: 73,
-                    verb: "χαίρω".to_string(),
+                    verb: String::from("χαίρω"),
                 },
                 HCVerbOption {
                     id: 20,
-                    verb: "χορεύω".to_string(),
+                    verb: String::from("χορεύω"),
                 },
                 HCVerbOption {
                     id: 127,
-                    verb: "χρή".to_string(),
+                    verb: String::from("χρή"),
                 },
             ]),
         };
@@ -2341,10 +2346,10 @@ mod tests {
             session_id: *session_uuid.as_ref().unwrap(),
             move_type: MoveType::AskTheirTurn,
             myturn: false,
-            starting_form: Some("παιδεύω".to_string()),
-            answer: Some("παιδ".to_string()),
+            starting_form: Some(String::from("παιδεύω")),
+            answer: Some(String::from("παιδ")),
             is_correct: Some(false),
-            correct_answer: Some("παιδεύετε".to_string()),
+            correct_answer: Some(String::from("παιδεύετε")),
             verb: Some(1),
             person: Some(1),
             number: Some(1),
@@ -2356,8 +2361,8 @@ mod tests {
             tense_prev: Some(0),
             voice_prev: Some(0),
             mood_prev: Some(0),
-            time: Some("25:01".to_string()),
-            response_to: "getmoves".to_string(),
+            time: Some(String::from("25:01")),
+            response_to: String::from("getmoves"),
             success: true,
             mesg: None,
             verbs: None,
@@ -2368,7 +2373,7 @@ mod tests {
 
         //ask new verb after incorrect result
         let aq3 = AskQuery {
-            qtype: "ask".to_string(),
+            qtype: String::from("ask"),
             session_id: *session_uuid.as_ref().unwrap(),
             person: 0,
             number: 0,
@@ -2392,7 +2397,7 @@ mod tests {
             session_id: *session_uuid.as_ref().unwrap(),
             move_type: MoveType::AnswerTheirTurn,
             myturn: false,
-            starting_form: Some("πέμπω".to_string()),
+            starting_form: Some(String::from("πέμπω")),
             answer: None,
             is_correct: None,
             correct_answer: None,
@@ -2408,7 +2413,7 @@ mod tests {
             voice_prev: None,
             mood_prev: None,
             time: None,
-            response_to: "getmoves".to_string(),
+            response_to: String::from("getmoves"),
             success: true,
             mesg: None,
             verbs: None,
@@ -2425,7 +2430,7 @@ mod tests {
             session_id: *session_uuid.as_ref().unwrap(),
             move_type: MoveType::AnswerMyTurn,
             myturn: true,
-            starting_form: Some("πέμπω".to_string()),
+            starting_form: Some(String::from("πέμπω")),
             answer: None,
             is_correct: None,
             correct_answer: None,
@@ -2441,7 +2446,7 @@ mod tests {
             voice_prev: None,
             mood_prev: None,
             time: None,
-            response_to: "getmoves".to_string(),
+            response_to: String::from("getmoves"),
             success: true,
             mesg: None,
             verbs: None,
@@ -2468,13 +2473,13 @@ mod tests {
                 .unwrap();
 
         let mut csq = CreateSessionQuery {
-            qtype: "abc".to_string(),
+            qtype: String::from("abc"),
             name: None,
-            verbs: Some("20".to_string()),
+            verbs: Some(String::from("20")),
             units: None,
             params: None,
             highest_unit: None,
-            opponent: "".to_string(),
+            opponent: String::from(""),
             countdown: true,
             practice_reps_per_verb: Some(4),
             max_changes: 4,
@@ -2485,7 +2490,7 @@ mod tests {
         //assert!(res.is_ok());
 
         let aq = AskQuery {
-            qtype: "ask".to_string(),
+            qtype: String::from("ask"),
             session_id: *session_uuid.as_ref().unwrap(),
             person: 0,
             number: 0,
@@ -2523,7 +2528,7 @@ mod tests {
         assert_eq!(s.as_ref().unwrap()[0].their_score, Some(0));
 
         let m = GetMoveQuery {
-            qtype: "getmove".to_string(),
+            qtype: String::from("getmove"),
             session_id: *session_uuid.as_ref().unwrap(),
         };
         let mut tx = db.begin_tx().await.unwrap();
@@ -2537,7 +2542,7 @@ mod tests {
         //     session_id: *session_uuid.as_ref().unwrap(),
         //     move_type: MoveType::Practice,
         //     myturn: true,
-        //     starting_form: Some("παιδεύω".to_string()),
+        //     starting_form: Some(String::from("παιδεύω")),
         //     answer: None,
         //     is_correct: None,
         //     correct_answer: None,
@@ -2553,16 +2558,16 @@ mod tests {
         //     voice_prev: None,
         //     mood_prev: None,
         //     time: None,
-        //     response_to: "getmoves".to_string(),
+        //     response_to: String::from("getmoves"),
         //     success: true,
         //     mesg: None,
         //     verbs: None,
         // };
 
         let answerq = AnswerQuery {
-            qtype: "abc".to_string(),
-            answer: "παιδεύω".to_string(),
-            time: "25:01".to_string(),
+            qtype: String::from("abc"),
+            answer: String::from("παιδεύω"),
+            time: String::from("25:01"),
             mf_pressed: false,
             timed_out: false,
             session_id: *session_uuid.as_ref().unwrap(),

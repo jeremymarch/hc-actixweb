@@ -189,14 +189,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                             )
                             .await
                             {
-                                Ok(_session_uuid) => ("inserted!".to_string(), true),
+                                Ok(_session_uuid) => (String::from("inserted!"), true),
                                 Err(HcError::UnknownError) => {
-                                    ("opponent not found!".to_string(), false)
+                                    (String::from("opponent not found!"), false)
                                 }
                                 Err(e) => (format!("error inserting: {e:?}"), false),
                             };
                             let res = StatusResponse {
-                                response_to: "newsession".to_string(),
+                                response_to: String::from("newsession"),
                                 mesg,
                                 success,
                             };
@@ -216,7 +216,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                             {
                                 if res.move_type != MoveType::Practice {
                                     let gm = GetMoveQuery {
-                                        qtype: "getmove".to_string(),
+                                        qtype: String::from("getmove"),
                                         session_id: info.session_id,
                                     };
                                     let mut tx = db.begin_tx().await.unwrap();
@@ -257,7 +257,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                             {
                                 if res.move_type != MoveType::Practice {
                                     let gm = GetMoveQuery {
-                                        qtype: "getmove".to_string(),
+                                        qtype: String::from("getmove"),
                                         session_id: info.session_id,
                                     };
                                     let mut tx = db.begin_tx().await.unwrap();
@@ -301,7 +301,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                                     && res.is_correct == Some(false)
                                 {
                                     let gm = GetMoveQuery {
-                                        qtype: "getmove".to_string(),
+                                        qtype: String::from("getmove"),
                                         session_id: info.session_id,
                                     };
                                     let mut tx = db.begin_tx().await.unwrap();
@@ -360,7 +360,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                             if let Ok(sessions) = libhc::hc_get_sessions_tr(&mut tx, user_id).await
                             {
                                 let res = SessionsListResponse {
-                                    response_to: "getsessions".to_string(),
+                                    response_to: String::from("getsessions"),
                                     sessions,
                                     success: true,
                                     username,

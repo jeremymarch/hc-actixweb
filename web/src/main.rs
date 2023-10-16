@@ -126,7 +126,7 @@ async fn ws_route(
     }
 }
 
-//let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
+//let updated_ip = get_ip(&req).unwrap_or_else(|| String::from(""));
 //let user_agent = get_user_agent(&req).unwrap_or("");
 fn _get_user_agent(req: &HttpRequest) -> Option<&str> {
     req.headers().get("user-agent")?.to_str().ok()
@@ -174,7 +174,7 @@ async fn get_game_moves(
 
     if let Some(_user_id) = login::get_user_id(session.clone()) {
         let res = GetMovesResponse {
-            response_to: "getgamemoves".to_string(),
+            response_to: String::from("getgamemoves"),
             session_id: info.session_id,
             moves: libhc::hc_get_game_moves(db, &info)
                 .await
@@ -199,12 +199,12 @@ async fn create_session(
 
         let (mesg, success) =
             match libhc::hc_insert_session(db, user_id, &mut info, verbs, timestamp).await {
-                Ok(_session_uuid) => ("inserted!".to_string(), true),
-                Err(HcError::UnknownError) => ("opponent not found!".to_string(), false),
+                Ok(_session_uuid) => (String::from("inserted!"), true),
+                Err(HcError::UnknownError) => (String::from("opponent not found!"), false),
                 Err(e) => (format!("error inserting: {e:?}"), false),
             };
         let res = StatusResponse {
-            response_to: "newsession".to_string(),
+            response_to: String::from("newsession"),
             mesg,
             success,
         };

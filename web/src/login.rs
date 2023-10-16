@@ -53,7 +53,7 @@ pub struct Credentials {
 
 pub async fn logout(session: Session) -> Result<HttpResponse, AWError> {
     session.purge();
-    //FlashMessage::error("Authentication error".to_string()).send();
+    //FlashMessage::error(String::from("Authentication error")).send();
     Ok(HttpResponse::SeeOther()
         .insert_header((LOCATION, "/login"))
         .finish())
@@ -195,7 +195,7 @@ pub async fn login_post(
     }
 
     session.purge();
-    FlashMessage::error("Authentication error".to_string()).send();
+    FlashMessage::error(String::from("Authentication error")).send();
     Ok(HttpResponse::SeeOther()
         .insert_header((LOCATION, "/login"))
         .finish())
@@ -356,7 +356,7 @@ pub async fn new_user_post(
             }
             Err(_e) => {
                 //session.purge();
-                FlashMessage::error("Create user error".to_string()).send();
+                FlashMessage::error(String::from("Create user error")).send();
                 Ok(HttpResponse::SeeOther()
                     .insert_header((LOCATION, "/newuser"))
                     .finish())
@@ -364,7 +364,7 @@ pub async fn new_user_post(
         }
     } else {
         //session.purge();
-        FlashMessage::error("Create user error".to_string()).send();
+        FlashMessage::error(String::from("Create user error")).send();
         Ok(HttpResponse::SeeOther()
             .insert_header((LOCATION, "/newuser"))
             .finish())
