@@ -45,7 +45,6 @@ use libhc::CreateSessionQuery;
 use libhc::GetMoveQuery;
 use libhc::GetMovesQuery;
 use libhc::GetSessions;
-use libhc::HcDb;
 use libhc::HcError;
 use libhc::MoveResult;
 use libhc::MoveType;
@@ -66,9 +65,6 @@ use actix_session::config::PersistentSession;
 use actix_web::cookie::time::Duration;
 const SECS_IN_10_YEARS: i64 = 60 * 60 * 24 * 7 * 4 * 12 * 10;
 
-//use std::fs::File;
-//use std::io::BufReader;
-//use std::io::BufRead;
 use rand::Rng;
 use std::io;
 
@@ -87,17 +83,6 @@ async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
     //remember that basic authentication blocks this
     Ok(HttpResponse::Ok().finish()) //send 200 with empty body
 }
-
-// pub trait HcDb {
-//     fn insert_session(&self,
-//         pool: &SqlitePool,
-//         user_id: Uuid,
-//         highest_unit: Option<u32>,
-//         opponent_id: Option<Uuid>,
-//         max_changes: u8,
-//         practice_reps_per_verb: Option<i16>,
-//         timestamp: i64) -> Result<Uuid, sqlx::Error>;
-// }
 
 #[derive(Serialize)]
 struct GetMovesResponse {
@@ -180,7 +165,7 @@ async fn get_sessions(
         //let updated_ip = get_ip(&req).unwrap_or_else(|| "".to_string());
         //let user_agent = get_user_agent(&req).unwrap_or("");
 
-        let res = libhc::hc_get_sessions_real(db, user_id, verbs, username, &info)
+        let res = libhc::hc_get_sessions(db, user_id, verbs, username, &info)
             .await
             .map_err(map_hc_error)?;
         Ok(HttpResponse::Ok().json(res))
@@ -262,11 +247,9 @@ async fn get_move(
     //"ask", prev form to start from or null, prev answer and is_correct, correct answer
 
     if let Some(user_id) = login::get_user_id(session) {
-        let mut tx = db.begin_tx().await.unwrap();
-        let res = libhc::hc_get_move(&mut tx, user_id, false, info.session_id, verbs)
+        let res = libhc::hc_get_move(db, user_id, false, info.session_id, verbs)
             .await
             .map_err(map_hc_error)?;
-        tx.commit_tx().await.unwrap();
 
         Ok(HttpResponse::Ok().json(res))
     } else {
@@ -549,9 +532,10 @@ async fn main() -> io::Result<()> {
     //     .await
     //     .expect("Could not connect to db.")
     // };
-    let mut tx = hcdb.begin_tx().await.expect("error creating db");
-    tx.create_db().await.expect("error creating db");
-    tx.commit_tx().await.unwrap();
+
+    libhc::hc_create_db(&hcdb)
+        .await
+        .expect("Error creating database");
 
     //1. to make a new key:
     // let secret_key = Key::generate(); // only for testing: should use same key from .env file/variable, else have to login again on each restart

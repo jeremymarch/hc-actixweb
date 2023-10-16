@@ -313,6 +313,13 @@ pub trait HcTrx {
     async fn create_db(&mut self) -> Result<u32, HcError>;
 }
 
+pub async fn hc_create_db(db: &dyn HcDb) -> Result<(), HcError> {
+    let mut tx = db.begin_tx().await?;
+    tx.create_db().await?;
+    tx.commit_tx().await?;
+    Ok(())
+}
+
 pub async fn hc_create_user(
     db: &dyn HcDb,
     username: &str,
@@ -847,7 +854,7 @@ async fn hc_ask_practice(
     Ok(())
 }
 
-pub async fn hc_get_sessions_real(
+pub async fn hc_get_sessions(
     db: &dyn HcDb,
     user_id: Uuid,
     verbs: &Vec<Arc<HcGreekVerb>>,
@@ -856,22 +863,37 @@ pub async fn hc_get_sessions_real(
 ) -> Result<SessionsListResponse, HcError> {
     let mut tx = db.begin_tx().await?;
     let current_session = match info.current_session {
-        Some(r) => Some(hc_get_move(&mut tx, user_id, false, r, verbs).await?),
+        Some(r) => Some(hc_get_move_tr(&mut tx, user_id, false, r, verbs).await?),
         _ => None,
     };
 
-    Ok(SessionsListResponse {
+    let res = Ok(SessionsListResponse {
         response_to: "getsessions".to_string(),
-        sessions: hc_get_sessions(&mut tx, user_id).await?,
+        sessions: hc_get_sessions_tr(&mut tx, user_id).await?,
         success: true,
         username,
         current_session,
-    })
+    });
+    tx.commit_tx().await?;
+    res
+}
+
+pub async fn hc_get_move(
+    db: &dyn HcDb,
+    user_id: Uuid,
+    opponent_id: bool,
+    session_id: Uuid,
+    verbs: &Vec<Arc<HcGreekVerb>>,
+) -> Result<SessionState, HcError> {
+    let mut tx = db.begin_tx().await?;
+    let res = hc_get_move_tr(&mut tx, user_id, opponent_id, session_id, verbs).await?;
+    tx.commit_tx().await?;
+    Ok(res)
 }
 
 //opponent_id gets move status for opponent rather than user_id when true:
 //we handle the case of s.challenged_user_id.is_none() here, but opponent_id should always be false for practice games
-pub async fn hc_get_move(
+pub async fn hc_get_move_tr(
     tx: &mut Box<dyn HcTrx>,
     user_id: Uuid,
     opponent_id: bool,
@@ -974,7 +996,7 @@ fn hc_move_get_type(
     (myturn, move_type)
 }
 
-pub async fn hc_get_sessions(
+pub async fn hc_get_sessions_tr(
     tx: &mut Box<dyn HcTrx>,
     user_id: Uuid,
 ) -> Result<Vec<SessionsListQuery>, HcError> {
@@ -1469,7 +1491,7 @@ mod tests {
         assert!(ask.is_ok());
 
         let mut tx = db.begin_tx().await.unwrap();
-        let s = hc_get_sessions(&mut tx, uuid1).await;
+        let s = hc_get_sessions_tr(&mut tx, uuid1).await;
         tx.commit_tx().await.unwrap();
         // let s_res = Ok([SessionsListQuery { session_id: 75d08792-ea12-40f6-a903-bd4e6aae2aad,
         //     challenged: Some(cffd0d33-6aab-45c0-9dc1-279ae4ecaafa),
@@ -1496,7 +1518,7 @@ mod tests {
         };
 
         let mut tx = db.begin_tx().await.unwrap();
-        let ss = hc_get_move(&mut tx, uuid1, false, m.session_id, &verbs).await;
+        let ss = hc_get_move_tr(&mut tx, uuid1, false, m.session_id, &verbs).await;
         tx.commit_tx().await.unwrap();
 
         let ss_res = SessionState {
@@ -1529,7 +1551,7 @@ mod tests {
         assert!(ss.unwrap() == ss_res);
 
         let mut tx = db.begin_tx().await.unwrap();
-        let ss2 = hc_get_move(&mut tx, uuid2, false, m.session_id, &verbs).await;
+        let ss2 = hc_get_move_tr(&mut tx, uuid2, false, m.session_id, &verbs).await;
         tx.commit_tx().await.unwrap();
 
         let ss_res2 = SessionState {
@@ -1584,7 +1606,7 @@ mod tests {
         assert!(answer.is_err());
 
         let mut tx = db.begin_tx().await.unwrap();
-        let ss = hc_get_move(&mut tx, uuid1, false, m.session_id, &verbs).await;
+        let ss = hc_get_move_tr(&mut tx, uuid1, false, m.session_id, &verbs).await;
         tx.commit_tx().await.unwrap();
 
         let ss_res = SessionState {
@@ -1616,7 +1638,7 @@ mod tests {
         assert!(ss.unwrap() == ss_res);
 
         let mut tx = db.begin_tx().await.unwrap();
-        let ss2 = hc_get_move(&mut tx, uuid2, false, m.session_id, &verbs).await;
+        let ss2 = hc_get_move_tr(&mut tx, uuid2, false, m.session_id, &verbs).await;
         tx.commit_tx().await.unwrap();
 
         let ss_res2 = SessionState {
@@ -1665,7 +1687,7 @@ mod tests {
         assert!(ask.is_ok());
 
         let mut tx = db.begin_tx().await.unwrap();
-        let ss = hc_get_move(&mut tx, uuid1, false, m.session_id, &verbs).await;
+        let ss = hc_get_move_tr(&mut tx, uuid1, false, m.session_id, &verbs).await;
         tx.commit_tx().await.unwrap();
 
         assert!(ss.is_ok());
@@ -1699,7 +1721,7 @@ mod tests {
         assert!(ss.unwrap() == ss_res);
 
         let mut tx = db.begin_tx().await.unwrap();
-        let ss2 = hc_get_move(&mut tx, uuid2, false, m.session_id, &verbs).await;
+        let ss2 = hc_get_move_tr(&mut tx, uuid2, false, m.session_id, &verbs).await;
         tx.commit_tx().await.unwrap();
 
         let ss_res2 = SessionState {
@@ -1746,7 +1768,7 @@ mod tests {
         assert!(!answer.unwrap().is_correct.unwrap());
 
         let mut tx = db.begin_tx().await.unwrap();
-        let s = hc_get_sessions(&mut tx, uuid1).await;
+        let s = hc_get_sessions_tr(&mut tx, uuid1).await;
         tx.commit_tx().await.unwrap();
         // let s_res = Ok([SessionsListQuery {
         // session_id: c152c43f-d52c-496b-ab34-da44ab61275c,
@@ -1765,7 +1787,7 @@ mod tests {
         assert_eq!(s.as_ref().unwrap()[0].their_score, Some(1));
 
         let mut tx = db.begin_tx().await.unwrap();
-        let s = hc_get_sessions(&mut tx, uuid2).await;
+        let s = hc_get_sessions_tr(&mut tx, uuid2).await;
         tx.commit_tx().await.unwrap();
 
         //println!("s: {:?}", s);
@@ -1774,7 +1796,7 @@ mod tests {
         assert_eq!(s.as_ref().unwrap()[0].their_score, Some(0));
 
         let mut tx = db.begin_tx().await.unwrap();
-        let ss = hc_get_move(&mut tx, uuid1, false, m.session_id, &verbs).await;
+        let ss = hc_get_move_tr(&mut tx, uuid1, false, m.session_id, &verbs).await;
         tx.commit_tx().await.unwrap();
 
         let ss_res = SessionState {
@@ -2312,7 +2334,7 @@ mod tests {
         assert!(ss.unwrap() == ss_res);
 
         let mut tx = db.begin_tx().await.unwrap();
-        let ss2 = hc_get_move(&mut tx, uuid2, false, m.session_id, &verbs).await;
+        let ss2 = hc_get_move_tr(&mut tx, uuid2, false, m.session_id, &verbs).await;
         tx.commit_tx().await.unwrap();
 
         let ss_res2 = SessionState {
@@ -2362,7 +2384,7 @@ mod tests {
         assert!(ask.is_ok());
 
         let mut tx = db.begin_tx().await.unwrap();
-        let ss = hc_get_move(&mut tx, uuid1, false, m.session_id, &verbs).await;
+        let ss = hc_get_move_tr(&mut tx, uuid1, false, m.session_id, &verbs).await;
         tx.commit_tx().await.unwrap();
 
         assert!(ss.is_ok());
@@ -2396,7 +2418,7 @@ mod tests {
         assert!(ss.unwrap() == ss_res);
 
         let mut tx = db.begin_tx().await.unwrap();
-        let ss2 = hc_get_move(&mut tx, uuid2, false, m.session_id, &verbs).await;
+        let ss2 = hc_get_move_tr(&mut tx, uuid2, false, m.session_id, &verbs).await;
         tx.commit_tx().await.unwrap();
 
         let ss_res2 = SessionState {
@@ -2482,7 +2504,7 @@ mod tests {
         assert!(ask.is_err());
 
         let mut tx = db.begin_tx().await.unwrap();
-        let s = hc_get_sessions(&mut tx, uuid1).await;
+        let s = hc_get_sessions_tr(&mut tx, uuid1).await;
         tx.commit_tx().await.unwrap();
 
         // let s_res = Ok([SessionsListQuery { session_id: 75d08792-ea12-40f6-a903-bd4e6aae2aad,
@@ -2505,7 +2527,7 @@ mod tests {
             session_id: *session_uuid.as_ref().unwrap(),
         };
         let mut tx = db.begin_tx().await.unwrap();
-        let ss = hc_get_move(&mut tx, uuid1, false, m.session_id, &verbs).await;
+        let ss = hc_get_move_tr(&mut tx, uuid1, false, m.session_id, &verbs).await;
         tx.commit_tx().await.unwrap();
 
         assert_eq!(ss.as_ref().unwrap().move_type, MoveType::Practice);
@@ -2573,6 +2595,6 @@ mod tests {
         let answer = hc_answer(&db, uuid1, &answerq, timestamp, &verbs).await;
         assert!(answer.is_ok());
 
-        //let ss = hc_get_move(&db, uuid1, false, m.session_id, &verbs).await;
+        //let ss = hc_get_move_tr(&db, uuid1, false, m.session_id, &verbs).await;
     }
 }

@@ -164,9 +164,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                         });
                         let fut = async move {
                             let mut tx = db.begin_tx().await.unwrap();
-                            if let Ok(res) =
-                                libhc::hc_get_move(&mut tx, user_id, false, info.session_id, &verbs)
-                                    .await
+                            if let Ok(res) = libhc::hc_get_move_tr(
+                                &mut tx,
+                                user_id,
+                                false,
+                                info.session_id,
+                                &verbs,
+                            )
+                            .await
                             {
                                 tx.commit_tx().await.unwrap();
                                 if let Ok(resjson) = serde_json::to_string(&res) {
@@ -216,7 +221,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                                         session_id: info.session_id,
                                     };
                                     let mut tx = db.begin_tx().await.unwrap();
-                                    if let Ok(gm_res) = libhc::hc_get_move(
+                                    if let Ok(gm_res) = libhc::hc_get_move_tr(
                                         &mut tx,
                                         user_id,
                                         true,
@@ -257,7 +262,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                                         session_id: info.session_id,
                                     };
                                     let mut tx = db.begin_tx().await.unwrap();
-                                    if let Ok(gm_res) = libhc::hc_get_move(
+                                    if let Ok(gm_res) = libhc::hc_get_move_tr(
                                         &mut tx,
                                         user_id,
                                         true,
@@ -301,7 +306,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                                         session_id: info.session_id,
                                     };
                                     let mut tx = db.begin_tx().await.unwrap();
-                                    if let Ok(gm_res) = libhc::hc_get_move(
+                                    if let Ok(gm_res) = libhc::hc_get_move_tr(
                                         &mut tx,
                                         user_id,
                                         true,
@@ -343,7 +348,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                             let current_session = match info.current_session {
                                 Some(r) => {
                                     let mut tx = db.begin_tx().await.unwrap();
-                                    match libhc::hc_get_move(&mut tx, user_id, false, r, &verbs)
+                                    match libhc::hc_get_move_tr(&mut tx, user_id, false, r, &verbs)
                                         .await
                                     {
                                         Ok(res) => {
@@ -359,7 +364,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsHcGameSession {
                                 _ => None,
                             };
                             let mut tx = db.begin_tx().await.unwrap();
-                            if let Ok(sessions) = libhc::hc_get_sessions(&mut tx, user_id).await {
+                            if let Ok(sessions) = libhc::hc_get_sessions_tr(&mut tx, user_id).await
+                            {
                                 let res = SessionsListResponse {
                                     response_to: "getsessions".to_string(),
                                     sessions,
