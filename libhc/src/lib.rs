@@ -274,8 +274,6 @@ pub trait HcTrx {
         points: i32,
     ) -> Result<u32, HcError>;
 
-    async fn validate_login_db(&mut self, username: &str, password: &str) -> Result<Uuid, HcError>;
-
     async fn get_user_id(&mut self, username: &str) -> Result<UserResult, HcError>;
 
     async fn insert_session_tx(

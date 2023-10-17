@@ -106,26 +106,6 @@ impl HcTrx for HcDbSqliteTrx<'_> {
         Ok(1)
     }
 
-    async fn validate_login_db(&mut self, username: &str, password: &str) -> Result<Uuid, HcError> {
-        let query = "SELECT user_id,user_name,password,email,user_type,timestamp FROM users WHERE user_name = $1 AND password = $2 LIMIT 1;";
-        let res: UserResult = sqlx::query(query)
-            .bind(username)
-            .bind(password)
-            .map(|rec: SqliteRow| UserResult {
-                user_id: rec.get("user_id"),
-                user_name: rec.get("user_name"),
-                password: rec.get("password"),
-                email: rec.get("email"),
-                user_type: rec.get("user_type"),
-                timestamp: rec.get("timestamp"),
-            })
-            .fetch_one(&mut *self.tx)
-            .await
-            .map_err(map_sqlx_error)?;
-
-        Ok(res.user_id)
-    }
-
     async fn get_user_id(&mut self, username: &str) -> Result<UserResult, HcError> {
         let query = "SELECT user_id,user_name,password,email,user_type,timestamp FROM users WHERE user_name = $1 LIMIT 1;";
         let res: UserResult = sqlx::query(query)
