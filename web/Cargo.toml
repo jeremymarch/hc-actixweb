@@ -28,7 +28,6 @@ env_logger = "0.10.0"
 log = "0.4.20"
 thiserror = "1.0.49"
 secrecy = { version = "0.8.0", features = ["serde"] }
-argon2 = { version = "0.5.1", features = ["std"] }
 #https://www.reddit.com/r/rust/comments/qamgyh/comment/hh3u59e/?utm_source=share&utm_medium=web2x&context=3
 chrono = { version = "0.4.26", default-features = false, features=["clock"] }
 hex = "0.4.3"

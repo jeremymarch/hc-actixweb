@@ -158,7 +158,7 @@ pub async fn login_post(
         password: form.0.password,
     };
 
-    if let Ok(user_id) = hc_validate_credentials(credentials, db)
+    if let Ok(user_id) = hc_validate_credentials(db, credentials)
         .await
         .map_err(map_hc_error)
     //fix me, should handle error here in case db error, etc.

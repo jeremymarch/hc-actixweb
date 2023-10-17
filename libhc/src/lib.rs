@@ -357,8 +357,8 @@ fn compute_password_hash(password: Secret<String>) -> Result<Secret<String>, HcE
 }
 
 pub async fn hc_validate_credentials(
-    credentials: Credentials,
     db: &dyn HcDb,
+    credentials: Credentials,
 ) -> Result<uuid::Uuid, HcError> {
     let mut user_id = None;
     let mut expected_password_hash = Secret::new(
@@ -1537,7 +1537,7 @@ mod tests {
             username: String::from("testuser9"),
             password: Secret::new("abcdabcdx".to_string()),
         };
-        let res = hc_validate_credentials(credentials, &db).await;
+        let res = hc_validate_credentials(&db, credentials).await;
         assert_eq!(res, Err(HcError::AuthenticationError));
 
         //passing credentials
@@ -1545,7 +1545,7 @@ mod tests {
             username: String::from("testuser9"),
             password: Secret::new("abcdabcd".to_string()),
         };
-        let res = hc_validate_credentials(credentials, &db).await;
+        let res = hc_validate_credentials(&db, credentials).await;
         assert_eq!(res.unwrap(), uuid1);
     }
 

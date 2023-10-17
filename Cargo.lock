@@ -1143,7 +1143,6 @@ dependencies = [
  "actix-web",
  "actix-web-actors",
  "actix-web-flash-messages",
- "argon2",
  "chrono",
  "env_logger",
  "futures",
