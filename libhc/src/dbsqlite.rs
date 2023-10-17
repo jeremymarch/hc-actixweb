@@ -28,6 +28,8 @@ use crate::MoveType;
 use crate::SessionResult;
 use crate::SessionsListQuery;
 use crate::UserResult;
+use secrecy::ExposeSecret;
+use secrecy::Secret;
 use sqlx::sqlite::SqliteRow;
 use sqlx::types::Uuid;
 use sqlx::Transaction;
@@ -468,7 +470,7 @@ impl HcTrx for HcDbSqliteTrx<'_> {
     async fn create_user(
         &mut self,
         username: &str,
-        password: &str,
+        password: Secret<String>,
         email: &str,
         timestamp: i64,
     ) -> Result<Uuid, HcError> {
@@ -477,7 +479,7 @@ impl HcTrx for HcDbSqliteTrx<'_> {
         let _res = sqlx::query(query)
             .bind(uuid)
             .bind(username)
-            .bind(password)
+            .bind(password.expose_secret())
             .bind(email)
             .bind(timestamp)
             .execute(&mut *self.tx)
@@ -485,6 +487,26 @@ impl HcTrx for HcDbSqliteTrx<'_> {
             .map_err(map_sqlx_error)?;
 
         Ok(uuid)
+    }
+
+    async fn get_credentials(
+        &mut self,
+        username: &str,
+    ) -> Result<Option<(uuid::Uuid, Secret<String>)>, HcError> {
+        let row = sqlx::query(
+            r#"
+            SELECT user_id, password
+            FROM users
+            WHERE user_name = $1
+            "#,
+        )
+        .bind(username)
+        .map(|row: SqliteRow| (row.get("user_id"), Secret::new(row.get("password"))))
+        .fetch_optional(&mut *self.tx)
+        .await
+        .map_err(map_sqlx_error)?;
+
+        Ok(row)
     }
 
     async fn create_db(&mut self) -> Result<u32, HcError> {

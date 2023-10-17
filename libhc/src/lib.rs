@@ -21,12 +21,23 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #[cfg(not(any(feature = "sqlite", feature = "postgres")))]
 compile_error!("Either feature \"sqlite\" or \"postgres\" must be enabled for this crate.");
 
+use argon2::password_hash::SaltString;
+use argon2::Algorithm;
+use argon2::Argon2;
+use argon2::Params;
+use argon2::PasswordHash;
+use argon2::PasswordHasher;
+use argon2::PasswordVerifier;
+use argon2::Version;
 use chrono::prelude::*;
 use hoplite_verbs_rs::*;
 use polytonic_greek::hgk_compare_multiple_forms;
 use polytonic_greek::hgk_compare_sqlite; //note: this does not actually depend on sqlite
 use rand::prelude::SliceRandom;
+use secrecy::ExposeSecret;
+use secrecy::Secret;
 use std::collections::HashSet;
+use tokio::task::spawn_blocking;
 use uuid::Uuid;
 #[cfg(feature = "postgres")]
 pub mod dbpostgres;
@@ -36,16 +47,24 @@ pub mod dbsqlite;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, PartialEq, thiserror::Error)]
 pub enum HcError {
     Database(String),
+    AuthenticationError,
     UnknownError,
+}
+
+#[derive(Clone)]
+pub struct Credentials {
+    pub username: String,
+    pub password: Secret<String>,
 }
 
 impl std::fmt::Display for HcError {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         match self {
             HcError::Database(s) => write!(fmt, "HcError: database: {}", s),
+            HcError::AuthenticationError => write!(fmt, "HcError: authentication error"),
             HcError::UnknownError => write!(fmt, "HcError: unknown error"),
         }
     }
@@ -291,7 +310,6 @@ pub trait HcTrx {
         timestamp: i64,
     ) -> Result<Uuid, HcError>;
 
-    #[allow(clippy::too_many_arguments)]
     async fn update_answer_move_tx(
         &mut self,
         info: &AnswerQuery,
@@ -305,10 +323,15 @@ pub trait HcTrx {
     async fn create_user(
         &mut self,
         username: &str,
-        password: &str,
+        password: Secret<String>,
         email: &str,
         timestamp: i64,
     ) -> Result<Uuid, HcError>;
+
+    async fn get_credentials(
+        &mut self,
+        username: &str,
+    ) -> Result<Option<(uuid::Uuid, Secret<String>)>, HcError>;
 
     async fn create_db(&mut self) -> Result<u32, HcError>;
 }
@@ -318,6 +341,66 @@ pub async fn hc_create_db(db: &dyn HcDb) -> Result<(), HcError> {
     tx.create_db().await?;
     tx.commit_tx().await?;
     Ok(())
+}
+
+fn compute_password_hash(password: Secret<String>) -> Result<Secret<String>, HcError> {
+    let salt = SaltString::generate(&mut rand::thread_rng());
+    let password_hash = Argon2::new(
+        Algorithm::Argon2id,
+        Version::V0x13,
+        Params::new(15000, 2, 1, None).unwrap(),
+    )
+    .hash_password(password.expose_secret().as_bytes(), &salt);
+
+    match password_hash {
+        Ok(p) => Ok(Secret::new(p.to_string())),
+        Err(_e) => Err(HcError::AuthenticationError),
+    }
+}
+
+pub async fn hc_validate_credentials(
+    credentials: Credentials,
+    db: &dyn HcDb,
+) -> Result<uuid::Uuid, HcError> {
+    let mut user_id = None;
+    let mut expected_password_hash = Secret::new(
+        "$argon2id$v=19$m=15000,t=2,p=1$\
+        gZiV/M1gPc22ElAH/Jh1Hw$\
+        CWOrkoo7oJBQ/iyh7uJ0LO2aLEfrHwTWllSAxT0zRno"
+            .to_string(),
+    );
+
+    let mut tx = db.begin_tx().await?;
+    if let Some((stored_user_id, stored_password_hash)) =
+        tx.get_credentials(&credentials.username).await?
+    {
+        user_id = Some(stored_user_id);
+        expected_password_hash = stored_password_hash;
+    }
+    tx.commit_tx().await?;
+
+    spawn_blocking(move || {
+        verify_password_hash(expected_password_hash, &credentials.password) //this will error and return if password does not match
+    })
+    .await
+    .map_err(|_| HcError::AuthenticationError)??;
+    match user_id {
+        Some(id) => Ok(id),
+        _ => Err(HcError::AuthenticationError),
+    }
+}
+
+fn verify_password_hash(
+    expected_password_hash: Secret<String>,
+    password_candidate: &Secret<String>,
+) -> Result<(), HcError> {
+    let expected_password_hash = PasswordHash::new(expected_password_hash.expose_secret());
+    match expected_password_hash {
+        Ok(p) => Argon2::default()
+            .verify_password(password_candidate.expose_secret().as_bytes(), &p)
+            .map_err(|_| HcError::AuthenticationError),
+        Err(_) => Err(HcError::AuthenticationError),
+    }
 }
 
 pub async fn hc_create_user(
@@ -337,8 +420,16 @@ pub async fn hc_create_user(
         return Err(HcError::UnknownError);
     }
 
+    let secret_password = Secret::new(password.to_string());
+
+    let password_hash = spawn_blocking(move || compute_password_hash(secret_password))
+        .await
+        .map_err(|_| HcError::AuthenticationError)??;
+
     let mut tx = db.begin_tx().await?;
-    let user_id = tx.create_user(username, password, email, timestamp).await?;
+    let user_id = tx
+        .create_user(username, password_hash, email, timestamp)
+        .await?;
     tx.commit_tx().await?;
     Ok(user_id)
 }
@@ -1435,6 +1526,33 @@ mod tests {
         assert!(!hc_change_verbs(&vec![1, 1, 2, 2, 2], 3));
         assert!(hc_change_verbs(&vec![1, 1, 1, 1, 1, 2, 2, 2, 2, 2], 5));
         assert!(!hc_change_verbs(&vec![1, 1, 1, 1, 2, 2, 2, 2, 2], 5));
+    }
+
+    #[tokio::test]
+    async fn test_login() {
+        initialize_db_once().await; //only works for postgres, sqlite initialized in get_db()
+        let db = get_db().await;
+        let timestamp = get_timestamp();
+
+        let uuid1 = hc_create_user(&db, "testuser9", "abcdabcd", "user1@blah.com", timestamp)
+            .await
+            .unwrap();
+
+        //failing credentials
+        let credentials = Credentials {
+            username: String::from("testuser9"),
+            password: Secret::new("abcdabcdx".to_string()),
+        };
+        let res = hc_validate_credentials(credentials, &db).await;
+        assert_eq!(res, Err(HcError::AuthenticationError));
+
+        //passing credentials
+        let credentials = Credentials {
+            username: String::from("testuser9"),
+            password: Secret::new("abcdabcd".to_string()),
+        };
+        let res = hc_validate_credentials(credentials, &db).await;
+        assert_eq!(res.unwrap(), uuid1);
     }
 
     #[tokio::test]

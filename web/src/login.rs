@@ -27,8 +27,7 @@ use actix_web::HttpResponse;
 use actix_web_flash_messages::FlashMessage;
 use actix_web_flash_messages::{IncomingFlashMessages, Level};
 use libhc::dbpostgres::HcDbPostgres;
-use libhc::HcDb;
-use secrecy::ExposeSecret;
+use libhc::Credentials;
 use secrecy::Secret;
 use std::fmt::Write;
 
@@ -44,11 +43,6 @@ pub struct CreateUserFormData {
     password: String,
     confirm_password: String,
     email: String,
-}
-
-pub struct Credentials {
-    pub username: String,
-    pub password: Secret<String>,
 }
 
 pub async fn logout(session: Session) -> Result<HttpResponse, AWError> {
@@ -153,40 +147,25 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
 "##)))
 }
 
-//for testing without db
-// fn validate_login(credentials: Credentials) -> Option<uuid::Uuid> {
-//     if credentials.username.to_lowercase() == "user1"
-//         && credentials.password.expose_secret() == "1234"
-//     {
-//         Some(Uuid::from_u128(0x8CD36EFFDF5744FF953B29A473D12347))
-//     } else if credentials.username.to_lowercase() == "user2"
-//         && credentials.password.expose_secret() == "1234"
-//     {
-//         Some(Uuid::from_u128(0xD75B0169E7C343838298136E3D63375C))
-//     } else {
-//         None
-//     }
-// }
-
+use libhc::hc_validate_credentials;
 pub async fn login_post(
     (session, form, req): (Session, web::Form<LoginFormData>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<HcDbPostgres>().unwrap();
 
     let credentials = Credentials {
-        username: form.0.username,
+        username: form.0.username.clone(),
         password: form.0.password,
     };
-    let mut tx = db.begin_tx().await.unwrap();
-    if let Ok(user_id) = tx
-        .validate_login_db(&credentials.username, credentials.password.expose_secret())
+
+    if let Ok(user_id) = hc_validate_credentials(credentials, db)
         .await
         .map_err(map_hc_error)
+    //fix me, should handle error here in case db error, etc.
     {
-        tx.commit_tx().await.unwrap();
         session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
         if session.insert("user_id", user_id).is_ok()
-            && session.insert("username", credentials.username).is_ok()
+            && session.insert("username", form.0.username).is_ok()
         {
             return Ok(HttpResponse::SeeOther()
                 .insert_header((LOCATION, "/"))
@@ -314,21 +293,6 @@ pub async fn new_user_get(flash_messages: IncomingFlashMessages) -> Result<HttpR
 "##)))
 }
 
-//for testing without db
-// fn validate_login(credentials: Credentials) -> Option<uuid::Uuid> {
-//     if credentials.username.to_lowercase() == "user1"
-//         && credentials.password.expose_secret() == "1234"
-//     {
-//         Some(Uuid::from_u128(0x8CD36EFFDF5744FF953B29A473D12347))
-//     } else if credentials.username.to_lowercase() == "user2"
-//         && credentials.password.expose_secret() == "1234"
-//     {
-//         Some(Uuid::from_u128(0xD75B0169E7C343838298136E3D63375C))
-//     } else {
-//         None
-//     }
-// }
-
 pub async fn new_user_post(
     (/*session, */ form, req): (/*Session,*/ web::Form<CreateUserFormData>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
@@ -385,49 +349,3 @@ pub fn get_username(session: Session) -> Option<String> {
         None
     }
 }
-
-/*
-async fn check_login((session, _req): (Session, HttpRequest)) -> Result<HttpResponse, AWError> {
-    //session.insert("user_id", 1);
-    //session.renew();
-    //session.purge();
-    if let Some(user_id) = get_user_id(session) {
-        return Ok(HttpResponse::Ok().json(LoginCheckResponse { is_logged_in:true,user_id:user_id }));
-    }
-    Ok(HttpResponse::Ok().json(LoginCheckResponse { is_logged_in:false,user_id:0 }))
-}
-*/
-
-/* For Basic Authentication
-use actix_web_httpauth::middleware::HttpAuthentication;
-use actix_web_httpauth::extractors::basic::BasicAuth;
-use actix_web_httpauth::extractors::basic::Config;
-use actix_web_httpauth::extractors::AuthenticationError;
-use actix_web::dev::ServiceRequest;
-use std::pin::Pin;
-
-async fn validator_basic(req: ServiceRequest, credentials: BasicAuth) -> Result<ServiceRequest, Error> {
-
-    let config = req.app_data::<Config>()
-    .map(|data| Pin::new(data).get_ref().clone())
-    .unwrap_or_else(Default::default);
-
-    match validate_credentials_basic(credentials.user_id(), credentials.password().unwrap().trim()) {
-        Ok(res) => {
-            if res {
-                Ok(req)
-            } else {
-                Err(AuthenticationError::from(config).into())
-            }
-        }
-        Err(_) => Err(AuthenticationError::from(config).into()),
-    }
-}
-
-fn validate_credentials_basic(user_id: &str, user_password: &str) -> Result<bool, std::io::Error> {
-    if user_id.eq("greekdb") && user_password.eq("pass") {
-        return Ok(true);
-    }
-    Err(std::io::Error::new(std::io::ErrorKind::Other, "Authentication failed!"))
-}
-*/

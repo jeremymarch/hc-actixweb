@@ -338,6 +338,11 @@ pub fn map_hc_error(e: HcError) -> PhilologusError {
             name: String::from("sqlx error"),
             error: format!("sqlx Configuration: {}", e),
         },
+        HcError::AuthenticationError => PhilologusError {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            name: String::from("authentication error"),
+            error: String::from("authentication error"),
+        },
         HcError::UnknownError => PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,
             name: String::from("unknown error"),
