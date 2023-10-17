@@ -92,7 +92,7 @@ impl HcTrx for HcDbSqliteTrx<'_> {
         session_id: Uuid,
         user_to_score: &str,
         points: i32,
-    ) -> Result<u32, HcError> {
+    ) -> Result<(), HcError> {
         let query = format!(
             "UPDATE sessions SET {user_to_score} = {user_to_score} + $1 WHERE session_id = $2;"
         );
@@ -103,7 +103,7 @@ impl HcTrx for HcDbSqliteTrx<'_> {
             .await
             .map_err(map_sqlx_error)?;
 
-        Ok(1)
+        Ok(())
     }
 
     async fn get_user_id(&mut self, username: &str) -> Result<UserResult, HcError> {
@@ -426,7 +426,7 @@ impl HcTrx for HcDbSqliteTrx<'_> {
         is_correct: bool,
         mf_pressed: bool,
         timestamp: i64,
-    ) -> Result<u32, HcError> {
+    ) -> Result<(), HcError> {
         let m = self.get_last_move_tx(info.session_id).await?;
 
         let query = "UPDATE moves SET answer_user_id=$1, answer=$2, correct_answer=$3, is_correct=$4, time=$5, mf_pressed=$6, timed_out=$7, answeredtimestamp=$8 WHERE move_id=$9;";
@@ -444,7 +444,7 @@ impl HcTrx for HcDbSqliteTrx<'_> {
             .await
             .map_err(map_sqlx_error)?;
 
-        Ok(1)
+        Ok(())
     }
 
     async fn create_user(
@@ -489,7 +489,7 @@ impl HcTrx for HcDbSqliteTrx<'_> {
         Ok(row)
     }
 
-    async fn create_db(&mut self) -> Result<u32, HcError> {
+    async fn create_db(&mut self) -> Result<(), HcError> {
         let query = r#"CREATE TABLE IF NOT EXISTS users ( 
     user_id BLOB PRIMARY KEY NOT NULL, 
     user_name TEXT, 
@@ -564,6 +564,6 @@ impl HcTrx for HcDbSqliteTrx<'_> {
             .await
             .map_err(map_sqlx_error)?;
 
-        Ok(1)
+        Ok(())
     }
 }

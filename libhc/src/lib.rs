@@ -272,7 +272,7 @@ pub trait HcTrx {
         session_id: Uuid,
         user_to_score: &str,
         points: i32,
-    ) -> Result<u32, HcError>;
+    ) -> Result<(), HcError>;
 
     async fn get_user_id(&mut self, username: &str) -> Result<UserResult, HcError>;
 
@@ -316,7 +316,7 @@ pub trait HcTrx {
         is_correct: bool,
         mf_pressed: bool,
         timestamp: i64,
-    ) -> Result<u32, HcError>;
+    ) -> Result<(), HcError>;
 
     async fn create_user(
         &mut self,
@@ -331,7 +331,7 @@ pub trait HcTrx {
         username: &str,
     ) -> Result<Option<(uuid::Uuid, Secret<String>)>, HcError>;
 
-    async fn create_db(&mut self) -> Result<u32, HcError>;
+    async fn create_db(&mut self) -> Result<(), HcError>;
 }
 
 pub async fn hc_create_db(db: &dyn HcDb) -> Result<(), HcError> {
@@ -643,16 +643,15 @@ pub async fn hc_answer(
 
     let is_correct = hgk_compare_multiple_forms(&correct_answer, &info.answer.replace("---", "—"));
 
-    let _res = tx
-        .update_answer_move_tx(
-            info,
-            user_id,
-            &correct_answer,
-            is_correct,
-            info.mf_pressed,
-            timestamp,
-        )
-        .await?;
+    tx.update_answer_move_tx(
+        info,
+        user_id,
+        &correct_answer,
+        is_correct,
+        info.mf_pressed,
+        timestamp,
+    )
+    .await?;
 
     //if practice session, ask the next here
     if s.challenged_user_id.is_none() {
@@ -666,8 +665,7 @@ pub async fn hc_answer(
                 "challenger_score"
             };
             let points = 1;
-            let _ = tx
-                .add_to_score(info.session_id, user_to_score, points)
+            tx.add_to_score(info.session_id, user_to_score, points)
                 .await?;
         }
     }
@@ -780,8 +778,7 @@ pub async fn hc_mf_pressed(
         Ok(res)
     } else {
         let is_correct = false;
-        let _res = tx
-            .update_answer_move_tx(info, user_id, &correct_answer, is_correct, true, timestamp)
+        tx.update_answer_move_tx(info, user_id, &correct_answer, is_correct, true, timestamp)
             .await?;
 
         //if practice session, ask the next here
@@ -796,8 +793,7 @@ pub async fn hc_mf_pressed(
                     "challenger_score"
                 };
                 let points = 1;
-                let _ = tx
-                    .add_to_score(info.session_id, user_to_score, points)
+                tx.add_to_score(info.session_id, user_to_score, points)
                     .await?;
             }
         }
