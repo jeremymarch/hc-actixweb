@@ -1178,6 +1178,9 @@ pub async fn hc_insert_session(
         _ => None,
     };
 
+    //be sure max_time is always zero if countdown is false (i.e. elapsed timer)
+    info.max_time = if info.countdown { info.max_time } else { 0 };
+
     match tx
         .insert_session_tx(user_id, highest_unit, opponent_user_id, info, timestamp)
         .await

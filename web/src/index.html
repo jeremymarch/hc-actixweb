@@ -1412,7 +1412,8 @@ a {color:blue;}
         if (s.move_type !== 'FirstMoveTheirTurn') { // do not show if first move not asked yet and I did not start game
           d.setAttribute('data-uuid', s.session_id);
           d.setAttribute('data-max-changes', s.max_changes);
-          d.setAttribute('data-max-time', (s.countdown !== 0));
+          d.setAttribute('data-max-time', s.max_time);
+          d.setAttribute('data-countdown', !!s.countdown)
           d.classList.add('gamerow');
           if (s.myturn && s.move_type !== 'Practice') {
             d.classList.add('myturn');
@@ -1645,6 +1646,7 @@ a {color:blue;}
     reps = (reps) ? parseInt(reps) : 4;
     maxChanges = (maxChanges) ? parseInt(maxChanges) : 2;
     maxTime = (maxTime) ? parseInt(maxTime) : 30;
+    maxTime = (countdown) ? maxTime : 0; //always 0 for elapsed timer
 
     const lp = [];
     const lpck = document.querySelectorAll('.limitparam:checked');
@@ -1768,12 +1770,12 @@ a {color:blue;}
     console.log('multiple forms clicked');
     if (!globalMFPressed) { // only allow clicking this once
       q('#mfbutton').disabled = true;
-
-      addSecondsToTime(globalSeconds / 2);
       globalMFPressed = true;
-
       const answer = q('#answerform').value.trim();
       const time = q('#mainTime').innerText.trim();
+
+      addSecondsToTime(globalSeconds / 2);
+      
       console.log('MF clicked: ' + answer + ', time: ' + time + ', mfPressed: ' + globalMFPressed + ', timedout: ' + globalTimedOut);
 
       sendMF(globalSessionId, answer, time, globalMFPressed, globalTimedOut);
@@ -2035,7 +2037,6 @@ a {color:blue;}
 
     q('#correctanswer').style.visibility = 'visible';
     q('#startingform').innerText = data.starting_form;
-
     q('#mainTime').innerText = data.time;
     q('#askparamsdiv').style.display = 'none';
     q('#submitbutton').style.display = 'none';
@@ -2140,7 +2141,6 @@ a {color:blue;}
       q('#statusmesg').innerHTML = 'Change up to (2) parameters';
     }
     globalSeconds = parseInt(q('.gamerow.selectedGame').getAttribute('data-max-time'));
-
     q('#mainTime').innerHTML = globalSeconds + ':00';
     q('#askparamsdiv').style.display = 'block';
     q('#changedesc').innerHTML = '';// desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev);
