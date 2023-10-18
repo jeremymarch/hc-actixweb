@@ -1413,7 +1413,7 @@ a {color:blue;}
           d.setAttribute('data-uuid', s.session_id);
           d.setAttribute('data-max-changes', s.max_changes);
           d.setAttribute('data-max-time', s.max_time);
-          d.setAttribute('data-countdown', !!s.countdown)
+          d.setAttribute('data-countdown', !!s.countdown);
           d.classList.add('gamerow');
           if (s.myturn && s.move_type !== 'Practice') {
             d.classList.add('myturn');
@@ -1646,7 +1646,7 @@ a {color:blue;}
     reps = (reps) ? parseInt(reps) : 4;
     maxChanges = (maxChanges) ? parseInt(maxChanges) : 2;
     maxTime = (maxTime) ? parseInt(maxTime) : 30;
-    maxTime = (countdown) ? maxTime : 0; //always 0 for elapsed timer
+    maxTime = (countdown) ? maxTime : 0; // always 0 for elapsed timer
 
     const lp = [];
     const lpck = document.querySelectorAll('.limitparam:checked');
@@ -1774,8 +1774,8 @@ a {color:blue;}
       const answer = q('#answerform').value.trim();
       const time = q('#mainTime').innerText.trim();
 
-      addSecondsToTime(globalSeconds / 2);
-      
+      addSecondsToTime(globalSeconds / 2); //globalSeconds will be 0 for elapsed timer and thus add nothing
+
       console.log('MF clicked: ' + answer + ', time: ' + time + ', mfPressed: ' + globalMFPressed + ', timedout: ' + globalTimedOut);
 
       sendMF(globalSessionId, answer, time, globalMFPressed, globalTimedOut);
