@@ -352,6 +352,8 @@ pub fn map_hc_error(e: HcError) -> PhilologusError {
 }
 
 use actix_web::http::header;
+use jsonwebtoken::Algorithm;
+use jsonwebtoken::{decode, DecodingKey, Validation};
 use oauth2::basic::BasicClient;
 use oauth2::ResponseType;
 use oauth2::{
@@ -437,6 +439,18 @@ async fn aaaauth(
 
     session.insert("login", true).unwrap();
 
+    let mut tok = String::from("");
+    if let Some(t) = id_token {
+        let key = DecodingKey::from_secret(&[]);
+        let mut validation = Validation::new(Algorithm::HS256);
+        validation.insecure_disable_signature_validation();
+
+        tok = format!(
+            "token: {:?}",
+            decode::<String>(&t, &key, &validation).unwrap()
+        );
+    }
+
     let html = format!(
         r#"<html>
         <head><title>OAuth2 Test</title></head>
@@ -454,7 +468,7 @@ async fn aaaauth(
         state.secret(),
         token,
         user,
-        id_token,
+        tok,
     );
     HttpResponse::Ok().body(html)
 }
