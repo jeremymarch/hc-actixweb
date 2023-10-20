@@ -355,7 +355,7 @@ use actix_web::http::header;
 use oauth2::basic::BasicClient;
 use oauth2::{
     AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, PkceCodeChallenge, RedirectUrl,
-    /*Scope,*/ TokenUrl,
+    Scope, TokenUrl,
 };
 use serde::Deserialize;
 use std::env;
@@ -401,13 +401,9 @@ async fn aaalogin((req,): (HttpRequest,)) -> HttpResponse {
     let (authorize_url, _csrf_state) = &data
         .oauth
         .authorize_url(CsrfToken::new_random)
-        // // This example is requesting access to the "calendar" features and the user's profile.
-        // .add_scope(Scope::new(
-        //     "https://www.googleapis.com/auth/calendar".to_string(),
-        // ))
-        // .add_scope(Scope::new(
-        //     "https://www.googleapis.com/auth/plus.me".to_string(),
-        // ))
+        // This example is requesting access to the "calendar" features and the user's profile.
+        .add_scope(Scope::new("name".to_string()))
+        .add_scope(Scope::new("email".to_string()))
         .set_pkce_challenge(pkce_code_challenge)
         .url();
 
@@ -440,10 +436,10 @@ async fn aaaauth(
         r#"<html>
         <head><title>OAuth2 Test</title></head>
         <body>
-            Google returned the following state:
-            <pre>{}</pre>
-            Google returned the following token:
-            <pre>{:?}</pre>
+            Apple returned the following state:
+            <p>{}</p>
+            Apple returned the following token:
+            <p>{:?}</p>
         </body>
     </html>"#,
         state.secret(),
