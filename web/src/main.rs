@@ -425,6 +425,22 @@ async fn aaalogout(session: Session) -> HttpResponse {
         .finish()
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct Claims {
+    iss: Option<String>,
+    sub: Option<String>,
+    aud: Option<String>,
+    iat: Option<String>,
+    exp: Option<String>,
+    nonce: Option<String>,
+    nonce_supported: Option<String>,
+    email: Option<String>,
+    email_verified: Option<String>,
+    is_private_email: Option<String>,
+    real_user_status: Option<String>,
+    transfer_sub: Option<String>,
+}
+
 async fn aaaauth(
     (session, params, req): (Session, web::Form<AuthRequest>, HttpRequest),
 ) -> HttpResponse {
@@ -447,7 +463,7 @@ async fn aaaauth(
 
         tok = format!(
             "token: {:?}",
-            decode::<String>(&t, &key, &validation).unwrap()
+            decode::<Claims>(&t, &key, &validation).unwrap()
         );
     }
 
