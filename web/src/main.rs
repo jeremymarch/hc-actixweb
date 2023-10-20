@@ -366,6 +366,8 @@ pub struct AuthRequest {
     code: String,
     state: String,
     scope: Option<String>,
+    email: Option<String>,
+    name: Option<String>,
 }
 
 struct AppState {
@@ -429,6 +431,8 @@ async fn aaaauth(
     let code = AuthorizationCode::new(params.code.clone());
     let state = CsrfToken::new(params.state.clone());
     let scope = params.scope.clone();
+    let email = params.email.clone();
+    let name = params.name.clone();
 
     // Exchange the code with a token.
     let token = &data.oauth.exchange_code(code);
@@ -445,11 +449,17 @@ async fn aaaauth(
             <p>{:?}</p>
             scope:
             <p>{:?}</p>
+            email:
+            <p>{:?}</p>
+            name:
+            <p>{:?}</p>
         </body>
     </html>"#,
         state.secret(),
         token,
-        scope
+        scope,
+        email,
+        name,
     );
     HttpResponse::Ok().body(html)
 }
