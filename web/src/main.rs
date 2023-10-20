@@ -368,6 +368,7 @@ pub struct AuthRequest {
     scope: Option<String>,
     email: Option<String>,
     name: Option<String>,
+    id_token: Option<String>,
 }
 
 struct AppState {
@@ -433,6 +434,7 @@ async fn aaaauth(
     let scope = params.scope.clone();
     let email = params.email.clone();
     let name = params.name.clone();
+    let id_token = params.id_token.clone();
 
     // Exchange the code with a token.
     let token = &data.oauth.exchange_code(code);
@@ -453,6 +455,8 @@ async fn aaaauth(
             <p>{:?}</p>
             name:
             <p>{:?}</p>
+            id_token:
+            <p>{:?}</p>
         </body>
     </html>"#,
         state.secret(),
@@ -460,6 +464,7 @@ async fn aaaauth(
         scope,
         email,
         name,
+        id_token,
     );
     HttpResponse::Ok().body(html)
 }
