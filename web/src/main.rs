@@ -421,7 +421,7 @@ async fn aaalogout(session: Session) -> HttpResponse {
 }
 
 async fn aaaauth(
-    (session, params, req): (Session, web::Query<AuthRequest>, HttpRequest),
+    (session, params, req): (Session, web::Form<AuthRequest>, HttpRequest),
 ) -> HttpResponse {
     let data = req.app_data::<AppState>().unwrap();
     let code = AuthorizationCode::new(params.code.clone());
@@ -614,7 +614,7 @@ fn config(cfg: &mut web::ServiceConfig) {
         .route("/aaaindex", web::get().to(aaaindex))
         .route("/aaalogin", web::get().to(aaalogin))
         .route("/aaalogout", web::get().to(aaalogout))
-        .route("/aaaauth", web::get().to(aaaauth))
+        .route("/aaaauth", web::post().to(aaaauth))
         .route("/login", web::get().to(login::login_get))
         .route("/login", web::post().to(login::login_post))
         .route("/newuser", web::get().to(login::new_user_get))
