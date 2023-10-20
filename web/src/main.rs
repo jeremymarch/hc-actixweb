@@ -402,6 +402,7 @@ async fn aaalogin((req,): (HttpRequest,)) -> HttpResponse {
         .oauth
         .authorize_url(CsrfToken::new_random)
         // This example is requesting access to the "calendar" features and the user's profile.
+        .set_response_type(&ResponseType::new("code id_token".to_string()))
         .add_extra_param("response_mode".to_string(), "form_post".to_string())
         .add_scope(Scope::new("name".to_string()))
         .add_scope(Scope::new("email".to_string()))
