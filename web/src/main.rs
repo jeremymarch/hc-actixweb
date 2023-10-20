@@ -365,7 +365,7 @@ use std::env;
 pub struct AuthRequest {
     code: String,
     state: String,
-    scope: String,
+    scope: Option<String>,
 }
 
 struct AppState {
