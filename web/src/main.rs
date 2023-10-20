@@ -402,6 +402,7 @@ async fn aaalogin((req,): (HttpRequest,)) -> HttpResponse {
         .oauth
         .authorize_url(CsrfToken::new_random)
         // This example is requesting access to the "calendar" features and the user's profile.
+        .add_extra_param("response_type".to_string(), "form_post".to_string())
         .add_scope(Scope::new("name".to_string()))
         .add_scope(Scope::new("email".to_string()))
         .set_pkce_challenge(pkce_code_challenge)
