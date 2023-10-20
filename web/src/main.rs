@@ -365,10 +365,8 @@ use std::env;
 pub struct AuthRequest {
     code: String,
     state: String,
-    scope: Option<String>,
-    email: Option<String>,
-    name: Option<String>,
     id_token: Option<String>,
+    user: Option<String>,
 }
 
 struct AppState {
@@ -431,9 +429,7 @@ async fn aaaauth(
     let data = req.app_data::<AppState>().unwrap();
     let code = AuthorizationCode::new(params.code.clone());
     let state = CsrfToken::new(params.state.clone());
-    let scope = params.scope.clone();
-    let email = params.email.clone();
-    let name = params.name.clone();
+    let user = params.user.clone();
     let id_token = params.id_token.clone();
 
     // Exchange the code with a token.
@@ -449,11 +445,7 @@ async fn aaaauth(
             <p>{}</p>
             Apple returned the following token:
             <p>{:?}</p>
-            scope:
-            <p>{:?}</p>
-            email:
-            <p>{:?}</p>
-            name:
+            user:
             <p>{:?}</p>
             id_token:
             <p>{:?}</p>
@@ -461,9 +453,7 @@ async fn aaaauth(
     </html>"#,
         state.secret(),
         token,
-        scope,
-        email,
-        name,
+        user,
         id_token,
     );
     HttpResponse::Ok().body(html)
