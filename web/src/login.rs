@@ -146,6 +146,66 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
 </html>
 "##)))
 }
+/*
+struct OAuthPost {
+    code: Option<String>,
+    state: Option<String>,
+}
+
+//https://developer.okta.com/blog/2019/06/04/what-the-heck-is-sign-in-with-apple
+pub async fn oauth_post(
+    (session, form, req): (Session, web::Form<OAuthPost>, HttpRequest),
+) -> Result<HttpResponse, AWError> {
+    let client_id = "us.philolog.hoplite-challenge.client";
+    let client_secret = "eyJraWQiOiJZREtHQVk3QVA0IiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJFRkhDNFhGWjM4IiwiaWF0IjoxNjk3Njg1MjAxLCJleHAiOjE3MTMyMzcyMDEsImF1ZCI6Imh0dHBzOi8vYXBwbGVpZC5hcHBsZS5jb20iLCJzdWIiOiJ1cy5waGlsb2xvZy5ob3BsaXRlLWNoYWxsZW5nZS5jbGllbnQifQ.Xy-sYbch2xDnQFNRkr8vLDwu__FX2__pkdw_fWuZSasySceG2CERSZUcJ83bf4NVc3kvvfrl2LoQMfsgnZNEMw";
+    let redirect_url = "https://example-app.com/redirect";
+
+    if form.code.is_some() {
+
+        if let Ok(state) = session.get::<String>("state") {
+            if form.state.is_some() && form.state.unwrap() !=  state {
+                //error
+            }
+        } else {
+            None
+        }
+
+        // Token endpoint docs:
+  // https://developer.apple.com/documentation/signinwithapplerestapi/generate_and_validate_tokens
+
+  $response = http('https://appleid.apple.com/auth/token', [
+    'grant_type' => 'authorization_code',
+    'code' => $_POST['code'],
+    'redirect_uri' => $redirect_uri,
+    'client_id' => $client_id,
+    'client_secret' => $client_secret,
+  ]);
+
+  if(!isset($response->access_token)) {
+    echo '<p>Error getting an access token:</p>';
+    echo '<pre>'; print_r($response); echo '</pre>';
+    echo '<p><a href="/">Start Over</a></p>';
+    die();
+  }
+
+  echo '<h3>Access Token Response</h3>';
+  echo '<pre>'; print_r($response); echo '</pre>';
+
+
+  $claims = explode('.', $response->id_token)[1];
+  $claims = json_decode(base64_decode($claims));
+
+  echo '<h3>Parsed ID Token</h3>';
+  echo '<pre>';
+  print_r($claims);
+  echo '</pre>';
+
+  die();
+
+    }
+
+}
+*/
 
 use libhc::hc_validate_credentials;
 pub async fn login_post(

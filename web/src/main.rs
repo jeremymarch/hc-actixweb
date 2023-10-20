@@ -351,6 +351,108 @@ pub fn map_hc_error(e: HcError) -> PhilologusError {
     }
 }
 
+use actix_web::http::header;
+use oauth2::basic::BasicClient;
+use oauth2::{
+    AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, PkceCodeChallenge, RedirectUrl,
+    /*Scope,*/ TokenUrl,
+};
+use serde::Deserialize;
+use std::env;
+
+#[derive(Deserialize)]
+pub struct AuthRequest {
+    code: String,
+    state: String,
+    scope: String,
+}
+
+struct AppState {
+    oauth: BasicClient,
+}
+
+async fn aaaindex(session: Session) -> HttpResponse {
+    let link = if let Some(_login) = session.get::<bool>("login").unwrap() {
+        "aaalogout"
+    } else {
+        "aaalogin"
+    };
+
+    let html = format!(
+        r#"<html>
+        <head><title>OAuth2 Test</title></head>
+        <body>
+            <a href="/{}">{}</a>
+        </body>
+    </html>"#,
+        link, link
+    );
+
+    HttpResponse::Ok().body(html)
+}
+
+async fn aaalogin((req,): (HttpRequest,)) -> HttpResponse {
+    let data = req.app_data::<AppState>().unwrap();
+    // Google supports Proof Key for Code Exchange (PKCE - https://oauth.net/2/pkce/).
+    // Create a PKCE code verifier and SHA-256 encode it as a code challenge.
+    let (pkce_code_challenge, _pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
+
+    // Generate the authorization URL to which we'll redirect the user.
+    let (authorize_url, _csrf_state) = &data
+        .oauth
+        .authorize_url(CsrfToken::new_random)
+        // // This example is requesting access to the "calendar" features and the user's profile.
+        // .add_scope(Scope::new(
+        //     "https://www.googleapis.com/auth/calendar".to_string(),
+        // ))
+        // .add_scope(Scope::new(
+        //     "https://www.googleapis.com/auth/plus.me".to_string(),
+        // ))
+        .set_pkce_challenge(pkce_code_challenge)
+        .url();
+
+    HttpResponse::Found()
+        .append_header((header::LOCATION, authorize_url.to_string()))
+        .finish()
+}
+
+async fn aaalogout(session: Session) -> HttpResponse {
+    session.remove("login");
+    HttpResponse::Found()
+        .append_header((header::LOCATION, "/".to_string()))
+        .finish()
+}
+
+async fn aaaauth(
+    session: Session,
+    data: web::Data<AppState>,
+    params: web::Query<AuthRequest>,
+) -> HttpResponse {
+    let code = AuthorizationCode::new(params.code.clone());
+    let state = CsrfToken::new(params.state.clone());
+    let _scope = params.scope.clone();
+
+    // Exchange the code with a token.
+    let token = &data.oauth.exchange_code(code);
+
+    session.insert("login", true).unwrap();
+
+    let html = format!(
+        r#"<html>
+        <head><title>OAuth2 Test</title></head>
+        <body>
+            Google returned the following state:
+            <pre>{}</pre>
+            Google returned the following token:
+            <pre>{:?}</pre>
+        </body>
+    </html>"#,
+        state.secret(),
+        token
+    );
+    HttpResponse::Ok().body(html)
+}
+
 #[actix_web::main]
 async fn main() -> io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=info");
@@ -448,7 +550,32 @@ async fn main() -> io::Result<()> {
     let message_framework = FlashMessagesFramework::builder(message_store).build();
 
     HttpServer::new(move || {
+        let apple_client_id = ClientId::new(
+            env::var("APPLE_CLIENT_ID").expect("Missing the APPLE_CLIENT_ID environment variable."),
+        );
+        let apple_client_secret = ClientSecret::new(
+            env::var("APPLE_CLIENT_SECRET")
+                .expect("Missing the APPLE_CLIENT_SECRET environment variable."),
+        );
+        let auth_url = AuthUrl::new("https://appleid.apple.com/auth/authorize".to_string())
+            .expect("Invalid authorization endpoint URL");
+        let token_url = TokenUrl::new("https://appleid.apple.com/auth/token".to_string())
+            .expect("Invalid token endpoint URL");
+
+        // Set up the config for the Google OAuth2 process.
+        let client = BasicClient::new(
+            apple_client_id,
+            Some(apple_client_secret),
+            auth_url,
+            Some(token_url),
+        )
+        .set_redirect_uri(
+            RedirectUrl::new("https://hoplite-challenge.philolog.us/aaaauth".to_string())
+                .expect("Invalid redirect URL"),
+        );
+
         App::new()
+            .app_data(AppState { oauth: client })
             .app_data(libhc::hc_load_verbs("pp.txt"))
             .app_data(hcdb.clone())
             .app_data(web::Data::from(app_state.clone()))
@@ -488,6 +615,10 @@ async fn main() -> io::Result<()> {
 
 fn config(cfg: &mut web::ServiceConfig) {
     cfg.route("/", web::get().to(index_page))
+        .route("/aaaindex", web::get().to(aaaindex))
+        .route("/aaalogin", web::get().to(aaalogin))
+        .route("/aaalogout", web::get().to(aaalogout))
+        .route("/aaaauth", web::get().to(aaaauth))
         .route("/login", web::get().to(login::login_get))
         .route("/login", web::post().to(login::login_post))
         .route("/newuser", web::get().to(login::new_user_get))
