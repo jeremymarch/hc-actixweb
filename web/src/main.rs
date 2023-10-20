@@ -353,6 +353,7 @@ pub fn map_hc_error(e: HcError) -> PhilologusError {
 
 use actix_web::http::header;
 use oauth2::basic::BasicClient;
+use oauth2::ResponseType;
 use oauth2::{
     AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, PkceCodeChallenge, RedirectUrl,
     Scope, TokenUrl,
