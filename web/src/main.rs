@@ -364,7 +364,7 @@ use std::env;
 pub struct AuthRequest {
     code: String,
     state: String,
-    scope: String,
+    //scope: String,
 }
 
 struct AppState {
@@ -424,13 +424,12 @@ async fn aaalogout(session: Session) -> HttpResponse {
 }
 
 async fn aaaauth(
-    session: Session,
-    data: web::Data<AppState>,
-    params: web::Query<AuthRequest>,
+    (session, params, req): (Session, web::Query<AuthRequest>, HttpRequest),
 ) -> HttpResponse {
+    let data = req.app_data::<AppState>().unwrap();
     let code = AuthorizationCode::new(params.code.clone());
     let state = CsrfToken::new(params.state.clone());
-    let _scope = params.scope.clone();
+    //let _scope = params.scope.clone();
 
     // Exchange the code with a token.
     let token = &data.oauth.exchange_code(code);
