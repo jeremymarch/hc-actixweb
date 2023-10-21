@@ -444,17 +444,29 @@ pub async fn hc_create_oauth_user(
     timestamp: i64,
 ) -> Result<Uuid, HcError> {
     let mut tx = db.begin_tx().await?;
-    let user_id = tx
-        .create_user(
-            Some(oauth),
-            format!("{}{}", first_name, last_name).as_str(),
-            Secret::new(String::from("")),
-            email,
-            timestamp,
-        )
-        .await?;
-    tx.commit_tx().await?;
-    Ok(user_id)
+
+    match tx.get_oauth_user(&oauth).await {
+        Ok(user_id) => match user_id {
+            Some(user_id) => {
+                tx.commit_tx().await?;
+                Ok(user_id)
+            }
+            None => {
+                let user_id = tx
+                    .create_user(
+                        Some(oauth),
+                        format!("{}{}", first_name, last_name).as_str(),
+                        Secret::new(String::from("")),
+                        email,
+                        timestamp,
+                    )
+                    .await?;
+                tx.commit_tx().await?;
+                Ok(user_id)
+            }
+        },
+        Err(e) => Err(e),
+    }
 }
 
 async fn hc_get_session_state_tx(

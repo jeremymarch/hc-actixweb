@@ -486,10 +486,10 @@ async fn aaaauth(
         }
 
         if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
-            sub = ttt.claims.sub.unwrap().to_string();
+            sub = ttt.claims.sub.unwrap_or(String::from(""));
 
             let timestamp = libhc::get_timestamp();
-            let _ =
+            let uuid =
                 hc_create_oauth_user(db, sub.clone(), &first_name, &last_name, &email, timestamp)
                     .await;
         }
