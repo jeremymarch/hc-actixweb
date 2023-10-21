@@ -79,6 +79,9 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
                 }}
             }}
             setTheme();
+            function applelogin() {{
+                window.location.href = "aaalogin";
+            }}
             function validate() {{
                 let u = document.forms[0]["username"].value;
                 let p = document.forms[0]["password"].value;
@@ -106,6 +109,7 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
             .dark BUTTON {{ background-color:black;color:white;border:1px solid white; }}
             .dark a {{color:#03A5F3;}}
             #newuserdiv {{ padding-top:12px; }}
+            #apple-login {{border: 1px solid white;width: 200px;margin: 0x auto;display: inline-block;margin-top: 12px; }}
         </style>
     </head>
     <body>
@@ -138,6 +142,9 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
                         <td colspan="2" align="right" id="newuserdiv">
                             <a href="newuser">New User</a>
                         </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" align="center"><img id="apple-login" src="appleid_button@2x.png" onclick="applelogin()"/></td>
                     </tr>
                 </tbody>
             </table>
