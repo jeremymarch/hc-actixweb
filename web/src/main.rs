@@ -388,6 +388,20 @@ struct AppleClaims {
     nonce_supported: Option<bool>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct AppleOAuthUserName {
+    #[serde(rename(serialize = "firstName"), rename(deserialize = "firstName"))]
+    first_name: Option<String>,
+    #[serde(rename(serialize = "lastName"), rename(deserialize = "lastName"))]
+    last_name: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct AppleOAuthUser {
+    name: AppleOAuthUserName,
+    email: Option<String>,
+}
+
 async fn aaaindex(session: Session) -> HttpResponse {
     let link = if let Some(_login) = session.get::<bool>("login").unwrap() {
         "aaalogout"
@@ -460,11 +474,23 @@ async fn aaaauth(
         let mut validation = Validation::new(Algorithm::RS256);
         validation.insecure_disable_signature_validation();
 
+        let mut first_name = String::from("");
+        let mut last_name = String::from("");
+        let mut email = String::from("");
+        if let Some(ref user) = user {
+            let apple_oauth_user: AppleOAuthUser = serde_json::from_str(user).unwrap();
+            first_name = apple_oauth_user.name.first_name.unwrap().to_string();
+            last_name = apple_oauth_user.name.last_name.unwrap().to_string();
+            email = apple_oauth_user.email.unwrap().to_string();
+        }
+
         if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
             sub = ttt.claims.sub.unwrap().to_string();
 
             let timestamp = libhc::get_timestamp();
-            let _ = hc_create_oauth_user(db, sub.clone(), timestamp).await;
+            let _ =
+                hc_create_oauth_user(db, sub.clone(), &first_name, &last_name, &email, timestamp)
+                    .await;
         }
     }
 

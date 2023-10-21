@@ -438,15 +438,18 @@ pub async fn hc_create_user(
 pub async fn hc_create_oauth_user(
     db: &dyn HcDb,
     oauth: String,
+    first_name: &str,
+    last_name: &str,
+    email: &str,
     timestamp: i64,
 ) -> Result<Uuid, HcError> {
     let mut tx = db.begin_tx().await?;
     let user_id = tx
         .create_user(
             Some(oauth),
-            "oauth",
+            format!("{}{}", first_name, last_name).as_str(),
             Secret::new(String::from("")),
-            "",
+            email,
             timestamp,
         )
         .await?;
