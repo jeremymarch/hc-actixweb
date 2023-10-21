@@ -456,12 +456,12 @@ async fn aaaauth(
     session.insert("login", true).unwrap();
 
     let mut tok = String::from("");
-    if let Some(t) = id_token {
+    if let Some(ref t) = id_token {
         let key = DecodingKey::from_secret(&[]);
         let mut validation = Validation::new(Algorithm::HS256);
         validation.insecure_disable_signature_validation();
 
-        if let Ok(ttt) = decode::<Claims>(&t, &key, &validation) {
+        if let Ok(ttt) = decode::<Claims>(t, &key, &validation) {
             tok = format!("token: {:?}", ttt);
         }
     }
@@ -478,11 +478,14 @@ async fn aaaauth(
             <p>{:?}</p>
             id_token:
             <p>{:?}</p>
+            id_token:
+            <p>{:?}</p>
         </body>
     </html>"#,
         state.secret(),
         token,
         user,
+        id_token,
         tok,
     );
     HttpResponse::Ok().body(html)
