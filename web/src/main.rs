@@ -354,6 +354,7 @@ pub fn map_hc_error(e: HcError) -> PhilologusError {
 use actix_web::http::header;
 use jsonwebtoken::Algorithm;
 use jsonwebtoken::{decode, DecodingKey, Validation};
+use libhc::hc_create_oauth_user;
 use oauth2::basic::BasicClient;
 use oauth2::ResponseType;
 use oauth2::{
@@ -373,6 +374,18 @@ pub struct AuthRequest {
 
 struct AppState {
     oauth: BasicClient,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct AppleClaims {
+    iss: Option<String>,
+    aud: Option<String>,
+    exp: Option<u64>,
+    iat: Option<u64>,
+    sub: Option<String>,
+    c_hash: Option<String>,
+    auth_time: Option<u64>,
+    nonce_supported: Option<bool>,
 }
 
 async fn aaaindex(session: Session) -> HttpResponse {
@@ -408,6 +421,7 @@ async fn aaalogin((req,): (HttpRequest,)) -> HttpResponse {
         // This example is requesting access to the "calendar" features and the user's profile.
         .set_response_type(&ResponseType::new("code id_token".to_string()))
         .add_extra_param("response_mode".to_string(), "form_post".to_string())
+        .add_scope(Scope::new("openid".to_string()))
         .add_scope(Scope::new("name".to_string()))
         .add_scope(Scope::new("email".to_string()))
         .set_pkce_challenge(pkce_code_challenge)
@@ -425,21 +439,10 @@ async fn aaalogout(session: Session) -> HttpResponse {
         .finish()
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct AppleClaims {
-    iss: Option<String>,
-    aud: Option<String>,
-    exp: Option<u64>,
-    iat: Option<u64>,
-    sub: Option<String>,
-    c_hash: Option<String>,
-    auth_time: Option<u64>,
-    nonce_supported: Option<bool>,
-}
-
 async fn aaaauth(
     (session, params, req): (Session, web::Form<AuthRequest>, HttpRequest),
 ) -> HttpResponse {
+    let db = req.app_data::<HcDbPostgres>().unwrap();
     let data = req.app_data::<AppState>().unwrap();
     let code = AuthorizationCode::new(params.code.clone());
     let state = CsrfToken::new(params.state.clone());
@@ -451,14 +454,17 @@ async fn aaaauth(
 
     session.insert("login", true).unwrap();
 
-    let mut tok = String::from("");
+    let mut sub = String::from("");
     if let Some(ref t) = id_token {
         let key = DecodingKey::from_secret(&[]);
         let mut validation = Validation::new(Algorithm::RS256);
         validation.insecure_disable_signature_validation();
 
         if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
-            tok = format!("sub: {:?}", ttt.claims.sub.unwrap());
+            sub = ttt.claims.sub.unwrap().to_string();
+
+            let timestamp = libhc::get_timestamp();
+            let _ = hc_create_oauth_user(db, sub.clone(), timestamp).await;
         }
     }
 
@@ -482,7 +488,7 @@ async fn aaaauth(
         token,
         user,
         id_token,
-        tok,
+        sub,
     );
     HttpResponse::Ok().body(html)
 }

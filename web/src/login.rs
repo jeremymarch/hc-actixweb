@@ -153,6 +153,7 @@ struct OAuthPost {
 }
 
 //https://developer.okta.com/blog/2019/06/04/what-the-heck-is-sign-in-with-apple
+//https://www.scottbrady91.com/openid-connect/implementing-sign-in-with-apple-in-aspnet-core
 pub async fn oauth_post(
     (session, form, req): (Session, web::Form<OAuthPost>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
