@@ -453,9 +453,10 @@ async fn aaalogout(session: Session) -> HttpResponse {
         .finish()
 }
 
+use actix_web::http::header::LOCATION;
 async fn aaaauth(
     (session, params, req): (Session, web::Form<AuthRequest>, HttpRequest),
-) -> HttpResponse {
+) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<HcDbPostgres>().unwrap();
     let data = req.app_data::<AppState>().unwrap();
     let code = AuthorizationCode::new(params.code.clone());
@@ -489,9 +490,24 @@ async fn aaaauth(
             sub = ttt.claims.sub.unwrap_or(String::from(""));
 
             let timestamp = libhc::get_timestamp();
-            let uuid =
+            let (user_id, user_name) =
                 hc_create_oauth_user(db, sub.clone(), &first_name, &last_name, &email, timestamp)
-                    .await;
+                    .await
+                    .map_err(map_hc_error)?;
+
+            session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+            if session.insert("user_id", user_id).is_ok()
+                && session.insert("username", user_name).is_ok()
+            {
+                return Ok(HttpResponse::SeeOther()
+                    .insert_header((LOCATION, "/"))
+                    .finish());
+            }
+
+            session.purge();
+            return Ok(HttpResponse::Found()
+                .append_header((header::LOCATION, "/login".to_string()))
+                .finish());
         }
     }
 
@@ -517,7 +533,11 @@ async fn aaaauth(
         id_token,
         sub,
     );
-    HttpResponse::Ok().body(html)
+    Ok(HttpResponse::Ok().body(html))
+
+    // HttpResponse::Found()
+    //     .append_header((header::LOCATION, "/login".to_string()))
+    //     .finish()
 }
 
 #[actix_web::main]

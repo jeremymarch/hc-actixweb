@@ -332,7 +332,10 @@ pub trait HcTrx {
         username: &str,
     ) -> Result<Option<(uuid::Uuid, Secret<String>)>, HcError>;
 
-    async fn get_oauth_user(&mut self, oauth: &str) -> Result<Option<uuid::Uuid>, HcError>;
+    async fn get_oauth_user(
+        &mut self,
+        oauth: &str,
+    ) -> Result<Option<(uuid::Uuid, String)>, HcError>;
 
     async fn create_db(&mut self) -> Result<(), HcError>;
 }
@@ -442,30 +445,30 @@ pub async fn hc_create_oauth_user(
     last_name: &str,
     email: &str,
     timestamp: i64,
-) -> Result<Uuid, HcError> {
+) -> Result<(Uuid, String), HcError> {
     let mut tx = db.begin_tx().await?;
 
-    match tx.get_oauth_user(&oauth).await {
-        Ok(user_id) => match user_id {
-            Some(user_id) => {
-                tx.commit_tx().await?;
-                Ok(user_id)
-            }
-            None => {
-                let user_id = tx
-                    .create_user(
-                        Some(oauth),
-                        format!("{}{}", first_name, last_name).as_str(),
-                        Secret::new(String::from("")),
-                        email,
-                        timestamp,
-                    )
-                    .await?;
-                tx.commit_tx().await?;
-                Ok(user_id)
-            }
-        },
-        Err(e) => Err(e),
+    let existing_user = tx.get_oauth_user(&oauth).await?;
+
+    match existing_user {
+        Some((existing_user_id, existing_user_name)) => {
+            tx.commit_tx().await?;
+            Ok((existing_user_id, existing_user_name))
+        }
+        None => {
+            let user_name = format!("{}{}", first_name, last_name);
+            let user_id = tx
+                .create_user(
+                    Some(oauth),
+                    user_name.as_str(),
+                    Secret::new(String::from("")),
+                    email,
+                    timestamp,
+                )
+                .await?;
+            tx.commit_tx().await?;
+            Ok((user_id, user_name))
+        }
     }
 }
 

@@ -497,16 +497,19 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         Ok(row)
     }
 
-    async fn get_oauth_user(&mut self, oauth: &str) -> Result<Option<uuid::Uuid>, HcError> {
+    async fn get_oauth_user(
+        &mut self,
+        oauth: &str,
+    ) -> Result<Option<(uuid::Uuid, String)>, HcError> {
         let row = sqlx::query(
             r#"
-            SELECT user_id,
+            SELECT user_id, user_name,
             FROM users
             WHERE oauth = $1
             "#,
         )
         .bind(oauth)
-        .map(|row: PgRow| (row.get("user_id")))
+        .map(|row: PgRow| (row.get("user_id"), row.get("user_name")))
         .fetch_optional(&mut *self.tx)
         .await
         .map_err(map_sqlx_error)?;
