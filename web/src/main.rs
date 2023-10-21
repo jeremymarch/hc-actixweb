@@ -478,10 +478,11 @@ async fn aaaauth(
         let mut last_name = String::from("");
         let mut email = String::from("");
         if let Some(ref user) = user {
-            let apple_oauth_user: AppleOAuthUser = serde_json::from_str(user).unwrap();
-            first_name = apple_oauth_user.name.first_name.unwrap().to_string();
-            last_name = apple_oauth_user.name.last_name.unwrap().to_string();
-            email = apple_oauth_user.email.unwrap().to_string();
+            if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
+                first_name = apple_oauth_user.name.first_name.unwrap_or(String::from(""));
+                last_name = apple_oauth_user.name.last_name.unwrap_or(String::from(""));
+                email = apple_oauth_user.email.unwrap_or(String::from(""));
+            }
         }
 
         if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {

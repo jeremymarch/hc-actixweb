@@ -1443,13 +1443,27 @@ mod tests {
         let user = Some("{\"name\":{\"firstName\":\"First\",\"lastName\":\"Last\"},\"email\":\"abc@gmail.com\"}");
 
         if let Some(user) = user {
-            let apple_oauth_user: AppleOAuthUser = serde_json::from_str(user).unwrap();
-            first_name = apple_oauth_user.name.first_name.unwrap().to_string();
-            last_name = apple_oauth_user.name.last_name.unwrap().to_string();
-            email = apple_oauth_user.email.unwrap().to_string();
+            if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
+                first_name = apple_oauth_user.name.first_name.unwrap_or(String::from(""));
+                last_name = apple_oauth_user.name.last_name.unwrap_or(String::from(""));
+                email = apple_oauth_user.email.unwrap_or(String::from(""));
+            }
         }
         assert_eq!(first_name, "First");
         assert_eq!(last_name, "Last");
+        assert_eq!(email, "abc@gmail.com");
+
+        let user = Some("{\"name\":{\"lastName\":null},\"email\":\"abc@gmail.com\"}");
+
+        if let Some(user) = user {
+            if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
+                first_name = apple_oauth_user.name.first_name.unwrap_or(String::from(""));
+                last_name = apple_oauth_user.name.last_name.unwrap_or(String::from(""));
+                email = apple_oauth_user.email.unwrap_or(String::from(""));
+            }
+        }
+        assert_eq!(first_name, "");
+        assert_eq!(last_name, "");
         assert_eq!(email, "abc@gmail.com");
     }
 
