@@ -417,3 +417,188 @@ pub fn get_username(session: Session) -> Option<String> {
         None
     }
 }
+
+use actix_web::http::header;
+use jsonwebtoken::Algorithm;
+use jsonwebtoken::{decode, DecodingKey, Validation};
+use libhc::hc_create_oauth_user;
+use oauth2::basic::BasicClient;
+use oauth2::ResponseType;
+use oauth2::{AuthorizationCode, CsrfToken, PkceCodeChallenge, Scope};
+use serde::Deserialize;
+use serde::Serialize;
+
+#[derive(Deserialize)]
+pub struct AuthRequest {
+    code: String,
+    state: String,
+    id_token: Option<String>,
+    user: Option<String>,
+}
+
+pub struct AppState {
+    pub oauth: BasicClient,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct AppleClaims {
+    iss: Option<String>,
+    aud: Option<String>,
+    exp: Option<u64>,
+    iat: Option<u64>,
+    sub: Option<String>,
+    c_hash: Option<String>,
+    auth_time: Option<u64>,
+    nonce_supported: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct AppleOAuthUserName {
+    #[serde(rename(serialize = "firstName"), rename(deserialize = "firstName"))]
+    first_name: Option<String>,
+    #[serde(rename(serialize = "lastName"), rename(deserialize = "lastName"))]
+    last_name: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct AppleOAuthUser {
+    name: AppleOAuthUserName,
+    email: Option<String>,
+}
+
+pub async fn aaaindex(session: Session) -> HttpResponse {
+    let link = if let Some(_login) = session.get::<bool>("login").unwrap() {
+        "aaalogout"
+    } else {
+        "aaalogin"
+    };
+
+    let html = format!(
+        r#"<html>
+        <head><title>OAuth2 Test</title></head>
+        <body>
+            <a href="/{}">{}</a>
+        </body>
+    </html>"#,
+        link, link
+    );
+
+    HttpResponse::Ok().body(html)
+}
+
+pub async fn aaalogin((req,): (HttpRequest,)) -> HttpResponse {
+    let data = req.app_data::<AppState>().unwrap();
+    // Google supports Proof Key for Code Exchange (PKCE - https://oauth.net/2/pkce/).
+    // Create a PKCE code verifier and SHA-256 encode it as a code challenge.
+    let (pkce_code_challenge, _pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
+
+    // Generate the authorization URL to which we'll redirect the user.
+    let (authorize_url, _csrf_state) = &data
+        .oauth
+        .authorize_url(CsrfToken::new_random)
+        // This example is requesting access to the "calendar" features and the user's profile.
+        .set_response_type(&ResponseType::new("code id_token".to_string()))
+        .add_extra_param("response_mode".to_string(), "form_post".to_string())
+        .add_scope(Scope::new("openid".to_string()))
+        .add_scope(Scope::new("name".to_string()))
+        .add_scope(Scope::new("email".to_string()))
+        .set_pkce_challenge(pkce_code_challenge)
+        .url();
+
+    HttpResponse::Found()
+        .append_header((header::LOCATION, authorize_url.to_string()))
+        .finish()
+}
+
+pub async fn aaalogout(session: Session) -> HttpResponse {
+    session.remove("login");
+    HttpResponse::Found()
+        .append_header((header::LOCATION, "/".to_string()))
+        .finish()
+}
+
+pub async fn aaaauth(
+    (session, params, req): (Session, web::Form<AuthRequest>, HttpRequest),
+) -> Result<HttpResponse, AWError> {
+    let db = req.app_data::<HcDbPostgres>().unwrap();
+    let data = req.app_data::<AppState>().unwrap();
+    let code = AuthorizationCode::new(params.code.clone());
+    let state = CsrfToken::new(params.state.clone());
+    let user = params.user.clone();
+    let id_token = params.id_token.clone();
+
+    // Exchange the code with a token.
+    let token = &data.oauth.exchange_code(code);
+
+    session.insert("login", true).unwrap();
+
+    let mut sub = String::from("");
+    if let Some(ref t) = id_token {
+        let key = DecodingKey::from_secret(&[]);
+        let mut validation = Validation::new(Algorithm::RS256);
+        validation.insecure_disable_signature_validation();
+
+        let mut first_name = String::from("");
+        let mut last_name = String::from("");
+        let mut email = String::from("");
+        if let Some(ref user) = user {
+            if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
+                first_name = apple_oauth_user.name.first_name.unwrap_or(String::from(""));
+                last_name = apple_oauth_user.name.last_name.unwrap_or(String::from(""));
+                email = apple_oauth_user.email.unwrap_or(String::from(""));
+            }
+        }
+
+        if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
+            sub = ttt.claims.sub.unwrap_or(String::from(""));
+
+            let timestamp = libhc::get_timestamp();
+            let (user_id, user_name) =
+                hc_create_oauth_user(db, sub.clone(), &first_name, &last_name, &email, timestamp)
+                    .await
+                    .map_err(map_hc_error)?;
+
+            session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+            if session.insert("user_id", user_id).is_ok()
+                && session.insert("username", user_name).is_ok()
+            {
+                return Ok(HttpResponse::SeeOther()
+                    .insert_header((LOCATION, "/"))
+                    .finish());
+            }
+
+            session.purge();
+            return Ok(HttpResponse::Found()
+                .append_header((header::LOCATION, "/login".to_string()))
+                .finish());
+        }
+    }
+
+    let html = format!(
+        r#"<html>
+        <head><title>OAuth2 Test</title></head>
+        <body>
+            Apple returned the following state:
+            <p>{}</p>
+            Apple returned the following token:
+            <p>{:?}</p>
+            user:
+            <p>{:?}</p>
+            id_token:
+            <p>{:?}</p>
+            id_token:
+            <p>{:?}</p>
+        </body>
+    </html>"#,
+        state.secret(),
+        token,
+        user,
+        id_token,
+        sub,
+    );
+    Ok(HttpResponse::Ok().body(html))
+
+    // HttpResponse::Found()
+    //     .append_header((header::LOCATION, "/login".to_string()))
+    //     .finish()
+}
