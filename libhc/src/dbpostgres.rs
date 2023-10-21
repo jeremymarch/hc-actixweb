@@ -498,12 +498,14 @@ impl HcTrx for HcDbPostgresTrx<'_> {
     async fn create_db(&mut self) -> Result<(), HcError> {
         let query = r#"CREATE TABLE IF NOT EXISTS users ( 
     user_id UUID PRIMARY KEY NOT NULL, 
+    oauth TEXT,
     user_name TEXT, 
     password TEXT, 
     email TEXT,
     user_type INT NOT NULL DEFAULT 0,
     timestamp BIGINT NOT NULL DEFAULT 0,
-    UNIQUE(user_name)
+    UNIQUE(user_name),
+    UNIQUE(oauth)
     );"#;
 
         let _res = sqlx::query(query)

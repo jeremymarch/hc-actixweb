@@ -461,10 +461,9 @@ async fn aaaauth(
         let mut validation = Validation::new(Algorithm::HS256);
         validation.insecure_disable_signature_validation();
 
-        tok = format!(
-            "token: {:?}",
-            decode::<Claims>(&t, &key, &validation).unwrap()
-        );
+        if let Ok(ttt) = decode::<Claims>(&t, &key, &validation) {
+            tok = format!("token: {:?}", ttt);
+        }
     }
 
     let html = format!(
