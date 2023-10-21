@@ -428,17 +428,13 @@ async fn aaalogout(session: Session) -> HttpResponse {
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
     iss: Option<String>,
-    sub: Option<String>,
     aud: Option<String>,
-    iat: Option<String>,
-    exp: Option<String>,
-    nonce: Option<String>,
-    nonce_supported: Option<String>,
-    email: Option<String>,
-    email_verified: Option<String>,
-    is_private_email: Option<String>,
-    real_user_status: Option<String>,
-    transfer_sub: Option<String>,
+    exp: Option<u64>,
+    iat: Option<u64>,
+    sub: Option<String>,
+    c_hash: Option<String>,
+    auth_time: Option<u64>,
+    nonce_supported: Option<bool>,
 }
 
 async fn aaaauth(
@@ -458,7 +454,7 @@ async fn aaaauth(
     let mut tok = String::from("");
     if let Some(ref t) = id_token {
         let key = DecodingKey::from_secret(&[]);
-        let mut validation = Validation::new(Algorithm::HS256);
+        let mut validation = Validation::new(Algorithm::RS256);
         validation.insecure_disable_signature_validation();
 
         if let Ok(ttt) = decode::<Claims>(t, &key, &validation) {
