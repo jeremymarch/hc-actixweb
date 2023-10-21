@@ -482,7 +482,7 @@ pub async fn oauth_login((req,): (HttpRequest,)) -> HttpResponse {
         .add_scope(Scope::new("openid".to_string()))
         .add_scope(Scope::new("name".to_string()))
         .add_scope(Scope::new("email".to_string()))
-        .set_pkce_challenge(pkce_code_challenge)
+        .set_pkce_challenge(pkce_code_challenge) //apple does not support this, but no problem including it
         .url();
 
     HttpResponse::Found()

@@ -469,7 +469,7 @@ async fn main() -> io::Result<()> {
         let token_url = TokenUrl::new("https://appleid.apple.com/auth/token".to_string())
             .expect("Invalid token endpoint URL");
 
-        // Set up the config for the Google OAuth2 process.
+        // Set up the config for the Apple OAuth2 process.
         let client = BasicClient::new(
             apple_client_id,
             Some(apple_client_secret),
@@ -477,7 +477,7 @@ async fn main() -> io::Result<()> {
             Some(token_url),
         )
         .set_redirect_uri(
-            RedirectUrl::new("https://hoplite-challenge.philolog.us/aaaauth".to_string())
+            RedirectUrl::new("https://hoplite-challenge.philolog.us/auth".to_string())
                 .expect("Invalid redirect URL"),
         );
 
