@@ -80,7 +80,7 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
             }}
             setTheme();
             function applelogin() {{
-                window.location.href = "aaalogin";
+                window.location.href = "oauth-login";
             }}
             function validate() {{
                 let u = document.forms[0]["username"].value;
