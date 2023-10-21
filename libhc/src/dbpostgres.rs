@@ -455,15 +455,17 @@ impl HcTrx for HcDbPostgresTrx<'_> {
 
     async fn create_user(
         &mut self,
+        oauth: Option<String>,
         username: &str,
         password: Secret<String>,
         email: &str,
         timestamp: i64,
     ) -> Result<Uuid, HcError> {
         let uuid = sqlx::types::Uuid::new_v4();
-        let query = "INSERT INTO users VALUES ($1, $2, $3, $4, 0, $5);";
+        let query = "INSERT INTO users VALUES ($1, $2, $3, $4, $5, 0, $6);";
         let _res = sqlx::query(query)
             .bind(uuid)
+            .bind(oauth)
             .bind(username)
             .bind(password.expose_secret())
             .bind(email)
@@ -488,6 +490,23 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         )
         .bind(username)
         .map(|row: PgRow| (row.get("user_id"), Secret::new(row.get("password"))))
+        .fetch_optional(&mut *self.tx)
+        .await
+        .map_err(map_sqlx_error)?;
+
+        Ok(row)
+    }
+
+    async fn get_oauth_user(&mut self, oauth: &str) -> Result<Option<uuid::Uuid>, HcError> {
+        let row = sqlx::query(
+            r#"
+            SELECT user_id,
+            FROM users
+            WHERE oauth = $1
+            "#,
+        )
+        .bind(oauth)
+        .map(|row: PgRow| (row.get("user_id")))
         .fetch_optional(&mut *self.tx)
         .await
         .map_err(map_sqlx_error)?;

@@ -426,7 +426,7 @@ async fn aaalogout(session: Session) -> HttpResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Claims {
+struct AppleClaims {
     iss: Option<String>,
     aud: Option<String>,
     exp: Option<u64>,
@@ -457,8 +457,8 @@ async fn aaaauth(
         let mut validation = Validation::new(Algorithm::RS256);
         validation.insecure_disable_signature_validation();
 
-        if let Ok(ttt) = decode::<Claims>(t, &key, &validation) {
-            tok = format!("token: {:?}", ttt);
+        if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
+            tok = format!("sub: {:?}", ttt.claims.sub.unwrap());
         }
     }
 
