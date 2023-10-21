@@ -466,27 +466,7 @@ struct AppleOAuthUser {
     email: Option<String>,
 }
 
-pub async fn aaaindex(session: Session) -> HttpResponse {
-    let link = if let Some(_login) = session.get::<bool>("login").unwrap() {
-        "aaalogout"
-    } else {
-        "aaalogin"
-    };
-
-    let html = format!(
-        r#"<html>
-        <head><title>OAuth2 Test</title></head>
-        <body>
-            <a href="/{}">{}</a>
-        </body>
-    </html>"#,
-        link, link
-    );
-
-    HttpResponse::Ok().body(html)
-}
-
-pub async fn aaalogin((req,): (HttpRequest,)) -> HttpResponse {
+pub async fn oauth_login((req,): (HttpRequest,)) -> HttpResponse {
     let data = req.app_data::<AppState>().unwrap();
     // Google supports Proof Key for Code Exchange (PKCE - https://oauth.net/2/pkce/).
     // Create a PKCE code verifier and SHA-256 encode it as a code challenge.
@@ -510,14 +490,14 @@ pub async fn aaalogin((req,): (HttpRequest,)) -> HttpResponse {
         .finish()
 }
 
-pub async fn aaalogout(session: Session) -> HttpResponse {
+pub async fn oauth_logout(session: Session) -> HttpResponse {
     session.remove("login");
     HttpResponse::Found()
-        .append_header((header::LOCATION, "/".to_string()))
+        .append_header((header::LOCATION, "/login".to_string()))
         .finish()
 }
 
-pub async fn aaaauth(
+pub async fn oauth_auth(
     (session, params, req): (Session, web::Form<AuthRequest>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<HcDbPostgres>().unwrap();
@@ -530,7 +510,7 @@ pub async fn aaaauth(
     // Exchange the code with a token.
     let token = &data.oauth.exchange_code(code);
 
-    session.insert("login", true).unwrap();
+    //session.insert("login", true).unwrap();
 
     let mut sub = String::from("");
     if let Some(ref t) = id_token {

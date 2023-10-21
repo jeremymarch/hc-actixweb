@@ -522,10 +522,9 @@ async fn main() -> io::Result<()> {
 
 fn config(cfg: &mut web::ServiceConfig) {
     cfg.route("/", web::get().to(index_page))
-        .route("/aaaindex", web::get().to(login::aaaindex))
-        .route("/aaalogin", web::get().to(login::aaalogin))
-        .route("/aaalogout", web::get().to(login::aaalogout))
-        .route("/aaaauth", web::post().to(login::aaaauth))
+        .route("/oauth-login", web::get().to(login::oauth_login))
+        .route("/oauth-logout", web::get().to(login::oauth_logout))
+        .route("/auth", web::post().to(login::oauth_auth))
         .route("/login", web::get().to(login::login_get))
         .route("/login", web::post().to(login::login_post))
         .route("/newuser", web::get().to(login::new_user_get))
