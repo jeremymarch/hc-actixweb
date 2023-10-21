@@ -503,7 +503,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
     ) -> Result<Option<(uuid::Uuid, String)>, HcError> {
         let row = sqlx::query(
             r#"
-            SELECT user_id, user_name,
+            SELECT user_id, user_name
             FROM users
             WHERE oauth = $1
             "#,
