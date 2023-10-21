@@ -1420,6 +1420,39 @@ mod tests {
         ONCE.get_or_init(setup_test_db).await;
     }
 
+    #[derive(Debug, Serialize, Deserialize)]
+    struct AppleOAuthUserName {
+        #[serde(rename(serialize = "firstName"), rename(deserialize = "firstName"))]
+        first_name: Option<String>,
+        #[serde(rename(serialize = "lastName"), rename(deserialize = "lastName"))]
+        last_name: Option<String>,
+    }
+
+    #[derive(Debug, Serialize, Deserialize)]
+    struct AppleOAuthUser {
+        name: AppleOAuthUserName,
+        email: Option<String>,
+    }
+
+    #[tokio::test]
+    async fn test_oauth_json() {
+        let mut first_name = String::from("");
+        let mut last_name = String::from("");
+        let mut email = String::from("");
+
+        let user = Some("{\"name\":{\"firstName\":\"First\",\"lastName\":\"Last\"},\"email\":\"abc@gmail.com\"}");
+
+        if let Some(user) = user {
+            let apple_oauth_user: AppleOAuthUser = serde_json::from_str(user).unwrap();
+            first_name = apple_oauth_user.name.first_name.unwrap().to_string();
+            last_name = apple_oauth_user.name.last_name.unwrap().to_string();
+            email = apple_oauth_user.email.unwrap().to_string();
+        }
+        assert_eq!(first_name, "First");
+        assert_eq!(last_name, "Last");
+        assert_eq!(email, "abc@gmail.com");
+    }
+
     #[tokio::test]
     async fn test_get_available_verbs() {
         let mut a = hc_get_available_verbs_practice(&Some(String::from("1,2,3")), &vec![], 1);
