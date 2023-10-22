@@ -527,7 +527,7 @@ pub async fn oauth_login((req,): (HttpRequest,)) -> HttpResponse {
         .set_response_type(&ResponseType::new("code id_token".to_string()))
         .add_extra_param("response_mode".to_string(), "form_post".to_string())
         .add_scope(Scope::new("openid".to_string()))
-        .add_scope(Scope::new("name".to_string()))
+        //.add_scope(Scope::new("name".to_string()))
         .add_scope(Scope::new("email".to_string()))
         .set_pkce_challenge(pkce_code_challenge) //apple does not support this, but no problem including it
         .url();
