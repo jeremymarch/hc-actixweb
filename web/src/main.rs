@@ -75,14 +75,7 @@ use sqlx::types::Uuid;
 
 use hoplite_verbs_rs::*;
 
-use crate::login::AppState;
-use oauth2::basic::BasicClient;
-use oauth2::AuthUrl;
-use oauth2::ClientId;
-use oauth2::ClientSecret;
-use oauth2::RedirectUrl;
-use oauth2::TokenUrl;
-use std::env;
+use crate::login::AppState; //for oauth
 
 async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
     //remember that basic authentication blocks this
@@ -457,32 +450,14 @@ async fn main() -> io::Result<()> {
     let message_framework = FlashMessagesFramework::builder(message_store).build();
 
     HttpServer::new(move || {
-        let apple_client_id = ClientId::new(
-            env::var("APPLE_CLIENT_ID").expect("Missing the APPLE_CLIENT_ID environment variable."),
-        );
-        let apple_client_secret = ClientSecret::new(
-            env::var("APPLE_CLIENT_SECRET")
-                .expect("Missing the APPLE_CLIENT_SECRET environment variable."),
-        );
-        let auth_url = AuthUrl::new("https://appleid.apple.com/auth/authorize".to_string())
-            .expect("Invalid authorization endpoint URL");
-        let token_url = TokenUrl::new("https://appleid.apple.com/auth/token".to_string())
-            .expect("Invalid token endpoint URL");
-
-        // Set up the config for the Apple OAuth2 process.
-        let client = BasicClient::new(
-            apple_client_id,
-            Some(apple_client_secret),
-            auth_url,
-            Some(token_url),
-        )
-        .set_redirect_uri(
-            RedirectUrl::new("https://hoplite-challenge.philolog.us/auth".to_string())
-                .expect("Invalid redirect URL"),
-        );
+        let oauth_apple_client = login::get_apple_client();
+        let oauth_google_client = login::get_google_client();
 
         App::new()
-            .app_data(AppState { oauth: client })
+            .app_data(AppState {
+                apple_oauth: oauth_apple_client,
+                google_oauth: oauth_google_client,
+            })
             .app_data(libhc::hc_load_verbs("pp.txt"))
             .app_data(hcdb.clone())
             .app_data(web::Data::from(app_state.clone()))

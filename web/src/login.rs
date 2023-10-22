@@ -423,10 +423,16 @@ use jsonwebtoken::Algorithm;
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use libhc::hc_create_oauth_user;
 use oauth2::basic::BasicClient;
+use oauth2::AuthUrl;
+use oauth2::ClientId;
+use oauth2::ClientSecret;
+use oauth2::RedirectUrl;
 use oauth2::ResponseType;
+use oauth2::TokenUrl;
 use oauth2::{AuthorizationCode, CsrfToken, PkceCodeChallenge, Scope};
 use serde::Deserialize;
 use serde::Serialize;
+use std::env;
 
 #[derive(Deserialize)]
 pub struct AuthRequest {
@@ -437,7 +443,8 @@ pub struct AuthRequest {
 }
 
 pub struct AppState {
-    pub oauth: BasicClient,
+    pub apple_oauth: BasicClient,
+    pub google_oauth: BasicClient,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -466,6 +473,46 @@ struct AppleOAuthUser {
     email: Option<String>,
 }
 
+pub fn get_google_client() -> BasicClient {
+    let client_id = ClientId::new(
+        env::var("GOOGLE_CLIENT_ID").expect("Missing the GOOGLE_CLIENT_ID environment variable."),
+    );
+    let client_secret = ClientSecret::new(
+        env::var("GOOGLE_CLIENT_SECRET")
+            .expect("Missing the GOOGLE_CLIENT_SECRET environment variable."),
+    );
+    let auth_url = AuthUrl::new("https://accounts.google.com/o/oauth2/v2/auth".to_string())
+        .expect("Invalid authorization endpoint URL");
+    let token_url = TokenUrl::new("https://www.googleapis.com/oauth2/v4/token".to_string())
+        .expect("Invalid token endpoint URL");
+
+    // Set up the config for the Apple OAuth2 process.
+    BasicClient::new(client_id, Some(client_secret), auth_url, Some(token_url)).set_redirect_uri(
+        RedirectUrl::new("https://hoplite-challenge.philolog.us/auth".to_string())
+            .expect("Invalid redirect URL"),
+    )
+}
+
+pub fn get_apple_client() -> BasicClient {
+    let client_id = ClientId::new(
+        env::var("APPLE_CLIENT_ID").expect("Missing the APPLE_CLIENT_ID environment variable."),
+    );
+    let client_secret = ClientSecret::new(
+        env::var("APPLE_CLIENT_SECRET")
+            .expect("Missing the APPLE_CLIENT_SECRET environment variable."),
+    );
+    let auth_url = AuthUrl::new("https://appleid.apple.com/auth/authorize".to_string())
+        .expect("Invalid authorization endpoint URL");
+    let token_url = TokenUrl::new("https://appleid.apple.com/auth/token".to_string())
+        .expect("Invalid token endpoint URL");
+
+    // Set up the config for the Apple OAuth2 process.
+    BasicClient::new(client_id, Some(client_secret), auth_url, Some(token_url)).set_redirect_uri(
+        RedirectUrl::new("https://hoplite-challenge.philolog.us/auth".to_string())
+            .expect("Invalid redirect URL"),
+    )
+}
+
 pub async fn oauth_login((req,): (HttpRequest,)) -> HttpResponse {
     let data = req.app_data::<AppState>().unwrap();
     // Google supports Proof Key for Code Exchange (PKCE - https://oauth.net/2/pkce/).
@@ -474,7 +521,7 @@ pub async fn oauth_login((req,): (HttpRequest,)) -> HttpResponse {
 
     // Generate the authorization URL to which we'll redirect the user.
     let (authorize_url, _csrf_state) = &data
-        .oauth
+        .apple_oauth
         .authorize_url(CsrfToken::new_random)
         // This example is requesting access to the "calendar" features and the user's profile.
         .set_response_type(&ResponseType::new("code id_token".to_string()))
@@ -491,7 +538,7 @@ pub async fn oauth_login((req,): (HttpRequest,)) -> HttpResponse {
 }
 
 pub async fn oauth_logout(session: Session) -> HttpResponse {
-    session.remove("login");
+    session.purge();
     HttpResponse::Found()
         .append_header((header::LOCATION, "/login".to_string()))
         .finish()
@@ -508,7 +555,7 @@ pub async fn oauth_auth(
     let id_token = params.id_token.clone();
 
     // Exchange the code with a token.
-    let token = &data.oauth.exchange_code(code);
+    let token = &data.apple_oauth.exchange_code(code);
 
     //session.insert("login", true).unwrap();
 
