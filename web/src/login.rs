@@ -518,6 +518,7 @@ pub async fn oauth_login((req,): (HttpRequest,)) -> HttpResponse {
     // Google supports Proof Key for Code Exchange (PKCE - https://oauth.net/2/pkce/).
     // Create a PKCE code verifier and SHA-256 encode it as a code challenge.
     let (pkce_code_challenge, _pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
+    let nonce = uuid::Uuid::new_v4(); // use UUID as random and unique nonce
 
     // Generate the authorization URL to which we'll redirect the user.
     let (authorize_url, _csrf_state) = &data
@@ -526,6 +527,7 @@ pub async fn oauth_login((req,): (HttpRequest,)) -> HttpResponse {
         // This example is requesting access to the "calendar" features and the user's profile.
         .set_response_type(&ResponseType::new("code id_token".to_string()))
         .add_extra_param("response_mode".to_string(), "form_post".to_string())
+        .add_extra_param("nonce".to_string(), nonce.to_string())
         .add_scope(Scope::new("openid".to_string()))
         //.add_scope(Scope::new("name".to_string()))
         .add_scope(Scope::new("email".to_string()))
