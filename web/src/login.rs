@@ -447,7 +447,7 @@ pub struct AppState {
     pub google_oauth: BasicClient,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct AppleClaims {
     iss: Option<String>,
     aud: Option<String>,
@@ -562,6 +562,7 @@ pub async fn oauth_auth(
     //session.insert("login", true).unwrap();
 
     let mut sub = String::from("");
+    let mut whole = String::from("");
     if let Some(ref t) = id_token {
         let key = DecodingKey::from_secret(&[]);
         let mut validation = Validation::new(Algorithm::RS256);
@@ -579,7 +580,9 @@ pub async fn oauth_auth(
         }
 
         if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
+            whole = format!("{:?}", ttt.clone());
             sub = ttt.claims.sub.unwrap_or(String::from(""));
+            
 
             let timestamp = libhc::get_timestamp();
             let (user_id, user_name) =
@@ -587,19 +590,19 @@ pub async fn oauth_auth(
                     .await
                     .map_err(map_hc_error)?;
 
-            session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-            if session.insert("user_id", user_id).is_ok()
-                && session.insert("username", user_name).is_ok()
-            {
-                return Ok(HttpResponse::SeeOther()
-                    .insert_header((LOCATION, "/"))
-                    .finish());
-            }
+            // session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+            // if session.insert("user_id", user_id).is_ok()
+            //     && session.insert("username", user_name).is_ok()
+            // {
+            //     return Ok(HttpResponse::SeeOther()
+            //         .insert_header((LOCATION, "/"))
+            //         .finish());
+            // }
 
-            session.purge();
-            return Ok(HttpResponse::Found()
-                .append_header((header::LOCATION, "/login".to_string()))
-                .finish());
+            // session.purge();
+            // return Ok(HttpResponse::Found()
+            //     .append_header((header::LOCATION, "/login".to_string()))
+            //     .finish());
         }
     }
 
@@ -617,6 +620,8 @@ pub async fn oauth_auth(
             <p>{:?}</p>
             id_token:
             <p>{:?}</p>
+            id_token:
+            <p>{:?}</p>
         </body>
     </html>"#,
         state.secret(),
@@ -624,6 +629,7 @@ pub async fn oauth_auth(
         user,
         id_token,
         sub,
+        whole,
     );
     Ok(HttpResponse::Ok().body(html))
 
