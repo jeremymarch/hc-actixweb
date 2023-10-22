@@ -500,7 +500,7 @@ fn config(cfg: &mut web::ServiceConfig) {
         .route("/oauth-login", web::get().to(login::oauth_login))
         .route("/oauth-login-google", web::get().to(login::oauth_login_google))
         .route("/auth", web::post().to(login::oauth_auth))
-        .route("/auth-google", web::post().to(login::oauth_auth_google))
+        .route("/gauth", web::post().to(login::oauth_auth_google))
         .route("/login", web::get().to(login::login_get))
         .route("/login", web::post().to(login::login_post))
         .route("/newuser", web::get().to(login::new_user_get))

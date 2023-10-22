@@ -495,7 +495,7 @@ pub fn get_google_client() -> BasicClient {
 
     // Set up the config for the Google OAuth2 process.
     BasicClient::new(client_id, Some(client_secret), auth_url, Some(token_url)).set_redirect_uri(
-        RedirectUrl::new("https://hoplite-challenge.philolog.us/auth".to_string())
+        RedirectUrl::new("https://hoplite-challenge.philolog.us/gauth".to_string())
             .expect("Invalid redirect URL"),
     )
 }
@@ -599,7 +599,7 @@ pub async fn oauth_auth(
         validation.insecure_disable_signature_validation();
 
         let mut first_name = String::from("");
-        let mut last_name = String::from("");
+        let mut last_name = String::from("user");
         let mut email = String::from("");
         if let Some(ref user) = user {
             if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
@@ -680,8 +680,6 @@ pub async fn oauth_auth_google(
     // Exchange the code with a token.
     let token = &data.google_oauth.exchange_code(code);
 
-    //session.insert("login", true).unwrap();
-
     let mut sub = String::from("");
     let mut whole = String::from("");
     if let Some(ref t) = id_token {
@@ -690,7 +688,7 @@ pub async fn oauth_auth_google(
         validation.insecure_disable_signature_validation();
 
         let mut first_name = String::from("");
-        let mut last_name = String::from("");
+        let mut last_name = String::from("user");
         let mut email = String::from("");
         if let Some(ref user) = user {
             if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
