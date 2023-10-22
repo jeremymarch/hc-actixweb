@@ -82,6 +82,9 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
             function applelogin() {{
                 window.location.href = "oauth-login";
             }}
+            function googlelogin() {{
+                window.location.href = "oauth-login-google";
+            }}
             function validate() {{
                 let u = document.forms[0]["username"].value;
                 let p = document.forms[0]["password"].value;
@@ -110,6 +113,7 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
             .dark a {{color:#03A5F3;}}
             #newuserdiv {{ padding-top:12px; }}
             #apple-login {{border: 1px solid white;width: 200px;margin: 0x auto;display: inline-block;margin-top: 12px; }}
+            #google-login {{border: 1px solid white;width: 200px;margin: 0x auto;display: inline-block;margin-top: 12px; }}
         </style>
     </head>
     <body>
@@ -145,6 +149,9 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
                     </tr>
                     <tr>
                         <td colspan="2" align="center"><img id="apple-login" src="appleid_button@2x.png" onclick="applelogin()"/></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" align="center"><img id="google-login" src="branding_guideline_sample_dk_sq_lg.svg" onclick="googlelogin()"/></td>
                     </tr>
                 </tbody>
             </table>
@@ -522,6 +529,32 @@ pub async fn oauth_login((req,): (HttpRequest,)) -> HttpResponse {
 
     // Generate the authorization URL to which we'll redirect the user.
     let (authorize_url, _csrf_state) = &data
+        .apple_oauth
+        .authorize_url(CsrfToken::new_random)
+        // This example is requesting access to the "calendar" features and the user's profile.
+        .set_response_type(&ResponseType::new("code id_token".to_string()))
+        .add_extra_param("response_mode".to_string(), "form_post".to_string())
+        .add_extra_param("nonce".to_string(), nonce.to_string())
+        .add_scope(Scope::new("openid".to_string()))
+        .add_scope(Scope::new("name".to_string()))
+        .add_scope(Scope::new("email".to_string()))
+        .set_pkce_challenge(pkce_code_challenge) //apple does not support this, but no problem including it
+        .url();
+
+    HttpResponse::Found()
+        .append_header((header::LOCATION, authorize_url.to_string()))
+        .finish()
+}
+
+pub async fn oauth_login_google((req,): (HttpRequest,)) -> HttpResponse {
+    let data = req.app_data::<AppState>().unwrap();
+    // Google supports Proof Key for Code Exchange (PKCE - https://oauth.net/2/pkce/).
+    // Create a PKCE code verifier and SHA-256 encode it as a code challenge.
+    let (pkce_code_challenge, _pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
+    let nonce = uuid::Uuid::new_v4(); // use UUID as random and unique nonce
+
+    // Generate the authorization URL to which we'll redirect the user.
+    let (authorize_url, _csrf_state) = &data
         .google_oauth
         .authorize_url(CsrfToken::new_random)
         // This example is requesting access to the "calendar" features and the user's profile.
@@ -539,14 +572,102 @@ pub async fn oauth_login((req,): (HttpRequest,)) -> HttpResponse {
         .finish()
 }
 
-pub async fn oauth_logout(session: Session) -> HttpResponse {
-    session.purge();
-    HttpResponse::Found()
-        .append_header((header::LOCATION, "/login".to_string()))
-        .finish()
-}
+// pub async fn oauth_logout(session: Session) -> HttpResponse {
+//     session.purge();
+//     HttpResponse::Found()
+//         .append_header((header::LOCATION, "/login".to_string()))
+//         .finish()
+// }
 
 pub async fn oauth_auth(
+    (session, params, req): (Session, web::Form<AuthRequest>, HttpRequest),
+) -> Result<HttpResponse, AWError> {
+    let db = req.app_data::<HcDbPostgres>().unwrap();
+    let data = req.app_data::<AppState>().unwrap();
+    let code = AuthorizationCode::new(params.code.clone());
+    let state = CsrfToken::new(params.state.clone());
+    let user = params.user.clone();
+    let id_token = params.id_token.clone();
+
+    let token = &data.apple_oauth.exchange_code(code);
+
+    let mut sub = String::from("");
+    let mut whole = String::from("");
+    if let Some(ref t) = id_token {
+        let key = DecodingKey::from_secret(&[]);
+        let mut validation = Validation::new(Algorithm::RS256);
+        validation.insecure_disable_signature_validation();
+
+        let mut first_name = String::from("");
+        let mut last_name = String::from("");
+        let mut email = String::from("");
+        if let Some(ref user) = user {
+            if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
+                first_name = apple_oauth_user.name.first_name.unwrap_or(String::from(""));
+                last_name = apple_oauth_user.name.last_name.unwrap_or(String::from(""));
+                email = apple_oauth_user.email.unwrap_or(String::from(""));
+            }
+        }
+
+        if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
+            whole = format!("{:?}", ttt.clone());
+            sub = ttt.claims.sub.unwrap_or(String::from(""));
+            
+            let timestamp = libhc::get_timestamp();
+            let (user_id, user_name) =
+                hc_create_oauth_user(db, sub.clone(), &first_name, &last_name, &email, timestamp)
+                    .await
+                    .map_err(map_hc_error)?;
+
+            session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+            if session.insert("user_id", user_id).is_ok()
+                && session.insert("username", user_name).is_ok()
+            {
+                return Ok(HttpResponse::SeeOther()
+                    .insert_header((LOCATION, "/"))
+                    .finish());
+            }
+
+            session.purge();
+            return Ok(HttpResponse::Found()
+                .append_header((header::LOCATION, "/login".to_string()))
+                .finish());
+        }
+    }
+
+    let html = format!(
+        r#"<html>
+        <head><title>OAuth2 Test</title></head>
+        <body>
+            Apple returned the following state:
+            <p>{}</p>
+            Apple returned the following token:
+            <p>{:?}</p>
+            user:
+            <p>{:?}</p>
+            id_token:
+            <p>{:?}</p>
+            id_token:
+            <p>{:?}</p>
+            id_token:
+            <p>{:?}</p>
+        </body>
+    </html>"#,
+        state.secret(),
+        token,
+        user,
+        id_token,
+        sub,
+        whole,
+    );
+    Ok(HttpResponse::Ok().body(html))
+
+    // HttpResponse::Found()
+    //     .append_header((header::LOCATION, "/login".to_string()))
+    //     .finish()
+}
+
+pub async fn oauth_auth_google(
     (session, params, req): (Session, web::Form<AuthRequest>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<HcDbPostgres>().unwrap();
