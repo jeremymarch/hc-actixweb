@@ -486,7 +486,7 @@ pub fn get_google_client() -> BasicClient {
     let token_url = TokenUrl::new("https://www.googleapis.com/oauth2/v4/token".to_string())
         .expect("Invalid token endpoint URL");
 
-    // Set up the config for the Apple OAuth2 process.
+    // Set up the config for the Google OAuth2 process.
     BasicClient::new(client_id, Some(client_secret), auth_url, Some(token_url)).set_redirect_uri(
         RedirectUrl::new("https://hoplite-challenge.philolog.us/auth".to_string())
             .expect("Invalid redirect URL"),
@@ -521,7 +521,7 @@ pub async fn oauth_login((req,): (HttpRequest,)) -> HttpResponse {
 
     // Generate the authorization URL to which we'll redirect the user.
     let (authorize_url, _csrf_state) = &data
-        .apple_oauth
+        .google_oauth
         .authorize_url(CsrfToken::new_random)
         // This example is requesting access to the "calendar" features and the user's profile.
         .set_response_type(&ResponseType::new("code id_token".to_string()))
@@ -555,7 +555,7 @@ pub async fn oauth_auth(
     let id_token = params.id_token.clone();
 
     // Exchange the code with a token.
-    let token = &data.apple_oauth.exchange_code(code);
+    let token = &data.google_oauth.exchange_code(code);
 
     //session.insert("login", true).unwrap();
 
