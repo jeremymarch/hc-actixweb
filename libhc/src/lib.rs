@@ -323,7 +323,7 @@ pub trait HcTrx {
         &mut self,
         oauth_iss: Option<String>,
         oauth_sub: Option<String>,
-        username: &str,
+        username: Option<&str>,
         password: Secret<String>,
         email: &str,
         timestamp: i64,
@@ -435,7 +435,7 @@ pub async fn hc_create_user(
 
     let mut tx = db.begin_tx().await?;
     let user_id = tx
-        .create_user(None, None, username, password_hash, email, timestamp)
+        .create_user(None, None, Some(username), password_hash, email, timestamp)
         .await?;
     tx.commit_tx().await?;
     Ok(user_id)
@@ -465,7 +465,7 @@ pub async fn hc_create_oauth_user(
                 .create_user(
                     Some(oauth_iss),
                     Some(oauth_sub),
-                    user_name.as_str(),
+                    None,
                     Secret::new(String::from("")),
                     email,
                     timestamp,

@@ -457,7 +457,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         &mut self,
         oauth_iss: Option<String>,
         oauth_sub: Option<String>,
-        username: &str,
+        username: Option<&str>,
         password: Secret<String>,
         email: &str,
         timestamp: i64,
