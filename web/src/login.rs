@@ -631,8 +631,10 @@ pub async fn oauth_auth_apple(
 
                 session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
                 if session.insert("user_id", user_id).is_ok()
-                    && session.insert("username", user_name).is_ok()
                 {
+                    if let Some(u) = user_name {
+                        let _ = session.insert("username", u);
+                    }
                     return Ok(HttpResponse::SeeOther()
                         .insert_header((LOCATION, "/"))
                         .finish());

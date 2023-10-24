@@ -338,7 +338,7 @@ pub trait HcTrx {
         &mut self,
         oauth_iss: &str,
         oauth_sub: &str,
-    ) -> Result<Option<(uuid::Uuid, String)>, HcError>;
+    ) -> Result<Option<(uuid::Uuid, Option<String>)>, HcError>;
 
     async fn create_db(&mut self) -> Result<(), HcError>;
 }
@@ -449,7 +449,7 @@ pub async fn hc_create_oauth_user(
     last_name: &str,
     email: &str,
     timestamp: i64,
-) -> Result<(Uuid, String), HcError> {
+) -> Result<(Uuid, Option<String>), HcError> {
     let mut tx = db.begin_tx().await?;
 
     let existing_user = tx.get_oauth_user(&oauth_iss, &oauth_sub).await?;
@@ -460,7 +460,7 @@ pub async fn hc_create_oauth_user(
             Ok((existing_user_id, existing_user_name))
         }
         None => {
-            let user_name = format!("{}{}", first_name, last_name);
+            //let user_name = format!("{}{}", first_name, last_name);
             let user_id = tx
                 .create_user(
                     Some(oauth_iss),
@@ -472,7 +472,7 @@ pub async fn hc_create_oauth_user(
                 )
                 .await?;
             tx.commit_tx().await?;
-            Ok((user_id, user_name))
+            Ok((user_id, None))
         }
     }
 }

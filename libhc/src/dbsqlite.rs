@@ -497,7 +497,7 @@ impl HcTrx for HcDbSqliteTrx<'_> {
         &mut self,
         oauth_iss: &str,
         oauth_sub: &str,
-    ) -> Result<Option<(uuid::Uuid, String)>, HcError> {
+    ) -> Result<Option<(uuid::Uuid, Option<String>)>, HcError> {
         let row = sqlx::query(
             r#"
             SELECT user_id, user_name
