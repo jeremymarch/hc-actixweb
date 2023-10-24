@@ -166,6 +166,7 @@ struct OAuthPost {
     state: Option<String>,
 }
 
+//https://www.oauth.com/oauth2-servers/signing-in-with-google/
 //https://developer.okta.com/blog/2019/06/04/what-the-heck-is-sign-in-with-apple
 //https://www.scottbrady91.com/openid-connect/implementing-sign-in-with-apple-in-aspnet-core
 pub async fn oauth_post(
@@ -464,6 +465,8 @@ struct AppleClaims {
     c_hash: Option<String>,
     auth_time: Option<u64>,
     nonce_supported: Option<bool>,
+    email: Option<String>,
+    email_verified: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -599,7 +602,7 @@ pub async fn oauth_auth(
         validation.insecure_disable_signature_validation();
 
         let mut first_name = String::from("");
-        let mut last_name = String::from("user");
+        let mut last_name = String::from("");
         let mut email = String::from("");
         if let Some(ref user) = user {
             if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
@@ -612,7 +615,7 @@ pub async fn oauth_auth(
         if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
             whole = format!("{:?}", ttt.clone());
             sub = ttt.claims.sub.unwrap_or(String::from(""));
-            
+
             let timestamp = libhc::get_timestamp();
             let (user_id, user_name) =
                 hc_create_oauth_user(db, sub.clone(), &first_name, &last_name, &email, timestamp)
@@ -688,7 +691,7 @@ pub async fn oauth_auth_google(
         validation.insecure_disable_signature_validation();
 
         let mut first_name = String::from("");
-        let mut last_name = String::from("user");
+        let mut last_name = String::from("");
         let mut email = String::from("");
         if let Some(ref user) = user {
             if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
@@ -701,7 +704,6 @@ pub async fn oauth_auth_google(
         if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
             whole = format!("{:?}", ttt.clone());
             sub = ttt.claims.sub.unwrap_or(String::from(""));
-            
 
             let timestamp = libhc::get_timestamp();
             let (user_id, user_name) =

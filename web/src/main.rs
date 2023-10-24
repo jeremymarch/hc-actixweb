@@ -498,7 +498,10 @@ async fn main() -> io::Result<()> {
 fn config(cfg: &mut web::ServiceConfig) {
     cfg.route("/", web::get().to(index_page))
         .route("/oauth-login", web::get().to(login::oauth_login))
-        .route("/oauth-login-google", web::get().to(login::oauth_login_google))
+        .route(
+            "/oauth-login-google",
+            web::get().to(login::oauth_login_google),
+        )
         .route("/auth", web::post().to(login::oauth_auth))
         .route("/gauth", web::post().to(login::oauth_auth_google))
         .route("/login", web::get().to(login::login_get))
