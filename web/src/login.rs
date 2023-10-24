@@ -596,6 +596,7 @@ pub async fn oauth_auth_apple(
         let token = &data.apple_oauth.exchange_code(code);
 
         let mut sub = String::from("");
+        let mut iss = String::from("");
         let mut whole = String::from("");
         let mut new_claims = String::from("");
         if let Some(ref t) = id_token {
@@ -620,10 +621,11 @@ pub async fn oauth_auth_apple(
             if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
                 whole = format!("{:?}", ttt.clone());
                 sub = ttt.claims.sub.unwrap_or(String::from(""));
+                iss = ttt.claims.iss.unwrap_or(String::from(""));
 
                 let timestamp = libhc::get_timestamp();
                 let (user_id, user_name) =
-                    hc_create_oauth_user(db, sub.clone(), &first_name, &last_name, &email, timestamp)
+                    hc_create_oauth_user(db, iss.clone(), sub.clone(), &first_name, &last_name, &email, timestamp)
                         .await
                         .map_err(map_hc_error)?;
 
@@ -692,6 +694,7 @@ pub async fn oauth_auth_google(
         // Exchange the code with a token.
         let token = &data.google_oauth.exchange_code(code);
 
+        let mut iss = String::from("");
         let mut sub = String::from("");
         let mut whole = String::from("");
         if let Some(ref t) = id_token {
@@ -713,10 +716,11 @@ pub async fn oauth_auth_google(
             if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
                 whole = format!("{:?}", ttt.clone());
                 sub = ttt.claims.sub.unwrap_or(String::from(""));
+                iss = ttt.claims.iss.unwrap_or(String::from(""));
 
                 let timestamp = libhc::get_timestamp();
                 let (user_id, user_name) =
-                    hc_create_oauth_user(db, sub.clone(), &first_name, &last_name, &email, timestamp)
+                    hc_create_oauth_user(db, iss.clone(), sub.clone(), &first_name, &last_name, &email, timestamp)
                         .await
                         .map_err(map_hc_error)?;
 

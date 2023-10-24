@@ -449,17 +449,19 @@ impl HcTrx for HcDbSqliteTrx<'_> {
 
     async fn create_user(
         &mut self,
-        oauth: Option<String>,
+        oauth_iss: Option<String>,
+        oauth_sub: Option<String>,
         username: &str,
         password: Secret<String>,
         email: &str,
         timestamp: i64,
     ) -> Result<Uuid, HcError> {
         let uuid = sqlx::types::Uuid::new_v4();
-        let query = "INSERT INTO users VALUES ($1, $2, $3, $4, $5, 0, $6);";
+        let query = "INSERT INTO users VALUES ($1, $2, $3, $4, $5, $6, 0, $7);";
         let _res = sqlx::query(query)
             .bind(uuid)
-            .bind(oauth)
+            .bind(oauth_iss)
+            .bind(oauth_sub)
             .bind(username)
             .bind(password.expose_secret())
             .bind(email)
@@ -493,16 +495,18 @@ impl HcTrx for HcDbSqliteTrx<'_> {
 
     async fn get_oauth_user(
         &mut self,
-        oauth: &str,
+        oauth_iss: &str,
+        oauth_sub: &str,
     ) -> Result<Option<(uuid::Uuid, String)>, HcError> {
         let row = sqlx::query(
             r#"
             SELECT user_id, user_name
             FROM users
-            WHERE oauth = $1
+            WHERE oauth_sub = $1 AND oauth_iss = $2
             "#,
         )
-        .bind(oauth)
+        .bind(oauth_sub)
+        .bind(oauth_iss)
         .map(|row: SqliteRow| (row.get("user_id"), row.get("user_name")))
         .fetch_optional(&mut *self.tx)
         .await
@@ -514,7 +518,8 @@ impl HcTrx for HcDbSqliteTrx<'_> {
     async fn create_db(&mut self) -> Result<(), HcError> {
         let query = r#"CREATE TABLE IF NOT EXISTS users ( 
     user_id BLOB PRIMARY KEY NOT NULL, 
-    oauth TEXT,
+    oauth_iss TEXT,
+    oauth_sub TEXT,
     user_name TEXT, 
     password TEXT, 
     email TEXT,

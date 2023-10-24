@@ -321,7 +321,8 @@ pub trait HcTrx {
 
     async fn create_user(
         &mut self,
-        oauth: Option<String>,
+        oauth_iss: Option<String>,
+        oauth_sub: Option<String>,
         username: &str,
         password: Secret<String>,
         email: &str,
@@ -335,7 +336,8 @@ pub trait HcTrx {
 
     async fn get_oauth_user(
         &mut self,
-        oauth: &str,
+        oauth_iss: &str,
+        oauth_sub: &str,
     ) -> Result<Option<(uuid::Uuid, String)>, HcError>;
 
     async fn create_db(&mut self) -> Result<(), HcError>;
@@ -433,7 +435,7 @@ pub async fn hc_create_user(
 
     let mut tx = db.begin_tx().await?;
     let user_id = tx
-        .create_user(None, username, password_hash, email, timestamp)
+        .create_user(None, None, username, password_hash, email, timestamp)
         .await?;
     tx.commit_tx().await?;
     Ok(user_id)
@@ -441,7 +443,8 @@ pub async fn hc_create_user(
 
 pub async fn hc_create_oauth_user(
     db: &dyn HcDb,
-    oauth: String,
+    oauth_iss: String,
+    oauth_sub: String,
     first_name: &str,
     last_name: &str,
     email: &str,
@@ -449,7 +452,7 @@ pub async fn hc_create_oauth_user(
 ) -> Result<(Uuid, String), HcError> {
     let mut tx = db.begin_tx().await?;
 
-    let existing_user = tx.get_oauth_user(&oauth).await?;
+    let existing_user = tx.get_oauth_user(&oauth_iss, &oauth_sub).await?;
 
     match existing_user {
         Some((existing_user_id, existing_user_name)) => {
@@ -460,7 +463,8 @@ pub async fn hc_create_oauth_user(
             let user_name = format!("{}{}", first_name, last_name);
             let user_id = tx
                 .create_user(
-                    Some(oauth),
+                    Some(oauth_iss),
+                    Some(oauth_sub),
                     user_name.as_str(),
                     Secret::new(String::from("")),
                     email,
@@ -1482,6 +1486,27 @@ mod tests {
         assert_eq!(first_name, "");
         assert_eq!(last_name, "");
         assert_eq!(email, "abc@gmail.com");
+
+
+
+
+
+
+
+
+        // let user = Some("{\"name\":{\"firstName\":\"First\",\"lastName\":\"Last\"},\"email\":\"abc@gmail.com\"}");
+
+        // if let Some(user) = user {
+        //     if let Ok(h) = serde_json::from_str::<HashMap<String, Value>>(user) {
+
+        //         first_name = h.name.first_name.unwrap_or(String::from(""));
+        //         last_name = apple_oauth_user.name.last_name.unwrap_or(String::from(""));
+        //         email = apple_oauth_user.email.unwrap_or(String::from(""));
+        //     }
+        // }
+        // assert_eq!(first_name, "First");
+        // assert_eq!(last_name, "Last");
+        // assert_eq!(email, "abc@gmail.com");
     }
 
     #[tokio::test]
