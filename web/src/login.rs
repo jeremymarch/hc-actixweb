@@ -465,8 +465,6 @@ struct AppleClaims {
     c_hash: Option<String>,
     auth_time: Option<u64>,
     nonce_supported: Option<bool>,
-    email: Option<String>,
-    email_verified: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
