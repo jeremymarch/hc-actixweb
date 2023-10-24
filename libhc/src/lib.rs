@@ -87,6 +87,7 @@ pub struct SessionsListResponse {
     pub sessions: Vec<SessionsListQuery>,
     pub success: bool,
     pub username: Option<String>,
+    pub logged_in: bool,
     pub current_session: Option<SessionState>,
 }
 
@@ -997,6 +998,7 @@ pub async fn hc_get_sessions(
         sessions: hc_get_sessions_tr(&mut tx, user_id).await?,
         success: true,
         username,
+        logged_in: true,
         current_session,
     });
     tx.commit_tx().await?;

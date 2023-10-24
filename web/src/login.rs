@@ -29,6 +29,8 @@ use actix_web_flash_messages::{IncomingFlashMessages, Level};
 use libhc::dbpostgres::HcDbPostgres;
 use libhc::Credentials;
 use secrecy::Secret;
+use serde_json::Value;
+use std::collections::HashMap;
 use std::fmt::Write;
 
 #[derive(serde::Deserialize)]
@@ -580,7 +582,7 @@ pub async fn oauth_login_google((req,): (HttpRequest,)) -> HttpResponse {
 //         .finish()
 // }
 
-pub async fn oauth_auth(
+pub async fn oauth_auth_apple(
     (session, params, req): (Session, web::Form<AuthRequest>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<HcDbPostgres>().unwrap();
@@ -594,6 +596,7 @@ pub async fn oauth_auth(
 
     let mut sub = String::from("");
     let mut whole = String::from("");
+    let mut new_claims = String::from("");
     if let Some(ref t) = id_token {
         let key = DecodingKey::from_secret(&[]);
         let mut validation = Validation::new(Algorithm::RS256);
@@ -609,6 +612,9 @@ pub async fn oauth_auth(
                 email = apple_oauth_user.email.unwrap_or(String::from(""));
             }
         }
+
+        // let aaa = base64_url::decode(&t).unwrap();
+        // let thing: HashMap<String, Value> = serde_json::from_slice(&aaa).unwrap();
 
         if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
             whole = format!("{:?}", ttt.clone());
@@ -648,9 +654,11 @@ pub async fn oauth_auth(
             <p>{:?}</p>
             id_token:
             <p>{:?}</p>
-            id_token:
+            sub:
             <p>{:?}</p>
-            id_token:
+            whole:
+            <p>{:?}</p>
+            new claims:
             <p>{:?}</p>
         </body>
     </html>"#,
@@ -660,6 +668,7 @@ pub async fn oauth_auth(
         id_token,
         sub,
         whole,
+        new_claims,
     );
     Ok(HttpResponse::Ok().body(html))
 
@@ -709,19 +718,19 @@ pub async fn oauth_auth_google(
                     .await
                     .map_err(map_hc_error)?;
 
-            // session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-            // if session.insert("user_id", user_id).is_ok()
-            //     && session.insert("username", user_name).is_ok()
-            // {
-            //     return Ok(HttpResponse::SeeOther()
-            //         .insert_header((LOCATION, "/"))
-            //         .finish());
-            // }
+            session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+            if session.insert("user_id", user_id).is_ok()
+                && session.insert("username", user_name).is_ok()
+            {
+                return Ok(HttpResponse::SeeOther()
+                    .insert_header((LOCATION, "/"))
+                    .finish());
+            }
 
-            // session.purge();
-            // return Ok(HttpResponse::Found()
-            //     .append_header((header::LOCATION, "/login".to_string()))
-            //     .finish());
+            session.purge();
+            return Ok(HttpResponse::Found()
+                .append_header((header::LOCATION, "/login".to_string()))
+                .finish());
         }
     }
 

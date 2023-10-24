@@ -502,7 +502,7 @@ fn config(cfg: &mut web::ServiceConfig) {
             "/oauth-login-google",
             web::get().to(login::oauth_login_google),
         )
-        .route("/auth", web::post().to(login::oauth_auth))
+        .route("/auth", web::post().to(login::oauth_auth_apple))
         .route("/gauth", web::post().to(login::oauth_auth_google))
         .route("/login", web::get().to(login::login_get))
         .route("/login", web::post().to(login::login_post))
