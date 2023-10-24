@@ -446,7 +446,7 @@ use std::env;
 
 #[derive(Deserialize)]
 pub struct AuthRequest {
-    code: String,
+    code: Option<String>,
     state: String,
     id_token: Option<String>,
     user: Option<String>,
@@ -587,94 +587,95 @@ pub async fn oauth_auth_apple(
 ) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<HcDbPostgres>().unwrap();
     let data = req.app_data::<AppState>().unwrap();
-    let code = AuthorizationCode::new(params.code.clone());
-    let state = CsrfToken::new(params.state.clone());
-    let user = params.user.clone();
-    let id_token = params.id_token.clone();
+    if let Some(param_code ) = &params.code {
+        let code = AuthorizationCode::new(param_code.clone());
+        let state = CsrfToken::new(params.state.clone());
+        let user = params.user.clone();
+        let id_token = params.id_token.clone();
 
-    let token = &data.apple_oauth.exchange_code(code);
+        let token = &data.apple_oauth.exchange_code(code);
 
-    let mut sub = String::from("");
-    let mut whole = String::from("");
-    let mut new_claims = String::from("");
-    if let Some(ref t) = id_token {
-        let key = DecodingKey::from_secret(&[]);
-        let mut validation = Validation::new(Algorithm::RS256);
-        validation.insecure_disable_signature_validation();
+        let mut sub = String::from("");
+        let mut whole = String::from("");
+        let mut new_claims = String::from("");
+        if let Some(ref t) = id_token {
+            let key = DecodingKey::from_secret(&[]);
+            let mut validation = Validation::new(Algorithm::RS256);
+            validation.insecure_disable_signature_validation();
 
-        let mut first_name = String::from("");
-        let mut last_name = String::from("");
-        let mut email = String::from("");
-        if let Some(ref user) = user {
-            if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
-                first_name = apple_oauth_user.name.first_name.unwrap_or(String::from(""));
-                last_name = apple_oauth_user.name.last_name.unwrap_or(String::from(""));
-                email = apple_oauth_user.email.unwrap_or(String::from(""));
+            let mut first_name = String::from("");
+            let mut last_name = String::from("");
+            let mut email = String::from("");
+            if let Some(ref user) = user {
+                if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
+                    first_name = apple_oauth_user.name.first_name.unwrap_or(String::from(""));
+                    last_name = apple_oauth_user.name.last_name.unwrap_or(String::from(""));
+                    email = apple_oauth_user.email.unwrap_or(String::from(""));
+                }
             }
-        }
 
-        // let aaa = base64_url::decode(&t).unwrap();
-        // let thing: HashMap<String, Value> = serde_json::from_slice(&aaa).unwrap();
+            // let aaa = base64_url::decode(&t).unwrap();
+            // let thing: HashMap<String, Value> = serde_json::from_slice(&aaa).unwrap();
 
-        if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
-            whole = format!("{:?}", ttt.clone());
-            sub = ttt.claims.sub.unwrap_or(String::from(""));
+            if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
+                whole = format!("{:?}", ttt.clone());
+                sub = ttt.claims.sub.unwrap_or(String::from(""));
 
-            let timestamp = libhc::get_timestamp();
-            let (user_id, user_name) =
-                hc_create_oauth_user(db, sub.clone(), &first_name, &last_name, &email, timestamp)
-                    .await
-                    .map_err(map_hc_error)?;
+                let timestamp = libhc::get_timestamp();
+                let (user_id, user_name) =
+                    hc_create_oauth_user(db, sub.clone(), &first_name, &last_name, &email, timestamp)
+                        .await
+                        .map_err(map_hc_error)?;
 
-            session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-            if session.insert("user_id", user_id).is_ok()
-                && session.insert("username", user_name).is_ok()
-            {
-                return Ok(HttpResponse::SeeOther()
-                    .insert_header((LOCATION, "/"))
+                session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+                if session.insert("user_id", user_id).is_ok()
+                    && session.insert("username", user_name).is_ok()
+                {
+                    return Ok(HttpResponse::SeeOther()
+                        .insert_header((LOCATION, "/"))
+                        .finish());
+                }
+
+                session.purge();
+                return Ok(HttpResponse::Found()
+                    .append_header((header::LOCATION, "/login".to_string()))
                     .finish());
             }
-
-            session.purge();
-            return Ok(HttpResponse::Found()
-                .append_header((header::LOCATION, "/login".to_string()))
-                .finish());
         }
+        let html = format!(
+            r#"<html>
+            <head><title>OAuth2 Test</title></head>
+            <body>
+                Apple returned the following state:
+                <p>{}</p>
+                Apple returned the following token:
+                <p>{:?}</p>
+                user:
+                <p>{:?}</p>
+                id_token:
+                <p>{:?}</p>
+                sub:
+                <p>{:?}</p>
+                whole:
+                <p>{:?}</p>
+                new claims:
+                <p>{:?}</p>
+            </body>
+        </html>"#,
+            state.secret(),
+            token,
+            user,
+            id_token,
+            sub,
+            whole,
+            new_claims,
+        );
+        return Ok(HttpResponse::Ok().body(html));
     }
 
-    let html = format!(
-        r#"<html>
-        <head><title>OAuth2 Test</title></head>
-        <body>
-            Apple returned the following state:
-            <p>{}</p>
-            Apple returned the following token:
-            <p>{:?}</p>
-            user:
-            <p>{:?}</p>
-            id_token:
-            <p>{:?}</p>
-            sub:
-            <p>{:?}</p>
-            whole:
-            <p>{:?}</p>
-            new claims:
-            <p>{:?}</p>
-        </body>
-    </html>"#,
-        state.secret(),
-        token,
-        user,
-        id_token,
-        sub,
-        whole,
-        new_claims,
-    );
-    Ok(HttpResponse::Ok().body(html))
-
-    // HttpResponse::Found()
-    //     .append_header((header::LOCATION, "/login".to_string()))
-    //     .finish()
+    Ok(HttpResponse::Found()
+        .append_header((header::LOCATION, "/login".to_string()))
+        .finish())
 }
 
 pub async fn oauth_auth_google(
@@ -682,86 +683,88 @@ pub async fn oauth_auth_google(
 ) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<HcDbPostgres>().unwrap();
     let data = req.app_data::<AppState>().unwrap();
-    let code = AuthorizationCode::new(params.code.clone());
-    let state = CsrfToken::new(params.state.clone());
-    let user = params.user.clone();
-    let id_token = params.id_token.clone();
+    if let Some(param_code ) = &params.code {
+        let code = AuthorizationCode::new(param_code.clone());
+        let state = CsrfToken::new(params.state.clone());
+        let user = params.user.clone();
+        let id_token = params.id_token.clone();
 
-    // Exchange the code with a token.
-    let token = &data.google_oauth.exchange_code(code);
+        // Exchange the code with a token.
+        let token = &data.google_oauth.exchange_code(code);
 
-    let mut sub = String::from("");
-    let mut whole = String::from("");
-    if let Some(ref t) = id_token {
-        let key = DecodingKey::from_secret(&[]);
-        let mut validation = Validation::new(Algorithm::RS256);
-        validation.insecure_disable_signature_validation();
+        let mut sub = String::from("");
+        let mut whole = String::from("");
+        if let Some(ref t) = id_token {
+            let key = DecodingKey::from_secret(&[]);
+            let mut validation = Validation::new(Algorithm::RS256);
+            validation.insecure_disable_signature_validation();
 
-        let mut first_name = String::from("");
-        let mut last_name = String::from("");
-        let mut email = String::from("");
-        if let Some(ref user) = user {
-            if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
-                first_name = apple_oauth_user.name.first_name.unwrap_or(String::from(""));
-                last_name = apple_oauth_user.name.last_name.unwrap_or(String::from(""));
-                email = apple_oauth_user.email.unwrap_or(String::from(""));
+            let mut first_name = String::from("");
+            let mut last_name = String::from("");
+            let mut email = String::from("");
+            if let Some(ref user) = user {
+                if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
+                    first_name = apple_oauth_user.name.first_name.unwrap_or(String::from(""));
+                    last_name = apple_oauth_user.name.last_name.unwrap_or(String::from(""));
+                    email = apple_oauth_user.email.unwrap_or(String::from(""));
+                }
             }
-        }
 
-        if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
-            whole = format!("{:?}", ttt.clone());
-            sub = ttt.claims.sub.unwrap_or(String::from(""));
+            if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
+                whole = format!("{:?}", ttt.clone());
+                sub = ttt.claims.sub.unwrap_or(String::from(""));
 
-            let timestamp = libhc::get_timestamp();
-            let (user_id, user_name) =
-                hc_create_oauth_user(db, sub.clone(), &first_name, &last_name, &email, timestamp)
-                    .await
-                    .map_err(map_hc_error)?;
+                let timestamp = libhc::get_timestamp();
+                let (user_id, user_name) =
+                    hc_create_oauth_user(db, sub.clone(), &first_name, &last_name, &email, timestamp)
+                        .await
+                        .map_err(map_hc_error)?;
 
-            session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-            if session.insert("user_id", user_id).is_ok()
-                && session.insert("username", user_name).is_ok()
-            {
-                return Ok(HttpResponse::SeeOther()
-                    .insert_header((LOCATION, "/"))
+                session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+                if session.insert("user_id", user_id).is_ok()
+                    && session.insert("username", user_name).is_ok()
+                {
+                    return Ok(HttpResponse::SeeOther()
+                        .insert_header((LOCATION, "/"))
+                        .finish());
+                }
+
+                session.purge();
+                return Ok(HttpResponse::Found()
+                    .append_header((header::LOCATION, "/login".to_string()))
                     .finish());
             }
-
-            session.purge();
-            return Ok(HttpResponse::Found()
-                .append_header((header::LOCATION, "/login".to_string()))
-                .finish());
         }
+
+        let html = format!(
+            r#"<html>
+            <head><title>OAuth2 Test</title></head>
+            <body>
+                Apple returned the following state:
+                <p>{}</p>
+                Apple returned the following token:
+                <p>{:?}</p>
+                user:
+                <p>{:?}</p>
+                id_token:
+                <p>{:?}</p>
+                id_token:
+                <p>{:?}</p>
+                id_token:
+                <p>{:?}</p>
+            </body>
+        </html>"#,
+            state.secret(),
+            token,
+            user,
+            id_token,
+            sub,
+            whole,
+        );
+        return Ok(HttpResponse::Ok().body(html));
     }
 
-    let html = format!(
-        r#"<html>
-        <head><title>OAuth2 Test</title></head>
-        <body>
-            Apple returned the following state:
-            <p>{}</p>
-            Apple returned the following token:
-            <p>{:?}</p>
-            user:
-            <p>{:?}</p>
-            id_token:
-            <p>{:?}</p>
-            id_token:
-            <p>{:?}</p>
-            id_token:
-            <p>{:?}</p>
-        </body>
-    </html>"#,
-        state.secret(),
-        token,
-        user,
-        id_token,
-        sub,
-        whole,
-    );
-    Ok(HttpResponse::Ok().body(html))
-
-    // HttpResponse::Found()
-    //     .append_header((header::LOCATION, "/login".to_string()))
-    //     .finish()
+    Ok(HttpResponse::Found()
+        .append_header((header::LOCATION, "/login".to_string()))
+        .finish())
 }
