@@ -445,8 +445,8 @@ pub async fn hc_create_oauth_user(
     db: &dyn HcDb,
     oauth_iss: String,
     oauth_sub: String,
-    first_name: &str,
-    last_name: &str,
+    _first_name: &str,
+    _last_name: &str,
     email: &str,
     timestamp: i64,
 ) -> Result<(Uuid, Option<String>), HcError> {
@@ -1486,13 +1486,6 @@ mod tests {
         assert_eq!(first_name, "");
         assert_eq!(last_name, "");
         assert_eq!(email, "abc@gmail.com");
-
-
-
-
-
-
-
 
         // let user = Some("{\"name\":{\"firstName\":\"First\",\"lastName\":\"Last\"},\"email\":\"abc@gmail.com\"}");
 

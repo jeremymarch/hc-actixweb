@@ -29,8 +29,8 @@ use actix_web_flash_messages::{IncomingFlashMessages, Level};
 use libhc::dbpostgres::HcDbPostgres;
 use libhc::Credentials;
 use secrecy::Secret;
-use serde_json::Value;
-use std::collections::HashMap;
+//use serde_json::Value;
+//use std::collections::HashMap;
 use std::fmt::Write;
 
 #[derive(serde::Deserialize)]
@@ -523,7 +523,7 @@ pub fn get_apple_client() -> BasicClient {
     )
 }
 
-pub async fn oauth_login((req,): (HttpRequest,)) -> HttpResponse {
+pub async fn oauth_login((session, req): (Session, HttpRequest)) -> HttpResponse {
     let data = req.app_data::<AppState>().unwrap();
     // Google supports Proof Key for Code Exchange (PKCE - https://oauth.net/2/pkce/).
     // Create a PKCE code verifier and SHA-256 encode it as a code challenge.
@@ -531,7 +531,7 @@ pub async fn oauth_login((req,): (HttpRequest,)) -> HttpResponse {
     let nonce = uuid::Uuid::new_v4(); // use UUID as random and unique nonce
 
     // Generate the authorization URL to which we'll redirect the user.
-    let (authorize_url, _csrf_state) = &data
+    let (authorize_url, csrf_state) = &data
         .apple_oauth
         .authorize_url(CsrfToken::new_random)
         // This example is requesting access to the "calendar" features and the user's profile.
@@ -544,12 +544,14 @@ pub async fn oauth_login((req,): (HttpRequest,)) -> HttpResponse {
         .set_pkce_challenge(pkce_code_challenge) //apple does not support this, but no problem including it
         .url();
 
+    let _ = session.insert("state", csrf_state);
+
     HttpResponse::Found()
         .append_header((header::LOCATION, authorize_url.to_string()))
         .finish()
 }
 
-pub async fn oauth_login_google((req,): (HttpRequest,)) -> HttpResponse {
+pub async fn oauth_login_google((session, req): (Session, HttpRequest)) -> HttpResponse {
     let data = req.app_data::<AppState>().unwrap();
     // Google supports Proof Key for Code Exchange (PKCE - https://oauth.net/2/pkce/).
     // Create a PKCE code verifier and SHA-256 encode it as a code challenge.
@@ -557,7 +559,7 @@ pub async fn oauth_login_google((req,): (HttpRequest,)) -> HttpResponse {
     let nonce = uuid::Uuid::new_v4(); // use UUID as random and unique nonce
 
     // Generate the authorization URL to which we'll redirect the user.
-    let (authorize_url, _csrf_state) = &data
+    let (authorize_url, csrf_state) = &data
         .google_oauth
         .authorize_url(CsrfToken::new_random)
         // This example is requesting access to the "calendar" features and the user's profile.
@@ -569,6 +571,8 @@ pub async fn oauth_login_google((req,): (HttpRequest,)) -> HttpResponse {
         .add_scope(Scope::new("email".to_string()))
         .set_pkce_challenge(pkce_code_challenge) //apple does not support this, but no problem including it
         .url();
+
+    let _ = session.insert("state", csrf_state);
 
     HttpResponse::Found()
         .append_header((header::LOCATION, authorize_url.to_string()))
@@ -587,19 +591,20 @@ pub async fn oauth_auth_apple(
 ) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<HcDbPostgres>().unwrap();
     let data = req.app_data::<AppState>().unwrap();
-    if let Some(param_code ) = &params.code {
+    if let Some(param_code) = &params.code {
         let code = AuthorizationCode::new(param_code.clone());
-        let state = CsrfToken::new(params.state.clone());
+        let _state = CsrfToken::new(params.state.clone());
         let user = params.user.clone();
         let id_token = params.id_token.clone();
 
-        let token = &data.apple_oauth.exchange_code(code);
+        let _token = &data.apple_oauth.exchange_code(code);
 
-        let mut sub = String::from("");
-        let mut iss = String::from("");
-        let mut whole = String::from("");
-        let mut new_claims = String::from("");
+        // let mut sub = String::from("");
+        // let mut iss = String::from("");
+        // let mut whole = String::from("");
+        // let mut new_claims = String::from("");
         if let Some(ref t) = id_token {
+            //&& session.get("state").unwrap() == state.unwrap() {
             let key = DecodingKey::from_secret(&[]);
             let mut validation = Validation::new(Algorithm::RS256);
             validation.insecure_disable_signature_validation();
@@ -619,19 +624,25 @@ pub async fn oauth_auth_apple(
             // let thing: HashMap<String, Value> = serde_json::from_slice(&aaa).unwrap();
 
             if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
-                whole = format!("{:?}", ttt.clone());
-                sub = ttt.claims.sub.unwrap_or(String::from(""));
-                iss = ttt.claims.iss.unwrap_or(String::from(""));
+                //whole = format!("{:?}", ttt.clone());
+                let sub = ttt.claims.sub.unwrap_or(String::from(""));
+                let iss = ttt.claims.iss.unwrap_or(String::from(""));
 
                 let timestamp = libhc::get_timestamp();
-                let (user_id, user_name) =
-                    hc_create_oauth_user(db, iss.clone(), sub.clone(), &first_name, &last_name, &email, timestamp)
-                        .await
-                        .map_err(map_hc_error)?;
+                let (user_id, user_name) = hc_create_oauth_user(
+                    db,
+                    iss.clone(),
+                    sub.clone(),
+                    &first_name,
+                    &last_name,
+                    &email,
+                    timestamp,
+                )
+                .await
+                .map_err(map_hc_error)?;
 
                 session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-                if session.insert("user_id", user_id).is_ok()
-                {
+                if session.insert("user_id", user_id).is_ok() {
                     if let Some(u) = user_name {
                         let _ = session.insert("username", u);
                     }
@@ -646,35 +657,35 @@ pub async fn oauth_auth_apple(
                     .finish());
             }
         }
-        let html = format!(
-            r#"<html>
-            <head><title>OAuth2 Test</title></head>
-            <body>
-                Apple returned the following state:
-                <p>{}</p>
-                Apple returned the following token:
-                <p>{:?}</p>
-                user:
-                <p>{:?}</p>
-                id_token:
-                <p>{:?}</p>
-                sub:
-                <p>{:?}</p>
-                whole:
-                <p>{:?}</p>
-                new claims:
-                <p>{:?}</p>
-            </body>
-        </html>"#,
-            state.secret(),
-            token,
-            user,
-            id_token,
-            sub,
-            whole,
-            new_claims,
-        );
-        return Ok(HttpResponse::Ok().body(html));
+        // let html = format!(
+        //     r#"<html>
+        //     <head><title>OAuth2 Test</title></head>
+        //     <body>
+        //         Apple returned the following state:
+        //         <p>{}</p>
+        //         Apple returned the following token:
+        //         <p>{:?}</p>
+        //         user:
+        //         <p>{:?}</p>
+        //         id_token:
+        //         <p>{:?}</p>
+        //         sub:
+        //         <p>{:?}</p>
+        //         whole:
+        //         <p>{:?}</p>
+        //         new claims:
+        //         <p>{:?}</p>
+        //     </body>
+        // </html>"#,
+        //     state.secret(),
+        //     token,
+        //     user,
+        //     id_token,
+        //     sub,
+        //     whole,
+        //     new_claims,
+        // );
+        // return Ok(HttpResponse::Ok().body(html));
     }
 
     Ok(HttpResponse::Found()
@@ -687,19 +698,20 @@ pub async fn oauth_auth_google(
 ) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<HcDbPostgres>().unwrap();
     let data = req.app_data::<AppState>().unwrap();
-    if let Some(param_code ) = &params.code {
+    if let Some(param_code) = &params.code {
         let code = AuthorizationCode::new(param_code.clone());
-        let state = CsrfToken::new(params.state.clone());
+        let _state = CsrfToken::new(params.state.clone());
         let user = params.user.clone();
         let id_token = params.id_token.clone();
 
         // Exchange the code with a token.
-        let token = &data.google_oauth.exchange_code(code);
+        let _token = &data.google_oauth.exchange_code(code);
 
-        let mut iss = String::from("");
-        let mut sub = String::from("");
-        let mut whole = String::from("");
+        // let mut iss = String::from("");
+        // let mut sub = String::from("");
+        // let mut whole = String::from("");
         if let Some(ref t) = id_token {
+            //&& session.get("state").unwrap() == state.unwrap() {
             let key = DecodingKey::from_secret(&[]);
             let mut validation = Validation::new(Algorithm::RS256);
             validation.insecure_disable_signature_validation();
@@ -716,15 +728,22 @@ pub async fn oauth_auth_google(
             }
 
             if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
-                whole = format!("{:?}", ttt.clone());
-                sub = ttt.claims.sub.unwrap_or(String::from(""));
-                iss = ttt.claims.iss.unwrap_or(String::from(""));
+                //whole = format!("{:?}", ttt.clone());
+                let sub = ttt.claims.sub.unwrap_or(String::from(""));
+                let iss = ttt.claims.iss.unwrap_or(String::from(""));
 
                 let timestamp = libhc::get_timestamp();
-                let (user_id, user_name) =
-                    hc_create_oauth_user(db, iss.clone(), sub.clone(), &first_name, &last_name, &email, timestamp)
-                        .await
-                        .map_err(map_hc_error)?;
+                let (user_id, user_name) = hc_create_oauth_user(
+                    db,
+                    iss.clone(),
+                    sub.clone(),
+                    &first_name,
+                    &last_name,
+                    &email,
+                    timestamp,
+                )
+                .await
+                .map_err(map_hc_error)?;
 
                 session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
                 if session.insert("user_id", user_id).is_ok()
@@ -742,32 +761,32 @@ pub async fn oauth_auth_google(
             }
         }
 
-        let html = format!(
-            r#"<html>
-            <head><title>OAuth2 Test</title></head>
-            <body>
-                Apple returned the following state:
-                <p>{}</p>
-                Apple returned the following token:
-                <p>{:?}</p>
-                user:
-                <p>{:?}</p>
-                id_token:
-                <p>{:?}</p>
-                id_token:
-                <p>{:?}</p>
-                id_token:
-                <p>{:?}</p>
-            </body>
-        </html>"#,
-            state.secret(),
-            token,
-            user,
-            id_token,
-            sub,
-            whole,
-        );
-        return Ok(HttpResponse::Ok().body(html));
+        // let html = format!(
+        //     r#"<html>
+        //     <head><title>OAuth2 Test</title></head>
+        //     <body>
+        //         Apple returned the following state:
+        //         <p>{}</p>
+        //         Apple returned the following token:
+        //         <p>{:?}</p>
+        //         user:
+        //         <p>{:?}</p>
+        //         id_token:
+        //         <p>{:?}</p>
+        //         id_token:
+        //         <p>{:?}</p>
+        //         id_token:
+        //         <p>{:?}</p>
+        //     </body>
+        // </html>"#,
+        //     state.secret(),
+        //     token,
+        //     user,
+        //     id_token,
+        //     sub,
+        //     whole,
+        // );
+        // return Ok(HttpResponse::Ok().body(html));
     }
 
     Ok(HttpResponse::Found()
