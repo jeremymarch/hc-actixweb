@@ -167,7 +167,7 @@ struct OAuthPost {
     code: Option<String>,
     state: Option<String>,
 }
-
+//https://www.scottbrady91.com/openid-connect/implementing-sign-in-with-apple-in-aspnet-core
 //https://www.oauth.com/oauth2-servers/signing-in-with-google/
 //https://developer.okta.com/blog/2019/06/04/what-the-heck-is-sign-in-with-apple
 //https://www.scottbrady91.com/openid-connect/implementing-sign-in-with-apple-in-aspnet-core
@@ -544,7 +544,7 @@ pub async fn oauth_login((session, req): (Session, HttpRequest)) -> HttpResponse
         .set_pkce_challenge(pkce_code_challenge) //apple does not support this, but no problem including it
         .url();
 
-    let _ = session.insert::<CsrfToken>("state", csrf_state.clone());
+        let _ = session.insert::<String>("state", csrf_state.secret().to_string());
 
     HttpResponse::Found()
         .append_header((header::LOCATION, authorize_url.to_string()))
@@ -572,7 +572,7 @@ pub async fn oauth_login_google((session, req): (Session, HttpRequest)) -> HttpR
         .set_pkce_challenge(pkce_code_challenge) //apple does not support this, but no problem including it
         .url();
 
-    let _ = session.insert::<CsrfToken>("state", csrf_state.clone());
+    let _ = session.insert::<String>("state", csrf_state.secret().to_string());
 
     HttpResponse::Found()
         .append_header((header::LOCATION, authorize_url.to_string()))
@@ -604,7 +604,7 @@ pub async fn oauth_auth_apple(
         // let mut whole = String::from("");
         // let mut new_claims = String::from("");
         if let Some(ref t) = id_token {
-            if session.get::<CsrfToken>("state").unwrap().unwrap().secret() == state.secret() {
+            if session.get::<String>("state").unwrap().unwrap() == *state.secret() {
                 let key = DecodingKey::from_secret(&[]);
                 let mut validation = Validation::new(Algorithm::RS256);
                 validation.insecure_disable_signature_validation();
@@ -712,7 +712,7 @@ pub async fn oauth_auth_google(
         // let mut sub = String::from("");
         // let mut whole = String::from("");
         if let Some(ref t) = id_token {
-            if session.get::<CsrfToken>("state").unwrap().unwrap().secret() == state.secret() {
+            if session.get::<String>("state").unwrap().unwrap() == *state.secret() {
                 //&& session.get("state").unwrap() == state.unwrap() {
                 let key = DecodingKey::from_secret(&[]);
                 let mut validation = Validation::new(Algorithm::RS256);
