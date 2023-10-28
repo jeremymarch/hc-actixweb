@@ -593,7 +593,7 @@ pub async fn oauth_auth_apple(
     let data = req.app_data::<AppState>().unwrap();
     if let Some(param_code) = &params.code {
         let code = AuthorizationCode::new(param_code.clone());
-        let _state = CsrfToken::new(params.state.clone());
+        let state = CsrfToken::new(params.state.clone());
         let user = params.user.clone();
         let id_token = params.id_token.clone();
 
@@ -604,51 +604,52 @@ pub async fn oauth_auth_apple(
         // let mut whole = String::from("");
         // let mut new_claims = String::from("");
         if let Some(ref t) = id_token {
-            //&& session.get("state").unwrap() == state.unwrap() {
-            let key = DecodingKey::from_secret(&[]);
-            let mut validation = Validation::new(Algorithm::RS256);
-            validation.insecure_disable_signature_validation();
+            if session.get::<CsrfToken>("state").unwrap().unwrap().secret() == state.secret() {
+                let key = DecodingKey::from_secret(&[]);
+                let mut validation = Validation::new(Algorithm::RS256);
+                validation.insecure_disable_signature_validation();
 
-            let mut first_name = String::from("");
-            let mut last_name = String::from("");
-            let mut email = String::from("");
-            if let Some(ref user) = user {
-                if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
-                    first_name = apple_oauth_user.name.first_name.unwrap_or(String::from(""));
-                    last_name = apple_oauth_user.name.last_name.unwrap_or(String::from(""));
-                    email = apple_oauth_user.email.unwrap_or(String::from(""));
-                }
-            }
-
-            // let aaa = base64_url::decode(&t).unwrap();
-            // let thing: HashMap<String, Value> = serde_json::from_slice(&aaa).unwrap();
-
-            if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
-                //whole = format!("{:?}", ttt.clone());
-                let sub = ttt.claims.sub.unwrap_or(String::from(""));
-                let iss = ttt.claims.iss.unwrap_or(String::from(""));
-
-                let timestamp = libhc::get_timestamp();
-                let (user_id, user_name) = hc_create_oauth_user(
-                    db,
-                    iss.clone(),
-                    sub.clone(),
-                    &first_name,
-                    &last_name,
-                    &email,
-                    timestamp,
-                )
-                .await
-                .map_err(map_hc_error)?;
-
-                session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-                if session.insert("user_id", user_id).is_ok() {
-                    if let Some(u) = user_name {
-                        let _ = session.insert("username", u);
+                let mut first_name = String::from("");
+                let mut last_name = String::from("");
+                let mut email = String::from("");
+                if let Some(ref user) = user {
+                    if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
+                        first_name = apple_oauth_user.name.first_name.unwrap_or(String::from(""));
+                        last_name = apple_oauth_user.name.last_name.unwrap_or(String::from(""));
+                        email = apple_oauth_user.email.unwrap_or(String::from(""));
                     }
-                    return Ok(HttpResponse::SeeOther()
-                        .insert_header((LOCATION, "/"))
-                        .finish());
+                }
+
+                // let aaa = base64_url::decode(&t).unwrap();
+                // let thing: HashMap<String, Value> = serde_json::from_slice(&aaa).unwrap();
+
+                if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
+                    //whole = format!("{:?}", ttt.clone());
+                    let sub = ttt.claims.sub.unwrap_or(String::from(""));
+                    let iss = ttt.claims.iss.unwrap_or(String::from(""));
+
+                    let timestamp = libhc::get_timestamp();
+                    let (user_id, user_name) = hc_create_oauth_user(
+                        db,
+                        iss.clone(),
+                        sub.clone(),
+                        &first_name,
+                        &last_name,
+                        &email,
+                        timestamp,
+                    )
+                    .await
+                    .map_err(map_hc_error)?;
+
+                    session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+                    if session.insert("user_id", user_id).is_ok() {
+                        if let Some(u) = user_name {
+                            let _ = session.insert("username", u);
+                        }
+                        return Ok(HttpResponse::SeeOther()
+                            .insert_header((LOCATION, "/"))
+                            .finish());
+                    }
                 }
 
                 session.purge();
@@ -700,7 +701,7 @@ pub async fn oauth_auth_google(
     let data = req.app_data::<AppState>().unwrap();
     if let Some(param_code) = &params.code {
         let code = AuthorizationCode::new(param_code.clone());
-        let _state = CsrfToken::new(params.state.clone());
+        let state = CsrfToken::new(params.state.clone());
         let user = params.user.clone();
         let id_token = params.id_token.clone();
 
@@ -711,47 +712,49 @@ pub async fn oauth_auth_google(
         // let mut sub = String::from("");
         // let mut whole = String::from("");
         if let Some(ref t) = id_token {
-            //&& session.get("state").unwrap() == state.unwrap() {
-            let key = DecodingKey::from_secret(&[]);
-            let mut validation = Validation::new(Algorithm::RS256);
-            validation.insecure_disable_signature_validation();
+            if session.get::<CsrfToken>("state").unwrap().unwrap().secret() == state.secret() {
+                //&& session.get("state").unwrap() == state.unwrap() {
+                let key = DecodingKey::from_secret(&[]);
+                let mut validation = Validation::new(Algorithm::RS256);
+                validation.insecure_disable_signature_validation();
 
-            let mut first_name = String::from("");
-            let mut last_name = String::from("");
-            let mut email = String::from("");
-            if let Some(ref user) = user {
-                if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
-                    first_name = apple_oauth_user.name.first_name.unwrap_or(String::from(""));
-                    last_name = apple_oauth_user.name.last_name.unwrap_or(String::from(""));
-                    email = apple_oauth_user.email.unwrap_or(String::from(""));
+                let mut first_name = String::from("");
+                let mut last_name = String::from("");
+                let mut email = String::from("");
+                if let Some(ref user) = user {
+                    if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
+                        first_name = apple_oauth_user.name.first_name.unwrap_or(String::from(""));
+                        last_name = apple_oauth_user.name.last_name.unwrap_or(String::from(""));
+                        email = apple_oauth_user.email.unwrap_or(String::from(""));
+                    }
                 }
-            }
 
-            if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
-                //whole = format!("{:?}", ttt.clone());
-                let sub = ttt.claims.sub.unwrap_or(String::from(""));
-                let iss = ttt.claims.iss.unwrap_or(String::from(""));
+                if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
+                    //whole = format!("{:?}", ttt.clone());
+                    let sub = ttt.claims.sub.unwrap_or(String::from(""));
+                    let iss = ttt.claims.iss.unwrap_or(String::from(""));
 
-                let timestamp = libhc::get_timestamp();
-                let (user_id, user_name) = hc_create_oauth_user(
-                    db,
-                    iss.clone(),
-                    sub.clone(),
-                    &first_name,
-                    &last_name,
-                    &email,
-                    timestamp,
-                )
-                .await
-                .map_err(map_hc_error)?;
+                    let timestamp = libhc::get_timestamp();
+                    let (user_id, user_name) = hc_create_oauth_user(
+                        db,
+                        iss.clone(),
+                        sub.clone(),
+                        &first_name,
+                        &last_name,
+                        &email,
+                        timestamp,
+                    )
+                    .await
+                    .map_err(map_hc_error)?;
 
-                session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-                if session.insert("user_id", user_id).is_ok()
-                    && session.insert("username", user_name).is_ok()
-                {
-                    return Ok(HttpResponse::SeeOther()
-                        .insert_header((LOCATION, "/"))
-                        .finish());
+                    session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+                    if session.insert("user_id", user_id).is_ok()
+                        && session.insert("username", user_name).is_ok()
+                    {
+                        return Ok(HttpResponse::SeeOther()
+                            .insert_header((LOCATION, "/"))
+                            .finish());
+                    }
                 }
 
                 session.purge();
