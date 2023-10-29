@@ -468,6 +468,7 @@ struct AppleClaims {
     auth_time: Option<u64>,
     nonce: Option<String>,
     nonce_supported: Option<bool>,
+    email: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
