@@ -1390,7 +1390,7 @@ a {color:blue;}
       d.appendChild(frag);
     } else if (data.response_to === 'getsessions' && data.success) {
       if (data.logged_in) {
-        let userName = data.username ? data.username : "anon";
+        const userName = data.username ? data.username : 'anon';
         document.body.classList.add('loggedin');
         q('#username').innerText = userName;
         globalUserName = userName;

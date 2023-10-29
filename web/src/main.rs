@@ -497,9 +497,9 @@ async fn main() -> io::Result<()> {
 
 fn config(cfg: &mut web::ServiceConfig) {
     cfg.route("/", web::get().to(index_page))
-    .service(web::resource("/oauth-login-apple").route(web::get().to(login::oauth_login_apple)))
-    .service(web::resource(
-            "/oauth-login-google").route(web::get().to(login::oauth_login_google))
+        .service(web::resource("/oauth-login-apple").route(web::get().to(login::oauth_login_apple)))
+        .service(
+            web::resource("/oauth-login-google").route(web::get().to(login::oauth_login_google)),
         )
         .service(web::resource("/auth").route(web::post().to(login::oauth_auth_apple)))
         .service(web::resource("/gauth").route(web::post().to(login::oauth_auth_google)))

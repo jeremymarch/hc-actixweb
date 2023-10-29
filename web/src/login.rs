@@ -523,7 +523,9 @@ pub fn get_apple_client() -> BasicClient {
     )
 }
 
-pub async fn oauth_login_apple((session, req): (Session, HttpRequest)) -> Result<HttpResponse, AWError> {
+pub async fn oauth_login_apple(
+    (session, req): (Session, HttpRequest),
+) -> Result<HttpResponse, AWError> {
     let data = req.app_data::<AppState>().unwrap();
     // Google supports Proof Key for Code Exchange (PKCE - https://oauth.net/2/pkce/).
     // Create a PKCE code verifier and SHA-256 encode it as a code challenge.
@@ -544,20 +546,20 @@ pub async fn oauth_login_apple((session, req): (Session, HttpRequest)) -> Result
         .set_pkce_challenge(pkce_code_challenge) //apple does not support this, but no problem including it
         .url();
 
-        let state = csrf_state.secret().to_string();
-        println!("state: {} {}", state, authorize_url.to_string());
-        session.renew();
-        session.insert::<String>("oauth_state", state).expect("session.insert state");
-
-        let new_state = session.get::<String>("oauth_state").unwrap();
-        println!("RECEIVED STATE1: {:?}", new_state);
+    let state = csrf_state.secret().to_string();
+    session.renew();
+    session
+        .insert::<String>("oauth_state", state)
+        .expect("session.insert state");
 
     Ok(HttpResponse::Found()
         .append_header((header::LOCATION, authorize_url.to_string()))
         .finish())
 }
 
-pub async fn oauth_login_google((session, req): (Session, HttpRequest)) -> Result<HttpResponse, AWError> {
+pub async fn oauth_login_google(
+    (session, req): (Session, HttpRequest),
+) -> Result<HttpResponse, AWError> {
     let data = req.app_data::<AppState>().unwrap();
     // Google supports Proof Key for Code Exchange (PKCE - https://oauth.net/2/pkce/).
     // Create a PKCE code verifier and SHA-256 encode it as a code challenge.
@@ -578,13 +580,11 @@ pub async fn oauth_login_google((session, req): (Session, HttpRequest)) -> Resul
         .set_pkce_challenge(pkce_code_challenge) //apple does not support this, but no problem including it
         .url();
 
-        let state = csrf_state.secret().to_string();
-        println!("state: {} {}", state, authorize_url.to_string());
-        session.renew();
-        session.insert::<String>("oauth_state", state).expect("session.insert state");
-
-        let new_state = session.get::<String>("oauth_state").unwrap();
-        println!("RECEIVED STATE1: {:?}", new_state);
+    let state = csrf_state.secret().to_string();
+    session.renew();
+    session
+        .insert::<String>("oauth_state", state)
+        .expect("session.insert state");
 
     Ok(HttpResponse::Found()
         .append_header((header::LOCATION, authorize_url.to_string()))
@@ -605,12 +605,12 @@ pub async fn oauth_auth_apple(
         let user = params.user.clone();
         let id_token = params.id_token.clone();
 
-        let token = &data.apple_oauth.exchange_code(code);
+        let _token = &data.apple_oauth.exchange_code(code);
 
-        let mut sub = String::from("");
-        let mut iss = String::from("");
-        let mut whole = String::from("");
-        let mut new_claims = String::from("");
+        // let mut sub = String::from("");
+        // let mut iss = String::from("");
+        // let mut whole = String::from("");
+        // let mut new_claims = String::from("");
         if let Some(ref t) = id_token {
             if new_state.unwrap() == *state.secret() {
                 let key = DecodingKey::from_secret(&[]);
@@ -632,9 +632,9 @@ pub async fn oauth_auth_apple(
                 // let thing: HashMap<String, Value> = serde_json::from_slice(&aaa).unwrap();
 
                 if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
-                    whole = format!("{:?}", ttt.clone());
-                    sub = ttt.claims.sub.unwrap_or(String::from(""));
-                    iss = ttt.claims.iss.unwrap_or(String::from(""));
+                    //whole = format!("{:?}", ttt.clone());
+                    let sub = ttt.claims.sub.unwrap_or(String::from(""));
+                    let iss = ttt.claims.iss.unwrap_or(String::from(""));
 
                     let timestamp = libhc::get_timestamp();
                     let (user_id, user_name) = hc_create_oauth_user(
@@ -705,7 +705,6 @@ pub async fn oauth_auth_google(
     let new_state = session.get::<String>("oauth_state").unwrap();
     println!("received state: {:?}", new_state);
 
-
     if let Some(param_code) = &params.code {
         let code = AuthorizationCode::new(param_code.clone());
         let state = CsrfToken::new(params.state.clone());
@@ -713,11 +712,11 @@ pub async fn oauth_auth_google(
         let id_token = params.id_token.clone();
 
         // Exchange the code with a token.
-        let token = &data.google_oauth.exchange_code(code);
+        let _token = &data.google_oauth.exchange_code(code);
 
-        let mut iss = String::from("");
-        let mut sub = String::from("");
-        let mut whole = String::from("");
+        // let mut iss = String::from("");
+        // let mut sub = String::from("");
+        // let mut whole = String::from("");
         if let Some(ref t) = id_token {
             if new_state.unwrap() == *state.secret() {
                 //&& session.get("state").unwrap() == state.unwrap() {
@@ -737,9 +736,9 @@ pub async fn oauth_auth_google(
                 }
 
                 if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
-                    whole = format!("{:?}", ttt.clone());
-                    sub = ttt.claims.sub.unwrap_or(String::from(""));
-                    iss = ttt.claims.iss.unwrap_or(String::from(""));
+                    //whole = format!("{:?}", ttt.clone());
+                    let sub = ttt.claims.sub.unwrap_or(String::from(""));
+                    let iss = ttt.claims.iss.unwrap_or(String::from(""));
 
                     let timestamp = libhc::get_timestamp();
                     let (user_id, user_name) = hc_create_oauth_user(
