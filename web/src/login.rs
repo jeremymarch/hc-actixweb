@@ -82,7 +82,7 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
             }}
             setTheme();
             function applelogin() {{
-                window.location.href = "oauth-login";
+                window.location.href = "oauth-login-apple";
             }}
             function googlelogin() {{
                 window.location.href = "oauth-login-google";
@@ -523,7 +523,7 @@ pub fn get_apple_client() -> BasicClient {
     )
 }
 
-pub async fn oauth_login((session, req): (Session, HttpRequest)) -> HttpResponse {
+pub async fn oauth_login_apple((session, req): (Session, HttpRequest)) -> HttpResponse {
     let data = req.app_data::<AppState>().unwrap();
     // Google supports Proof Key for Code Exchange (PKCE - https://oauth.net/2/pkce/).
     // Create a PKCE code verifier and SHA-256 encode it as a code challenge.
@@ -544,7 +544,9 @@ pub async fn oauth_login((session, req): (Session, HttpRequest)) -> HttpResponse
         .set_pkce_challenge(pkce_code_challenge) //apple does not support this, but no problem including it
         .url();
 
-        let _ = session.insert::<String>("state", csrf_state.secret().to_string());
+        let state = csrf_state.secret().to_string();
+        println!("state: {:?}", state);
+        session.insert::<String>("state", state).expect("session.insert state");
 
     HttpResponse::Found()
         .append_header((header::LOCATION, authorize_url.to_string()))
@@ -572,7 +574,9 @@ pub async fn oauth_login_google((session, req): (Session, HttpRequest)) -> HttpR
         .set_pkce_challenge(pkce_code_challenge) //apple does not support this, but no problem including it
         .url();
 
-    let _ = session.insert::<String>("state", csrf_state.secret().to_string());
+        let state = csrf_state.secret().to_string();
+        println!("state: {:?}", state);
+        session.insert::<String>("state", state).expect("session.insert state");
 
     HttpResponse::Found()
         .append_header((header::LOCATION, authorize_url.to_string()))
