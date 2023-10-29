@@ -523,7 +523,7 @@ pub fn get_apple_client() -> BasicClient {
     )
 }
 
-pub async fn oauth_login_apple((session, req): (Session, HttpRequest)) -> HttpResponse {
+pub async fn oauth_login_apple((session, req): (Session, HttpRequest)) -> Result<HttpResponse, AWError> {
     let data = req.app_data::<AppState>().unwrap();
     // Google supports Proof Key for Code Exchange (PKCE - https://oauth.net/2/pkce/).
     // Create a PKCE code verifier and SHA-256 encode it as a code challenge.
@@ -547,14 +547,14 @@ pub async fn oauth_login_apple((session, req): (Session, HttpRequest)) -> HttpRe
         let state = csrf_state.secret().to_string();
         println!("state: {} {}", state, authorize_url.to_string());
         session.renew();
-        session.insert("oauth_state", state).expect("session.insert state");
+        session.insert::<String>("oauth_state", state).expect("session.insert state");
 
-    HttpResponse::Found()
+    Ok(HttpResponse::Found()
         .append_header((header::LOCATION, authorize_url.to_string()))
-        .finish()
+        .finish())
 }
 
-pub async fn oauth_login_google((session, req): (Session, HttpRequest)) -> HttpResponse {
+pub async fn oauth_login_google((session, req): (Session, HttpRequest)) -> Result<HttpResponse, AWError> {
     let data = req.app_data::<AppState>().unwrap();
     // Google supports Proof Key for Code Exchange (PKCE - https://oauth.net/2/pkce/).
     // Create a PKCE code verifier and SHA-256 encode it as a code challenge.
@@ -578,11 +578,11 @@ pub async fn oauth_login_google((session, req): (Session, HttpRequest)) -> HttpR
         let state = csrf_state.secret().to_string();
         println!("state: {} {}", state, authorize_url.to_string());
         session.renew();
-        session.insert("oauth_state", state).expect("session.insert state");
+        session.insert::<String>("oauth_state", state).expect("session.insert state");
 
-    HttpResponse::Found()
+    Ok(HttpResponse::Found()
         .append_header((header::LOCATION, authorize_url.to_string()))
-        .finish()
+        .finish())
 }
 
 // pub async fn oauth_logout(session: Session) -> HttpResponse {
@@ -598,7 +598,8 @@ pub async fn oauth_auth_apple(
     let db = req.app_data::<HcDbPostgres>().unwrap();
     let data = req.app_data::<AppState>().unwrap();
     let new_state = session.get::<String>("oauth_state").unwrap();
-    
+    println!("received state: {:?}", new_state);
+
     if let Some(param_code) = &params.code {
         let code = AuthorizationCode::new(param_code.clone());
         let state = CsrfToken::new(params.state.clone());
@@ -708,6 +709,8 @@ pub async fn oauth_auth_google(
     let db = req.app_data::<HcDbPostgres>().unwrap();
     let data = req.app_data::<AppState>().unwrap();
     let new_state = session.get::<String>("oauth_state").unwrap();
+    println!("received state: {:?}", new_state);
+
 
     if let Some(param_code) = &params.code {
         let code = AuthorizationCode::new(param_code.clone());
