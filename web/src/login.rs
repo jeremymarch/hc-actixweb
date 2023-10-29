@@ -549,6 +549,9 @@ pub async fn oauth_login_apple((session, req): (Session, HttpRequest)) -> Result
         session.renew();
         session.insert::<String>("oauth_state", state).expect("session.insert state");
 
+        let new_state = session.get::<String>("oauth_state").unwrap();
+        println!("RECEIVED STATE1: {:?}", new_state);
+
     Ok(HttpResponse::Found()
         .append_header((header::LOCATION, authorize_url.to_string()))
         .finish())
@@ -579,6 +582,9 @@ pub async fn oauth_login_google((session, req): (Session, HttpRequest)) -> Resul
         println!("state: {} {}", state, authorize_url.to_string());
         session.renew();
         session.insert::<String>("oauth_state", state).expect("session.insert state");
+
+        let new_state = session.get::<String>("oauth_state").unwrap();
+        println!("RECEIVED STATE1: {:?}", new_state);
 
     Ok(HttpResponse::Found()
         .append_header((header::LOCATION, authorize_url.to_string()))
