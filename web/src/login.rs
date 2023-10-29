@@ -113,9 +113,12 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
             .dark TABLE {{ border:2px solid white; }}
             .dark BUTTON {{ background-color:black;color:white;border:1px solid white; }}
             .dark a {{color:#03A5F3;}}
-            #newuserdiv {{ padding-top:12px; }}
+            #newuserdiv {{ padding-top:12px;height:70px; }}
             #apple-login {{border: 1px solid white;width: 200px;margin: 0x auto;display: inline-block;margin-top: 12px; }}
             #google-login {{border: 1px solid white;width: 200px;margin: 0x auto;display: inline-block;margin-top: 12px; }}
+            .oauthcell {{height:70px;}}
+            .orcell {{height:20px;border-top:1px solid black;padding-top:20px;border-top:1px solid white;}}
+            .dark .orcell {{border-top:1px solid white;}}
         </style>
     </head>
     <body>
@@ -150,10 +153,15 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
                         </td>
                     </tr>
                     <tr>
-                        <td colspan="2" align="center"><img id="apple-login" src="appleid_button@2x.png" onclick="applelogin()"/></td>
+                        <td colspan="2" align="center" class="orcell">
+                            or
+                        </td>
                     </tr>
                     <tr>
-                        <td colspan="2" align="center"><img id="google-login" src="branding_guideline_sample_dk_sq_lg.svg" onclick="googlelogin()"/></td>
+                        <td colspan="2" align="center" class="oauthcell"><img id="apple-login" src="appleid_button@2x.png" onclick="applelogin()"/></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" align="center" class="oauthcell"><img id="google-login" src="branding_guideline_sample_dk_sq_lg.svg" onclick="googlelogin()"/></td>
                     </tr>
                 </tbody>
             </table>
