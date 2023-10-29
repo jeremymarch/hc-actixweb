@@ -458,7 +458,7 @@ pub struct AppState {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-struct AppleAndGoogleClaims {
+struct AppleClaims {
     iss: Option<String>,
     aud: Option<String>,
     exp: Option<u64>,
@@ -469,7 +469,26 @@ struct AppleAndGoogleClaims {
     nonce: Option<String>,
     nonce_supported: Option<bool>,
     email: Option<String>,
-    email_verified: Option<String>, //this breaks apple oauth
+    //this is bool for Google and String for Apple
+    //https://developer.apple.com/forums/thread/121411?answerId=378290022#378290022
+    email_verified: Option<String>, 
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct GoogleClaims {
+    iss: Option<String>,
+    aud: Option<String>,
+    exp: Option<u64>,
+    iat: Option<u64>,
+    sub: Option<String>,
+    c_hash: Option<String>,
+    auth_time: Option<u64>,
+    nonce: Option<String>,
+    nonce_supported: Option<bool>,
+    email: Option<String>,
+    //this is bool for Google and String for Apple
+    //https://developer.apple.com/forums/thread/121411?answerId=378290022#378290022
+    email_verified: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -631,7 +650,7 @@ pub async fn oauth_auth_apple(
                     }
                 }
 
-                if let Ok(ttt) = decode::<AppleAndGoogleClaims>(t, &key, &validation) {
+                if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
                     //whole_idtoken = format!("{:?}", ttt.clone());
                     let sub = ttt.claims.sub.unwrap_or(String::from(""));
                     let iss = ttt.claims.iss.unwrap_or(String::from(""));
@@ -733,7 +752,7 @@ pub async fn oauth_auth_google(
                 //     }
                 // }
 
-                if let Ok(ttt) = decode::<AppleAndGoogleClaims>(t, &key, &validation) {
+                if let Ok(ttt) = decode::<GoogleClaims>(t, &key, &validation) {
                     //whole_idtoken = format!("{:?}", ttt.clone());
                     let sub = ttt.claims.sub.unwrap_or(String::from(""));
                     let iss = ttt.claims.iss.unwrap_or(String::from(""));
