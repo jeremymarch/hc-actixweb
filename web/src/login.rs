@@ -544,7 +544,7 @@ pub async fn oauth_login((session, req): (Session, HttpRequest)) -> HttpResponse
         .set_pkce_challenge(pkce_code_challenge) //apple does not support this, but no problem including it
         .url();
 
-        let _ = session.insert::<CsrfToken>("state", csrf_state.clone());
+        let _ = session.insert::<String>("state", csrf_state.secret().to_string());
 
     HttpResponse::Found()
         .append_header((header::LOCATION, authorize_url.to_string()))
@@ -572,7 +572,7 @@ pub async fn oauth_login_google((session, req): (Session, HttpRequest)) -> HttpR
         .set_pkce_challenge(pkce_code_challenge) //apple does not support this, but no problem including it
         .url();
 
-    let _ = session.insert::<CsrfToken>("state", csrf_state.clone());
+    let _ = session.insert::<String>("state", csrf_state.secret().to_string());
 
     HttpResponse::Found()
         .append_header((header::LOCATION, authorize_url.to_string()))
@@ -684,7 +684,7 @@ pub async fn oauth_auth_apple(
             id_token,
             sub,
             whole,
-            session.get::<CsrfToken>("state")
+            session.get::<String>("state")
         );
         return Ok(HttpResponse::Ok().body(html));
     }
@@ -790,7 +790,7 @@ pub async fn oauth_auth_google(
             id_token,
             sub,
             whole,
-            session.get::<CsrfToken>("state")
+            session.get::<String>("state")
         );
         return Ok(HttpResponse::Ok().body(html));
     }
