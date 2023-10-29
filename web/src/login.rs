@@ -612,7 +612,7 @@ pub async fn oauth_auth_apple(
         let mut whole = String::from("");
         let mut new_claims = String::from("");
         if let Some(ref t) = id_token {
-            if session.get::<String>("state").unwrap().unwrap() == *state.secret() {
+            if new_state.unwrap() == *state.secret() {
                 let key = DecodingKey::from_secret(&[]);
                 let mut validation = Validation::new(Algorithm::RS256);
                 validation.insecure_disable_signature_validation();
@@ -663,35 +663,35 @@ pub async fn oauth_auth_apple(
                 return nav_to_login(session);
             }
         }
-        let html = format!(
-            r#"<html>
-            <head><title>OAuth2 Test</title></head>
-            <body>
-                Apple returned the following state:
-                <p>{}</p>
-                Apple returned the following token:
-                <p>{:?}</p>
-                user:
-                <p>{:?}</p>
-                id_token:
-                <p>{:?}</p>
-                sub:
-                <p>{:?}</p>
-                whole:
-                <p>{:?}</p>
-                new state:
-                <p>{:?}</p>
-            </body>
-        </html>"#,
-            state.secret(),
-            token,
-            user,
-            id_token,
-            sub,
-            whole,
-            new_state,
-        );
-        return Ok(HttpResponse::Ok().body(html));
+        // let html = format!(
+        //     r#"<html>
+        //     <head><title>OAuth2 Test</title></head>
+        //     <body>
+        //         Apple returned the following state:
+        //         <p>{}</p>
+        //         Apple returned the following token:
+        //         <p>{:?}</p>
+        //         user:
+        //         <p>{:?}</p>
+        //         id_token:
+        //         <p>{:?}</p>
+        //         sub:
+        //         <p>{:?}</p>
+        //         whole:
+        //         <p>{:?}</p>
+        //         new state:
+        //         <p>{:?}</p>
+        //     </body>
+        // </html>"#,
+        //     state.secret(),
+        //     token,
+        //     user,
+        //     id_token,
+        //     sub,
+        //     whole,
+        //     new_state,
+        // );
+        // return Ok(HttpResponse::Ok().body(html));
     }
 
     nav_to_login(session)
@@ -719,7 +719,7 @@ pub async fn oauth_auth_google(
         let mut sub = String::from("");
         let mut whole = String::from("");
         if let Some(ref t) = id_token {
-            if session.get::<String>("state").unwrap().unwrap() == *state.secret() {
+            if new_state.unwrap() == *state.secret() {
                 //&& session.get("state").unwrap() == state.unwrap() {
                 let key = DecodingKey::from_secret(&[]);
                 let mut validation = Validation::new(Algorithm::RS256);
@@ -768,35 +768,35 @@ pub async fn oauth_auth_google(
             }
         }
 
-        let html = format!(
-            r#"<html>
-            <head><title>OAuth2 Test</title></head>
-            <body>
-                Apple returned the following state:
-                <p>{}</p>
-                Apple returned the following token:
-                <p>{:?}</p>
-                user:
-                <p>{:?}</p>
-                id_token:
-                <p>{:?}</p>
-                sub:
-                <p>{:?}</p>
-                whole:
-                <p>{:?}</p>
-                new state:
-                <p>{:?}</p>
-            </body>
-        </html>"#,
-            state.secret(),
-            token,
-            user,
-            id_token,
-            sub,
-            whole,
-            new_state
-        );
-        return Ok(HttpResponse::Ok().body(html));
+        // let html = format!(
+        //     r#"<html>
+        //     <head><title>OAuth2 Test</title></head>
+        //     <body>
+        //         Apple returned the following state:
+        //         <p>{}</p>
+        //         Apple returned the following token:
+        //         <p>{:?}</p>
+        //         user:
+        //         <p>{:?}</p>
+        //         id_token:
+        //         <p>{:?}</p>
+        //         sub:
+        //         <p>{:?}</p>
+        //         whole:
+        //         <p>{:?}</p>
+        //         new state:
+        //         <p>{:?}</p>
+        //     </body>
+        // </html>"#,
+        //     state.secret(),
+        //     token,
+        //     user,
+        //     id_token,
+        //     sub,
+        //     whole,
+        //     new_state
+        // );
+        // return Ok(HttpResponse::Ok().body(html));
     }
 
     nav_to_login(session)
