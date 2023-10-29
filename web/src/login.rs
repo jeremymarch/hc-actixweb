@@ -469,6 +469,7 @@ struct AppleClaims {
     nonce: Option<String>,
     nonce_supported: Option<bool>,
     email: Option<String>,
+    email_verified: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
