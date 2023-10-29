@@ -546,6 +546,7 @@ pub async fn oauth_login_apple((session, req): (Session, HttpRequest)) -> HttpRe
 
         let state = csrf_state.secret().to_string();
         println!("state: {} {}", state, authorize_url.to_string());
+        session.renew();
         session.insert("oauth_state", state).expect("session.insert state");
 
     HttpResponse::Found()
@@ -576,6 +577,7 @@ pub async fn oauth_login_google((session, req): (Session, HttpRequest)) -> HttpR
 
         let state = csrf_state.secret().to_string();
         println!("state: {} {}", state, authorize_url.to_string());
+        session.renew();
         session.insert("oauth_state", state).expect("session.insert state");
 
     HttpResponse::Found()
