@@ -591,13 +591,6 @@ pub async fn oauth_login_google((session, req): (Session, HttpRequest)) -> Resul
         .finish())
 }
 
-// pub async fn oauth_logout(session: Session) -> HttpResponse {
-//     session.purge();
-//     HttpResponse::Found()
-//         .append_header((header::LOCATION, "/login".to_string()))
-//         .finish()
-// }
-
 pub async fn oauth_auth_apple(
     (session, params, req): (Session, web::Form<AuthRequest>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
@@ -619,7 +612,7 @@ pub async fn oauth_auth_apple(
         let mut whole = String::from("");
         let mut new_claims = String::from("");
         if let Some(ref t) = id_token {
-            //if session.get::<String>("state").unwrap().unwrap() == *state.secret() {
+            if session.get::<String>("state").unwrap().unwrap() == *state.secret() {
                 let key = DecodingKey::from_secret(&[]);
                 let mut validation = Validation::new(Algorithm::RS256);
                 validation.insecure_disable_signature_validation();
@@ -656,22 +649,19 @@ pub async fn oauth_auth_apple(
                     .await
                     .map_err(map_hc_error)?;
 
-                    // session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-                    // if session.insert("user_id", user_id).is_ok() {
-                    //     if let Some(u) = user_name {
-                    //         let _ = session.insert("username", u);
-                    //     }
-                    //     return Ok(HttpResponse::SeeOther()
-                    //         .insert_header((LOCATION, "/"))
-                    //         .finish());
-                    // }
+                    session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+                    if session.insert("user_id", user_id).is_ok() {
+                        if let Some(u) = user_name {
+                            let _ = session.insert("username", u);
+                        }
+                        return Ok(HttpResponse::SeeOther()
+                            .insert_header((LOCATION, "/"))
+                            .finish());
+                    }
                 }
 
-                // session.purge();
-                // return Ok(HttpResponse::Found()
-                //     .append_header((header::LOCATION, "/login".to_string()))
-                //     .finish());
-            //}
+                return nav_to_login(session);
+            }
         }
         let html = format!(
             r#"<html>
@@ -704,9 +694,7 @@ pub async fn oauth_auth_apple(
         return Ok(HttpResponse::Ok().body(html));
     }
 
-    Ok(HttpResponse::Found()
-        .append_header((header::LOCATION, "/login".to_string()))
-        .finish())
+    nav_to_login(session)
 }
 
 pub async fn oauth_auth_google(
@@ -731,7 +719,7 @@ pub async fn oauth_auth_google(
         let mut sub = String::from("");
         let mut whole = String::from("");
         if let Some(ref t) = id_token {
-            //if session.get::<String>("state").unwrap().unwrap() == *state.secret() {
+            if session.get::<String>("state").unwrap().unwrap() == *state.secret() {
                 //&& session.get("state").unwrap() == state.unwrap() {
                 let key = DecodingKey::from_secret(&[]);
                 let mut validation = Validation::new(Algorithm::RS256);
@@ -766,21 +754,18 @@ pub async fn oauth_auth_google(
                     .await
                     .map_err(map_hc_error)?;
 
-                    // session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-                    // if session.insert("user_id", user_id).is_ok()
-                    //     && session.insert("username", user_name).is_ok()
-                    // {
-                    //     return Ok(HttpResponse::SeeOther()
-                    //         .insert_header((LOCATION, "/"))
-                    //         .finish());
-                    // }
+                    session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+                    if session.insert("user_id", user_id).is_ok()
+                        && session.insert("username", user_name).is_ok()
+                    {
+                        return Ok(HttpResponse::SeeOther()
+                            .insert_header((LOCATION, "/"))
+                            .finish());
+                    }
                 }
 
-                // session.purge();
-                // return Ok(HttpResponse::Found()
-                //     .append_header((header::LOCATION, "/login".to_string()))
-                //     .finish());
-            //}
+                return nav_to_login(session);
+            }
         }
 
         let html = format!(
@@ -814,6 +799,11 @@ pub async fn oauth_auth_google(
         return Ok(HttpResponse::Ok().body(html));
     }
 
+    nav_to_login(session)
+}
+
+fn nav_to_login(session: Session) -> Result<HttpResponse, AWError> {
+    session.purge();
     Ok(HttpResponse::Found()
         .append_header((header::LOCATION, "/login".to_string()))
         .finish())
