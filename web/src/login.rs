@@ -597,6 +597,8 @@ pub async fn oauth_auth_apple(
 ) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<HcDbPostgres>().unwrap();
     let data = req.app_data::<AppState>().unwrap();
+    let new_state = session.get::<String>("oauth_state").unwrap();
+    
     if let Some(param_code) = &params.code {
         let code = AuthorizationCode::new(param_code.clone());
         let state = CsrfToken::new(params.state.clone());
@@ -690,7 +692,7 @@ pub async fn oauth_auth_apple(
             id_token,
             sub,
             whole,
-            session.get::<String>("oauth_state").unwrap()
+            new_state,
         );
         return Ok(HttpResponse::Ok().body(html));
     }
@@ -705,6 +707,8 @@ pub async fn oauth_auth_google(
 ) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<HcDbPostgres>().unwrap();
     let data = req.app_data::<AppState>().unwrap();
+    let new_state = session.get::<String>("oauth_state").unwrap();
+
     if let Some(param_code) = &params.code {
         let code = AuthorizationCode::new(param_code.clone());
         let state = CsrfToken::new(params.state.clone());
@@ -796,7 +800,7 @@ pub async fn oauth_auth_google(
             id_token,
             sub,
             whole,
-            session.get::<String>("oauth_state").unwrap(),
+            new_state
         );
         return Ok(HttpResponse::Ok().body(html));
     }
