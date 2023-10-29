@@ -476,7 +476,7 @@ async fn main() -> io::Result<()> {
             .wrap(
                 SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
                     .cookie_secure(cookie_secure) //cookie_secure must be false if testing without https
-                    .cookie_same_site(SameSite::None)
+                    .cookie_same_site(SameSite::Lax)
                     .cookie_content_security(actix_session::config::CookieContentSecurity::Private)
                     .session_lifecycle(
                         PersistentSession::default()
