@@ -162,68 +162,6 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
 </html>
 "##)))
 }
-/*
-struct OAuthPost {
-    code: Option<String>,
-    state: Option<String>,
-}
-//https://www.scottbrady91.com/openid-connect/implementing-sign-in-with-apple-in-aspnet-core
-//https://www.oauth.com/oauth2-servers/signing-in-with-google/
-//https://developer.okta.com/blog/2019/06/04/what-the-heck-is-sign-in-with-apple
-//https://www.scottbrady91.com/openid-connect/implementing-sign-in-with-apple-in-aspnet-core
-pub async fn oauth_post(
-    (session, form, req): (Session, web::Form<OAuthPost>, HttpRequest),
-) -> Result<HttpResponse, AWError> {
-    let client_id = "us.philolog.hoplite-challenge.client";
-    let client_secret = "eyJraWQiOiJZREtHQVk3QVA0IiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJFRkhDNFhGWjM4IiwiaWF0IjoxNjk3Njg1MjAxLCJleHAiOjE3MTMyMzcyMDEsImF1ZCI6Imh0dHBzOi8vYXBwbGVpZC5hcHBsZS5jb20iLCJzdWIiOiJ1cy5waGlsb2xvZy5ob3BsaXRlLWNoYWxsZW5nZS5jbGllbnQifQ.Xy-sYbch2xDnQFNRkr8vLDwu__FX2__pkdw_fWuZSasySceG2CERSZUcJ83bf4NVc3kvvfrl2LoQMfsgnZNEMw";
-    let redirect_url = "https://example-app.com/redirect";
-
-    if form.code.is_some() {
-
-        if let Ok(state) = session.get::<String>("state") {
-            if form.state.is_some() && form.state.unwrap() !=  state {
-                //error
-            }
-        } else {
-            None
-        }
-
-        // Token endpoint docs:
-  // https://developer.apple.com/documentation/signinwithapplerestapi/generate_and_validate_tokens
-
-  $response = http('https://appleid.apple.com/auth/token', [
-    'grant_type' => 'authorization_code',
-    'code' => $_POST['code'],
-    'redirect_uri' => $redirect_uri,
-    'client_id' => $client_id,
-    'client_secret' => $client_secret,
-  ]);
-
-  if(!isset($response->access_token)) {
-    echo '<p>Error getting an access token:</p>';
-    echo '<pre>'; print_r($response); echo '</pre>';
-    echo '<p><a href="/">Start Over</a></p>';
-    die();
-  }
-
-  echo '<h3>Access Token Response</h3>';
-  echo '<pre>'; print_r($response); echo '</pre>';
-
-
-  $claims = explode('.', $response->id_token)[1];
-  $claims = json_decode(base64_decode($claims));
-
-  echo '<h3>Parsed ID Token</h3>';
-  echo '<pre>';
-  print_r($claims);
-  echo '</pre>';
-
-  die();
-
-    }
-
-}
-*/
 
 use libhc::hc_validate_credentials;
 pub async fn login_post(
@@ -428,6 +366,68 @@ pub fn get_username(session: Session) -> Option<String> {
     }
 }
 
+/*
+struct OAuthPost {
+    code: Option<String>,
+    state: Option<String>,
+}
+//https://www.scottbrady91.com/openid-connect/implementing-sign-in-with-apple-in-aspnet-core
+//https://www.oauth.com/oauth2-servers/signing-in-with-google/
+//https://developer.okta.com/blog/2019/06/04/what-the-heck-is-sign-in-with-apple
+//https://www.scottbrady91.com/openid-connect/implementing-sign-in-with-apple-in-aspnet-core
+pub async fn oauth_post(
+    (session, form, req): (Session, web::Form<OAuthPost>, HttpRequest),
+) -> Result<HttpResponse, AWError> {
+    let client_id = "us.philolog.hoplite-challenge.client";
+    let client_secret = "eyJraWQiOiJZREtHQVk3QVA0IiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJFRkhDNFhGWjM4IiwiaWF0IjoxNjk3Njg1MjAxLCJleHAiOjE3MTMyMzcyMDEsImF1ZCI6Imh0dHBzOi8vYXBwbGVpZC5hcHBsZS5jb20iLCJzdWIiOiJ1cy5waGlsb2xvZy5ob3BsaXRlLWNoYWxsZW5nZS5jbGllbnQifQ.Xy-sYbch2xDnQFNRkr8vLDwu__FX2__pkdw_fWuZSasySceG2CERSZUcJ83bf4NVc3kvvfrl2LoQMfsgnZNEMw";
+    let redirect_url = "https://example-app.com/redirect";
+
+    if form.code.is_some() {
+
+        if let Ok(state) = session.get::<String>("state") {
+            if form.state.is_some() && form.state.unwrap() !=  state {
+                //error
+            }
+        } else {
+            None
+        }
+
+        // Token endpoint docs:
+  // https://developer.apple.com/documentation/signinwithapplerestapi/generate_and_validate_tokens
+
+  $response = http('https://appleid.apple.com/auth/token', [
+    'grant_type' => 'authorization_code',
+    'code' => $_POST['code'],
+    'redirect_uri' => $redirect_uri,
+    'client_id' => $client_id,
+    'client_secret' => $client_secret,
+  ]);
+
+  if(!isset($response->access_token)) {
+    echo '<p>Error getting an access token:</p>';
+    echo '<pre>'; print_r($response); echo '</pre>';
+    echo '<p><a href="/">Start Over</a></p>';
+    die();
+  }
+
+  echo '<h3>Access Token Response</h3>';
+  echo '<pre>'; print_r($response); echo '</pre>';
+
+
+  $claims = explode('.', $response->id_token)[1];
+  $claims = json_decode(base64_decode($claims));
+
+  echo '<h3>Parsed ID Token</h3>';
+  echo '<pre>';
+  print_r($claims);
+  echo '</pre>';
+
+  die();
+
+    }
+}
+*/
+
 use actix_web::http::header;
 use jsonwebtoken::Algorithm;
 use jsonwebtoken::{decode, DecodingKey, Validation};
@@ -466,6 +466,7 @@ struct AppleClaims {
     sub: Option<String>,
     c_hash: Option<String>,
     auth_time: Option<u64>,
+    nonce: Option<String>,
     nonce_supported: Option<bool>,
 }
 
@@ -596,12 +597,12 @@ pub async fn oauth_auth_apple(
 ) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<HcDbPostgres>().unwrap();
     let data = req.app_data::<AppState>().unwrap();
-    let new_state = session.get::<String>("oauth_state").unwrap();
-    println!("received state: {:?}", new_state);
+    let saved_state = session.get::<String>("oauth_state").unwrap();
+    //println!("received state: {:?}", new_state);
 
     if let Some(param_code) = &params.code {
         let code = AuthorizationCode::new(param_code.clone());
-        let state = CsrfToken::new(params.state.clone());
+        let received_state = CsrfToken::new(params.state.clone());
         let user = params.user.clone();
         let id_token = params.id_token.clone();
 
@@ -609,10 +610,10 @@ pub async fn oauth_auth_apple(
 
         // let mut sub = String::from("");
         // let mut iss = String::from("");
-        // let mut whole = String::from("");
+        // let mut whole_idtoken = String::from("");
         // let mut new_claims = String::from("");
         if let Some(ref t) = id_token {
-            if new_state.unwrap() == *state.secret() {
+            if saved_state.unwrap() == *received_state.secret() {
                 let key = DecodingKey::from_secret(&[]);
                 let mut validation = Validation::new(Algorithm::RS256);
                 validation.insecure_disable_signature_validation();
@@ -628,11 +629,8 @@ pub async fn oauth_auth_apple(
                     }
                 }
 
-                // let aaa = base64_url::decode(&t).unwrap();
-                // let thing: HashMap<String, Value> = serde_json::from_slice(&aaa).unwrap();
-
                 if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
-                    //whole = format!("{:?}", ttt.clone());
+                    //whole_idtoken = format!("{:?}", ttt.clone());
                     let sub = ttt.claims.sub.unwrap_or(String::from(""));
                     let iss = ttt.claims.iss.unwrap_or(String::from(""));
 
@@ -688,7 +686,7 @@ pub async fn oauth_auth_apple(
         //     user,
         //     id_token,
         //     sub,
-        //     whole,
+        //     whole_idtoken,
         //     new_state,
         // );
         // return Ok(HttpResponse::Ok().body(html));
@@ -702,13 +700,12 @@ pub async fn oauth_auth_google(
 ) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<HcDbPostgres>().unwrap();
     let data = req.app_data::<AppState>().unwrap();
-    let new_state = session.get::<String>("oauth_state").unwrap();
-    println!("received state: {:?}", new_state);
+    let saved_state = session.get::<String>("oauth_state").unwrap();
 
     if let Some(param_code) = &params.code {
         let code = AuthorizationCode::new(param_code.clone());
-        let state = CsrfToken::new(params.state.clone());
-        let user = params.user.clone();
+        let received_state = CsrfToken::new(params.state.clone());
+        //let user = params.user.clone(); //google doesn't send user this way
         let id_token = params.id_token.clone();
 
         // Exchange the code with a token.
@@ -716,27 +713,26 @@ pub async fn oauth_auth_google(
 
         // let mut iss = String::from("");
         // let mut sub = String::from("");
-        // let mut whole = String::from("");
+        // let mut whole_idtoken = String::from("");
         if let Some(ref t) = id_token {
-            if new_state.unwrap() == *state.secret() {
-                //&& session.get("state").unwrap() == state.unwrap() {
+            if saved_state.unwrap() == *received_state.secret() {
                 let key = DecodingKey::from_secret(&[]);
                 let mut validation = Validation::new(Algorithm::RS256);
                 validation.insecure_disable_signature_validation();
 
-                let mut first_name = String::from("");
-                let mut last_name = String::from("");
-                let mut email = String::from("");
-                if let Some(ref user) = user {
-                    if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
-                        first_name = apple_oauth_user.name.first_name.unwrap_or(String::from(""));
-                        last_name = apple_oauth_user.name.last_name.unwrap_or(String::from(""));
-                        email = apple_oauth_user.email.unwrap_or(String::from(""));
-                    }
-                }
+                let first_name = String::from("");
+                let last_name = String::from("");
+                let email = String::from("");
+                // if let Some(ref user) = user {
+                //     if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
+                //         first_name = apple_oauth_user.name.first_name.unwrap_or(String::from(""));
+                //         last_name = apple_oauth_user.name.last_name.unwrap_or(String::from(""));
+                //         email = apple_oauth_user.email.unwrap_or(String::from(""));
+                //     }
+                // }
 
                 if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
-                    //whole = format!("{:?}", ttt.clone());
+                    //whole_idtoken = format!("{:?}", ttt.clone());
                     let sub = ttt.claims.sub.unwrap_or(String::from(""));
                     let iss = ttt.claims.iss.unwrap_or(String::from(""));
 
@@ -781,7 +777,7 @@ pub async fn oauth_auth_google(
         //         <p>{:?}</p>
         //         sub:
         //         <p>{:?}</p>
-        //         whole:
+        //         whole_idtoken:
         //         <p>{:?}</p>
         //         new state:
         //         <p>{:?}</p>
@@ -792,7 +788,7 @@ pub async fn oauth_auth_google(
         //     user,
         //     id_token,
         //     sub,
-        //     whole,
+        //     whole_idtoken,
         //     new_state
         // );
         // return Ok(HttpResponse::Ok().body(html));
