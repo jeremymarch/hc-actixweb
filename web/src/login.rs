@@ -469,7 +469,7 @@ struct AppleAndGoogleClaims {
     nonce: Option<String>,
     nonce_supported: Option<bool>,
     email: Option<String>,
-    //email_verified: Option<bool>, this breaks apple oauth
+    email_verified: Option<String>, //this breaks apple oauth
 }
 
 #[derive(Debug, Serialize, Deserialize)]
