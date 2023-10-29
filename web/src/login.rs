@@ -117,7 +117,7 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
             #apple-login {{border: 1px solid white;width: 200px;margin: 0x auto;display: inline-block;margin-top: 12px; }}
             #google-login {{border: 1px solid white;width: 200px;margin: 0x auto;display: inline-block;margin-top: 12px; }}
             .oauthcell {{height:70px;}}
-            .orcell {{height:20px;border-top:1px solid black;padding-top:20px;border-top:1px solid white;}}
+            .orcell {{height:20px;padding-top:20px;border-top:1px solid black;}}
             .dark .orcell {{border-top:1px solid white;}}
         </style>
     </head>

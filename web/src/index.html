@@ -400,7 +400,7 @@ a {color:blue;}
 .dark .paramdivchanged { border-bottom: 4px solid red;}
 .dark a {color:#03A5F3;}
 .dark .gamespan { color:#03A5F3; }
-.dark .gamerow.selectedGame {background-color: white;}
+.dark .selectedGame .gamerow-first-line {background-color: white;}
 
 .dark .gamerow {background-color:#202124;}
 
@@ -1406,9 +1406,11 @@ a {color:blue;}
       frag.appendChild(dlist);
       for (let i = 0; i < data.sessions.length; i++) {
         const d = document.createElement('div');
+        const gamerowFirstLine = document.createElement('div');
+        gamerowFirstLine.classList.add('gamerow-first-line');
         const arrow = document.createElement('div');
         arrow.classList.add('game-expander');
-        d.appendChild(arrow);
+        gamerowFirstLine.appendChild(arrow);
         const s = data.sessions[i];
         if (s.move_type !== 'FirstMoveTheirTurn') { // do not show if first move not asked yet and I did not start game
           d.setAttribute('data-uuid', s.session_id);
@@ -1440,7 +1442,8 @@ a {color:blue;}
             sp.innerText += ' (' + s.my_score + ' - ' + s.their_score + ')';
           }
           sp.innerHTML += myturnIcon;
-          d.appendChild(sp);
+          gamerowFirstLine.appendChild(sp);
+          d.appendChild(gamerowFirstLine);
           dlist.appendChild(d);
         }
       }
@@ -1802,7 +1805,7 @@ a {color:blue;}
   }
 
   function getGameMoves () {
-    const sessionId = this.parentNode.getAttribute('data-uuid');
+    const sessionId = this.parentNode.parentNode.getAttribute('data-uuid');
     const sendData = { qtype: 'getgamemoves', session_id: sessionId };
     genericSendRequest('getgamemoves', sendData, null);
   }
