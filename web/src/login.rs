@@ -545,8 +545,8 @@ pub async fn oauth_login_apple((session, req): (Session, HttpRequest)) -> HttpRe
         .url();
 
         let state = csrf_state.secret().to_string();
-        println!("state: {:?}", state);
-        session.insert::<String>("state", state).expect("session.insert state");
+        println!("state: {} {}", state, authorize_url.to_string());
+        session.insert("oauth_state", state).expect("session.insert state");
 
     HttpResponse::Found()
         .append_header((header::LOCATION, authorize_url.to_string()))
@@ -575,8 +575,8 @@ pub async fn oauth_login_google((session, req): (Session, HttpRequest)) -> HttpR
         .url();
 
         let state = csrf_state.secret().to_string();
-        println!("state: {:?}", state);
-        session.insert::<String>("state", state).expect("session.insert state");
+        println!("state: {} {}", state, authorize_url.to_string());
+        session.insert("oauth_state", state).expect("session.insert state");
 
     HttpResponse::Found()
         .append_header((header::LOCATION, authorize_url.to_string()))
@@ -688,7 +688,7 @@ pub async fn oauth_auth_apple(
             id_token,
             sub,
             whole,
-            session.get::<String>("state")
+            session.get::<String>("oauth_state")
         );
         return Ok(HttpResponse::Ok().body(html));
     }
@@ -794,7 +794,7 @@ pub async fn oauth_auth_google(
             id_token,
             sub,
             whole,
-            session.get::<String>("state")
+            session.get::<String>("oauth_state")
         );
         return Ok(HttpResponse::Ok().body(html));
     }
