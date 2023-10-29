@@ -544,7 +544,7 @@ pub async fn oauth_login((session, req): (Session, HttpRequest)) -> HttpResponse
         .set_pkce_challenge(pkce_code_challenge) //apple does not support this, but no problem including it
         .url();
 
-        let _ = session.insert::<String>("state", csrf_state.secret().to_string());
+        let _ = session.insert::<CsrfToken>("state", csrf_state.clone());
 
     HttpResponse::Found()
         .append_header((header::LOCATION, authorize_url.to_string()))
@@ -572,7 +572,7 @@ pub async fn oauth_login_google((session, req): (Session, HttpRequest)) -> HttpR
         .set_pkce_challenge(pkce_code_challenge) //apple does not support this, but no problem including it
         .url();
 
-    let _ = session.insert::<String>("state", csrf_state.secret().to_string());
+    let _ = session.insert::<CsrfToken>("state", csrf_state.clone());
 
     HttpResponse::Found()
         .append_header((header::LOCATION, authorize_url.to_string()))
@@ -597,14 +597,14 @@ pub async fn oauth_auth_apple(
         let user = params.user.clone();
         let id_token = params.id_token.clone();
 
-        let _token = &data.apple_oauth.exchange_code(code);
+        let token = &data.apple_oauth.exchange_code(code);
 
-        // let mut sub = String::from("");
-        // let mut iss = String::from("");
-        // let mut whole = String::from("");
-        // let mut new_claims = String::from("");
+        let mut sub = String::from("");
+        let mut iss = String::from("");
+        let mut whole = String::from("");
+        let mut new_claims = String::from("");
         if let Some(ref t) = id_token {
-            if session.get::<String>("state").unwrap().unwrap() == *state.secret() {
+            //if session.get::<String>("state").unwrap().unwrap() == *state.secret() {
                 let key = DecodingKey::from_secret(&[]);
                 let mut validation = Validation::new(Algorithm::RS256);
                 validation.insecure_disable_signature_validation();
@@ -624,9 +624,9 @@ pub async fn oauth_auth_apple(
                 // let thing: HashMap<String, Value> = serde_json::from_slice(&aaa).unwrap();
 
                 if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
-                    //whole = format!("{:?}", ttt.clone());
-                    let sub = ttt.claims.sub.unwrap_or(String::from(""));
-                    let iss = ttt.claims.iss.unwrap_or(String::from(""));
+                    whole = format!("{:?}", ttt.clone());
+                    sub = ttt.claims.sub.unwrap_or(String::from(""));
+                    iss = ttt.claims.iss.unwrap_or(String::from(""));
 
                     let timestamp = libhc::get_timestamp();
                     let (user_id, user_name) = hc_create_oauth_user(
@@ -641,52 +641,52 @@ pub async fn oauth_auth_apple(
                     .await
                     .map_err(map_hc_error)?;
 
-                    session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-                    if session.insert("user_id", user_id).is_ok() {
-                        if let Some(u) = user_name {
-                            let _ = session.insert("username", u);
-                        }
-                        return Ok(HttpResponse::SeeOther()
-                            .insert_header((LOCATION, "/"))
-                            .finish());
-                    }
+                    // session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+                    // if session.insert("user_id", user_id).is_ok() {
+                    //     if let Some(u) = user_name {
+                    //         let _ = session.insert("username", u);
+                    //     }
+                    //     return Ok(HttpResponse::SeeOther()
+                    //         .insert_header((LOCATION, "/"))
+                    //         .finish());
+                    // }
                 }
 
-                session.purge();
-                return Ok(HttpResponse::Found()
-                    .append_header((header::LOCATION, "/login".to_string()))
-                    .finish());
-            }
+                // session.purge();
+                // return Ok(HttpResponse::Found()
+                //     .append_header((header::LOCATION, "/login".to_string()))
+                //     .finish());
+            //}
         }
-        // let html = format!(
-        //     r#"<html>
-        //     <head><title>OAuth2 Test</title></head>
-        //     <body>
-        //         Apple returned the following state:
-        //         <p>{}</p>
-        //         Apple returned the following token:
-        //         <p>{:?}</p>
-        //         user:
-        //         <p>{:?}</p>
-        //         id_token:
-        //         <p>{:?}</p>
-        //         sub:
-        //         <p>{:?}</p>
-        //         whole:
-        //         <p>{:?}</p>
-        //         new claims:
-        //         <p>{:?}</p>
-        //     </body>
-        // </html>"#,
-        //     state.secret(),
-        //     token,
-        //     user,
-        //     id_token,
-        //     sub,
-        //     whole,
-        //     new_claims,
-        // );
-        // return Ok(HttpResponse::Ok().body(html));
+        let html = format!(
+            r#"<html>
+            <head><title>OAuth2 Test</title></head>
+            <body>
+                Apple returned the following state:
+                <p>{}</p>
+                Apple returned the following token:
+                <p>{:?}</p>
+                user:
+                <p>{:?}</p>
+                id_token:
+                <p>{:?}</p>
+                sub:
+                <p>{:?}</p>
+                whole:
+                <p>{:?}</p>
+                new state:
+                <p>{:?}</p>
+            </body>
+        </html>"#,
+            state.secret(),
+            token,
+            user,
+            id_token,
+            sub,
+            whole,
+            session.get::<CsrfToken>("state")
+        );
+        return Ok(HttpResponse::Ok().body(html));
     }
 
     Ok(HttpResponse::Found()
@@ -706,13 +706,13 @@ pub async fn oauth_auth_google(
         let id_token = params.id_token.clone();
 
         // Exchange the code with a token.
-        let _token = &data.google_oauth.exchange_code(code);
+        let token = &data.google_oauth.exchange_code(code);
 
-        // let mut iss = String::from("");
-        // let mut sub = String::from("");
-        // let mut whole = String::from("");
+        let mut iss = String::from("");
+        let mut sub = String::from("");
+        let mut whole = String::from("");
         if let Some(ref t) = id_token {
-            if session.get::<String>("state").unwrap().unwrap() == *state.secret() {
+            //if session.get::<String>("state").unwrap().unwrap() == *state.secret() {
                 //&& session.get("state").unwrap() == state.unwrap() {
                 let key = DecodingKey::from_secret(&[]);
                 let mut validation = Validation::new(Algorithm::RS256);
@@ -730,9 +730,9 @@ pub async fn oauth_auth_google(
                 }
 
                 if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
-                    //whole = format!("{:?}", ttt.clone());
-                    let sub = ttt.claims.sub.unwrap_or(String::from(""));
-                    let iss = ttt.claims.iss.unwrap_or(String::from(""));
+                    whole = format!("{:?}", ttt.clone());
+                    sub = ttt.claims.sub.unwrap_or(String::from(""));
+                    iss = ttt.claims.iss.unwrap_or(String::from(""));
 
                     let timestamp = libhc::get_timestamp();
                     let (user_id, user_name) = hc_create_oauth_user(
@@ -747,49 +747,52 @@ pub async fn oauth_auth_google(
                     .await
                     .map_err(map_hc_error)?;
 
-                    session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-                    if session.insert("user_id", user_id).is_ok()
-                        && session.insert("username", user_name).is_ok()
-                    {
-                        return Ok(HttpResponse::SeeOther()
-                            .insert_header((LOCATION, "/"))
-                            .finish());
-                    }
+                    // session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+                    // if session.insert("user_id", user_id).is_ok()
+                    //     && session.insert("username", user_name).is_ok()
+                    // {
+                    //     return Ok(HttpResponse::SeeOther()
+                    //         .insert_header((LOCATION, "/"))
+                    //         .finish());
+                    // }
                 }
 
-                session.purge();
-                return Ok(HttpResponse::Found()
-                    .append_header((header::LOCATION, "/login".to_string()))
-                    .finish());
-            }
+                // session.purge();
+                // return Ok(HttpResponse::Found()
+                //     .append_header((header::LOCATION, "/login".to_string()))
+                //     .finish());
+            //}
         }
 
-        // let html = format!(
-        //     r#"<html>
-        //     <head><title>OAuth2 Test</title></head>
-        //     <body>
-        //         Apple returned the following state:
-        //         <p>{}</p>
-        //         Apple returned the following token:
-        //         <p>{:?}</p>
-        //         user:
-        //         <p>{:?}</p>
-        //         id_token:
-        //         <p>{:?}</p>
-        //         id_token:
-        //         <p>{:?}</p>
-        //         id_token:
-        //         <p>{:?}</p>
-        //     </body>
-        // </html>"#,
-        //     state.secret(),
-        //     token,
-        //     user,
-        //     id_token,
-        //     sub,
-        //     whole,
-        // );
-        // return Ok(HttpResponse::Ok().body(html));
+        let html = format!(
+            r#"<html>
+            <head><title>OAuth2 Test</title></head>
+            <body>
+                Apple returned the following state:
+                <p>{}</p>
+                Apple returned the following token:
+                <p>{:?}</p>
+                user:
+                <p>{:?}</p>
+                id_token:
+                <p>{:?}</p>
+                sub:
+                <p>{:?}</p>
+                whole:
+                <p>{:?}</p>
+                new state:
+                <p>{:?}</p>
+            </body>
+        </html>"#,
+            state.secret(),
+            token,
+            user,
+            id_token,
+            sub,
+            whole,
+            session.get::<CsrfToken>("state")
+        );
+        return Ok(HttpResponse::Ok().body(html));
     }
 
     Ok(HttpResponse::Found()
