@@ -458,7 +458,7 @@ pub struct AppState {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-struct AppleClaims {
+struct AppleAndGoogleClaims {
     iss: Option<String>,
     aud: Option<String>,
     exp: Option<u64>,
@@ -469,7 +469,7 @@ struct AppleClaims {
     nonce: Option<String>,
     nonce_supported: Option<bool>,
     email: Option<String>,
-    email_verified: Option<bool>,
+    //email_verified: Option<bool>, this breaks apple oauth
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -631,7 +631,7 @@ pub async fn oauth_auth_apple(
                     }
                 }
 
-                if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
+                if let Ok(ttt) = decode::<AppleAndGoogleClaims>(t, &key, &validation) {
                     //whole_idtoken = format!("{:?}", ttt.clone());
                     let sub = ttt.claims.sub.unwrap_or(String::from(""));
                     let iss = ttt.claims.iss.unwrap_or(String::from(""));
@@ -733,7 +733,7 @@ pub async fn oauth_auth_google(
                 //     }
                 // }
 
-                if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
+                if let Ok(ttt) = decode::<AppleAndGoogleClaims>(t, &key, &validation) {
                     //whole_idtoken = format!("{:?}", ttt.clone());
                     let sub = ttt.claims.sub.unwrap_or(String::from(""));
                     let iss = ttt.claims.iss.unwrap_or(String::from(""));
