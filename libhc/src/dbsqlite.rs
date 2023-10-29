@@ -526,7 +526,7 @@ impl HcTrx for HcDbSqliteTrx<'_> {
     user_type INT NOT NULL DEFAULT 0,
     timestamp INT NOT NULL DEFAULT 0,
     UNIQUE(user_name),
-    UNIQUE(oauth)
+    UNIQUE(oauth_sub)
     ) STRICT;"#;
 
         let _res = sqlx::query(query)
