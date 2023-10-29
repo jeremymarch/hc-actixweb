@@ -690,7 +690,7 @@ pub async fn oauth_auth_apple(
             id_token,
             sub,
             whole,
-            session.get::<String>("oauth_state")
+            session.get::<String>("oauth_state").unwrap()
         );
         return Ok(HttpResponse::Ok().body(html));
     }
@@ -796,7 +796,7 @@ pub async fn oauth_auth_google(
             id_token,
             sub,
             whole,
-            session.get::<String>("oauth_state")
+            session.get::<String>("oauth_state").unwrap(),
         );
         return Ok(HttpResponse::Ok().body(html));
     }
