@@ -1387,7 +1387,7 @@ a {color:blue;}
       const frag = new DocumentFragment();
       const d = q(".gamerow[data-uuid='" + data.session_id + "']");
 
-      let mr = d.querySelectorAll('.result-row');
+      const mr = d.querySelectorAll('.result-row');
       if (mr !== null) {
         for (let i = 0; i < mr.length; i++) {
           mr[i].parentNode.removeNode(mr[i]);
@@ -1547,12 +1547,11 @@ a {color:blue;}
     const dd = document.createElement('div');
     dd.classList.add('result-row');
 
-    let r = "";
+    let r = '';
     if (row.is_correct) {
-      r = "<span class='resultCorrect'>" + row.answer + "</span>";
-    }
-    else {
-      r = "<span class='resultIncorrect'>" + row.answer + "</span> " + row.correct_answer;
+      r = '<span class="resultCorrect">' + row.answer + '</span>';
+    } else {
+      r = '<span class="resultIncorrect">' + row.answer + '</span> ' + row.correct_answer;
     }
 
     dd.innerHTML = params.person + ' ' +
