@@ -659,6 +659,7 @@ pub async fn oauth_auth_apple(
                 }
 
                 if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
+                    println!("claims: {:?}", ttt);
                     //whole_idtoken = format!("{:?}", ttt.clone());
                     let sub = ttt.claims.sub.unwrap_or(String::from(""));
                     let iss = ttt.claims.iss.unwrap_or(String::from(""));
@@ -761,6 +762,7 @@ pub async fn oauth_auth_google(
                 // }
 
                 if let Ok(ttt) = decode::<GoogleClaims>(t, &key, &validation) {
+                    println!("claims: {:?}", ttt);
                     //whole_idtoken = format!("{:?}", ttt.clone());
                     let sub = ttt.claims.sub.unwrap_or(String::from(""));
                     let iss = ttt.claims.iss.unwrap_or(String::from(""));

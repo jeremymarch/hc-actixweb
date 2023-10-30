@@ -347,7 +347,6 @@ BUTTON:disabled {cursor:default}
     position: relative;
     padding: 0.25rem;
     margin: 0.5rem;
-    cursor:pointer;
 }
 .gamespan {
     color:blue;
@@ -400,6 +399,7 @@ a {color:blue;}
 .dark .paramdivchanged { border-bottom: 4px solid red;}
 .dark a {color:#03A5F3;}
 .dark .gamespan { color:#03A5F3; }
+.gamerow-first-line { cursor:pointer; }
 .dark .selectedGame .gamerow-first-line {background-color: white;}
 
 .dark .gamerow {background-color:#202124;}
@@ -495,6 +495,8 @@ a {color:blue;}
     font-size: 1.5rem;
   }
 }
+.resultCorrect { color:green; font-family: NewAthenaUnicode,WebNewAthenaUnicode, helvetica,arial; }
+.resultIncorrect { color:red; font-family: NewAthenaUnicode,WebNewAthenaUnicode, helvetica,arial; }
 </style>
 </head>
 <body>
@@ -1384,8 +1386,17 @@ a {color:blue;}
     } else if (data.response_to === 'getgamemoves' && data.success) {
       const frag = new DocumentFragment();
       const d = q(".gamerow[data-uuid='" + data.session_id + "']");
+
+      let mr = d.querySelectorAll('.result-row');
+      if (mr !== null) {
+        for (let i = 0; i < mr.length; i++) {
+          mr[i].parentNode.removeNode(mr[i]);
+        }
+      }
       for (let i = 0; i < data.moves.length; i++) {
-        makeMoveRow(frag, data.moves[i], (i > 0 ? data.moves[i - 1] : null));
+        if (data.moves[i].is_correct !== null) {
+          makeMoveRow(frag, data.moves[i], (i > 0 ? data.moves[i - 1] : null));
+        }
       }
       d.appendChild(frag);
     } else if (data.response_to === 'getsessions' && data.success) {
@@ -1534,12 +1545,22 @@ a {color:blue;}
       params.voice = '';
     }
     const dd = document.createElement('div');
-    dd.innerText = params.person + ' ' +
+    dd.classList.add('result-row');
+
+    let r = "";
+    if (row.is_correct) {
+      r = "<span class='resultCorrect'>" + row.answer + "</span>";
+    }
+    else {
+      r = "<span class='resultIncorrect'>" + row.answer + "</span> " + row.correct_answer;
+    }
+
+    dd.innerHTML = params.person + ' ' +
       params.number + ' ' +
       params.tense + ' ' +
       params.mood + ' ' +
       params.voice + ' ' +
-      row.correct_answer;
+      r;
     frag.appendChild(dd);
   }
 
