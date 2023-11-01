@@ -497,6 +497,8 @@ a {color:blue;}
 }
 .resultCorrect { color:green; font-family: NewAthenaUnicode,WebNewAthenaUnicode, helvetica,arial; }
 .resultIncorrect { color:red; font-family: NewAthenaUnicode,WebNewAthenaUnicode, helvetica,arial; }
+.resultGreek { font-family: NewAthenaUnicode,WebNewAthenaUnicode, helvetica,arial; }
+.result-row { margin-left:33px; }
 </style>
 </head>
 <body>
@@ -1390,12 +1392,13 @@ a {color:blue;}
       const mr = d.querySelectorAll('.result-row');
       if (mr !== null) {
         for (let i = 0; i < mr.length; i++) {
-          mr[i].parentNode.removeNode(mr[i]);
+          mr[i].remove();
         }
       }
       for (let i = 0; i < data.moves.length; i++) {
         if (data.moves[i].is_correct !== null) {
-          makeMoveRow(frag, data.moves[i], (i > 0 ? data.moves[i - 1] : null));
+          const moveRow = makeMoveRow(data.moves[i], (i > 0 ? data.moves[i - 1] : null));
+          frag.appendChild(moveRow);
         }
       }
       d.appendChild(frag);
@@ -1485,9 +1488,41 @@ a {color:blue;}
     }
   }
 
-  function makeMoveRow (frag, row, prevRow) {
-    // console.log('moves: ' + row.session_id); // fix me to do
+  function fakeit () {
+    let d = q(".gamerow[data-uuid='" + globalSessionId + "']");
+    if (d && d.firstChild) {
 
+      // const frag = new DocumentFragment();
+      const r = makeMoveRow({"move_id":"",
+        "session_id":"",
+        "ask_user_id":null,
+        "answer_user_id":null,
+        "verb_id":4,
+        "person":1,
+        "number":0,
+        "tense":0,
+        "mood":0,
+        "voice":1,
+        "answer":null,
+        "correct_answer":null,
+        "is_correct":null,
+        "time":null,
+        "timed_out":null,
+        "mf_pressed":null,
+        "asktimestamp":1697602262,
+        "answeredtimestamp":null}, null);
+        // frag.appendChild(r);
+
+      if (d.firstChild.nextSibling) {
+        d.insertBefore(r, d.firstChild.nextSibling);
+      } else {
+        d.appendChild(r);
+      }
+    }
+  }
+
+  function makeMoveRow (row, prevRow) {
+    // console.log('moves: ' + row.session_id); // fix me to do
     const params = {};
     if (row.person === 0) {
       params.person = '1st';
@@ -1544,23 +1579,23 @@ a {color:blue;}
     } else {
       params.voice = '';
     }
-    const dd = document.createElement('div');
-    dd.classList.add('result-row');
 
-    let r = '';
+    let answer = '';
     if (row.is_correct) {
-      r = '<span class="resultCorrect">' + row.answer + '</span>';
+      answer = '<span class="resultCorrect">' + row.answer + '</span>';
     } else {
-      r = '<span class="resultIncorrect">' + row.answer + '</span> ' + row.correct_answer;
+      answer = '<span class="resultIncorrect">' + row.answer + '</span> <span class="resultGreek">' + row.correct_answer + '</span>';
     }
 
-    dd.innerHTML = params.person + ' ' +
+    const div = document.createElement('div');
+    div.classList.add('result-row');
+    div.innerHTML = params.person + ' ' +
       params.number + ' ' +
       params.tense + ' ' +
       params.mood + ' ' +
       params.voice + ' ' +
-      r;
-    frag.appendChild(dd);
+      answer;
+    return div;
   }
 
   function serialize (obj) {
@@ -1824,10 +1859,20 @@ a {color:blue;}
     }
   }
 
-  function getGameMoves () {
+  function getGameMoves() {
     const sessionId = this.parentNode.parentNode.getAttribute('data-uuid');
-    const sendData = { qtype: 'getgamemoves', session_id: sessionId };
-    genericSendRequest('getgamemoves', sendData, null);
+    const clickedGameRow = q(".gamerow[data-uuid='" + sessionId + "']");
+    if (clickedGameRow && clickedGameRow.querySelectorAll('.result-row').length > 0) {  
+      const moveRows = clickedGameRow.querySelectorAll('.result-row');
+      if (moveRows !== null) {
+        for (let i = 0; i < moveRows.length; i++) {
+          moveRows[i].remove();
+        }
+      }
+    } else {
+      const sendData = { qtype: 'getgamemoves', session_id: sessionId };
+      genericSendRequest('getgamemoves', sendData, null);
+    }
   }
 
   function getSessions (withCurrentGame) {

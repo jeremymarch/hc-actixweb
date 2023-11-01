@@ -379,6 +379,7 @@ struct OAuthPost {
     code: Option<String>,
     state: Option<String>,
 }
+//https://stackoverflow.com/questions/42216700/how-can-i-redirect-after-oauth2-with-samesite-strict-and-still-get-my-cookies
 //https://www.scottbrady91.com/openid-connect/implementing-sign-in-with-apple-in-aspnet-core
 //https://www.oauth.com/oauth2-servers/signing-in-with-google/
 //https://developer.okta.com/blog/2019/06/04/what-the-heck-is-sign-in-with-apple
@@ -753,13 +754,6 @@ pub async fn oauth_auth_google(
                 let first_name = String::from("");
                 let last_name = String::from("");
                 let email = String::from("");
-                // if let Some(ref user) = user {
-                //     if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
-                //         first_name = apple_oauth_user.name.first_name.unwrap_or(String::from(""));
-                //         last_name = apple_oauth_user.name.last_name.unwrap_or(String::from(""));
-                //         email = apple_oauth_user.email.unwrap_or(String::from(""));
-                //     }
-                // }
 
                 if let Ok(ttt) = decode::<GoogleClaims>(t, &key, &validation) {
                     println!("claims: {:?}", ttt);
