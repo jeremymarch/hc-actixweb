@@ -1489,28 +1489,31 @@ a {color:blue;}
   }
 
   function fakeit () {
-    let d = q(".gamerow[data-uuid='" + globalSessionId + "']");
+    let d = q('.gamerow[data-uuid="' + globalSessionId + '"]');
     if (d && d.firstChild) {
 
       // const frag = new DocumentFragment();
-      const r = makeMoveRow({"move_id":"",
-        "session_id":"",
-        "ask_user_id":null,
-        "answer_user_id":null,
-        "verb_id":4,
-        "person":1,
-        "number":0,
-        "tense":0,
-        "mood":0,
-        "voice":1,
-        "answer":null,
-        "correct_answer":null,
-        "is_correct":null,
-        "time":null,
-        "timed_out":null,
-        "mf_pressed":null,
-        "asktimestamp":1697602262,
-        "answeredtimestamp":null}, null);
+      const r = makeMoveRow(
+      {
+        'move_id': '',
+        'session_id': '',
+        'ask_user_id': null,
+        'answer_user_id': null,
+        'verb_id': 4,
+        'person': 1,
+        'number': 0,
+        'tense': 0,
+        'mood': 0,
+        'voice': 1,
+        'answer': null,
+        'correct_answer': null,
+        'is_correct': null,
+        'time': null,
+        'timed_out': null,
+        'mf_pressed': null,
+        'asktimestamp': 1697602262,
+        'answeredtimestamp': null 
+      }, null);
         // frag.appendChild(r);
 
       if (d.firstChild.nextSibling) {
@@ -1859,10 +1862,10 @@ a {color:blue;}
     }
   }
 
-  function getGameMoves() {
+  function getGameMoves () {
     const sessionId = this.parentNode.parentNode.getAttribute('data-uuid');
     const clickedGameRow = q(".gamerow[data-uuid='" + sessionId + "']");
-    if (clickedGameRow && clickedGameRow.querySelectorAll('.result-row').length > 0) {  
+    if (clickedGameRow && clickedGameRow.querySelectorAll('.result-row').length > 0) {
       const moveRows = clickedGameRow.querySelectorAll('.result-row');
       if (moveRows !== null) {
         for (let i = 0; i < moveRows.length; i++) {
