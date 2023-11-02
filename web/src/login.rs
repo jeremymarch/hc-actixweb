@@ -634,7 +634,7 @@ pub async fn oauth_auth_apple(
         let code = AuthorizationCode::new(param_code.clone());
         let received_state = CsrfToken::new(params.state.clone());
         let user = params.user.clone();
-        let id_token = params.id_token.clone();
+        let id_token = &params.id_token;
 
         let token = &data.apple_oauth.exchange_code(code);
 
@@ -737,7 +737,7 @@ pub async fn oauth_auth_google(
         let code = AuthorizationCode::new(param_code.clone());
         let received_state = CsrfToken::new(params.state.clone());
         //let user = params.user.clone(); //google doesn't send user this way
-        let id_token = params.id_token.clone();
+        let id_token = &params.id_token;
 
         // Exchange the code with a token.
         let token = &data.google_oauth.exchange_code(code);
