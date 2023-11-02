@@ -1363,7 +1363,47 @@ a {color:blue;}
       getSessions(false);
       uiModeAskResponse(data);
     } else if ((data.response_to === 'answerresponse' || data.response_to === 'answerresponsepractice') && data.success) {
-      getSessions(false);
+      // getSessions(false);
+
+      //option in philolog to download def at same time as word list
+      //include answer_prev in enter response
+      //rename person to person_next, etc in enter response?
+      //include real prev in enter response?
+      //look into why web font isn't downloaded in firefox for linux
+      //fix the fact that getSessions overwrites any open game moves
+      //add hamburger
+      //add setting to use websockets (experimental)?
+      //use email as user name if possible for oauth; store history of usernames in column in users table with date changed
+      //allow to reset username
+      //change users table to be able to store oauth_sub for each authority (google, apple, etc)
+      //allow to display game settings
+      //typewriter style text?
+
+
+
+      //jwm start move row inserter here
+      const thisMove = {
+        move_id: '',
+        session_id: '',
+        ask_user_id: null,
+        answer_user_id: null,
+        verb_id: data.verb,
+        person: data.person,
+        number: data.number,
+        tense: data.tense,
+        mood: data.mood,
+        voice: data.voice,
+        answer: data.answer,
+        correct_answer: data.correct_answer,
+        is_correct: data.is_correct,
+        time: null,
+        timed_out: null,
+        mf_pressed: null,
+        asktimestamp: 1697602262,
+        answeredtimestamp: null 
+      };
+      insertGameMove(thisMove, null);
+      //jwm end move row inserter here
 
       globalStartingForm = data.starting_form;
       globalChangeDesc = data.change_desc;
@@ -1488,33 +1528,10 @@ a {color:blue;}
     }
   }
 
-  function fakeit () {
+  function insertGameMove (thisMove, prevMove) {
     let d = q('.gamerow[data-uuid="' + globalSessionId + '"]');
     if (d && d.firstChild) {
-
-      // const frag = new DocumentFragment();
-      const r = makeMoveRow(
-      {
-        'move_id': '',
-        'session_id': '',
-        'ask_user_id': null,
-        'answer_user_id': null,
-        'verb_id': 4,
-        'person': 1,
-        'number': 0,
-        'tense': 0,
-        'mood': 0,
-        'voice': 1,
-        'answer': null,
-        'correct_answer': null,
-        'is_correct': null,
-        'time': null,
-        'timed_out': null,
-        'mf_pressed': null,
-        'asktimestamp': 1697602262,
-        'answeredtimestamp': null 
-      }, null);
-        // frag.appendChild(r);
+      const r = makeMoveRow(thisMove, prevMove);
 
       if (d.firstChild.nextSibling) {
         d.insertBefore(r, d.firstChild.nextSibling);

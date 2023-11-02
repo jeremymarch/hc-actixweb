@@ -636,7 +636,7 @@ pub async fn oauth_auth_apple(
         let user = params.user.clone();
         let id_token = params.id_token.clone();
 
-        let _token = &data.apple_oauth.exchange_code(code);
+        let token = &data.apple_oauth.exchange_code(code);
 
         // let mut sub = String::from("");
         // let mut iss = String::from("");
@@ -660,7 +660,7 @@ pub async fn oauth_auth_apple(
                 }
 
                 if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
-                    println!("claims: {:?}", ttt);
+                    println!("claims: {:?}, token: {:?}", ttt, token);
                     //whole_idtoken = format!("{:?}", ttt.clone());
                     let sub = ttt.claims.sub.unwrap_or(String::from(""));
                     let iss = ttt.claims.iss.unwrap_or(String::from(""));
@@ -740,7 +740,7 @@ pub async fn oauth_auth_google(
         let id_token = params.id_token.clone();
 
         // Exchange the code with a token.
-        let _token = &data.google_oauth.exchange_code(code);
+        let token = &data.google_oauth.exchange_code(code);
 
         // let mut iss = String::from("");
         // let mut sub = String::from("");
@@ -756,7 +756,7 @@ pub async fn oauth_auth_google(
                 let email = String::from("");
 
                 if let Ok(ttt) = decode::<GoogleClaims>(t, &key, &validation) {
-                    println!("claims: {:?}", ttt);
+                    println!("claims: {:?}, token: {:?}", ttt, token);
                     //whole_idtoken = format!("{:?}", ttt.clone());
                     let sub = ttt.claims.sub.unwrap_or(String::from(""));
                     let iss = ttt.claims.iss.unwrap_or(String::from(""));
