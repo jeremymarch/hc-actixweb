@@ -630,9 +630,14 @@ pub async fn oauth_auth_apple(
     let saved_state = session.get::<String>("oauth_state").unwrap();
     //println!("received state: {:?}", new_state);
 
-    println!("code {:?} id_token {:?}", params.code, params.id_token.clone());
+    println!(
+        "code {:?} id_token {:?}",
+        params.code,
+        params.id_token.clone()
+    );
 
     if let Some(param_code) = &params.code {
+        println!("code code");
         let code = AuthorizationCode::new(param_code.clone());
         let received_state = CsrfToken::new(params.state.clone());
         let user = params.user.clone();
@@ -645,6 +650,7 @@ pub async fn oauth_auth_apple(
         // let mut whole_idtoken = String::from("");
         // let mut new_claims = String::from("");
         if let Some(ref t) = id_token {
+            println!("state {:?} {:?}", saved_state, received_state);
             if saved_state.unwrap() == *received_state.secret() {
                 let key = DecodingKey::from_secret(&[]);
                 let mut validation = Validation::new(Algorithm::RS256);
@@ -735,9 +741,14 @@ pub async fn oauth_auth_google(
     let data = req.app_data::<AppState>().unwrap();
     let saved_state = session.get::<String>("oauth_state").unwrap();
 
-    println!("code {:?} id_token {:?}", params.code, params.id_token.clone());
+    println!(
+        "code {:?} id_token {:?}",
+        params.code,
+        params.id_token.clone()
+    );
 
     if let Some(param_code) = &params.code {
+        println!("code code");
         let code = AuthorizationCode::new(param_code.clone());
         let received_state = CsrfToken::new(params.state.clone());
         //let user = params.user.clone(); //google doesn't send user this way
@@ -750,6 +761,7 @@ pub async fn oauth_auth_google(
         // let mut sub = String::from("");
         // let mut whole_idtoken = String::from("");
         if let Some(ref t) = id_token {
+            println!("state {:?} {:?}", saved_state, received_state);
             if saved_state.unwrap() == *received_state.secret() {
                 let key = DecodingKey::from_secret(&[]);
                 let mut validation = Validation::new(Algorithm::RS256);
