@@ -152,6 +152,8 @@ BODY { font-family:helvetica neue,helvetica, arial, sans-serif;margin:0px; }
 }
 #appTitle {
   font-weight:bold;
+  position:relative;
+  right:10px;
 }
 #newGameRow {
   margin-bottom: 0px;
@@ -375,14 +377,11 @@ a {color:blue;}
   line-height: 1.5;
 }
 
-
 .myturnIcon { display:none; }
 .myturn .myturnIcon { display:block; }
 
 .startingform {border: 1px solid black;background-color:white}
 #answerform {border: 1px solid black;background-color:white}
-
-#changedesc b { border-bottom:0.2rem solid red; padding-bottom:0.1rem;}
 
 .dark BODY { background-color: black;color:white; }
 .dark .hcform { background-color: #202124;color:white; }
@@ -499,6 +498,125 @@ a {color:blue;}
 .resultIncorrect { color:red; font-family: NewAthenaUnicode,WebNewAthenaUnicode, helvetica,arial; }
 .resultGreek { font-family: NewAthenaUnicode,WebNewAthenaUnicode, helvetica,arial; }
 .result-row { margin-left:33px; }
+.changedParam { font-weight:bold;border-bottom:0.13rem solid red; padding-bottom:0.1rem; }
+
+
+#hamburgercontainer {
+          padding:0px;
+          margin:0px;
+        }
+        #hamburger {
+            z-index: 999;
+            position: relative;
+        }
+        #hamburger {
+            background-color: white;
+            border: 1px solid #666;
+            border-radius: 4px;
+            cursor: pointer;
+            height: 20px;
+            width: 20px;
+        }
+        #hamburger rect {
+            fill: black;
+        }
+        .dark #hamburger {
+            background-color: black;
+        }
+        .dark #hamburger rect {
+            fill: white;
+        }
+        #settingsdiv ul {
+            list-style-type: none;
+            margin: 0px;
+            padding: 0px;
+            text-align: left;
+        }
+        .settings {
+            position: absolute;
+            top: 70px;
+            right: 11px;
+            width: 230px;
+            z-index: 999;
+            padding: 10px;
+        }
+        #settingsdiv {
+            background-color: white;
+            color: black;
+            border: 2px solid black;
+            border-radius: 10px;
+        }
+        .dark #settingsdiv {
+            background-color: black;
+            color: white;
+            border: 2px solid white;
+        }
+        .dark #settingsdiv li {
+            color: white;
+        }
+        .dark #hamburger {
+            background-color: black;
+        }
+        .dark #hamburger rect {
+            fill: white;
+        }
+        #settingsdiv {
+          display:none;
+        }
+        #settingsdiv .settingsItem {
+            background-color: white;
+            color: black;
+            display: block;
+            padding: 6px 10px;
+            cursor: pointer;
+            border: 2px solid white;
+        }
+        #settingsdiv .settingsItem:hover {
+            border: 2px solid black;
+        }
+        #settingsdiv div:focus {
+            border: 2px solid black;
+            outline: 0px solid black;
+        }
+        .dark #settingsdiv .settingsItem {
+            background-color: black;
+            color: white;
+            display: block;
+            padding: 6px 10px;
+            cursor: pointer;
+            border: 2px solid black;
+        }
+        .dark #settingsdiv .settingsItem:hover {
+            border: 2px solid white;
+        }
+        .dark #settingsdiv div:focus {
+            border: 2px solid white;
+            outline: 0px solid white;
+        }
+        .settingsOn #settingsdiv {
+          display:block;
+        }
+        .settingsOn #backdrop {
+          display:block;
+        }
+        .settingsDarkMode {
+          text-align:right;
+          float:right;
+          padding:0px;
+          border:none;
+        }
+        #settingsDarkMode {
+          height:70px;
+        }
+        #backdrop {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            width: 100%;
+            height: 100%;
+            z-index: 900;
+            display:none;
+        }
 </style>
 </head>
 <body>
@@ -509,7 +627,16 @@ a {color:blue;}
               (<a href="logout">logout</a>)
             </span>
         </div>
-        <div id="appTitle">HOPLITE CHALLENGE (beta)</div>
+        <div id="appTitle">HOPLITE CHALLENGE</div>
+
+        <div id="hamburgercontainer">
+          <svg id="hamburger" viewBox="0 0 120 120">
+              <rect x="10" y="30" width="100" height="12"></rect>
+              <rect x="10" y="56" width="100" height="12"></rect>
+              <rect x="10" y="82" width="100" height="12"></rect>
+          </svg>
+      </div>
+
     </div>
     <div id="listouter">
       <div id="settings">
@@ -797,6 +924,34 @@ a {color:blue;}
 <button id="submitbutton">Start</button>
 <div id="statusmesg">press start to begin</div>
 </div>
+<div id="settingsdiv" class="settings">
+  Settings<br>
+  <ul>
+    <!-- <li>
+      <div id='aboutButton' tabindex='0' class='menulink settingsItem'>about</div>
+    </li>
+    <li>
+      <div id='iOSButton' tabindex='0' class='menulink settingsItem'>iOS/Android app</div>
+    </li> -->
+    <!--<li><div id='configureButton' tabindex='0' class='menulink settingsItem'>configure</div></li>-->
+    <!--<li>
+      <div id='toggleHistoryButton' tabindex='0' class='menulink settingsItem'>show/hide history</div>
+    </li>-->
+    <li>
+      <div id="settingsDarkMode" tabindex='0' class="settingsItem">dark mode:
+        <div class='settingsDarkMode'>
+          <label for='darkModeSystem'>system</label> 
+          <input id='darkModeSystem' type='radio' name='darkmode' value='system'/><br>
+          <label for='darkModeDark'>dark</label> 
+          <input id='darkModeDark' type='radio' name='darkmode' value='dark'/><br>
+          <label for='darkModeLight'>light</label><input id='darkModeLight' type='radio' name='darkmode' value='light'/>
+        </div>
+      </div>
+    </li>
+  </ul>
+</div>
+<div id="mesg"></div>
+<div id="backdrop"></div>
 <script nonce="%NONCE%" type="module">
   // eslint-disable-next-line import/no-named-default
   import { toggle, translit, default as init } from './hoplitekb_wasm_rs.js';
@@ -1156,6 +1311,12 @@ a {color:blue;}
   document.getElementById('verbselectionmodehqunit').addEventListener('change', verbTypeChanged, false);
   document.getElementById('verbselectionmodecustom').addEventListener('change', verbTypeChanged, false);
 
+  document.getElementById('hamburger').addEventListener('click', toggleSettings, false);
+  document.getElementById('darkModeSystem').addEventListener('click', darkModeClick, false);
+  document.getElementById('darkModeDark').addEventListener('click', darkModeClick, false);
+  document.getElementById('darkModeLight').addEventListener('click', darkModeClick, false);
+  document.getElementById('backdrop').addEventListener('click', toggleSettings, false);
+
   const hqUnitItems = document.querySelectorAll('.hqunitchk');
   for (let i = 0; i < hqUnitItems.length; i++) {
     hqUnitItems[i].addEventListener('click', hqUnitClicked, false);
@@ -1226,6 +1387,49 @@ a {color:blue;}
     }
     console.log(getTextWidth('παιδεύσητε', 'normal 24pt WebNewAthenaUnicode')); // close to 86
   }
+
+  function toggleSettingsOn () {
+        document.body.classList.add('settingsOn');
+      }
+      function toggleSettingsOff () {
+        document.body.classList.remove('settingsOn');
+      }
+
+      function toggleSettings () {
+        if (document.body.classList.contains('settingsOn')) {
+          toggleSettingsOff();
+        } else {
+          const mode = window.localStorage.getItem('mode');
+          switch (mode) {
+            case 'dark':
+              document.querySelector('#darkModeDark').checked = true;
+              break;
+            case 'light':
+              document.querySelector('#darkModeLight').checked = true;
+              break;
+            default:
+              document.querySelector('#darkModeSystem').checked = true;
+              break;
+          }
+          toggleSettingsOn();
+        }
+      }
+
+      function darkModeClick () {
+        switch (this.id) {
+          case 'darkModeDark':
+            window.localStorage.setItem('mode', 'dark');
+            break;
+          case 'darkModeLight':
+            window.localStorage.setItem('mode', 'light');
+            break;
+          default:
+            window.localStorage.removeItem('mode');
+            break;
+        }
+        // eslint-disable-next-line no-undef
+        setTheme();
+      }
 
   function hqUnitClicked () {
     const value = this.checked;
@@ -1387,12 +1591,12 @@ a {color:blue;}
         session_id: '',
         ask_user_id: null,
         answer_user_id: null,
-        verb_id: data.verb,
-        person: data.person,
-        number: data.number,
-        tense: data.tense,
-        mood: data.mood,
-        voice: data.voice,
+        verb_id: null,
+        person: data.person_prev,
+        number: data.number_prev,
+        tense: data.tense_prev,
+        mood: data.mood_prev,
+        voice: data.voice_prev,
         answer: data.answer,
         correct_answer: data.correct_answer,
         is_correct: data.is_correct,
@@ -1942,27 +2146,27 @@ a {color:blue;}
     let moodStr = '';
     let voiceStr = '';
     if (person !== prevp && prevp !== null) {
-      personStr = '<b>' + (abbrev ? personsAbbrev[person] : persons[person]) + '</b>';
+      personStr = '<span class="changedParam">' + (abbrev ? personsAbbrev[person] : persons[person]) + '</span>';
     } else {
       personStr = (abbrev ? personsAbbrev[person] : persons[person]);
     }
     if (number !== prevn && prevn !== null) {
-      numberStr = '<b>' + (abbrev ? numbersAbbrev[number] : numbers[number]) + '</b>';
+      numberStr = '<span class="changedParam">' + (abbrev ? numbersAbbrev[number] : numbers[number]) + '</span>';
     } else {
       numberStr = (abbrev ? numbersAbbrev[number] : numbers[number]);
     }
     if (tense !== prevt && prevt !== null) {
-      tenseStr = '<b>' + (abbrev ? tensesAbbrev[tense] : tenses[tense]) + '</b>';
+      tenseStr = '<span class="changedParam">' + (abbrev ? tensesAbbrev[tense] : tenses[tense]) + '</span>';
     } else {
       tenseStr = (abbrev ? tensesAbbrev[tense] : tenses[tense]);
     }
     if (mood !== prevm && prevm !== null) {
-      moodStr = '<b>' + (abbrev ? moodsAbbrev[mood] : moods[mood]) + '</b>';
+      moodStr = '<span class="changedParam">' + (abbrev ? moodsAbbrev[mood] : moods[mood]) + '</span>';
     } else {
       moodStr = (abbrev ? moodsAbbrev[mood] : moods[mood]);
     }
     if (voice !== prevv && prevv !== null) {
-      voiceStr = '<b>' + (abbrev ? voicesAbbrev[voice] : voices[voice]) + '</b>';
+      voiceStr = '<span class="changedParam">' + (abbrev ? voicesAbbrev[voice] : voices[voice]) + '</span>';
     } else {
       voiceStr = (abbrev ? voicesAbbrev[voice] : voices[voice]);
     }
