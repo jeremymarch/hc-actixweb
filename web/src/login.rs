@@ -652,6 +652,7 @@ pub async fn oauth_auth_apple(
         if let Some(ref t) = id_token {
             println!("state {:?} {:?}", saved_state, received_state);
             if saved_state.unwrap() == *received_state.secret() {
+                println!("same state!");
                 let key = DecodingKey::from_secret(&[]);
                 let mut validation = Validation::new(Algorithm::RS256);
                 validation.insecure_disable_signature_validation();
@@ -763,6 +764,7 @@ pub async fn oauth_auth_google(
         if let Some(ref t) = id_token {
             println!("state {:?} {:?}", saved_state, received_state);
             if saved_state.unwrap() == *received_state.secret() {
+                println!("same state!");
                 let key = DecodingKey::from_secret(&[]);
                 let mut validation = Validation::new(Algorithm::RS256);
                 validation.insecure_disable_signature_validation();

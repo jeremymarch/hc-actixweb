@@ -1671,7 +1671,7 @@ mod tests {
         .await;
         assert!(res.is_ok());
 
-        //second time user will have the same user_id
+        //second time the same oauth user will have the same user_id
         let res2 = hc_create_oauth_user(
             &db,
             "oauth_issuer".to_string(),
