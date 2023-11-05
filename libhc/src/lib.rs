@@ -1657,6 +1657,32 @@ mod tests {
         };
         let res = hc_validate_credentials(&db, credentials).await;
         assert_eq!(res.unwrap(), uuid1);
+
+        //insert oauth user
+        let res = hc_create_oauth_user(
+            &db,
+            "oauth_issuer".to_string(),
+            "oauth_sub".to_string(),
+            "first name",
+            "last name",
+            "blah@blah.com",
+            timestamp,
+        )
+        .await;
+        assert!(res.is_ok());
+
+        //second time user will have the same user_id
+        let res2 = hc_create_oauth_user(
+            &db,
+            "oauth_issuer".to_string(),
+            "oauth_sub".to_string(),
+            "first name",
+            "last name",
+            "blah@blah.com",
+            timestamp,
+        )
+        .await;
+        assert_eq!(res.unwrap().0, res2.unwrap().0);
     }
 
     #[tokio::test]
