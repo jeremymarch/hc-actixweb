@@ -630,6 +630,8 @@ pub async fn oauth_auth_apple(
     let saved_state = session.get::<String>("oauth_state").unwrap();
     //println!("received state: {:?}", new_state);
 
+    println!("code {:?} id_token {:?}", params.code, params.id_token.clone());
+
     if let Some(param_code) = &params.code {
         let code = AuthorizationCode::new(param_code.clone());
         let received_state = CsrfToken::new(params.state.clone());
@@ -732,6 +734,8 @@ pub async fn oauth_auth_google(
     let db = req.app_data::<HcDbPostgres>().unwrap();
     let data = req.app_data::<AppState>().unwrap();
     let saved_state = session.get::<String>("oauth_state").unwrap();
+
+    println!("code {:?} id_token {:?}", params.code, params.id_token.clone());
 
     if let Some(param_code) = &params.code {
         let code = AuthorizationCode::new(param_code.clone());
