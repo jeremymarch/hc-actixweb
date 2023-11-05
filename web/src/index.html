@@ -1389,47 +1389,47 @@ a {color:blue;}
   }
 
   function toggleSettingsOn () {
-        document.body.classList.add('settingsOn');
-      }
-      function toggleSettingsOff () {
-        document.body.classList.remove('settingsOn');
-      }
+    document.body.classList.add('settingsOn');
+  }
+  function toggleSettingsOff () {
+    document.body.classList.remove('settingsOn');
+  }
 
-      function toggleSettings () {
-        if (document.body.classList.contains('settingsOn')) {
-          toggleSettingsOff();
-        } else {
-          const mode = window.localStorage.getItem('mode');
-          switch (mode) {
-            case 'dark':
-              document.querySelector('#darkModeDark').checked = true;
-              break;
-            case 'light':
-              document.querySelector('#darkModeLight').checked = true;
-              break;
-            default:
-              document.querySelector('#darkModeSystem').checked = true;
-              break;
-          }
-          toggleSettingsOn();
-        }
+  function toggleSettings () {
+    if (document.body.classList.contains('settingsOn')) {
+      toggleSettingsOff();
+    } else {
+      const mode = window.localStorage.getItem('mode');
+      switch (mode) {
+        case 'dark':
+          document.querySelector('#darkModeDark').checked = true;
+          break;
+        case 'light':
+          document.querySelector('#darkModeLight').checked = true;
+          break;
+        default:
+          document.querySelector('#darkModeSystem').checked = true;
+          break;
       }
+      toggleSettingsOn();
+    }
+  }
 
-      function darkModeClick () {
-        switch (this.id) {
-          case 'darkModeDark':
-            window.localStorage.setItem('mode', 'dark');
-            break;
-          case 'darkModeLight':
-            window.localStorage.setItem('mode', 'light');
-            break;
-          default:
-            window.localStorage.removeItem('mode');
-            break;
-        }
-        // eslint-disable-next-line no-undef
-        setTheme();
-      }
+  function darkModeClick () {
+    switch (this.id) {
+      case 'darkModeDark':
+        window.localStorage.setItem('mode', 'dark');
+        break;
+      case 'darkModeLight':
+        window.localStorage.setItem('mode', 'light');
+        break;
+      default:
+        window.localStorage.removeItem('mode');
+        break;
+    }
+    // eslint-disable-next-line no-undef
+    setTheme();
+  }
 
   function hqUnitClicked () {
     const value = this.checked;
@@ -1569,19 +1569,19 @@ a {color:blue;}
     } else if ((data.response_to === 'answerresponse' || data.response_to === 'answerresponsepractice') && data.success) {
       // getSessions(false);
 
-      //option in philolog to download def at same time as word list
-      //include answer_prev in enter response
-      //rename person to person_next, etc in enter response?
-      //include real prev in enter response?
-      //look into why web font isn't downloaded in firefox for linux
-      //fix the fact that getSessions overwrites any open game moves
-      //add hamburger
-      //add setting to use websockets (experimental)?
-      //use email as user name if possible for oauth; store history of usernames in column in users table with date changed
-      //allow to reset username
-      //change users table to be able to store oauth_sub for each authority (google, apple, etc)
-      //allow to display game settings
-      //typewriter style text?
+      // option in philolog to download def at same time as word list
+      // include answer_prev in enter response
+      // rename person to person_next, etc in enter response?
+      // include real prev in enter response?
+      // look into why web font isn't downloaded in firefox for linux
+      // fix the fact that getSessions overwrites any open game moves
+      // add hamburger
+      // add setting to use websockets (experimental)?
+      // use email as user name if possible for oauth; store history of usernames in column in users table with date changed
+      // allow to reset username
+      // change users table to be able to store oauth_sub for each authority (google, apple, etc)
+      // allow to display game settings
+      // typewriter style text?
 
 
 
@@ -1604,7 +1604,7 @@ a {color:blue;}
         timed_out: null,
         mf_pressed: null,
         asktimestamp: 1697602262,
-        answeredtimestamp: null 
+        answeredtimestamp: null
       };
       insertGameMove(thisMove, {person:null,number:null,tense:null,mood:null,voice:null});
       //jwm end move row inserter here
@@ -1641,7 +1641,7 @@ a {color:blue;}
       }
       for (let i = 0; i < data.moves.length; i++) {
         if (data.moves[i].is_correct !== null) {
-          const moveRow = makeMoveRow(data.moves[i], (i > 0 ? data.moves[i - 1] : {person:null,number:null,tense:null,mood:null,voice:null}));
+          const moveRow = makeMoveRow(data.moves[i], (i > 0 ? data.moves[i - 1] : { person: null, number: null, tense: null, mood: null, voice: null }));
           frag.appendChild(moveRow);
         }
       }
@@ -1733,7 +1733,7 @@ a {color:blue;}
   }
 
   function insertGameMove (thisMove, prevMove) {
-    let d = q('.gamerow[data-uuid="' + globalSessionId + '"]');
+    const d = q('.gamerow[data-uuid="' + globalSessionId + '"]');
     if (d && d.firstChild) {
       const r = makeMoveRow(thisMove, prevMove);
 
