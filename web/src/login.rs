@@ -477,10 +477,10 @@ struct AppleClaims {
     auth_time: Option<u64>,
     nonce: Option<String>,
     nonce_supported: Option<bool>,
-    email: Option<String>,
+    //email: Option<String>,
     //this is bool for Google and String for Apple
     //https://developer.apple.com/forums/thread/121411?answerId=378290022#378290022
-    email_verified: Option<String>,
+    //email_verified: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -494,10 +494,10 @@ struct GoogleClaims {
     auth_time: Option<u64>,
     nonce: Option<String>,
     nonce_supported: Option<bool>,
-    email: Option<String>,
+    //email: Option<String>,
     //this is bool for Google and String for Apple
     //https://developer.apple.com/forums/thread/121411?answerId=378290022#378290022
-    email_verified: Option<bool>,
+    //email_verified: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
