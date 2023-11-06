@@ -668,7 +668,9 @@ pub async fn oauth_auth_apple(
                     }
                 }
                 println!("apple about to check claims {:?}", t);
-                if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
+                let the_claims = decode::<AppleClaims>(t, &key, &validation);
+                println!("the claims: {:?}", the_claims);
+                if let Ok(ttt) = the_claims {
                     println!("claims: {:?}, token: {:?}", ttt, token);
                     //whole_idtoken = format!("{:?}", ttt.clone());
                     let sub = ttt.claims.sub.unwrap_or(String::from(""));
@@ -774,7 +776,9 @@ pub async fn oauth_auth_google(
                 let email = String::from("");
 
                 println!("google about to check claims {:?}", t);
-                if let Ok(ttt) = decode::<GoogleClaims>(t, &key, &validation) {
+                let the_claims = decode::<GoogleClaims>(t, &key, &validation);
+                println!("the claims: {:?}", the_claims);
+                if let Ok(ttt) = the_claims {
                     println!("claims: {:?}, token: {:?}", ttt, token);
                     //whole_idtoken = format!("{:?}", ttt.clone());
                     let sub = ttt.claims.sub.unwrap_or(String::from(""));
@@ -847,3 +851,19 @@ fn nav_to_login(session: Session) -> Result<HttpResponse, AWError> {
         .append_header((header::LOCATION, "/login".to_string()))
         .finish())
 }
+
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+
+//     #[test]
+//     fn test_oauth2() {
+//         let key = DecodingKey::from_secret(&[]);
+//         let mut validation = Validation::new(Algorithm::RS256);
+//         validation.insecure_disable_signature_validation();
+//         let t = "eyJraWQiOiJXNldjT0tCIiwiYWxnIjoiUlMyNTYifQ.eyJpc3MiOiJodHRwczovL2FwcGxlaWQuYXBwbGUuY29tIiwiYXVkIjoidXMucGhpbG9sb2cuaG9wbGl0ZS1jaGFsbGVuZ2UuY2xpZW50IiwiZXhwIjoxNjk5MzE4MTkyLCJpYXQiOjE2OTkyMzE3OTIsInN1YiI6IjAwMTA0NC4xMDlkNzMxYzg1YmQ0YjhiYTJjM2M0YzEyNmEwZDVjNC4wMjM4Iiwibm9uY2UiOiJhMjkxNzFjZi02YzJiLTQ1YjEtYjRhZS00ZWY1MWVlZDY1ODgiLCJjX2hhc2giOiJkQjV3ZHFOMVM3bUhyMXd2NzhxaTFnIiwiZW1haWwiOiJleHVuc3RhcGxlckBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6InRydWUiLCJhdXRoX3RpbWUiOjE2OTkyMzE3OTIsIm5vbmNlX3N1cHBvcnRlZCI6dHJ1ZX0.DxALgyx8WEwfsBe1o-Q8IL3opslEWT22j6Bh3_kUA8qfReIsqDNFwEJJ2EBEivABPbZC_UJuWnCN2U0LO6ljK_N9PdtrEVWNBzELTJYjt42QRrRoG8ENkAUZtRvwcHKtMzRXOyjHMeiHdGD1XpSN1hP0I0BRB7-lxaotJRnhM07WcRx4Q230myuK2mOGAxU93jzyOo5hKZ6eOLluMhU_bwJn4ffAP0qAJaFzxVjuN-SW0U4DnyDsr9yNS-agCbepN_vAd69SVY5daM0XhkbMiL5nlQLu2m7R9wxdCTHLjSCeAxlj9XlYTFvWT7ZkXPbMtXdXvmVZDiz6UvghsvfFmQ";
+//         let res = decode::<GoogleClaims>(t, &key, &validation);
+//         println!("{:?}", res);
+//         assert!(res.is_ok());
+//     }
+// }
