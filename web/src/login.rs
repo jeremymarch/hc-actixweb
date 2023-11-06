@@ -650,9 +650,9 @@ pub async fn oauth_auth_apple(
         // let mut whole_idtoken = String::from("");
         // let mut new_claims = String::from("");
         if let Some(ref t) = id_token {
-            println!("state {:?} {:?}", saved_state, received_state);
+            println!("apple state {:?} {:?}", saved_state, received_state);
             if saved_state.unwrap() == *received_state.secret() {
-                println!("same state!");
+                println!("apple same state!");
                 let key = DecodingKey::from_secret(&[]);
                 let mut validation = Validation::new(Algorithm::RS256);
                 validation.insecure_disable_signature_validation();
@@ -667,7 +667,7 @@ pub async fn oauth_auth_apple(
                         email = apple_oauth_user.email.unwrap_or(String::from(""));
                     }
                 }
-
+                println!("apple about to check claims");
                 if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
                     println!("claims: {:?}, token: {:?}", ttt, token);
                     //whole_idtoken = format!("{:?}", ttt.clone());
@@ -762,9 +762,9 @@ pub async fn oauth_auth_google(
         // let mut sub = String::from("");
         // let mut whole_idtoken = String::from("");
         if let Some(ref t) = id_token {
-            println!("state {:?} {:?}", saved_state, received_state);
+            println!("google state {:?} {:?}", saved_state, received_state);
             if saved_state.unwrap() == *received_state.secret() {
-                println!("same state!");
+                println!("google same state!");
                 let key = DecodingKey::from_secret(&[]);
                 let mut validation = Validation::new(Algorithm::RS256);
                 validation.insecure_disable_signature_validation();
@@ -773,6 +773,7 @@ pub async fn oauth_auth_google(
                 let last_name = String::from("");
                 let email = String::from("");
 
+                println!("google about to check claims");
                 if let Ok(ttt) = decode::<GoogleClaims>(t, &key, &validation) {
                     println!("claims: {:?}, token: {:?}", ttt, token);
                     //whole_idtoken = format!("{:?}", ttt.clone());
