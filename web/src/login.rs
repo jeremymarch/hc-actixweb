@@ -667,7 +667,7 @@ pub async fn oauth_auth_apple(
                         email = apple_oauth_user.email.unwrap_or(String::from(""));
                     }
                 }
-                println!("apple about to check claims");
+                println!("apple about to check claims {:?}", t);
                 if let Ok(ttt) = decode::<AppleClaims>(t, &key, &validation) {
                     println!("claims: {:?}, token: {:?}", ttt, token);
                     //whole_idtoken = format!("{:?}", ttt.clone());
@@ -773,7 +773,7 @@ pub async fn oauth_auth_google(
                 let last_name = String::from("");
                 let email = String::from("");
 
-                println!("google about to check claims");
+                println!("google about to check claims {:?}", t);
                 if let Ok(ttt) = decode::<GoogleClaims>(t, &key, &validation) {
                     println!("claims: {:?}, token: {:?}", ttt, token);
                     //whole_idtoken = format!("{:?}", ttt.clone());
