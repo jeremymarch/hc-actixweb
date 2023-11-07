@@ -653,8 +653,11 @@ pub async fn oauth_auth_apple(
             // println!("apple state {:?} {:?}", saved_state, received_state);
             if saved_state.unwrap() == *received_state.secret() {
                 // println!("apple same state!");
-                let key = DecodingKey::from_base64_secret(env::var("APPLE_CLIENT_SECRET")
-                .expect("Missing the APPLE_CLIENT_SECRET environment variable.").as_str()).unwrap();
+                let key = DecodingKey::from_secret(
+                    env::var("APPLE_CLIENT_SECRET")
+                        .expect("Missing the APPLE_CLIENT_SECRET environment variable.")
+                        .as_ref(),
+                );
                 let mut validation = Validation::new(Algorithm::RS256);
                 validation.set_audience(&[env::var("APPLE_CLIENT_ID")
                     .expect("Missing the APPLE_CLIENT_ID environment variable.")]);
@@ -771,8 +774,11 @@ pub async fn oauth_auth_google(
             // println!("google state {:?} {:?}", saved_state, received_state);
             if saved_state.unwrap() == *received_state.secret() {
                 // println!("google same state!");
-                let key = DecodingKey::from_base64_secret(env::var("GOOGLE_CLIENT_SECRET")
-                .expect("Missing the GOOGLE_CLIENT_SECRET environment variable.").as_str()).unwrap();
+                let key = DecodingKey::from_secret(
+                    env::var("GOOGLE_CLIENT_SECRET")
+                        .expect("Missing the GOOGLE_CLIENT_SECRET environment variable.")
+                        .as_ref(),
+                );
                 let mut validation = Validation::new(Algorithm::RS256);
                 validation.set_audience(&[env::var("GOOGLE_CLIENT_ID")
                     .expect("Missing the GOOGLE_CLIENT_ID environment variable.")]);
