@@ -672,7 +672,7 @@ pub async fn oauth_auth_apple(
                 }
                 // println!("apple about to check claims {:?}", t);
                 let the_claims = decode::<AppleClaims>(t, &key, &validation);
-                // println!("the claims: {:?}", the_claims);
+                println!("the claims: {:?}", the_claims);
                 if let Ok(ttt) = the_claims {
                     // println!("claims: {:?}, token: {:?}", ttt, token);
                     //whole_idtoken = format!("{:?}", ttt.clone());
@@ -783,7 +783,7 @@ pub async fn oauth_auth_google(
 
                 // println!("google about to check claims {:?}", t);
                 let the_claims = decode::<GoogleClaims>(t, &key, &validation);
-                // println!("the claims: {:?}", the_claims);
+                println!("the claims: {:?}", the_claims);
                 if let Ok(ttt) = the_claims {
                     // println!("claims: {:?}, token: {:?}", ttt, token);
                     //whole_idtoken = format!("{:?}", ttt.clone());
