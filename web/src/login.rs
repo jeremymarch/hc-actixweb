@@ -675,7 +675,7 @@ pub async fn oauth_auth_apple(
                         email = apple_oauth_user.email.unwrap_or(String::from(""));
                     }
                 }
-                // println!("apple about to check claims {:?}", t);
+                println!("apple about to check claims {:?}", t);
                 let the_claims = decode::<AppleClaims>(t, &key, &validation);
                 println!("the claims: {:?}", the_claims);
                 if let Ok(ttt) = the_claims {
@@ -786,7 +786,7 @@ pub async fn oauth_auth_google(
                 let last_name = String::from("");
                 let email = String::from("");
 
-                // println!("google about to check claims {:?}", t);
+                println!("google about to check claims {:?}", t);
                 let the_claims = decode::<GoogleClaims>(t, &key, &validation);
                 println!("the claims: {:?}", the_claims);
                 if let Ok(ttt) = the_claims {
