@@ -34,7 +34,7 @@ hex = "0.4.3"
 rand = "0.8.5"
 
 base64-url = "2.0.0"
-jsonwebtoken = "8.3.0"
+jsonwebtoken = "9.1.0"
 oauth2 = "4.4.2"
 base64 = "0.10"
 url = "2.1"
