@@ -653,16 +653,17 @@ pub async fn oauth_auth_apple(
             // println!("apple state {:?} {:?}", saved_state, received_state);
             if saved_state.unwrap() == *received_state.secret() {
                 // println!("apple same state!");
-                let key = DecodingKey::from_secret(
-                    env::var("APPLE_CLIENT_SECRET")
-                        .expect("Missing the APPLE_CLIENT_SECRET environment variable.")
-                        .as_ref(),
-                );
+                let key = DecodingKey::from_secret(&[]);
+                // let key = DecodingKey::from_secret(
+                //     env::var("APPLE_CLIENT_SECRET")
+                //         .expect("Missing the APPLE_CLIENT_SECRET environment variable.")
+                //         .as_ref(),
+                // );
                 let mut validation = Validation::new(Algorithm::RS256);
                 validation.set_audience(&[env::var("APPLE_CLIENT_ID")
                     .expect("Missing the APPLE_CLIENT_ID environment variable.")]);
                 validation.set_issuer(&["https://appleid.apple.com"]);
-                // validation.insecure_disable_signature_validation();
+                validation.insecure_disable_signature_validation();
 
                 let mut first_name = String::from("");
                 let mut last_name = String::from("");
@@ -774,16 +775,12 @@ pub async fn oauth_auth_google(
             // println!("google state {:?} {:?}", saved_state, received_state);
             if saved_state.unwrap() == *received_state.secret() {
                 // println!("google same state!");
-                let key = DecodingKey::from_secret(
-                    env::var("GOOGLE_CLIENT_SECRET")
-                        .expect("Missing the GOOGLE_CLIENT_SECRET environment variable.")
-                        .as_ref(),
-                );
+                let key = DecodingKey::from_secret(&[]);
                 let mut validation = Validation::new(Algorithm::RS256);
                 validation.set_audience(&[env::var("GOOGLE_CLIENT_ID")
                     .expect("Missing the GOOGLE_CLIENT_ID environment variable.")]);
                 validation.set_issuer(&["https://accounts.google.com"]);
-                // validation.insecure_disable_signature_validation();
+                validation.insecure_disable_signature_validation();
 
                 let first_name = String::from("");
                 let last_name = String::from("");
