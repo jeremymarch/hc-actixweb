@@ -677,7 +677,7 @@ pub async fn oauth_auth_apple(
                 }
                 println!("apple test test3");
                 if let Ok(result) = sign_in_with_apple::validate(
-                    env::var("APPLE_CLIENT_ID")
+                    &env::var("APPLE_CLIENT_ID")
                         .expect("Missing the APPLE_CLIENT_ID environment variable."),
                     t,
                     false,
