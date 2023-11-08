@@ -675,13 +675,24 @@ pub async fn oauth_auth_apple(
                         email = apple_oauth_user.email.unwrap_or(String::from(""));
                     }
                 }
+                println!("apple test test");
+                let result = sign_in_with_apple::validate(
+                    env::var("APPLE_CLIENT_ID")
+                        .expect("Missing the APPLE_CLIENT_ID environment variable.")
+                        .to_string(),
+                    t.to_string(),
+                    true,
+                )
+                .await
+                .unwrap();
+
                 println!("apple about to check claims {:?} , token {:?}", t, token);
                 let the_claims = decode::<AppleClaims>(t, &key, &validation);
                 println!("the claims: {:?}", the_claims);
                 if let Ok(ttt) = the_claims {
                     // println!("claims: {:?}, token: {:?}", ttt, token);
                     //whole_idtoken = format!("{:?}", ttt.clone());
-                    let sub = ttt.claims.sub.unwrap_or(String::from(""));
+                    let sub = result.claims.sub; //ttt.claims.sub.unwrap_or(String::from(""));
                     let iss = ttt.claims.iss.unwrap_or(String::from(""));
 
                     let timestamp = libhc::get_timestamp();
