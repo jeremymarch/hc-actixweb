@@ -675,12 +675,12 @@ pub async fn oauth_auth_apple(
                         email = apple_oauth_user.email.unwrap_or(String::from(""));
                     }
                 }
-                println!("apple test test2");
+                println!("apple test test3");
                 if let Ok(result) = sign_in_with_apple::validate(
                     env::var("APPLE_CLIENT_ID")
                         .expect("Missing the APPLE_CLIENT_ID environment variable."),
-                    t.to_string(),
-                    true,
+                    t,
+                    false,
                 )
                 .await
                 {
