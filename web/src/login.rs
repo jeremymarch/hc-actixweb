@@ -643,7 +643,7 @@ pub async fn oauth_auth_apple(
         let user = params.user.clone();
         let id_token = params.id_token.clone();
 
-        let token = &data.apple_oauth.exchange_code(code);
+        let _token = &data.apple_oauth.exchange_code(code);
 
         // let mut sub = String::from("");
         // let mut iss = String::from("");
@@ -653,7 +653,7 @@ pub async fn oauth_auth_apple(
             // println!("apple state {:?} {:?}", saved_state, received_state);
             if saved_state.unwrap() == *received_state.secret() {
                 // println!("apple same state!");
-                let key = DecodingKey::from_secret(&[]);
+                //let key = DecodingKey::from_secret(&[]);
                 // let key = DecodingKey::from_secret(
                 //     env::var("APPLE_CLIENT_SECRET")
                 //         .expect("Missing the APPLE_CLIENT_SECRET environment variable.")
@@ -675,25 +675,19 @@ pub async fn oauth_auth_apple(
                         email = apple_oauth_user.email.unwrap_or(String::from(""));
                     }
                 }
-                println!("apple test test");
-                let result = sign_in_with_apple::validate(
+                println!("apple test test2");
+                if let Ok(result) = sign_in_with_apple::validate(
                     env::var("APPLE_CLIENT_ID")
-                        .expect("Missing the APPLE_CLIENT_ID environment variable.")
-                        .to_string(),
+                        .expect("Missing the APPLE_CLIENT_ID environment variable."),
                     t.to_string(),
                     true,
                 )
                 .await
-                .unwrap();
-
-                println!("apple about to check claims {:?} , token {:?}", t, token);
-                let the_claims = decode::<AppleClaims>(t, &key, &validation);
-                println!("the claims: {:?}", the_claims);
-                if let Ok(ttt) = the_claims {
+                {
                     // println!("claims: {:?}, token: {:?}", ttt, token);
                     //whole_idtoken = format!("{:?}", ttt.clone());
                     let sub = result.claims.sub; //ttt.claims.sub.unwrap_or(String::from(""));
-                    let iss = ttt.claims.iss.unwrap_or(String::from(""));
+                    let iss = result.claims.iss; //ttt.claims.iss.unwrap_or(String::from(""));
 
                     let timestamp = libhc::get_timestamp();
                     let (user_id, user_name) = hc_create_oauth_user(
