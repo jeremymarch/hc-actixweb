@@ -438,8 +438,6 @@ pub async fn oauth_post(
 */
 
 use actix_web::http::header;
-use jsonwebtoken::Algorithm;
-use jsonwebtoken::{decode, DecodingKey, Validation};
 use libhc::hc_create_oauth_user;
 use oauth2::basic::BasicClient;
 use oauth2::AuthUrl;
@@ -627,17 +625,10 @@ pub async fn oauth_auth_apple(
 ) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<HcDbPostgres>().unwrap();
     let data = req.app_data::<AppState>().unwrap();
-    let saved_state = session.get::<String>("oauth_state").unwrap();
-    //println!("received state: {:?}", new_state);
 
-    // println!(
-    //     "code {:?} id_token {:?}",
-    //     params.code,
-    //     params.id_token.clone()
-    // );
+    let saved_state = session.get::<String>("oauth_state").unwrap();
 
     if let Some(param_code) = &params.code {
-        // println!("code code");
         let code = AuthorizationCode::new(param_code.clone());
         let received_state = CsrfToken::new(params.state.clone());
         let user = params.user.clone();
@@ -645,29 +636,12 @@ pub async fn oauth_auth_apple(
 
         let _token = &data.apple_oauth.exchange_code(code);
 
-        // let mut sub = String::from("");
-        // let mut iss = String::from("");
-        // let mut whole_idtoken = String::from("");
-        // let mut new_claims = String::from("");
-        if let Some(ref t) = id_token {
-            // println!("apple state {:?} {:?}", saved_state, received_state);
+        if let Some(ref id_token_ref) = id_token {
             if saved_state.unwrap() == *received_state.secret() {
-                // println!("apple same state!");
-                //let key = DecodingKey::from_secret(&[]);
-                // let key = DecodingKey::from_secret(
-                //     env::var("APPLE_CLIENT_SECRET")
-                //         .expect("Missing the APPLE_CLIENT_SECRET environment variable.")
-                //         .as_ref(),
-                // );
-                let mut validation = Validation::new(Algorithm::RS256);
-                validation.set_audience(&[env::var("APPLE_CLIENT_ID")
-                    .expect("Missing the APPLE_CLIENT_ID environment variable.")]);
-                validation.set_issuer(&["https://appleid.apple.com"]);
-                validation.insecure_disable_signature_validation();
-
                 let mut first_name = String::from("");
                 let mut last_name = String::from("");
                 let mut email = String::from("");
+
                 if let Some(ref user) = user {
                     if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
                         first_name = apple_oauth_user.name.first_name.unwrap_or(String::from(""));
@@ -675,19 +649,19 @@ pub async fn oauth_auth_apple(
                         email = apple_oauth_user.email.unwrap_or(String::from(""));
                     }
                 }
+
                 println!("apple test test3");
                 if let Ok(result) = sign_in_with_apple::validate(
                     &env::var("APPLE_CLIENT_ID")
                         .expect("Missing the APPLE_CLIENT_ID environment variable."),
-                    t,
+                    id_token_ref,
                     false,
                 )
                 .await
                 {
-                    // println!("claims: {:?}, token: {:?}", ttt, token);
-                    //whole_idtoken = format!("{:?}", ttt.clone());
-                    let sub = result.claims.sub; //ttt.claims.sub.unwrap_or(String::from(""));
-                    let iss = result.claims.iss; //ttt.claims.iss.unwrap_or(String::from(""));
+                    let sub = result.claims.sub;
+                    let iss = result.claims.iss;
+                    //let email = result.claims.email.unwrap_or(String::from(""));
 
                     let timestamp = libhc::get_timestamp();
                     let (user_id, user_name) = hc_create_oauth_user(
@@ -716,35 +690,6 @@ pub async fn oauth_auth_apple(
                 return nav_to_login(session);
             }
         }
-        // let html = format!(
-        //     r#"<html>
-        //     <head><title>OAuth2 Test</title></head>
-        //     <body>
-        //         Apple returned the following state:
-        //         <p>{}</p>
-        //         Apple returned the following token:
-        //         <p>{:?}</p>
-        //         user:
-        //         <p>{:?}</p>
-        //         id_token:
-        //         <p>{:?}</p>
-        //         sub:
-        //         <p>{:?}</p>
-        //         whole:
-        //         <p>{:?}</p>
-        //         new state:
-        //         <p>{:?}</p>
-        //     </body>
-        // </html>"#,
-        //     state.secret(),
-        //     token,
-        //     user,
-        //     id_token,
-        //     sub,
-        //     whole_idtoken,
-        //     new_state,
-        // );
-        // return Ok(HttpResponse::Ok().body(html));
     }
 
     nav_to_login(session)
@@ -757,12 +702,6 @@ pub async fn oauth_auth_google(
     let data = req.app_data::<AppState>().unwrap();
     let saved_state = session.get::<String>("oauth_state").unwrap();
 
-    // println!(
-    //     "code {:?} id_token {:?}",
-    //     params.code,
-    //     params.id_token.clone()
-    // );
-
     if let Some(param_code) = &params.code {
         // println!("code code");
         let code = AuthorizationCode::new(param_code.clone());
@@ -771,34 +710,26 @@ pub async fn oauth_auth_google(
         let id_token = params.id_token.clone();
 
         // Exchange the code with a token.
-        let token = &data.google_oauth.exchange_code(code);
+        let _token = &data.google_oauth.exchange_code(code);
 
-        // let mut iss = String::from("");
-        // let mut sub = String::from("");
-        // let mut whole_idtoken = String::from("");
-        if let Some(ref t) = id_token {
-            // println!("google state {:?} {:?}", saved_state, received_state);
+        if let Some(ref id_token_ref) = id_token {
             if saved_state.unwrap() == *received_state.secret() {
-                // println!("google same state!");
-                let key = DecodingKey::from_secret(&[]);
-                let mut validation = Validation::new(Algorithm::RS256);
-                validation.set_audience(&[env::var("GOOGLE_CLIENT_ID")
-                    .expect("Missing the GOOGLE_CLIENT_ID environment variable.")]);
-                validation.set_issuer(&["https://accounts.google.com"]);
-                validation.insecure_disable_signature_validation();
-
                 let first_name = String::from("");
                 let last_name = String::from("");
                 let email = String::from("");
 
-                println!("google about to check claims {:?} , token {:?}", t, token);
-                let the_claims = decode::<GoogleClaims>(t, &key, &validation);
-                println!("the claims: {:?}", the_claims);
-                if let Ok(ttt) = the_claims {
-                    // println!("claims: {:?}, token: {:?}", ttt, token);
-                    //whole_idtoken = format!("{:?}", ttt.clone());
-                    let sub = ttt.claims.sub.unwrap_or(String::from(""));
-                    let iss = ttt.claims.iss.unwrap_or(String::from(""));
+                let mut client = google_signin::Client::new();
+                client.audiences.push(
+                    env::var("GOOGLE_CLIENT_ID")
+                        .expect("Missing the GOOGLE_CLIENT_ID environment variable."),
+                );
+                //client.hosted_domains.push(YOUR_HOSTED_DOMAIN); // optional
+                let certs_cache = google_signin::CachedCerts::new();
+
+                if let Ok(id_info) = client.verify(id_token_ref, &certs_cache).await {
+                    let sub = id_info.sub;
+                    let iss = id_info.iss;
+                    //let email = id_info.email.unwrap_or(String::from(""));
 
                     let timestamp = libhc::get_timestamp();
                     let (user_id, user_name) = hc_create_oauth_user(
@@ -826,36 +757,6 @@ pub async fn oauth_auth_google(
                 return nav_to_login(session);
             }
         }
-
-        // let html = format!(
-        //     r#"<html>
-        //     <head><title>OAuth2 Test</title></head>
-        //     <body>
-        //         Apple returned the following state:
-        //         <p>{}</p>
-        //         Apple returned the following token:
-        //         <p>{:?}</p>
-        //         user:
-        //         <p>{:?}</p>
-        //         id_token:
-        //         <p>{:?}</p>
-        //         sub:
-        //         <p>{:?}</p>
-        //         whole_idtoken:
-        //         <p>{:?}</p>
-        //         new state:
-        //         <p>{:?}</p>
-        //     </body>
-        // </html>"#,
-        //     state.secret(),
-        //     token,
-        //     user,
-        //     id_token,
-        //     sub,
-        //     whole_idtoken,
-        //     new_state
-        // );
-        // return Ok(HttpResponse::Ok().body(html));
     }
 
     nav_to_login(session)

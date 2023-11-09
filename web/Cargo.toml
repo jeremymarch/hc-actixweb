@@ -34,8 +34,9 @@ hex = "0.4.3"
 rand = "0.8.5"
 
 oauth2 = "4.4.2"
-jsonwebtoken = "9.1.0"
+#jsonwebtoken = "9.1.0"
 sign-in-with-apple = { git = "https://github.com/jeremymarch/sign-in-with-apple", version = "0.3.2" }
+google-signin = { git = "https://github.com/wyyerd/google-signin-rs", version = "0.4.0" }
 
 uuid = { version = "1.5.0", features = ["v4", "serde"] }
 
