@@ -717,7 +717,7 @@ pub async fn oauth_auth_google(
                 let first_name = String::from("");
                 let last_name = String::from("");
                 let email = String::from("");
-                println!("cccccc");
+                println!("cccccc {:?}", id_token_ref);
                 let mut client = google_signin::Client::new();
                 client.audiences.push(
                     env::var("GOOGLE_CLIENT_ID")
