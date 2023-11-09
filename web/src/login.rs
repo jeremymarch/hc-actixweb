@@ -33,6 +33,10 @@ use secrecy::Secret;
 //use std::collections::HashMap;
 use std::fmt::Write;
 
+use sign_in_with_apple::AppleClaims;
+use sign_in_with_apple::GoogleClaims;
+use sign_in_with_apple::Issuer;
+
 #[derive(serde::Deserialize)]
 pub struct LoginFormData {
     username: String,
@@ -463,7 +467,7 @@ pub struct AppState {
     pub apple_oauth: BasicClient,
     pub google_oauth: BasicClient,
 }
-
+/*
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct AppleClaims {
     iss: Option<String>,
@@ -497,7 +501,7 @@ struct GoogleClaims {
     //https://developer.apple.com/forums/thread/121411?answerId=378290022#378290022
     email_verified: Option<bool>,
 }
-
+*/
 #[derive(Debug, Serialize, Deserialize)]
 struct AppleOAuthUserName {
     #[serde(rename(serialize = "firstName"), rename(deserialize = "firstName"))]
@@ -651,11 +655,12 @@ pub async fn oauth_auth_apple(
                 }
 
                 println!("apple test test3");
-                if let Ok(result) = sign_in_with_apple::validate(
+                if let Ok(result) = sign_in_with_apple::validate::<AppleClaims>(
                     &env::var("APPLE_CLIENT_ID")
                         .expect("Missing the APPLE_CLIENT_ID environment variable."),
                     id_token_ref,
                     false,
+                    Issuer::APPLE,
                 )
                 .await
                 {
@@ -717,23 +722,21 @@ pub async fn oauth_auth_google(
                 let first_name = String::from("");
                 let last_name = String::from("");
                 let email = String::from("");
-                println!("cccccc {:?}", id_token_ref);
-                let mut client = google_signin::Client::new();
-                client.audiences.push(
-                    env::var("GOOGLE_CLIENT_ID")
-                        .expect("Missing the GOOGLE_CLIENT_ID environment variable."),
-                );
-                println!("aaaaa");
-                //client.hosted_domains.push(YOUR_HOSTED_DOMAIN); // optional
-                let certs_cache = google_signin::CachedCerts::new();
-                println!("bbbbb");
-                let id_info = client.verify(id_token_ref, &certs_cache).await;
-                println!("gggggg: {:?}", id_info);
 
-                if let Ok(id_info) = id_info {
-                    let sub = id_info.sub;
-                    let iss = id_info.iss;
-                    //let email = id_info.email.unwrap_or(String::from(""));
+                println!("cccccc {:?}", id_token_ref);
+                println!("google test test3");
+                if let Ok(result) = sign_in_with_apple::validate::<GoogleClaims>(
+                    &env::var("GOOGLE_CLIENT_ID")
+                        .expect("Missing the GOOGLE_CLIENT_ID environment variable."),
+                    id_token_ref,
+                    false,
+                    Issuer::GOOGLE,
+                )
+                .await
+                {
+                    let sub = result.claims.sub;
+                    let iss = result.claims.iss;
+                    //let email = result.claims.email.unwrap_or(String::from(""));
 
                     let timestamp = libhc::get_timestamp();
                     let (user_id, user_name) = hc_create_oauth_user(
