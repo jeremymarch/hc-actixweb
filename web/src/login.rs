@@ -717,16 +717,20 @@ pub async fn oauth_auth_google(
                 let first_name = String::from("");
                 let last_name = String::from("");
                 let email = String::from("");
-
+                println!("cccccc");
                 let mut client = google_signin::Client::new();
                 client.audiences.push(
                     env::var("GOOGLE_CLIENT_ID")
                         .expect("Missing the GOOGLE_CLIENT_ID environment variable."),
                 );
+                println!("aaaaa");
                 //client.hosted_domains.push(YOUR_HOSTED_DOMAIN); // optional
                 let certs_cache = google_signin::CachedCerts::new();
+                println!("bbbbb");
+                let id_info = client.verify(id_token_ref, &certs_cache).await;
+                println!("gggggg: {:?}", id_info);
 
-                if let Ok(id_info) = client.verify(id_token_ref, &certs_cache).await {
+                if let Ok(id_info) = id_info {
                     let sub = id_info.sub;
                     let iss = id_info.iss;
                     //let email = id_info.email.unwrap_or(String::from(""));
