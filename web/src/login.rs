@@ -671,8 +671,8 @@ pub async fn oauth_auth_apple(
                     let timestamp = libhc::get_timestamp();
                     let (user_id, user_name) = hc_create_oauth_user(
                         db,
-                        iss.clone(),
-                        sub.clone(),
+                        &iss,
+                        &sub,
                         &first_name,
                         &last_name,
                         &email,
@@ -741,8 +741,8 @@ pub async fn oauth_auth_google(
                     let timestamp = libhc::get_timestamp();
                     let (user_id, user_name) = hc_create_oauth_user(
                         db,
-                        iss.clone(),
-                        sub.clone(),
+                        &iss,
+                        &sub,
                         &first_name,
                         &last_name,
                         &email,

@@ -97,7 +97,7 @@ pub struct UserResult {
     user_name: String,
     password: String,
     email: String,
-    user_type: i32,
+    user_type: i64,
     timestamp: i64,
 }
 
@@ -319,13 +319,16 @@ pub trait HcTrx {
         timestamp: i64,
     ) -> Result<(), HcError>;
 
+    #[allow(clippy::too_many_arguments)]
     async fn create_user(
         &mut self,
-        oauth_iss: Option<String>,
-        oauth_sub: Option<String>,
+        google_oauth_sub: Option<&str>,
+        apple_oauth_sub: Option<&str>,
         username: Option<&str>,
         password: Secret<String>,
         email: &str,
+        first_name: &str,
+        last_name: &str,
         timestamp: i64,
     ) -> Result<Uuid, HcError>;
 
@@ -427,6 +430,9 @@ pub async fn hc_create_user(
         return Err(HcError::UnknownError);
     }
 
+    let first_name = "";
+    let last_name = "";
+
     let secret_password = Secret::new(password.to_string());
 
     let password_hash = spawn_blocking(move || compute_password_hash(secret_password))
@@ -435,7 +441,16 @@ pub async fn hc_create_user(
 
     let mut tx = db.begin_tx().await?;
     let user_id = tx
-        .create_user(None, None, Some(username), password_hash, email, timestamp)
+        .create_user(
+            None,
+            None,
+            Some(username),
+            password_hash,
+            email,
+            first_name,
+            last_name,
+            timestamp,
+        )
         .await?;
     tx.commit_tx().await?;
     Ok(user_id)
@@ -443,16 +458,27 @@ pub async fn hc_create_user(
 
 pub async fn hc_create_oauth_user(
     db: &dyn HcDb,
-    oauth_iss: String,
-    oauth_sub: String,
-    _first_name: &str,
-    _last_name: &str,
+    oauth_iss: &str,
+    oauth_sub: &str,
+    first_name: &str,
+    last_name: &str,
     email: &str,
     timestamp: i64,
 ) -> Result<(Uuid, Option<String>), HcError> {
     let mut tx = db.begin_tx().await?;
 
-    let existing_user = tx.get_oauth_user(&oauth_iss, &oauth_sub).await?;
+    let existing_user = tx.get_oauth_user(oauth_iss, oauth_sub).await?;
+
+    let google_oauth_sub = if oauth_iss == "https://accounts.google.com" {
+        Some(oauth_sub)
+    } else {
+        None
+    };
+    let apple_oauth_sub = if oauth_iss == "https://appleid.apple.com" {
+        Some(oauth_sub)
+    } else {
+        None
+    };
 
     match existing_user {
         Some((existing_user_id, existing_user_name)) => {
@@ -463,11 +489,13 @@ pub async fn hc_create_oauth_user(
             //let user_name = format!("{}{}", first_name, last_name);
             let user_id = tx
                 .create_user(
-                    Some(oauth_iss),
-                    Some(oauth_sub),
+                    google_oauth_sub,
+                    apple_oauth_sub,
                     None,
                     Secret::new(String::from("")),
                     email,
+                    first_name,
+                    last_name,
                     timestamp,
                 )
                 .await?;
@@ -1661,8 +1689,8 @@ mod tests {
         //insert oauth user
         let res = hc_create_oauth_user(
             &db,
-            "oauth_issuer".to_string(),
-            "oauth_sub".to_string(),
+            "https://appleid.apple.com",
+            "apple_oauth_sub",
             "first name",
             "last name",
             "blah@blah.com",
@@ -1674,8 +1702,8 @@ mod tests {
         //second time the same oauth user will have the same user_id
         let res2 = hc_create_oauth_user(
             &db,
-            "oauth_issuer".to_string(),
-            "oauth_sub".to_string(),
+            "https://appleid.apple.com",
+            "apple_oauth_sub",
             "first name",
             "last name",
             "blah@blah.com",

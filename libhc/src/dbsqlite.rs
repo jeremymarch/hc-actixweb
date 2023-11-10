@@ -449,22 +449,27 @@ impl HcTrx for HcDbSqliteTrx<'_> {
 
     async fn create_user(
         &mut self,
-        oauth_iss: Option<String>,
-        oauth_sub: Option<String>,
+        google_oauth_sub: Option<&str>,
+        apple_oauth_sub: Option<&str>,
         username: Option<&str>,
         password: Secret<String>,
         email: &str,
+        first_name: &str,
+        last_name: &str,
         timestamp: i64,
     ) -> Result<Uuid, HcError> {
         let uuid = sqlx::types::Uuid::new_v4();
-        let query = "INSERT INTO users VALUES ($1, $2, $3, $4, $5, $6, 0, $7);";
+        let query = "INSERT INTO users VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $9, $10);";
         let _res = sqlx::query(query)
             .bind(uuid)
-            .bind(oauth_iss)
-            .bind(oauth_sub)
+            .bind(google_oauth_sub)
+            .bind(apple_oauth_sub)
             .bind(username)
             .bind(password.expose_secret())
             .bind(email)
+            .bind(first_name)
+            .bind(last_name)
+            .bind(timestamp)
             .bind(timestamp)
             .execute(&mut *self.tx)
             .await
@@ -498,19 +503,25 @@ impl HcTrx for HcDbSqliteTrx<'_> {
         oauth_iss: &str,
         oauth_sub: &str,
     ) -> Result<Option<(uuid::Uuid, Option<String>)>, HcError> {
-        let row = sqlx::query(
+        // https://accounts.google.com
+        let query = format!(
             r#"
             SELECT user_id, user_name
             FROM users
-            WHERE oauth_sub = $1 AND oauth_iss = $2
-            "#,
-        )
-        .bind(oauth_sub)
-        .bind(oauth_iss)
-        .map(|row: SqliteRow| (row.get("user_id"), row.get("user_name")))
-        .fetch_optional(&mut *self.tx)
-        .await
-        .map_err(map_sqlx_error)?;
+            WHERE {} = $1;"#,
+            if oauth_iss == "https://appleid.apple.com" {
+                "apple_oauth_sub"
+            } else {
+                "google_oauth_sub"
+            }
+        );
+
+        let row = sqlx::query(&query)
+            .bind(oauth_sub)
+            .map(|row: SqliteRow| (row.get("user_id"), row.get("user_name")))
+            .fetch_optional(&mut *self.tx)
+            .await
+            .map_err(map_sqlx_error)?;
 
         Ok(row)
     }
@@ -518,15 +529,19 @@ impl HcTrx for HcDbSqliteTrx<'_> {
     async fn create_db(&mut self) -> Result<(), HcError> {
         let query = r#"CREATE TABLE IF NOT EXISTS users ( 
     user_id BLOB PRIMARY KEY NOT NULL, 
-    oauth_iss TEXT,
-    oauth_sub TEXT,
+    google_oauth_sub TEXT,
+    apple_oauth_sub TEXT,
     user_name TEXT, 
     password TEXT, 
     email TEXT,
+    first_name TEXT,
+    last_name TEXT,
     user_type INT NOT NULL DEFAULT 0,
     timestamp INT NOT NULL DEFAULT 0,
+    created INT NOT NULL DEFAULT 0,
     UNIQUE(user_name),
-    UNIQUE(oauth_sub)
+    UNIQUE(google_oauth_sub),
+    UNIQUE(apple_oauth_sub)
     ) STRICT;"#;
 
         let _res = sqlx::query(query)
