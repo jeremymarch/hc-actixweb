@@ -501,7 +501,7 @@ pub async fn hc_create_oauth_user(
                 )
                 .await?;
             tx.commit_tx().await?;
-            Ok((user_id, None))
+            Ok((user_id, user_name.map(|user_name| user_name.to_string())))
         }
     }
 }
