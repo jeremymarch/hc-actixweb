@@ -666,7 +666,7 @@ pub async fn oauth_auth_apple(
                 {
                     let sub = result.claims.sub;
                     let iss = result.claims.iss;
-                    //let email = result.claims.email.unwrap_or(String::from(""));
+                    email = result.claims.email.unwrap_or(String::from(""));
 
                     let timestamp = libhc::get_timestamp();
                     let (user_id, user_name) = hc_create_oauth_user(
@@ -721,7 +721,7 @@ pub async fn oauth_auth_google(
             if saved_state.unwrap() == *received_state.secret() {
                 let first_name = String::from("");
                 let last_name = String::from("");
-                let email = String::from("");
+                let mut email = String::from("");
 
                 println!("cccccc {:?}", id_token_ref);
                 println!("google test test3");
@@ -736,7 +736,7 @@ pub async fn oauth_auth_google(
                 {
                     let sub = result.claims.sub;
                     let iss = result.claims.iss;
-                    //let email = result.claims.email.unwrap_or(String::from(""));
+                    email = result.claims.email.unwrap_or(String::from(""));
 
                     let timestamp = libhc::get_timestamp();
                     let (user_id, user_name) = hc_create_oauth_user(
