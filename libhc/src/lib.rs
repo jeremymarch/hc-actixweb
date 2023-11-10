@@ -456,6 +456,9 @@ pub async fn hc_create_user(
     Ok(user_id)
 }
 
+const GOOGLE_ISS: &str = "https://accounts.google.com";
+const APPLE_ISS: &str = "https://appleid.apple.com";
+
 pub async fn hc_create_oauth_user(
     db: &dyn HcDb,
     oauth_iss: &str,
@@ -470,12 +473,12 @@ pub async fn hc_create_oauth_user(
 
     let existing_user = tx.get_oauth_user(oauth_iss, oauth_sub).await?;
 
-    let google_oauth_sub = if oauth_iss == "https://accounts.google.com" {
+    let google_oauth_sub = if oauth_iss == GOOGLE_ISS {
         Some(oauth_sub)
     } else {
         None
     };
-    let apple_oauth_sub = if oauth_iss == "https://appleid.apple.com" {
+    let apple_oauth_sub = if oauth_iss == APPLE_ISS {
         Some(oauth_sub)
     } else {
         None
