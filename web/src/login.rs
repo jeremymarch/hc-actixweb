@@ -669,7 +669,7 @@ pub async fn oauth_auth_apple(
                     email = result.claims.email.unwrap_or(String::from(""));
 
                     let timestamp = libhc::get_timestamp();
-                    let (user_id, user_name) = hc_create_oauth_user(
+                    if let Ok((user_id, user_name)) = hc_create_oauth_user(
                         db,
                         &iss,
                         &sub,
@@ -680,16 +680,16 @@ pub async fn oauth_auth_apple(
                         timestamp,
                     )
                     .await
-                    .map_err(map_hc_error)?;
-
-                    session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-                    if session.insert("user_id", user_id).is_ok() {
-                        if let Some(u) = user_name {
-                            let _ = session.insert("username", u);
+                    {
+                        session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+                        if session.insert("user_id", user_id).is_ok() {
+                            if let Some(u) = user_name {
+                                let _ = session.insert("username", u);
+                            }
+                            return Ok(HttpResponse::SeeOther()
+                                .insert_header((LOCATION, "/"))
+                                .finish());
                         }
-                        return Ok(HttpResponse::SeeOther()
-                            .insert_header((LOCATION, "/"))
-                            .finish());
                     }
                 }
 
@@ -740,7 +740,7 @@ pub async fn oauth_auth_google(
                     email = result.claims.email.unwrap_or(String::from(""));
 
                     let timestamp = libhc::get_timestamp();
-                    let (user_id, user_name) = hc_create_oauth_user(
+                    if let Ok((user_id, user_name)) = hc_create_oauth_user(
                         db,
                         &iss,
                         &sub,
@@ -751,15 +751,15 @@ pub async fn oauth_auth_google(
                         timestamp,
                     )
                     .await
-                    .map_err(map_hc_error)?;
-
-                    session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-                    if session.insert("user_id", user_id).is_ok()
-                        && session.insert("username", user_name).is_ok()
                     {
-                        return Ok(HttpResponse::SeeOther()
-                            .insert_header((LOCATION, "/"))
-                            .finish());
+                        session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+                        if session.insert("user_id", user_id).is_ok()
+                            && session.insert("username", user_name).is_ok()
+                        {
+                            return Ok(HttpResponse::SeeOther()
+                                .insert_header((LOCATION, "/"))
+                                .finish());
+                        }
                     }
                 }
 
