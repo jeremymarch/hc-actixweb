@@ -561,16 +561,13 @@ pub async fn oauth_login_apple(
     (session, req): (Session, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
     let data = req.app_data::<AppState>().unwrap();
-    // Google supports Proof Key for Code Exchange (PKCE - https://oauth.net/2/pkce/).
-    // Create a PKCE code verifier and SHA-256 encode it as a code challenge.
+
     let (pkce_code_challenge, _pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
     let nonce = uuid::Uuid::new_v4(); // use UUID as random and unique nonce
 
-    // Generate the authorization URL to which we'll redirect the user.
     let (authorize_url, csrf_state) = &data
         .apple_oauth
         .authorize_url(CsrfToken::new_random)
-        // This example is requesting access to the "calendar" features and the user's profile.
         .set_response_type(&ResponseType::new("code id_token".to_string()))
         .add_extra_param("response_mode".to_string(), "form_post".to_string())
         .add_extra_param("nonce".to_string(), nonce.to_string())
@@ -600,18 +597,16 @@ pub async fn oauth_login_google(
     let (pkce_code_challenge, _pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
     let nonce = uuid::Uuid::new_v4(); // use UUID as random and unique nonce
 
-    // Generate the authorization URL to which we'll redirect the user.
     let (authorize_url, csrf_state) = &data
         .google_oauth
         .authorize_url(CsrfToken::new_random)
-        // This example is requesting access to the "calendar" features and the user's profile.
         .set_response_type(&ResponseType::new("code id_token".to_string()))
         .add_extra_param("response_mode".to_string(), "form_post".to_string())
         .add_extra_param("nonce".to_string(), nonce.to_string())
         .add_scope(Scope::new("openid".to_string()))
-        //.add_scope(Scope::new("name".to_string()))
+        // .add_scope(Scope::new("name".to_string()))
         .add_scope(Scope::new("email".to_string()))
-        .set_pkce_challenge(pkce_code_challenge) //apple does not support this, but no problem including it
+        .set_pkce_challenge(pkce_code_challenge) // apple does not support this
         .url();
 
     let state = csrf_state.secret().to_string();
@@ -643,6 +638,7 @@ pub async fn oauth_auth_apple(
 
         if let Some(ref id_token_ref) = id_token {
             if saved_state.unwrap() == *received_state.secret() {
+                
                 let mut first_name = String::from("");
                 let mut last_name = String::from("");
                 let mut email = String::from("");
