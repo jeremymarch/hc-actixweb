@@ -259,12 +259,12 @@ pub enum MoveType {
 
 use async_trait::async_trait;
 #[async_trait]
-pub trait HcDb {
+pub trait HcDb: Send + Sync {
     async fn begin_tx(&self) -> Result<Box<dyn HcTrx>, HcError>;
 }
 
 #[async_trait]
-pub trait HcTrx {
+pub trait HcTrx: Send + Sync {
     async fn commit_tx(self: Box<Self>) -> Result<(), HcError>;
     async fn rollback_tx(self: Box<Self>) -> Result<(), HcError>;
 

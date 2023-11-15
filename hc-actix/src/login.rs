@@ -638,7 +638,6 @@ pub async fn oauth_auth_apple(
 
         if let Some(ref id_token_ref) = id_token {
             if saved_state.unwrap() == *received_state.secret() {
-                
                 let mut first_name = String::from("");
                 let mut last_name = String::from("");
                 let mut email = String::from("");

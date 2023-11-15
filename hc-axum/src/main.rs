@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 use std::sync::atomic::AtomicUsize;
+use uuid::uuid;
 
 use serde::{Deserialize, Serialize};
 use socketioxide::{
@@ -27,20 +28,31 @@ use tower::ServiceBuilder;
 use tower_http::{cors::CorsLayer, services::ServeDir};
 use tracing::{error, info};
 use tracing_subscriber::FmtSubscriber;
-use rand::Rng;
+//use rand::Rng;
 
+use axum::response::Json;
 use axum::{
-    response::{ Html, IntoResponse},
+    response::{Html, IntoResponse},
     Server,
 };
-use http::{
-    header::{HeaderMap, HeaderName, HeaderValue},
-};
-use axum::{response::Json};
-use serde_json::{json, Value};
+use http::header::{HeaderMap, HeaderName, HeaderValue};
+
+use axum::debug_handler;
+use axum::error_handling::HandleErrorLayer;
 use axum::extract;
+use axum::extract::State;
 use axum::routing::post;
+use http::StatusCode;
+use sqlx::postgres::PgPoolOptions;
+use time::Duration;
+use tower::BoxError;
+use tower_sessions::{Expiry, MemoryStore, Session, SessionManagerLayer};
+
+use libhc::dbpostgres::HcDbPostgres;
 use libhc::GetSessions;
+use libhc::SessionsListResponse;
+
+use uuid::Uuid;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(transparent)]
@@ -129,20 +141,45 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         });
     });
+
+    //e.g. export HOPLITE_DB=postgres://jwm:1234@localhost/hc
+    let db_string = std::env::var("HOPLITE_DB")
+        .unwrap_or_else(|_| panic!("Environment variable for db string not set: HOPLITE_DB."));
+
+    let hcdb = HcDbPostgres {
+        db: PgPoolOptions::new()
+            .max_connections(5)
+            .connect(&db_string)
+            .await
+            .expect("Could not connect to db."),
+    };
+
+    let session_store = MemoryStore::default();
+    let session_service = ServiceBuilder::new()
+        .layer(HandleErrorLayer::new(|_: BoxError| async {
+            StatusCode::BAD_REQUEST
+        }))
+        .layer(
+            SessionManagerLayer::new(session_store)
+                .with_secure(false)
+                .with_expiry(Expiry::OnInactivity(Duration::seconds(10)))
+                .with_name("hcax"),
+        );
+
     let app = axum::Router::new()
         .route("/index.html", axum::routing::get(index))
         .route("/list", post(get_sessions))
-        .nest_service("/", ServeDir::new("../static"))
+        .nest_service("/", ServeDir::new("static"))
         .nest_service("/dist", ServeDir::new("dist"))
         .layer(
             ServiceBuilder::new()
                 .layer(CorsLayer::permissive()) // Enable CORS policy
                 .layer(layer),
-        );
-    let server = Server::bind(&"0.0.0.0:3000"
-        .parse()
-        .unwrap())
-        .serve(app.into_make_service());
+        )
+        .with_state(hcdb)
+        .layer(session_service);
+
+    let server = Server::bind(&"0.0.0.0:3000".parse().unwrap()).serve(app.into_make_service());
 
     if let Err(e) = server.await {
         error!("server error: {}", e);
@@ -153,8 +190,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 static INDEX_PAGE: &str = include_str!("../../hc-actix/src/index.html");
 
 async fn index() -> impl IntoResponse {
-    let mut rng = rand::thread_rng();
-    let csp_nonce: String = rng.gen::<u32>().to_string();
+    // let mut rng = rand::thread_rng();
+    // let csp_nonce: String = rng.gen::<u32>().to_string();
+    let csp_nonce: String = Uuid::new_v4().to_string();
 
     let mut headers = HeaderMap::new();
     headers.insert(
@@ -166,6 +204,33 @@ async fn index() -> impl IntoResponse {
     (headers, Html(page))
 }
 
-async fn get_sessions(extract::Form(payload): extract::Form<GetSessions>) -> Json<Value> {
-    Json(json!({ "msg": "Hello, world!" }))
+#[debug_handler]
+async fn get_sessions(
+    session: Session,
+    State(db): State<HcDbPostgres>,
+    extract::Form(payload): extract::Form<GetSessions>,
+) -> Json<SessionsListResponse> {
+    let verbs = libhc::hc_load_verbs("pp.txt");
+
+    let user_id: Uuid = uuid!("96b875e7-fc53-4498-ad8d-9ce417e938b7");
+    //let user_id = Uuid::new_v4();// { //login::get_user_id(session.clone()) {
+    let username = Some(String::from("axumtest")); //login::get_username(session);
+
+    session
+        .insert("axumsession", user_id)
+        .expect("Could not serialize.");
+
+    let res = libhc::hc_get_sessions(&db, user_id, &verbs, username, &payload)
+        .await
+        .unwrap();
+
+    // let res = SessionsListResponse {
+    //     response_to: String::from("abc"),
+    //     sessions: vec![],
+    //     success: false,
+    //     username: None,
+    //     logged_in: false,
+    //     current_session: None,
+    // };
+    Json(res)
 }
