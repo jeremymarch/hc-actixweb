@@ -187,7 +187,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_state(hcdb)
         .layer(session_service);
 
-    let server = Server::bind(&"0.0.0.0:3000".parse().unwrap()).serve(app.into_make_service());
+    let server = Server::bind(&"0.0.0.0:8088".parse().unwrap()).serve(app.into_make_service());
 
     if let Err(e) = server.await {
         error!("server error: {}", e);
