@@ -35,10 +35,6 @@ use axum::{
 };
 use http::header::{HeaderMap, HeaderName, HeaderValue};
 
-use axum::response::Redirect;
-use libhc::hc_validate_credentials;
-use libhc::Credentials;
-
 use axum::debug_handler;
 use axum::error_handling::HandleErrorLayer;
 use axum::extract;
@@ -53,14 +49,9 @@ use libhc::dbpostgres::HcDbPostgres;
 use libhc::GetSessions;
 use libhc::SessionsListResponse;
 
-use secrecy::Secret;
 use uuid::Uuid;
 
-#[derive(serde::Deserialize)]
-pub struct LoginFormData {
-    username: String,
-    password: Secret<String>,
-}
+mod login;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(transparent)]
@@ -161,6 +152,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .await
             .expect("Could not connect to db."),
     };
+    libhc::hc_create_db(&hcdb)
+        .await
+        .expect("Error creating database");
 
     let session_store = MemoryStore::default();
     let session_service = ServiceBuilder::new()
@@ -177,9 +171,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = axum::Router::new()
         .route("/index.html", axum::routing::get(index))
         .route("/list", axum::routing::post(get_sessions))
-        .route("/login", axum::routing::get(login_get))
-        .route("/login", axum::routing::post(login_post))
-        .route("/logout", axum::routing::get(logout))
+        .route("/login", axum::routing::get(login::login_get))
+        .route("/login", axum::routing::post(login::login_post))
+        .route("/newuser", axum::routing::get(login::new_user_get))
+        .route("/newuser", axum::routing::post(login::new_user_post))
+        .route("/logout", axum::routing::get(login::logout))
         .nest_service("/", ServeDir::new("static"))
         .nest_service("/dist", ServeDir::new("dist"))
         .layer(
@@ -247,153 +243,4 @@ async fn get_sessions(
         current_session: None,
     };
     Json(res)
-}
-
-#[debug_handler]
-async fn login_get() -> impl IntoResponse {
-    let error_html = "";
-
-    let b = format!(
-        r##"<!DOCTYPE html>
-    <html lang="en">
-        <head>
-            <meta http-equiv="content-type" content="text/html; charset=utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1"/>
-            <title>Login</title>
-            <script nonce="2726c7f26c">
-                function setTheme() {{
-                    var mode = localStorage.getItem("mode");
-                    if ((window.matchMedia( "(prefers-color-scheme: dark)" ).matches || mode === "dark") && mode !== "light") {{
-                        document.querySelector("HTML").classList.add("dark");
-                    }}
-                    else {{
-                        document.querySelector("HTML").classList.remove("dark");
-                    }}
-                }}
-                setTheme();
-                function applelogin() {{
-                    window.location.href = "oauth-login-apple";
-                }}
-                function googlelogin() {{
-                    window.location.href = "oauth-login-google";
-                }}
-                function validate() {{
-                    let u = document.forms[0]["username"].value;
-                    let p = document.forms[0]["password"].value;
-                    if (u == "") {{
-                      alert("Please enter a username");
-                      return false;
-                    }}
-                    if (p == "") {{
-                        alert("Please enter a password");
-                        return false;
-                      }}
-                  }}
-                  function start() {{
-                    document.getElementById("loginform").addEventListener('submit', validate, false);
-                  }}
-                  window.addEventListener('load', start, false);
-            </script>
-            <style nonce="2726c7f26c">
-                BODY {{ font-family:helvetica;arial;display: flex;align-items: center;justify-content: center;height: 87vh; flex-direction: column; }}
-                TABLE {{ border:2px solid black;padding: 24px;border-radius: 10px; }}
-                BUTTON {{ padding: 3px 16px; }}
-                .dark BODY {{ background-color:black;color:white; }}
-                .dark INPUT {{ background-color:black;color:white;border: 2px solid white;border-radius: 6px; }}
-                .dark TABLE {{ border:2px solid white; }}
-                .dark BUTTON {{ background-color:black;color:white;border:1px solid white; }}
-                .dark a {{color:#03A5F3;}}
-                #newuserdiv {{ padding-top:12px;height:70px; }}
-                #apple-login {{border: 1px solid white;width: 200px;margin: 0x auto;display: inline-block;margin-top: 12px; }}
-                #google-login {{border: 1px solid white;width: 200px;margin: 0x auto;display: inline-block;margin-top: 12px; }}
-                .oauthcell {{height:70px;}}
-                .orcell {{height:20px;padding-top:20px;border-top:1px solid black;}}
-                .dark .orcell {{border-top:1px solid white;}}
-            </style>
-        </head>
-        <body>
-            <form id="loginform" action="/login" method="post">
-                <table>
-                    <tbody>
-                        <tr><td colspan="2" align="center">{error_html}</td></tr>
-                        <tr>
-                            <td>               
-                                <label for="username">Username</label>
-                            </td>
-                            <td>
-                                <input type="text" id="username" name="username">
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <label for="password">Password</label>
-                            </td>
-                            <td>
-                                <input type="password" id="password" name="password">
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan="2" align="center">
-                                <button type="submit">Login</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan="2" align="right" id="newuserdiv">
-                                <a href="newuser">New User</a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan="2" align="center" class="orcell">
-                                or
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan="2" align="center" class="oauthcell"><img id="apple-login" src="appleid_button@2x.png" onclick="applelogin()"/></td>
-                        </tr>
-                        <tr>
-                            <td colspan="2" align="center" class="oauthcell"><img id="google-login" src="branding_guideline_sample_dk_sq_lg.svg" onclick="googlelogin()"/></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </form>
-        </body>
-    </html>
-    "##
-    );
-
-    Html(b)
-}
-
-async fn login_post(
-    session: Session,
-    State(db): State<HcDbPostgres>,
-    extract::Form(form): extract::Form<LoginFormData>,
-) -> impl IntoResponse {
-    session.clear();
-    //session.flush();
-    let credentials = Credentials {
-        username: form.username.clone(),
-        password: form.password,
-    };
-
-    if let Ok(user_id) = hc_validate_credentials(&db, credentials).await
-    //map_err(map_hc_error)
-    //fix me, should handle error here in case db error, etc.
-    {
-        if session.insert("user_id", user_id).is_ok()
-            && session.insert("username", form.username).is_ok()
-        {
-            return Redirect::to("/index.html");
-        }
-    }
-
-    session.clear();
-    Redirect::to("/login")
-}
-
-pub async fn logout(session: Session) -> impl IntoResponse {
-    session.clear();
-    session.flush();
-    //FlashMessage::error(String::from("Authentication error")).send();
-    Redirect::to("/login")
 }
