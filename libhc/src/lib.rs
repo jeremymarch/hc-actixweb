@@ -459,6 +459,7 @@ pub async fn hc_create_user(
 const GOOGLE_ISS: &str = "https://accounts.google.com";
 const APPLE_ISS: &str = "https://appleid.apple.com";
 
+#[allow(clippy::too_many_arguments)]
 pub async fn hc_create_oauth_user(
     db: &dyn HcDb,
     oauth_iss: &str,

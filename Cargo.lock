@@ -1324,7 +1324,7 @@ dependencies = [
  "axum",
  "http",
  "libhc",
- "rand",
+ "secrecy",
  "serde",
  "serde_json",
  "socketioxide",
