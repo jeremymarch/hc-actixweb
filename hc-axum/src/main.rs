@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 use std::sync::atomic::AtomicUsize;
-
+use axum::response::Response;
 use serde::{Deserialize, Serialize};
 use socketioxide::{
     extract::{Data, SocketRef},
@@ -176,6 +176,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/newuser", axum::routing::get(login::new_user_get))
         .route("/newuser", axum::routing::post(login::new_user_post))
         .route("/logout", axum::routing::get(login::logout))
+        .route("/healthzzz", axum::routing::get(health_check))
         .nest_service("/", ServeDir::new("static"))
         .nest_service("/dist", ServeDir::new("dist"))
         .layer(
@@ -243,4 +244,9 @@ async fn get_sessions(
         current_session: None,
     };
     Json(res)
+}
+
+async fn health_check() -> Response {
+    //remember that basic authentication blocks this
+    String::from("").into_response() //send 200 with empty body
 }
