@@ -446,7 +446,7 @@ pub async fn oauth_login_apple(session: Session) -> impl IntoResponse {
         .url();
 
     let state = csrf_state.secret().to_string();
-    //session.clear();
+    session.clear();
     session
         .insert(OAUTH_COOKIE, state)
         .expect("session.insert state");
@@ -472,7 +472,7 @@ pub async fn oauth_login_google(session: Session) -> impl IntoResponse {
         .url();
 
     let state = csrf_state.secret().to_string();
-    //session.clear();
+    session.clear();
     session
         .insert(OAUTH_COOKIE, state)
         .expect("session.insert state");
@@ -496,7 +496,7 @@ pub async fn oauth_auth_apple(
         let _token = get_apple_client().exchange_code(code);
 
         if let Some(ref id_token_ref) = id_token {
-            if /*saved_state.is_some() && */saved_state.unwrap() == *received_state.secret() {
+            if saved_state.is_some() && saved_state.unwrap() == *received_state.secret() {
                 let mut first_name = String::from("");
                 let mut last_name = String::from("");
                 let mut email = String::from("");
@@ -521,7 +521,7 @@ pub async fn oauth_auth_apple(
                 {
                     let sub = result.claims.sub;
                     let iss = result.claims.iss;
-                    //email = result.claims.email.unwrap_or(String::from(""));
+                    email = result.claims.email.unwrap_or(String::from(""));
 
                     let timestamp = libhc::get_timestamp();
                     match hc_create_oauth_user(
@@ -578,7 +578,7 @@ pub async fn oauth_auth_google(
         let _token = get_google_client().exchange_code(code);
 
         if let Some(ref id_token_ref) = id_token {
-            if /*saved_state.is_some() && */saved_state.unwrap() == *received_state.secret() {
+            if saved_state.is_some() && saved_state.unwrap() == *received_state.secret() {
                 let first_name = String::from("");
                 let last_name = String::from("");
                 let mut email = String::from("");
@@ -596,7 +596,7 @@ pub async fn oauth_auth_google(
                 {
                     let sub = result.claims.sub;
                     let iss = result.claims.iss;
-                    //email = result.claims.email.unwrap_or(String::from(""));
+                    email = result.claims.email.unwrap_or(String::from(""));
 
                     let timestamp = libhc::get_timestamp();
 
