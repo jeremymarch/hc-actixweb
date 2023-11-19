@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+use tower_sessions::cookie::SameSite;
 use axum::response::Response;
 use serde::{Deserialize, Serialize};
 use socketioxide::{
@@ -197,7 +198,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             SessionManagerLayer::new(session_store)
                 .with_secure(cookie_secure)
                 .with_expiry(Expiry::OnInactivity(Duration::days(365)))
-                .with_name("hcax"),
+                .with_name("hcax")
+                .with_same_site(SameSite::None)
         );
 
     let verbs = libhc::hc_load_verbs("pp.txt");

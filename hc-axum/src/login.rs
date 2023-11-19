@@ -39,8 +39,9 @@ pub fn get_username(session: &Session) -> Option<String> {
     }
 }
 
+const OAUTH_COOKIE: &str = "oauth_state";
 pub fn get_oauth_state(session: &Session) -> Option<String> {
-    if let Ok(s) = session.get::<String>("oauth_state") {
+    if let Ok(s) = session.get::<String>(OAUTH_COOKIE) {
         s
     } else {
         None
@@ -447,7 +448,7 @@ pub async fn oauth_login_apple(session: Session) -> impl IntoResponse {
     let state = csrf_state.secret().to_string();
     //session.clear();
     session
-        .insert("oauth_state", state)
+        .insert(OAUTH_COOKIE, state)
         .expect("session.insert state");
 
     Redirect::to(&authorize_url.to_string())
@@ -473,7 +474,7 @@ pub async fn oauth_login_google(session: Session) -> impl IntoResponse {
     let state = csrf_state.secret().to_string();
     //session.clear();
     session
-        .insert("oauth_state", state)
+        .insert(OAUTH_COOKIE, state)
         .expect("session.insert state");
 
     Redirect::to(&authorize_url.to_string())
