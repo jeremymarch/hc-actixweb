@@ -25,6 +25,21 @@ pub struct CreateUserFormData {
     email: String,
 }
 
+pub fn get_user_id(session: &Session) -> Option<uuid::Uuid> {
+    if let Ok(s) = session.get::<uuid::Uuid>("user_id") {
+        s
+    } else {
+        None
+    }
+}
+pub fn get_username(session: &Session) -> Option<String> {
+    if let Ok(s) = session.get::<String>("username") {
+        s
+    } else {
+        None
+    }
+}
+
 #[debug_handler]
 pub async fn login_get() -> impl IntoResponse {
     let error_html = "";

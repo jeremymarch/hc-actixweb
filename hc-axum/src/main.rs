@@ -47,13 +47,25 @@ use tower_sessions::{Expiry, MemoryStore, Session, SessionManagerLayer};
 
 use hoplite_verbs_rs::*;
 use libhc::dbpostgres::HcDbPostgres;
+use libhc::AnswerQuery;
+use libhc::GetMoveQuery;
 use libhc::GetSessions;
+use libhc::SessionState;
 use libhc::SessionsListResponse;
 use std::sync::Arc;
 
 use uuid::Uuid;
 
 mod login;
+
+use libhc::CreateSessionQuery;
+use libhc::HcError;
+#[derive(Serialize)]
+pub struct StatusResponse {
+    response_to: String,
+    mesg: String,
+    success: bool,
+}
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(transparent)]
@@ -196,6 +208,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/index.html", axum::routing::get(index))
         .route("/list", axum::routing::post(get_sessions))
         .route("/new", axum::routing::post(create_session))
+        .route("/getmove", axum::routing::post(get_move))
+        .route("/enter", axum::routing::post(enter))
         .route("/login", axum::routing::get(login::login_get))
         .route("/login", axum::routing::post(login::login_post))
         .route("/newuser", axum::routing::get(login::new_user_get))
@@ -210,7 +224,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .layer(layer),
         )
         .with_state(state)
-        //.with_state(verbs)
         .layer(session_service);
 
     let server = Server::bind(&"0.0.0.0:8088".parse().unwrap()).serve(app.into_make_service());
@@ -243,48 +256,26 @@ async fn get_sessions(
     session: Session,
     State(state): State<AppState>,
     extract::Form(payload): extract::Form<GetSessions>,
-) -> Json<SessionsListResponse> {
-    if let Ok(user_id) = session.get::<Uuid>("user_id") {
+) -> Response {
+    if let Some(user_id) = login::get_user_id(&session) {
         //uuid!("96b875e7-fc53-4498-ad8d-9ce417e938b7");
-        let username = session
-            .get::<String>("username")
-            .unwrap_or(Some("zzz".to_string()));
+        let username = login::get_username(&session);
 
-        if let Some(user_id) = user_id {
-            let res =
-                libhc::hc_get_sessions(&state.hcdb, user_id, &state.verbs, username, &payload)
-                    .await
-                    .unwrap();
-
-            return Json(res);
+        match libhc::hc_get_sessions(&state.hcdb, user_id, &state.verbs, username, &payload).await {
+            Ok(res) => Json(res).into_response(),
+            _ => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }
+    } else {
+        StatusCode::UNAUTHORIZED.into_response()
     }
-
-    let res = SessionsListResponse {
-        response_to: String::from(""),
-        sessions: vec![],
-        success: false,
-        username: None,
-        logged_in: false,
-        current_session: None,
-    };
-    Json(res)
-}
-use libhc::CreateSessionQuery;
-use libhc::HcError;
-#[derive(Serialize)]
-pub struct StatusResponse {
-    response_to: String,
-    mesg: String,
-    success: bool,
 }
 
 async fn create_session(
     session: Session,
     State(state): State<AppState>,
     extract::Form(mut payload): extract::Form<CreateSessionQuery>,
-) -> Json<StatusResponse> {
-    if let Some(user_id) = session.get::<Uuid>("user_id").unwrap() {
+) -> Response {
+    if let Some(user_id) = login::get_user_id(&session) {
         let timestamp = libhc::get_timestamp();
 
         let (mesg, success) = match libhc::hc_insert_session(
@@ -305,19 +296,55 @@ async fn create_session(
             mesg,
             success,
         };
-        Json(res)
+        Json(res).into_response()
     } else {
-        //not_logged_in_response()
-        let res = StatusResponse {
-            response_to: String::from("newsession"),
-            mesg: "".to_string(),
-            success: false,
-        };
-        Json(res)
+        StatusCode::UNAUTHORIZED.into_response()
+    }
+}
+
+async fn get_move(
+    session: Session,
+    State(state): State<AppState>,
+    extract::Form(payload): extract::Form<GetMoveQuery>,
+) -> Response {
+    //"ask", prev form to start from or null, prev answer and is_correct, correct answer
+
+    if let Some(user_id) = login::get_user_id(&session) {
+        match libhc::hc_get_move(
+            &state.hcdb,
+            user_id,
+            false,
+            payload.session_id,
+            &state.verbs,
+        )
+        .await
+        {
+            Ok(res) => Json(res).into_response(),
+            _ => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        }
+    } else {
+        StatusCode::UNAUTHORIZED.into_response()
+    }
+}
+
+async fn enter(
+    session: Session,
+    State(state): State<AppState>,
+    extract::Form(payload): extract::Form<AnswerQuery>,
+) -> Response {
+    let timestamp = libhc::get_timestamp();
+
+    if let Some(user_id) = login::get_user_id(&session) {
+        match libhc::hc_answer(&state.hcdb, user_id, &payload, timestamp, &state.verbs).await {
+            Ok(res) => Json(res).into_response(),
+            _ => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        }
+    } else {
+        StatusCode::UNAUTHORIZED.into_response()
     }
 }
 
 async fn health_check() -> Response {
     //remember that basic authentication blocks this
-    String::from("").into_response() //send 200 with empty body
+    StatusCode::OK.into_response() //send 200 with empty body
 }
