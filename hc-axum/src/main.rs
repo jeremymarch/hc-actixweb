@@ -61,7 +61,7 @@ struct Username(String);
 
 use axum::extract::FromRef;
 #[derive(Clone)]
-struct AppState {
+pub struct AppState {
     hcdb: HcDbPostgres,
     verbs: Vec<Arc<HcGreekVerb>>,
 }
