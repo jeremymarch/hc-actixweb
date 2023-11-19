@@ -1,4 +1,4 @@
-use crate::AppState;
+use crate::AxumAppState;
 use axum::debug_handler;
 use axum::extract;
 use axum::extract::State;
@@ -156,7 +156,7 @@ pub async fn login_get() -> impl IntoResponse {
 
 pub async fn login_post(
     session: Session,
-    State(state): State<AppState>,
+    State(state): State<AxumAppState>,
     extract::Form(form): extract::Form<LoginFormData>,
 ) -> impl IntoResponse {
     //session.clear();
@@ -303,7 +303,7 @@ pub async fn new_user_get() -> impl IntoResponse {
 }
 
 pub async fn new_user_post(
-    State(state): State<AppState>,
+    State(state): State<AxumAppState>,
     extract::Form(form): extract::Form<CreateUserFormData>,
 ) -> impl IntoResponse {
     let username = form.username;
@@ -319,7 +319,7 @@ pub async fn new_user_post(
             //.map_err(map_hc_error)
         {
             Ok(_user_id) => {
-                //session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+                //session.clear(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
                 //if session.insert("user_id", user_id).is_ok() {
                     Redirect::to("/login")
                 //}
@@ -337,9 +337,8 @@ pub async fn new_user_post(
     }
 }
 
-/*
-use actix_web::http::header;
 use libhc::hc_create_oauth_user;
+use libhc::HcError::Database;
 use oauth2::basic::BasicClient;
 use oauth2::AuthUrl;
 use oauth2::ClientId;
@@ -350,6 +349,9 @@ use oauth2::TokenUrl;
 use oauth2::{AuthorizationCode, CsrfToken, PkceCodeChallenge, Scope};
 use serde::Deserialize;
 use serde::Serialize;
+use sign_in_with_apple::AppleClaims;
+use sign_in_with_apple::GoogleClaims;
+use sign_in_with_apple::Issuer;
 use std::env;
 
 #[derive(Deserialize)]
@@ -453,16 +455,15 @@ pub fn get_apple_client() -> BasicClient {
     )
 }
 
-pub async fn oauth_login_apple(
-    (session, req): (Session, HttpRequest),
-) -> Result<HttpResponse, AWError> {
-    let data = req.app_data::<AppState>().unwrap();
+pub async fn oauth_login_apple(session: Session) -> impl IntoResponse {
+    //     (session, req): (Session, HttpRequest),
+    // ) -> Result<HttpResponse, AWError> {
+    //     let data = req.app_data::<AppState>().unwrap();
 
     let (pkce_code_challenge, _pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
     let nonce = uuid::Uuid::new_v4(); // use UUID as random and unique nonce
 
-    let (authorize_url, csrf_state) = &data
-        .apple_oauth
+    let (authorize_url, csrf_state) = get_apple_client()
         .authorize_url(CsrfToken::new_random)
         .set_response_type(&ResponseType::new("code id_token".to_string()))
         .add_extra_param("response_mode".to_string(), "form_post".to_string())
@@ -474,27 +475,27 @@ pub async fn oauth_login_apple(
         .url();
 
     let state = csrf_state.secret().to_string();
-    session.renew();
+    session.clear();
     session
-        .insert::<String>("oauth_state", state)
+        .insert("oauth_state", state)
         .expect("session.insert state");
 
-    Ok(HttpResponse::Found()
-        .append_header((header::LOCATION, authorize_url.to_string()))
-        .finish())
+    // Ok(HttpResponse::Found()
+    //     .append_header((header::LOCATION, authorize_url.to_string()))
+    //     .finish())
+    Redirect::to(&authorize_url.to_string())
 }
 
-pub async fn oauth_login_google(
-    (session, req): (Session, HttpRequest),
-) -> Result<HttpResponse, AWError> {
-    let data = req.app_data::<AppState>().unwrap();
+pub async fn oauth_login_google(session: Session) -> impl IntoResponse {
+    //     (session, req): (Session, HttpRequest),
+    // ) -> Result<HttpResponse, AWError> {
+    //     let data = req.app_data::<AppState>().unwrap();
     // Google supports Proof Key for Code Exchange (PKCE - https://oauth.net/2/pkce/).
     // Create a PKCE code verifier and SHA-256 encode it as a code challenge.
     let (pkce_code_challenge, _pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
     let nonce = uuid::Uuid::new_v4(); // use UUID as random and unique nonce
 
-    let (authorize_url, csrf_state) = &data
-        .google_oauth
+    let (authorize_url, csrf_state) = get_google_client()
         .authorize_url(CsrfToken::new_random)
         .set_response_type(&ResponseType::new("code id_token".to_string()))
         .add_extra_param("response_mode".to_string(), "form_post".to_string())
@@ -506,21 +507,26 @@ pub async fn oauth_login_google(
         .url();
 
     let state = csrf_state.secret().to_string();
-    session.renew();
+    session.clear();
     session
-        .insert::<String>("oauth_state", state)
+        .insert("oauth_state", state)
         .expect("session.insert state");
 
-    Ok(HttpResponse::Found()
-        .append_header((header::LOCATION, authorize_url.to_string()))
-        .finish())
+    // Ok(HttpResponse::Found()
+    //     .append_header((header::LOCATION, authorize_url.to_string()))
+    //     .finish())
+    Redirect::to(&authorize_url.to_string())
 }
 
 pub async fn oauth_auth_apple(
-    (session, params, req): (Session, web::Form<AuthRequest>, HttpRequest),
-) -> Result<HttpResponse, AWError> {
-    let db = req.app_data::<HcDbPostgres>().unwrap();
-    let data = req.app_data::<AppState>().unwrap();
+    session: Session,
+    State(state): State<AxumAppState>,
+    extract::Form(params): extract::Form<AuthRequest>,
+) -> impl IntoResponse {
+    //     (session, params, req): (Session, web::Form<AuthRequest>, HttpRequest),
+    // ) -> Result<HttpResponse, AWError> {
+    //     let db = req.app_data::<HcDbPostgres>().unwrap();
+    //     let data = req.app_data::<AppState>().unwrap();
 
     let saved_state = session.get::<String>("oauth_state").unwrap();
 
@@ -530,7 +536,7 @@ pub async fn oauth_auth_apple(
         let user = params.user.clone();
         let id_token = params.id_token.clone();
 
-        let _token = &data.apple_oauth.exchange_code(code);
+        let _token = get_apple_client().exchange_code(code);
 
         if let Some(ref id_token_ref) = id_token {
             if saved_state.unwrap() == *received_state.secret() {
@@ -562,7 +568,7 @@ pub async fn oauth_auth_apple(
 
                     let timestamp = libhc::get_timestamp();
                     match hc_create_oauth_user(
-                        db,
+                        &state.hcdb,
                         &iss,
                         &sub,
                         if email.is_empty() { None } else { Some(&email) },
@@ -574,39 +580,38 @@ pub async fn oauth_auth_apple(
                     .await
                     {
                         Ok((user_id, user_name)) => {
-                            session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+                            //session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
                             if session.insert("user_id", user_id).is_ok()
                                 && session.insert("username", user_name).is_ok()
                             {
-                                return Ok(HttpResponse::SeeOther()
-                                    .insert_header((LOCATION, "/"))
-                                    .finish());
+                                return Redirect::to("/");
                             }
                         }
                         Err(Database(e)) => {
-                            FlashMessage::error(e.to_string()).send();
-                            return nav_to_login(session);
+                            //FlashMessage::error(e.to_string()).send();
+                            return Redirect::to("/login");
                         }
                         _ => (),
                     }
                 }
 
-                return nav_to_login(session);
+                return Redirect::to("/login");
             }
         }
     }
 
-    nav_to_login(session)
+    Redirect::to("/login")
 }
 
 pub async fn oauth_auth_google(
     session: Session,
-    State(db): State<HcDbPostgres>,
-    extract::Form(form): extract::Form<AuthRequest>,
-    //(session, params, req): (Session, web::Form<AuthRequest>, HttpRequest),
+    State(state): State<AxumAppState>,
+    extract::Form(params): extract::Form<AuthRequest>,
 ) -> impl IntoResponse {
-    //let db = req.app_data::<HcDbPostgres>().unwrap();
-    let data = req.app_data::<AppState>().unwrap();
+    //     (session, params, req): (Session, web::Form<AuthRequest>, HttpRequest),
+    // ) -> Result<HttpResponse, AWError> {
+    //     let db = req.app_data::<HcDbPostgres>().unwrap();
+    //     let data = req.app_data::<AppState>().unwrap();
     let saved_state = session.get::<String>("oauth_state").unwrap();
 
     if let Some(param_code) = &params.code {
@@ -617,7 +622,7 @@ pub async fn oauth_auth_google(
         let id_token = params.id_token.clone();
 
         // Exchange the code with a token.
-        let _token = &data.google_oauth.exchange_code(code);
+        let _token = get_google_client().exchange_code(code);
 
         if let Some(ref id_token_ref) = id_token {
             if saved_state.unwrap() == *received_state.secret() {
@@ -643,7 +648,7 @@ pub async fn oauth_auth_google(
                     let timestamp = libhc::get_timestamp();
 
                     match hc_create_oauth_user(
-                        db,
+                        &state.hcdb,
                         &iss,
                         &sub,
                         if email.is_empty() { None } else { Some(&email) },
@@ -655,6 +660,7 @@ pub async fn oauth_auth_google(
                     .await
                     {
                         Ok((user_id, user_name)) => {
+                            //session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
                             if session.insert("user_id", user_id).is_ok()
                                 && session.insert("username", user_name).is_ok()
                             {
@@ -663,22 +669,16 @@ pub async fn oauth_auth_google(
                         }
                         Err(Database(e)) => {
                             //FlashMessage::error(e.to_string()).send();
-                            return nav_to_login(session);
+                            return Redirect::to("/login");
                         }
                         _ => (),
                     }
                 }
 
-                return nav_to_login(session);
+                return Redirect::to("/login");
             }
         }
     }
 
-    nav_to_login(session)
-}
-
-fn nav_to_login(session: Session) -> impl IntoResponse {
-    session.clean();
     Redirect::to("/login")
 }
-*/

@@ -69,20 +69,21 @@ pub struct StatusResponse {
 #[serde(transparent)]
 struct Username(String);
 
-//use axum::extract::FromRef;
 #[derive(Clone)]
-pub struct AppState {
+pub struct AxumAppState {
     hcdb: HcDbPostgres,
     verbs: Vec<Arc<HcGreekVerb>>,
 }
-// impl FromRef<AppState> for HcDbPostgres {
-//     fn from_ref(app_state: &AppState) -> HcDbPostgres {
+//multiple states: https://stackoverflow.com/questions/75727029/axum-state-for-reqwest-client
+//but we don't seem to need the following?
+//use axum::extract::FromRef;
+// impl FromRef<AxumAppState> for HcDbPostgres {
+//     fn from_ref(app_state: &AxumAppState) -> HcDbPostgres {
 //         app_state.hcdb.clone()
 //     }
 // }
-
-// impl FromRef<AppState> for Vec<Arc<HcGreekVerb>> {
-//     fn from_ref(app_state: &AppState) -> Vec<Arc<HcGreekVerb>> {
+// impl FromRef<AxumAppState> for Vec<Arc<HcGreekVerb>> {
+//     fn from_ref(app_state: &AxumAppState) -> Vec<Arc<HcGreekVerb>> {
 //         app_state.verbs.clone()
 //     }
 // }
@@ -201,7 +202,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let verbs = libhc::hc_load_verbs("pp.txt");
 
-    let app_state = AppState { hcdb, verbs };
+    let app_state = AxumAppState { hcdb, verbs };
 
     let serve_dir = ServeDir::new("static"); //.not_found_service(axum::routing::get(index)); //not_found_service gives 404 status
 
@@ -214,6 +215,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/enter", axum::routing::post(enter))
         .route("/login", axum::routing::get(login::login_get))
         .route("/login", axum::routing::post(login::login_post))
+        .route(
+            "/oauth-login-apple",
+            axum::routing::get(login::oauth_login_apple),
+        )
+        .route(
+            "/oauth-login-google",
+            axum::routing::get(login::oauth_login_google),
+        )
+        // .route("/auth", axum::routing::post(login::oauth_auth_apple))
+        // .route("/gauth", axum::routing::post(login::oauth_auth_google))
         .route("/newuser", axum::routing::get(login::new_user_get))
         .route("/newuser", axum::routing::post(login::new_user_post))
         .route("/logout", axum::routing::get(login::logout))
@@ -227,10 +238,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_state(app_state)
         .layer(session_service);
 
-    let server = Server::bind(&"0.0.0.0:8088".parse().unwrap()).serve(app.into_make_service());
+    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], 8088));
+    let server = Server::bind(&addr).serve(app.into_make_service());
 
     if let Err(e) = server.await {
-        error!("server error: {}", e);
+        error!("Error starting axum server: {}", e);
     }
     Ok(())
 }
@@ -255,7 +267,7 @@ async fn index() -> impl IntoResponse {
 #[debug_handler]
 async fn get_sessions(
     session: Session,
-    State(state): State<AppState>,
+    State(state): State<AxumAppState>,
     extract::Form(payload): extract::Form<GetSessions>,
 ) -> Response {
     if let Some(user_id) = login::get_user_id(&session) {
@@ -273,7 +285,7 @@ async fn get_sessions(
 
 async fn create_session(
     session: Session,
-    State(state): State<AppState>,
+    State(state): State<AxumAppState>,
     extract::Form(mut payload): extract::Form<CreateSessionQuery>,
 ) -> Response {
     if let Some(user_id) = login::get_user_id(&session) {
@@ -305,7 +317,7 @@ async fn create_session(
 
 async fn get_move(
     session: Session,
-    State(state): State<AppState>,
+    State(state): State<AxumAppState>,
     extract::Form(payload): extract::Form<GetMoveQuery>,
 ) -> Response {
     //"ask", prev form to start from or null, prev answer and is_correct, correct answer
@@ -330,7 +342,7 @@ async fn get_move(
 
 async fn enter(
     session: Session,
-    State(state): State<AppState>,
+    State(state): State<AxumAppState>,
     extract::Form(payload): extract::Form<AnswerQuery>,
 ) -> Response {
     let timestamp = libhc::get_timestamp();
