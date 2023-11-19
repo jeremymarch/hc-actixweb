@@ -5,7 +5,6 @@ use axum::extract::State;
 use axum::response::Html;
 use axum::response::IntoResponse;
 use axum::response::Redirect;
-use libhc::dbpostgres::HcDbPostgres;
 use libhc::hc_validate_credentials;
 use libhc::Credentials;
 use secrecy::Secret;
@@ -174,7 +173,7 @@ pub async fn login_post(
         if session.insert("user_id", user_id).is_ok()
             && session.insert("username", form.username).is_ok()
         {
-            return Redirect::to("/index.html");
+            return Redirect::to("/"); //index.html
         }
     }
 

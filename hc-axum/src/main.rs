@@ -50,8 +50,6 @@ use libhc::dbpostgres::HcDbPostgres;
 use libhc::AnswerQuery;
 use libhc::GetMoveQuery;
 use libhc::GetSessions;
-use libhc::SessionState;
-use libhc::SessionsListResponse;
 use std::sync::Arc;
 
 use uuid::Uuid;
@@ -71,7 +69,7 @@ pub struct StatusResponse {
 #[serde(transparent)]
 struct Username(String);
 
-use axum::extract::FromRef;
+//use axum::extract::FromRef;
 #[derive(Clone)]
 pub struct AppState {
     hcdb: HcDbPostgres,
@@ -121,7 +119,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Starting server");
 
     let (layer, io) = SocketIo::new_layer();
-
     io.ns("/", |s: SocketRef| {
         s.on("new message", |s: SocketRef, Data::<String>(msg)| {
             let username = s.extensions.get::<Username>().unwrap().clone();
@@ -188,6 +185,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await
         .expect("Error creating database");
 
+    let cookie_secure = !cfg!(debug_assertions); //cookie is secure for release, not secure for debug builds
+
     let session_store = MemoryStore::default();
     let session_service = ServiceBuilder::new()
         .layer(HandleErrorLayer::new(|_: BoxError| async {
@@ -195,16 +194,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }))
         .layer(
             SessionManagerLayer::new(session_store)
-                .with_secure(false)
+                .with_secure(cookie_secure)
                 .with_expiry(Expiry::OnInactivity(Duration::days(365)))
                 .with_name("hcax"),
         );
 
     let verbs = libhc::hc_load_verbs("pp.txt");
 
-    let state = AppState { hcdb, verbs };
+    let app_state = AppState { hcdb, verbs };
+
+    let serve_dir = ServeDir::new("static"); //.not_found_service(axum::routing::get(index)); //not_found_service gives 404 status
 
     let app = axum::Router::new()
+        .route("/", axum::routing::get(index))
         .route("/index.html", axum::routing::get(index))
         .route("/list", axum::routing::post(get_sessions))
         .route("/new", axum::routing::post(create_session))
@@ -216,14 +218,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/newuser", axum::routing::post(login::new_user_post))
         .route("/logout", axum::routing::get(login::logout))
         .route("/healthzzz", axum::routing::get(health_check))
-        .nest_service("/", ServeDir::new("static"))
-        .nest_service("/dist", ServeDir::new("dist"))
+        .fallback_service(serve_dir) //for js, wasm, etc
         .layer(
             ServiceBuilder::new()
                 .layer(CorsLayer::permissive()) // Enable CORS policy
                 .layer(layer),
         )
-        .with_state(state)
+        .with_state(app_state)
         .layer(session_service);
 
     let server = Server::bind(&"0.0.0.0:8088".parse().unwrap()).serve(app.into_make_service());
