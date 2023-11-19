@@ -430,10 +430,6 @@ pub fn get_apple_client() -> BasicClient {
 }
 
 pub async fn oauth_login_apple(session: Session) -> impl IntoResponse {
-    //     (session, req): (Session, HttpRequest),
-    // ) -> Result<HttpResponse, AWError> {
-    //     let data = req.app_data::<AppState>().unwrap();
-
     let (pkce_code_challenge, _pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
     let nonce = uuid::Uuid::new_v4(); // use UUID as random and unique nonce
 
@@ -449,21 +445,15 @@ pub async fn oauth_login_apple(session: Session) -> impl IntoResponse {
         .url();
 
     let state = csrf_state.secret().to_string();
-    session.clear();
+    //session.clear();
     session
         .insert("oauth_state", state)
         .expect("session.insert state");
 
-    // Ok(HttpResponse::Found()
-    //     .append_header((header::LOCATION, authorize_url.to_string()))
-    //     .finish())
     Redirect::to(&authorize_url.to_string())
 }
 
 pub async fn oauth_login_google(session: Session) -> impl IntoResponse {
-    //     (session, req): (Session, HttpRequest),
-    // ) -> Result<HttpResponse, AWError> {
-    //     let data = req.app_data::<AppState>().unwrap();
     // Google supports Proof Key for Code Exchange (PKCE - https://oauth.net/2/pkce/).
     // Create a PKCE code verifier and SHA-256 encode it as a code challenge.
     let (pkce_code_challenge, _pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
@@ -481,14 +471,11 @@ pub async fn oauth_login_google(session: Session) -> impl IntoResponse {
         .url();
 
     let state = csrf_state.secret().to_string();
-    session.clear();
+    //session.clear();
     session
         .insert("oauth_state", state)
         .expect("session.insert state");
 
-    // Ok(HttpResponse::Found()
-    //     .append_header((header::LOCATION, authorize_url.to_string()))
-    //     .finish())
     Redirect::to(&authorize_url.to_string())
 }
 
@@ -497,11 +484,6 @@ pub async fn oauth_auth_apple(
     State(state): State<AxumAppState>,
     extract::Form(params): extract::Form<AuthRequest>,
 ) -> impl IntoResponse {
-    //     (session, params, req): (Session, web::Form<AuthRequest>, HttpRequest),
-    // ) -> Result<HttpResponse, AWError> {
-    //     let db = req.app_data::<HcDbPostgres>().unwrap();
-    //     let data = req.app_data::<AppState>().unwrap();
-
     let saved_state = get_oauth_state(&session);
 
     if let Some(param_code) = &params.code {
@@ -513,7 +495,7 @@ pub async fn oauth_auth_apple(
         let _token = get_apple_client().exchange_code(code);
 
         if let Some(ref id_token_ref) = id_token {
-            if saved_state.unwrap() == *received_state.secret() {
+            if /*saved_state.is_some() && */saved_state.unwrap() == *received_state.secret() {
                 let mut first_name = String::from("");
                 let mut last_name = String::from("");
                 let mut email = String::from("");
@@ -582,10 +564,6 @@ pub async fn oauth_auth_google(
     State(state): State<AxumAppState>,
     extract::Form(params): extract::Form<AuthRequest>,
 ) -> impl IntoResponse {
-    //     (session, params, req): (Session, web::Form<AuthRequest>, HttpRequest),
-    // ) -> Result<HttpResponse, AWError> {
-    //     let db = req.app_data::<HcDbPostgres>().unwrap();
-    //     let data = req.app_data::<AppState>().unwrap();
     let saved_state = get_oauth_state(&session);
 
     if let Some(param_code) = &params.code {
@@ -599,7 +577,7 @@ pub async fn oauth_auth_google(
         let _token = get_google_client().exchange_code(code);
 
         if let Some(ref id_token_ref) = id_token {
-            if saved_state.unwrap() == *received_state.secret() {
+            if /*saved_state.is_some() && */saved_state.unwrap() == *received_state.secret() {
                 let first_name = String::from("");
                 let last_name = String::from("");
                 let mut email = String::from("");
