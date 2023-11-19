@@ -39,6 +39,14 @@ pub fn get_username(session: &Session) -> Option<String> {
     }
 }
 
+pub fn get_oauth_state(session: &Session) -> Option<String> {
+    if let Ok(s) = session.get::<String>("oauth_state") {
+        s
+    } else {
+        None
+    }
+}
+
 #[debug_handler]
 pub async fn login_get() -> impl IntoResponse {
     let error_html = "";
@@ -362,45 +370,11 @@ pub struct AuthRequest {
     user: Option<String>,
 }
 
-pub struct AppState {
-    pub apple_oauth: BasicClient,
-    pub google_oauth: BasicClient,
-}
-/*
-#[derive(Debug, Serialize, Deserialize, Clone)]
-struct AppleClaims {
-    iss: Option<String>,
-    aud: Option<String>,
-    exp: Option<u64>,
-    iat: Option<u64>,
-    sub: Option<String>,
-    c_hash: Option<String>,
-    auth_time: Option<u64>,
-    nonce: Option<String>,
-    nonce_supported: Option<bool>,
-    email: Option<String>,
-    //this is bool for Google and String for Apple
-    //https://developer.apple.com/forums/thread/121411?answerId=378290022#378290022
-    email_verified: Option<String>,
-}
+// pub struct AppState {
+//     pub apple_oauth: BasicClient,
+//     pub google_oauth: BasicClient,
+// }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-struct GoogleClaims {
-    iss: Option<String>,
-    aud: Option<String>,
-    exp: Option<u64>,
-    iat: Option<u64>,
-    sub: Option<String>,
-    c_hash: Option<String>,
-    auth_time: Option<u64>,
-    nonce: Option<String>,
-    nonce_supported: Option<bool>,
-    email: Option<String>,
-    //this is bool for Google and String for Apple
-    //https://developer.apple.com/forums/thread/121411?answerId=378290022#378290022
-    email_verified: Option<bool>,
-}
-*/
 #[derive(Debug, Serialize, Deserialize)]
 struct AppleOAuthUserName {
     #[serde(rename(serialize = "firstName"), rename(deserialize = "firstName"))]
@@ -528,7 +502,7 @@ pub async fn oauth_auth_apple(
     //     let db = req.app_data::<HcDbPostgres>().unwrap();
     //     let data = req.app_data::<AppState>().unwrap();
 
-    let saved_state = session.get::<String>("oauth_state").unwrap();
+    let saved_state = get_oauth_state(&session);
 
     if let Some(param_code) = &params.code {
         let code = AuthorizationCode::new(param_code.clone());
@@ -564,7 +538,7 @@ pub async fn oauth_auth_apple(
                 {
                     let sub = result.claims.sub;
                     let iss = result.claims.iss;
-                    email = result.claims.email.unwrap_or(String::from(""));
+                    //email = result.claims.email.unwrap_or(String::from(""));
 
                     let timestamp = libhc::get_timestamp();
                     match hc_create_oauth_user(
@@ -612,7 +586,7 @@ pub async fn oauth_auth_google(
     // ) -> Result<HttpResponse, AWError> {
     //     let db = req.app_data::<HcDbPostgres>().unwrap();
     //     let data = req.app_data::<AppState>().unwrap();
-    let saved_state = session.get::<String>("oauth_state").unwrap();
+    let saved_state = get_oauth_state(&session);
 
     if let Some(param_code) = &params.code {
         // println!("code code");
@@ -643,7 +617,7 @@ pub async fn oauth_auth_google(
                 {
                     let sub = result.claims.sub;
                     let iss = result.claims.iss;
-                    email = result.claims.email.unwrap_or(String::from(""));
+                    //email = result.claims.email.unwrap_or(String::from(""));
 
                     let timestamp = libhc::get_timestamp();
 
