@@ -16,7 +16,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-use tower_sessions::cookie::SameSite;
 use axum::response::Response;
 use serde::{Deserialize, Serialize};
 use socketioxide::{
@@ -26,6 +25,7 @@ use socketioxide::{
 use std::sync::atomic::AtomicUsize;
 use tower::ServiceBuilder;
 use tower_http::{cors::CorsLayer, services::ServeDir};
+use tower_sessions::cookie::SameSite;
 use tracing::{error, info};
 use tracing_subscriber::FmtSubscriber;
 
@@ -199,7 +199,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .with_secure(cookie_secure)
                 .with_expiry(Expiry::OnInactivity(Duration::days(365)))
                 .with_name("hcax")
-                .with_same_site(SameSite::None)
+                .with_same_site(SameSite::None),
         );
 
     let verbs = libhc::hc_load_verbs("pp.txt");

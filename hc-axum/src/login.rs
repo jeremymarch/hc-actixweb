@@ -497,18 +497,6 @@ pub async fn oauth_auth_apple(
 
         if let Some(ref id_token_ref) = id_token {
             if saved_state.is_some() && saved_state.unwrap() == *received_state.secret() {
-                let mut first_name = String::from("");
-                let mut last_name = String::from("");
-                let mut email = String::from("");
-
-                if let Some(ref user) = user {
-                    if let Ok(apple_oauth_user) = serde_json::from_str::<AppleOAuthUser>(user) {
-                        first_name = apple_oauth_user.name.first_name.unwrap_or(String::from(""));
-                        last_name = apple_oauth_user.name.last_name.unwrap_or(String::from(""));
-                        email = apple_oauth_user.email.unwrap_or(String::from(""));
-                    }
-                }
-
                 println!("apple test test3");
                 if let Ok(result) = sign_in_with_apple::validate::<AppleClaims>(
                     &env::var("APPLE_CLIENT_ID")
@@ -519,9 +507,25 @@ pub async fn oauth_auth_apple(
                 )
                 .await
                 {
+                    let (first_name, last_name, mut email) =
+                        match serde_json::from_str::<AppleOAuthUser>(
+                            &user.unwrap_or(String::from("")),
+                        ) {
+                            Ok(apple_oauth_user) => (
+                                apple_oauth_user.name.first_name.unwrap_or(String::from("")),
+                                apple_oauth_user.name.last_name.unwrap_or(String::from("")),
+                                apple_oauth_user.email.unwrap_or(String::from("")),
+                            ),
+                            _ => (String::from(""), String::from(""), String::from("")),
+                        };
+                    email = if email.is_empty() {
+                        result.claims.email.unwrap_or(String::from(""))
+                    } else {
+                        email
+                    };
+
                     let sub = result.claims.sub;
                     let iss = result.claims.iss;
-                    email = result.claims.email.unwrap_or(String::from(""));
 
                     let timestamp = libhc::get_timestamp();
                     match hc_create_oauth_user(
@@ -537,14 +541,14 @@ pub async fn oauth_auth_apple(
                     .await
                     {
                         Ok((user_id, user_name)) => {
-                            //session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+                            session.clear(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
                             if session.insert("user_id", user_id).is_ok()
                                 && session.insert("username", user_name).is_ok()
                             {
                                 return Redirect::to("/");
                             }
                         }
-                        Err(Database(e)) => {
+                        Err(Database(_e)) => {
                             //FlashMessage::error(e.to_string()).send();
                             return Redirect::to("/login");
                         }
@@ -579,10 +583,6 @@ pub async fn oauth_auth_google(
 
         if let Some(ref id_token_ref) = id_token {
             if saved_state.is_some() && saved_state.unwrap() == *received_state.secret() {
-                let first_name = String::from("");
-                let last_name = String::from("");
-                let mut email = String::from("");
-
                 println!("cccccc {:?}", id_token_ref);
                 println!("google test test3");
                 if let Ok(result) = sign_in_with_apple::validate::<GoogleClaims>(
@@ -594,9 +594,11 @@ pub async fn oauth_auth_google(
                 )
                 .await
                 {
+                    let first_name = String::from("");
+                    let last_name = String::from("");
                     let sub = result.claims.sub;
                     let iss = result.claims.iss;
-                    email = result.claims.email.unwrap_or(String::from(""));
+                    let email = result.claims.email.unwrap_or(String::from(""));
 
                     let timestamp = libhc::get_timestamp();
 
@@ -613,14 +615,14 @@ pub async fn oauth_auth_google(
                     .await
                     {
                         Ok((user_id, user_name)) => {
-                            //session.renew(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+                            session.clear(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
                             if session.insert("user_id", user_id).is_ok()
                                 && session.insert("username", user_name).is_ok()
                             {
                                 return Redirect::to("/");
                             }
                         }
-                        Err(Database(e)) => {
+                        Err(Database(_e)) => {
                             //FlashMessage::error(e.to_string()).send();
                             return Redirect::to("/login");
                         }
