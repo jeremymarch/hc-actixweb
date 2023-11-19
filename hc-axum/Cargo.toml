@@ -24,6 +24,7 @@ uuid = "1.5.0"
 sqlx = { version = "0.7.2", features = ["postgres", "runtime-tokio-rustls", "uuid"] }
 time = "0.3.30"
 secrecy = { version = "0.8.0", features = ["serde"] }
+hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.3.9" }
 
 [profile.release]
 opt-level = 3

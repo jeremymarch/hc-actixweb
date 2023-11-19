@@ -16,13 +16,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-use std::sync::atomic::AtomicUsize;
 use axum::response::Response;
 use serde::{Deserialize, Serialize};
 use socketioxide::{
     extract::{Data, SocketRef},
     SocketIo,
 };
+use std::sync::atomic::AtomicUsize;
 use tower::ServiceBuilder;
 use tower_http::{cors::CorsLayer, services::ServeDir};
 use tracing::{error, info};
@@ -45,9 +45,11 @@ use time::Duration;
 use tower::BoxError;
 use tower_sessions::{Expiry, MemoryStore, Session, SessionManagerLayer};
 
+use hoplite_verbs_rs::*;
 use libhc::dbpostgres::HcDbPostgres;
 use libhc::GetSessions;
 use libhc::SessionsListResponse;
+use std::sync::Arc;
 
 use uuid::Uuid;
 
@@ -56,6 +58,24 @@ mod login;
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(transparent)]
 struct Username(String);
+
+use axum::extract::FromRef;
+#[derive(Clone)]
+struct AppState {
+    hcdb: HcDbPostgres,
+    verbs: Vec<Arc<HcGreekVerb>>,
+}
+// impl FromRef<AppState> for HcDbPostgres {
+//     fn from_ref(app_state: &AppState) -> HcDbPostgres {
+//         app_state.hcdb.clone()
+//     }
+// }
+
+// impl FromRef<AppState> for Vec<Arc<HcGreekVerb>> {
+//     fn from_ref(app_state: &AppState) -> Vec<Arc<HcGreekVerb>> {
+//         app_state.verbs.clone()
+//     }
+// }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase", untagged)]
@@ -164,13 +184,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .layer(
             SessionManagerLayer::new(session_store)
                 .with_secure(false)
-                .with_expiry(Expiry::OnInactivity(Duration::seconds(10)))
+                .with_expiry(Expiry::OnInactivity(Duration::days(365)))
                 .with_name("hcax"),
         );
+
+    let verbs = libhc::hc_load_verbs("pp.txt");
+
+    let state = AppState { hcdb, verbs };
 
     let app = axum::Router::new()
         .route("/index.html", axum::routing::get(index))
         .route("/list", axum::routing::post(get_sessions))
+        .route("/new", axum::routing::post(create_session))
         .route("/login", axum::routing::get(login::login_get))
         .route("/login", axum::routing::post(login::login_post))
         .route("/newuser", axum::routing::get(login::new_user_get))
@@ -184,7 +209,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .layer(CorsLayer::permissive()) // Enable CORS policy
                 .layer(layer),
         )
-        .with_state(hcdb)
+        .with_state(state)
+        //.with_state(verbs)
         .layer(session_service);
 
     let server = Server::bind(&"0.0.0.0:8088".parse().unwrap()).serve(app.into_make_service());
@@ -215,11 +241,9 @@ async fn index() -> impl IntoResponse {
 #[debug_handler]
 async fn get_sessions(
     session: Session,
-    State(db): State<HcDbPostgres>,
+    State(state): State<AppState>,
     extract::Form(payload): extract::Form<GetSessions>,
 ) -> Json<SessionsListResponse> {
-    let verbs = libhc::hc_load_verbs("pp.txt");
-
     if let Ok(user_id) = session.get::<Uuid>("user_id") {
         //uuid!("96b875e7-fc53-4498-ad8d-9ce417e938b7");
         let username = session
@@ -227,9 +251,10 @@ async fn get_sessions(
             .unwrap_or(Some("zzz".to_string()));
 
         if let Some(user_id) = user_id {
-            let res = libhc::hc_get_sessions(&db, user_id, &verbs, username, &payload)
-                .await
-                .unwrap();
+            let res =
+                libhc::hc_get_sessions(&state.hcdb, user_id, &state.verbs, username, &payload)
+                    .await
+                    .unwrap();
 
             return Json(res);
         }
@@ -244,6 +269,52 @@ async fn get_sessions(
         current_session: None,
     };
     Json(res)
+}
+use libhc::CreateSessionQuery;
+use libhc::HcError;
+#[derive(Serialize)]
+pub struct StatusResponse {
+    response_to: String,
+    mesg: String,
+    success: bool,
+}
+
+async fn create_session(
+    session: Session,
+    State(state): State<AppState>,
+    extract::Form(mut payload): extract::Form<CreateSessionQuery>,
+) -> Json<StatusResponse> {
+    if let Some(user_id) = session.get::<Uuid>("user_id").unwrap() {
+        let timestamp = libhc::get_timestamp();
+
+        let (mesg, success) = match libhc::hc_insert_session(
+            &state.hcdb,
+            user_id,
+            &mut payload,
+            &state.verbs,
+            timestamp,
+        )
+        .await
+        {
+            Ok(_session_uuid) => (String::from("inserted!"), true),
+            Err(HcError::UnknownError) => (String::from("opponent not found!"), false),
+            Err(e) => (format!("error inserting: {e:?}"), false),
+        };
+        let res = StatusResponse {
+            response_to: String::from("newsession"),
+            mesg,
+            success,
+        };
+        Json(res)
+    } else {
+        //not_logged_in_response()
+        let res = StatusResponse {
+            response_to: String::from("newsession"),
+            mesg: "".to_string(),
+            success: false,
+        };
+        Json(res)
+    }
 }
 
 async fn health_check() -> Response {

@@ -1,3 +1,4 @@
+use crate::AppState;
 use axum::debug_handler;
 use axum::extract;
 use axum::extract::State;
@@ -141,17 +142,17 @@ pub async fn login_get() -> impl IntoResponse {
 
 pub async fn login_post(
     session: Session,
-    State(db): State<HcDbPostgres>,
+    State(state): State<AppState>,
     extract::Form(form): extract::Form<LoginFormData>,
 ) -> impl IntoResponse {
-    session.clear();
+    //session.clear();
     //session.flush();
     let credentials = Credentials {
         username: form.username.clone(),
         password: form.password,
     };
 
-    if let Ok(user_id) = hc_validate_credentials(&db, credentials).await
+    if let Ok(user_id) = hc_validate_credentials(&state.hcdb, credentials).await
     //map_err(map_hc_error)
     //fix me, should handle error here in case db error, etc.
     {
@@ -162,19 +163,19 @@ pub async fn login_post(
         }
     }
 
-    session.clear();
+    //session.clear();
     Redirect::to("/login")
 }
 
 pub async fn logout(session: Session) -> impl IntoResponse {
     session.clear();
-    session.flush();
+    //session.flush();
     //FlashMessage::error(String::from("Authentication error")).send();
     Redirect::to("/login")
 }
 
 pub async fn new_user_get() -> impl IntoResponse {
-    let mut error_html = String::from("");
+    let error_html = String::from("");
     // for m in flash_messages.iter().filter(|m| m.level() == Level::Error) {
     //     writeln!(error_html, "<p><i>{}</i></p>", m.content()).unwrap();
     // }
@@ -288,8 +289,7 @@ pub async fn new_user_get() -> impl IntoResponse {
 }
 
 pub async fn new_user_post(
-    session: Session,
-    State(db): State<HcDbPostgres>,
+    State(state): State<AppState>,
     extract::Form(form): extract::Form<CreateUserFormData>,
 ) -> impl IntoResponse {
     let username = form.username;
@@ -300,7 +300,7 @@ pub async fn new_user_post(
     let timestamp = libhc::get_timestamp();
 
     if username.len() > 1 && password.len() > 3 && email.len() > 6 && password == confirm_password {
-        match libhc::hc_create_user(&db, &username, &password, &email, timestamp)
+        match libhc::hc_create_user(&state.hcdb, &username, &password, &email, timestamp)
             .await
             //.map_err(map_hc_error)
         {
@@ -310,7 +310,7 @@ pub async fn new_user_post(
                     Redirect::to("/login")
                 //}
             }
-            Err(e) => {
+            Err(_e) => {
                 //session.purge();
                 //FlashMessage::error(String::from("Create user error")).send();
                 Redirect::to("/newuser")
@@ -322,10 +322,6 @@ pub async fn new_user_post(
         Redirect::to("/newuser")
     }
 }
-
-
-
-
 
 /*
 use actix_web::http::header;
