@@ -223,8 +223,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/oauth-login-google",
             axum::routing::get(login::oauth_login_google),
         )
-        // .route("/auth", axum::routing::post(login::oauth_auth_apple))
-        // .route("/gauth", axum::routing::post(login::oauth_auth_google))
+        .route("/auth", axum::routing::post(login::oauth_auth_apple))
+        .route("/gauth", axum::routing::post(login::oauth_auth_google))
         .route("/newuser", axum::routing::get(login::new_user_get))
         .route("/newuser", axum::routing::post(login::new_user_post))
         .route("/logout", axum::routing::get(login::logout))
