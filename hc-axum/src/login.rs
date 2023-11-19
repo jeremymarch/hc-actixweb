@@ -497,7 +497,7 @@ pub async fn oauth_auth_apple(
 
         if let Some(ref id_token_ref) = id_token {
             if saved_state.is_some() && saved_state.unwrap() == *received_state.secret() {
-                println!("apple test test3");
+                //println!("apple test test3");
                 if let Ok(result) = sign_in_with_apple::validate::<AppleClaims>(
                     &env::var("APPLE_CLIENT_ID")
                         .expect("Missing the APPLE_CLIENT_ID environment variable."),
@@ -583,8 +583,8 @@ pub async fn oauth_auth_google(
 
         if let Some(ref id_token_ref) = id_token {
             if saved_state.is_some() && saved_state.unwrap() == *received_state.secret() {
-                println!("cccccc {:?}", id_token_ref);
-                println!("google test test3");
+                // println!("cccccc {:?}", id_token_ref);
+                // println!("google test test3");
                 if let Ok(result) = sign_in_with_apple::validate::<GoogleClaims>(
                     &env::var("GOOGLE_CLIENT_ID")
                         .expect("Missing the GOOGLE_CLIENT_ID environment variable."),
@@ -596,9 +596,10 @@ pub async fn oauth_auth_google(
                 {
                     let first_name = String::from("");
                     let last_name = String::from("");
+                    let email = result.claims.email.unwrap_or(String::from(""));
+
                     let sub = result.claims.sub;
                     let iss = result.claims.iss;
-                    let email = result.claims.email.unwrap_or(String::from(""));
 
                     let timestamp = libhc::get_timestamp();
 
