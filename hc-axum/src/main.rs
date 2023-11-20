@@ -219,7 +219,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .with_secure(cookie_secure)
                 .with_expiry(Expiry::OnInactivity(Duration::days(365)))
                 .with_name("hcax")
-                .with_same_site(SameSite::None),
+                .with_same_site(SameSite::Lax), //None, Strict, Lax //oauth needs None, but Chrome needs at least Lax for normal login to work
         );
 
     let verbs = libhc::hc_load_verbs("pp.txt");
@@ -272,16 +272,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 static INDEX_PAGE: &str = include_str!("../../hc-actix/src/index.html");
+static CSP: &str = "style-src 'nonce-%NONCE%';script-src 'nonce-%NONCE%' 'wasm-unsafe-eval' \
+                    'unsafe-inline'; object-src 'none'; base-uri 'none'";
 
 async fn index() -> impl IntoResponse {
     // let mut rng = rand::thread_rng();
     // let csp_nonce: String = rng.gen::<u32>().to_string();
-    let csp_nonce: String = Uuid::new_v4().to_string();
+    let csp_nonce: String = Uuid::new_v4().to_string(); //.simple().encode_upper(&mut Uuid::encode_buffer()).to_string();
 
     let mut headers = HeaderMap::new();
     headers.insert(
         HeaderName::from_static("content-security-policy"),
-        HeaderValue::from_str(&csp_nonce).unwrap(),
+        HeaderValue::from_str(&CSP.replace("%NONCE%", &csp_nonce)).unwrap(),
     );
 
     let page = INDEX_PAGE.replace("%NONCE%", &csp_nonce);
