@@ -120,6 +120,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Starting server");
 
+    /*
+        on connect
+        s.join(["self-my-uuid"])
+
+        getmove
+        s.join(["game-uuid"]).leave(["old-game-uuid"]);
+     */
+
     let (layer, io) = SocketIo::new_layer();
     io.ns("/", |s: SocketRef| {
         s.on("new message", |s: SocketRef, Data::<String>(msg)| {
@@ -171,6 +179,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         });
     });
+
+
+
+
 
     //e.g. export HOPLITE_DB=postgres://jwm:1234@localhost/hc
     let db_string = std::env::var("HOPLITE_DB")
