@@ -49,8 +49,11 @@ use tower_sessions::{Expiry, MemoryStore, Session, SessionManagerLayer};
 use hoplite_verbs_rs::*;
 use libhc::dbpostgres::HcDbPostgres;
 use libhc::AnswerQuery;
+use libhc::AskQuery;
 use libhc::GetMoveQuery;
 use libhc::GetSessions;
+use libhc::SessionState;
+use libhc::SessionsListResponse;
 use std::sync::Arc;
 
 use uuid::Uuid;
@@ -121,12 +124,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Starting server");
 
     /*
-        on connect
-        s.join(["self-my-uuid"])
+       on connect
+       s.join(["self-my-uuid"])
 
-        getmove
-        s.join(["game-uuid"]).leave(["old-game-uuid"]);
-     */
+       getmove
+       s.join(["game-uuid"]).leave(["old-game-uuid"]);
+    */
 
     let (layer, io) = SocketIo::new_layer();
     io.ns("/", |s: SocketRef| {
@@ -137,6 +140,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 message: msg,
             };
             s.broadcast().emit("new message", msg).ok();
+        });
+
+        s.on("abc", |s: SocketRef, Data::<String>(msg)| {
+            //let username = s.extensions.get::<Username>().unwrap().clone();
+            let msg = Res::Message {
+                username: Username(String::from("blah")),
+                message: msg,
+            };
+            s.broadcast().emit("abc", msg).ok();
         });
 
         s.on("add user", |s: SocketRef, Data::<String>(username)| {
@@ -179,10 +191,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         });
     });
-
-
-
-
 
     //e.g. export HOPLITE_DB=postgres://jwm:1234@localhost/hc
     let db_string = std::env::var("HOPLITE_DB")
@@ -227,6 +235,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/new", axum::routing::post(create_session))
         .route("/getmove", axum::routing::post(get_move))
         .route("/enter", axum::routing::post(enter))
+        .route("/mf", axum::routing::post(mf))
+        .route("/ask", axum::routing::post(ask))
         .route("/login", axum::routing::get(login::login_get))
         .route("/login", axum::routing::post(login::login_post))
         .route(
@@ -283,17 +293,17 @@ async fn get_sessions(
     session: Session,
     State(state): State<AxumAppState>,
     extract::Form(payload): extract::Form<GetSessions>,
-) -> Response {
+) -> Result<Json<SessionsListResponse>, StatusCode> {
     if let Some(user_id) = login::get_user_id(&session) {
         //uuid!("96b875e7-fc53-4498-ad8d-9ce417e938b7");
         let username = login::get_username(&session);
 
-        match libhc::hc_get_sessions(&state.hcdb, user_id, &state.verbs, username, &payload).await {
-            Ok(res) => Json(res).into_response(),
-            _ => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-        }
+        let res = libhc::hc_get_sessions(&state.hcdb, user_id, &state.verbs, username, &payload)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        Ok(Json(res))
     } else {
-        StatusCode::UNAUTHORIZED.into_response()
+        Err(StatusCode::UNAUTHORIZED)
     }
 }
 
@@ -301,7 +311,7 @@ async fn create_session(
     session: Session,
     State(state): State<AxumAppState>,
     extract::Form(mut payload): extract::Form<CreateSessionQuery>,
-) -> Response {
+) -> Result<Json<StatusResponse>, StatusCode> {
     if let Some(user_id) = login::get_user_id(&session) {
         let timestamp = libhc::get_timestamp();
 
@@ -323,9 +333,9 @@ async fn create_session(
             mesg,
             success,
         };
-        Json(res).into_response()
+        Ok(Json(res))
     } else {
-        StatusCode::UNAUTHORIZED.into_response()
+        Err(StatusCode::UNAUTHORIZED)
     }
 }
 
@@ -333,11 +343,11 @@ async fn get_move(
     session: Session,
     State(state): State<AxumAppState>,
     extract::Form(payload): extract::Form<GetMoveQuery>,
-) -> Response {
+) -> Result<Json<SessionState>, StatusCode> {
     //"ask", prev form to start from or null, prev answer and is_correct, correct answer
 
     if let Some(user_id) = login::get_user_id(&session) {
-        match libhc::hc_get_move(
+        let res = libhc::hc_get_move(
             &state.hcdb,
             user_id,
             false,
@@ -345,12 +355,11 @@ async fn get_move(
             &state.verbs,
         )
         .await
-        {
-            Ok(res) => Json(res).into_response(),
-            _ => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-        }
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        Ok(Json(res))
     } else {
-        StatusCode::UNAUTHORIZED.into_response()
+        Err(StatusCode::UNAUTHORIZED)
     }
 }
 
@@ -358,16 +367,52 @@ async fn enter(
     session: Session,
     State(state): State<AxumAppState>,
     extract::Form(payload): extract::Form<AnswerQuery>,
-) -> Response {
+) -> Result<Json<SessionState>, StatusCode> {
     let timestamp = libhc::get_timestamp();
 
     if let Some(user_id) = login::get_user_id(&session) {
-        match libhc::hc_answer(&state.hcdb, user_id, &payload, timestamp, &state.verbs).await {
-            Ok(res) => Json(res).into_response(),
-            _ => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-        }
+        let res = libhc::hc_answer(&state.hcdb, user_id, &payload, timestamp, &state.verbs)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        Ok(Json(res))
     } else {
-        StatusCode::UNAUTHORIZED.into_response()
+        Err(StatusCode::UNAUTHORIZED)
+    }
+}
+
+async fn ask(
+    session: Session,
+    State(state): State<AxumAppState>,
+    extract::Form(payload): extract::Form<AskQuery>,
+) -> Result<Json<SessionState>, StatusCode> {
+    let timestamp = libhc::get_timestamp();
+
+    if let Some(user_id) = login::get_user_id(&session) {
+        let res = libhc::hc_ask(&state.hcdb, user_id, &payload, timestamp, &state.verbs)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        Ok(Json(res))
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
+}
+
+async fn mf(
+    session: Session,
+    State(state): State<AxumAppState>,
+    extract::Form(payload): extract::Form<AnswerQuery>,
+) -> Result<Json<SessionState>, StatusCode> {
+    let timestamp = libhc::get_timestamp();
+
+    if let Some(user_id) = login::get_user_id(&session) {
+        let res = libhc::hc_mf_pressed(&state.hcdb, user_id, &payload, timestamp, &state.verbs)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        Ok(Json(res))
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
     }
 }
 

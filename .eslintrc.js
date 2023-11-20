@@ -6,7 +6,7 @@ module.exports = {
   extends: [
     'standard'
   ],
-  ignorePatterns: ['static/hoplitekb_wasm_rs.js'],
+  ignorePatterns: ['static/hoplitekb_wasm_rs.js', 'hc-axum/dist/main.js'],
   rules: {
     semi: [2, 'always']
   }
