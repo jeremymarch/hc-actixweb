@@ -704,8 +704,8 @@ pub async fn hc_answer(
     };
     let prev_form = HcGreekVerbForm {
         verb: verbs[idx].clone(),
-        person: HcPerson::from_i16(m.person.unwrap()),
-        number: HcNumber::from_i16(m.number.unwrap()),
+        person: Some(HcPerson::from_i16(m.person.unwrap())),
+        number: Some(HcNumber::from_i16(m.number.unwrap())),
         tense: HcTense::from_i16(m.tense.unwrap()),
         voice: HcVoice::from_i16(m.voice.unwrap()),
         mood: HcMood::from_i16(m.mood.unwrap()),
@@ -719,7 +719,8 @@ pub async fn hc_answer(
         Err(_) => String::from("—"),
     };
 
-    let is_correct = hgk_compare_multiple_forms(&correct_answer, &info.answer.replace("---", "—"));
+    let is_correct =
+        hgk_compare_multiple_forms(&correct_answer, &info.answer.replace("---", "—"), true);
 
     tx.update_answer_move_tx(
         info,
@@ -821,8 +822,8 @@ pub async fn hc_mf_pressed(
     };
     let prev_form = HcGreekVerbForm {
         verb: verbs[idx].clone(),
-        person: HcPerson::from_i16(m.person.unwrap()),
-        number: HcNumber::from_i16(m.number.unwrap()),
+        person: Some(HcPerson::from_i16(m.person.unwrap())),
+        number: Some(HcNumber::from_i16(m.number.unwrap())),
         tense: HcTense::from_i16(m.tense.unwrap()),
         voice: HcVoice::from_i16(m.voice.unwrap()),
         mood: HcMood::from_i16(m.mood.unwrap()),
@@ -1006,8 +1007,8 @@ async fn hc_ask_practice(
     let aq = AskQuery {
         qtype: String::from("ask"),
         session_id: session.session_id,
-        person: pf.person.to_i16(),
-        number: pf.number.to_i16(),
+        person: pf.person.unwrap().to_i16(),
+        number: pf.number.unwrap().to_i16(),
         tense: pf.tense.to_i16(),
         voice: pf.voice.to_i16(),
         mood: pf.mood.to_i16(),
@@ -1269,8 +1270,8 @@ pub async fn hc_insert_session(
             if opponent_user_id.is_none() {
                 let prev_form = HcGreekVerbForm {
                     verb: verbs[1].clone(),
-                    person: HcPerson::First,
-                    number: HcNumber::Singular,
+                    person: Some(HcPerson::First),
+                    number: Some(HcNumber::Singular),
                     tense: HcTense::Present,
                     voice: HcVoice::Active,
                     mood: HcMood::Indicative,

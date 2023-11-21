@@ -954,13 +954,14 @@ a {color:blue;}
 <div id="backdrop"></div>
 <script nonce="%NONCE%" type="module">
   // eslint-disable-next-line import/no-named-default
-  import { toggle, translit, default as init } from './hoplitekb_wasm_rs.js';
+  import { toggle, translit, compare_multiple_forms, default as init } from './hoplitekb_wasm_rs.js';
 
   async function run () {
     await init('./hoplitekb_wasm_rs_bg.wasm');
     // make the function available to the browser
     window.toggle = toggle;
     window.translit = translit;
+    window.compare_multiple_forms = compare_multiple_forms;
   }
   run();
 </script>
