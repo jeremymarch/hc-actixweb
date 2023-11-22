@@ -665,6 +665,20 @@ pub async fn hc_ask(
     Ok(res)
 }
 
+// pub async fn hc_answer_prospective(
+//     db: &dyn HcDb,
+//     user_id: Uuid,
+//     info: &AnswerQuery,
+//     timestamp: i64,
+//     verbs: &Vec<Arc<HcGreekVerb>>,
+// ) -> Result<SessionState, HcError> {
+
+//     //get and record answer, is_correct for last move
+
+//     //give question, answer for next two moves
+
+// }
+
 pub async fn hc_answer(
     db: &dyn HcDb,
     user_id: Uuid,

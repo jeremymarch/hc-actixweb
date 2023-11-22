@@ -44,6 +44,7 @@ use http::StatusCode;
 use sqlx::postgres::PgPoolOptions;
 use time::Duration;
 use tower::BoxError;
+use tower_cookies::CookieManagerLayer;
 use tower_sessions::{Expiry, MemoryStore, Session, SessionManagerLayer};
 
 use hoplite_verbs_rs::*;
@@ -219,7 +220,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .with_secure(cookie_secure)
                 .with_expiry(Expiry::OnInactivity(Duration::days(365)))
                 .with_name("hcax")
-                .with_same_site(SameSite::Lax), //None, Strict, Lax //oauth needs None, but Chrome needs at least Lax for normal login to work
+                .with_http_only(true)
+                .with_same_site(SameSite::Strict), //None, Strict, Lax //oauth needs None, but Chrome needs at least Lax for normal login to work
         );
 
     let verbs = libhc::hc_load_verbs("pp.txt");
@@ -260,7 +262,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .layer(layer),
         )
         .with_state(app_state)
-        .layer(session_service);
+        .layer(session_service)
+        .layer(CookieManagerLayer::new());
 
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], 8088));
     let server = Server::bind(&addr).serve(app.into_make_service());

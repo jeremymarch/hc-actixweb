@@ -442,6 +442,8 @@ pub async fn oauth_post(
 }
 */
 
+use crate::SameSite;
+use actix_web::cookie::Cookie;
 use actix_web::http::header;
 use libhc::hc_create_oauth_user;
 use oauth2::basic::BasicClient;
@@ -503,6 +505,8 @@ struct GoogleClaims {
     email_verified: Option<bool>,
 }
 */
+const OAUTH_COOKIE: &str = "oauth_state";
+
 #[derive(Debug, Serialize, Deserialize)]
 struct AppleOAuthUserName {
     #[serde(rename(serialize = "firstName"), rename(deserialize = "firstName"))]
@@ -579,12 +583,21 @@ pub async fn oauth_login_apple(
 
     let state = csrf_state.secret().to_string();
     session.renew();
-    session
-        .insert::<String>("oauth_state", state)
-        .expect("session.insert state");
+    // session
+    //     .insert::<String>("oauth_state", state)
+    //     .expect("session.insert state");
+
+    let cookie = Cookie::build(OAUTH_COOKIE, state)
+        // .domain("hoplite-challenge.philolog.us")
+        // .path("/")
+        .secure(true)
+        .http_only(true)
+        .same_site(SameSite::None)
+        .finish();
 
     Ok(HttpResponse::Found()
         .append_header((header::LOCATION, authorize_url.to_string()))
+        .cookie(cookie)
         .finish())
 }
 
@@ -611,12 +624,21 @@ pub async fn oauth_login_google(
 
     let state = csrf_state.secret().to_string();
     session.renew();
-    session
-        .insert::<String>("oauth_state", state)
-        .expect("session.insert state");
+    // session
+    //     .insert::<String>("oauth_state", state)
+    //     .expect("session.insert state");
+
+    let cookie = Cookie::build(OAUTH_COOKIE, state)
+        // .domain("hoplite-challenge.philolog.us")
+        // .path("/")
+        .secure(true)
+        .http_only(true)
+        .same_site(SameSite::None)
+        .finish();
 
     Ok(HttpResponse::Found()
         .append_header((header::LOCATION, authorize_url.to_string()))
+        .cookie(cookie)
         .finish())
 }
 
@@ -626,7 +648,10 @@ pub async fn oauth_auth_apple(
     let db = req.app_data::<HcDbPostgres>().unwrap();
     let data = req.app_data::<AppState>().unwrap();
 
-    let saved_state = session.get::<String>("oauth_state").unwrap();
+    //let saved_state = session.get::<String>("oauth_state").unwrap();
+
+    let saved_state = req.cookie(OAUTH_COOKIE).map(|v| v.value().to_string());
+    //cookies.remove(Cookie::new(OAUTH_COOKIE, ""));
 
     if let Some(param_code) = &params.code {
         let code = AuthorizationCode::new(param_code.clone());
@@ -686,8 +711,17 @@ pub async fn oauth_auth_apple(
                             if session.insert("user_id", user_id).is_ok()
                                 && session.insert("username", user_name).is_ok()
                             {
+                                let cookie = Cookie::build(OAUTH_COOKIE, "")
+                                    // .domain("hoplite-challenge.philolog.us")
+                                    // .path("/")
+                                    .secure(true)
+                                    .http_only(true)
+                                    .same_site(SameSite::None)
+                                    .finish();
+
                                 return Ok(HttpResponse::SeeOther()
                                     .insert_header((LOCATION, "/"))
+                                    .cookie(cookie)
                                     .finish());
                             }
                         }
@@ -712,7 +746,11 @@ pub async fn oauth_auth_google(
 ) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<HcDbPostgres>().unwrap();
     let data = req.app_data::<AppState>().unwrap();
-    let saved_state = session.get::<String>("oauth_state").unwrap();
+
+    //let saved_state = session.get::<String>("oauth_state").unwrap();
+
+    let saved_state = req.cookie(OAUTH_COOKIE).map(|v| v.value().to_string());
+    //cookies.remove(Cookie::new(OAUTH_COOKIE, ""));
 
     if let Some(param_code) = &params.code {
         // println!("code code");
@@ -763,8 +801,17 @@ pub async fn oauth_auth_google(
                             if session.insert("user_id", user_id).is_ok()
                                 && session.insert("username", user_name).is_ok()
                             {
+                                let cookie = Cookie::build(OAUTH_COOKIE, "")
+                                    // .domain("hoplite-challenge.philolog.us")
+                                    // .path("/")
+                                    .secure(true)
+                                    .http_only(true)
+                                    .same_site(SameSite::None)
+                                    .finish();
+
                                 return Ok(HttpResponse::SeeOther()
                                     .insert_header((LOCATION, "/"))
+                                    .cookie(cookie)
                                     .finish());
                             }
                         }
@@ -785,8 +832,17 @@ pub async fn oauth_auth_google(
 }
 
 fn nav_to_login(session: Session) -> Result<HttpResponse, AWError> {
+    let cookie = Cookie::build(OAUTH_COOKIE, "")
+        // .domain("hoplite-challenge.philolog.us")
+        // .path("/")
+        .secure(true)
+        .http_only(true)
+        .same_site(SameSite::None)
+        .finish();
+
     session.purge();
     Ok(HttpResponse::Found()
         .append_header((header::LOCATION, "/login".to_string()))
+        .cookie(cookie)
         .finish())
 }

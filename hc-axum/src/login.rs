@@ -8,6 +8,9 @@ use axum::response::Redirect;
 use libhc::hc_validate_credentials;
 use libhc::Credentials;
 use secrecy::Secret;
+use tower_cookies::Cookie;
+use tower_cookies::Cookies;
+use tower_sessions::cookie::SameSite;
 use tower_sessions::Session;
 
 #[derive(serde::Deserialize)]
@@ -40,13 +43,13 @@ pub fn get_username(session: &Session) -> Option<String> {
 }
 
 const OAUTH_COOKIE: &str = "oauth_state";
-pub fn get_oauth_state(session: &Session) -> Option<String> {
-    if let Ok(s) = session.get::<String>(OAUTH_COOKIE) {
-        s
-    } else {
-        None
-    }
-}
+// pub fn get_oauth_state(session: &Session) -> Option<String> {
+//     if let Ok(s) = session.get::<String>(OAUTH_COOKIE) {
+//         s
+//     } else {
+//         None
+//     }
+// }
 
 #[debug_handler]
 pub async fn login_get() -> impl IntoResponse {
@@ -430,7 +433,7 @@ pub fn get_apple_client() -> BasicClient {
     )
 }
 
-pub async fn oauth_login_apple(session: Session) -> impl IntoResponse {
+pub async fn oauth_login_apple(session: Session, cookies: Cookies) -> impl IntoResponse {
     let (pkce_code_challenge, _pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
     let nonce = uuid::Uuid::new_v4(); // use UUID as random and unique nonce
 
@@ -445,16 +448,21 @@ pub async fn oauth_login_apple(session: Session) -> impl IntoResponse {
         .set_pkce_challenge(pkce_code_challenge) //apple does not support this, but no problem including it
         .url();
 
-    let state = csrf_state.secret().to_string();
     session.clear();
-    session
-        .insert(OAUTH_COOKIE, state)
-        .expect("session.insert state");
+
+    let cookie = Cookie::build(OAUTH_COOKIE, csrf_state.secret().to_string())
+        // .domain("hoplite-challenge.philolog.us")
+        // .path("/")
+        .secure(true)
+        .http_only(true)
+        .same_site(SameSite::None)
+        .finish();
+    cookies.add(cookie);
 
     Redirect::to(&authorize_url.to_string())
 }
 
-pub async fn oauth_login_google(session: Session) -> impl IntoResponse {
+pub async fn oauth_login_google(session: Session, cookies: Cookies) -> impl IntoResponse {
     // Google supports Proof Key for Code Exchange (PKCE - https://oauth.net/2/pkce/).
     // Create a PKCE code verifier and SHA-256 encode it as a code challenge.
     let (pkce_code_challenge, _pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
@@ -471,21 +479,31 @@ pub async fn oauth_login_google(session: Session) -> impl IntoResponse {
         .set_pkce_challenge(pkce_code_challenge) // apple does not support this
         .url();
 
-    let state = csrf_state.secret().to_string();
     session.clear();
-    session
-        .insert(OAUTH_COOKIE, state)
-        .expect("session.insert state");
+
+    let cookie = Cookie::build(OAUTH_COOKIE, csrf_state.secret().to_string())
+        // .domain("hoplite-challenge.philolog.us")
+        // .path("/")
+        .secure(true)
+        .http_only(true)
+        .same_site(SameSite::None)
+        .finish();
+    cookies.add(cookie);
 
     Redirect::to(&authorize_url.to_string())
 }
 
 pub async fn oauth_auth_apple(
     session: Session,
+    cookies: Cookies,
     State(state): State<AxumAppState>,
     extract::Form(params): extract::Form<AuthRequest>,
 ) -> impl IntoResponse {
-    let saved_state = get_oauth_state(&session);
+    let saved_state = match cookies.get(OAUTH_COOKIE) {
+        Some(v) => Some(v.value().to_string()),
+        None => None,
+    };
+    cookies.remove(Cookie::new(OAUTH_COOKIE, ""));
 
     if let Some(param_code) = &params.code {
         let code = AuthorizationCode::new(param_code.clone());
@@ -566,10 +584,15 @@ pub async fn oauth_auth_apple(
 
 pub async fn oauth_auth_google(
     session: Session,
+    cookies: Cookies,
     State(state): State<AxumAppState>,
     extract::Form(params): extract::Form<AuthRequest>,
 ) -> impl IntoResponse {
-    let saved_state = get_oauth_state(&session);
+    let saved_state = match cookies.get(OAUTH_COOKIE) {
+        Some(v) => Some(v.value().to_string()),
+        None => None,
+    };
+    cookies.remove(Cookie::new(OAUTH_COOKIE, ""));
 
     if let Some(param_code) = &params.code {
         // println!("code code");
