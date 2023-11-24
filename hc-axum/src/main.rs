@@ -118,11 +118,13 @@ static NUM_USERS: AtomicUsize = AtomicUsize::new(0);
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    if std::env::var_os("RUST_LOG").is_none() {
+        std::env::set_var("RUST_LOG", "hc-axum=debug,tower_http=debug")
+    }
     let subscriber = FmtSubscriber::new();
-
     tracing::subscriber::set_global_default(subscriber)?;
-
     info!("Starting server");
+    tracing::debug!("Starting server");
 
     /*
        on connect
@@ -373,6 +375,7 @@ async fn enter(
     State(state): State<AxumAppState>,
     extract::Form(payload): extract::Form<AnswerQuery>,
 ) -> Result<Json<SessionState>, StatusCode> {
+    tracing::info!("enter");
     let timestamp = libhc::get_timestamp();
 
     if let Some(user_id) = login::get_user_id(&session) {

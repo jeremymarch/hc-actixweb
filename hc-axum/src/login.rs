@@ -456,14 +456,14 @@ pub async fn oauth_login_apple(session: Session, cookies: Cookies) -> impl IntoR
         // .path("/")
         .secure(true)
         .http_only(true)
-        .same_site(SameSite::None)
+        .same_site(SameSite::None) //this must be None for oauth
         .finish();
     let cookie_nonce = Cookie::build(OAUTH_COOKIE_NONCE, nonce.to_string())
         // .domain("hoplite-challenge.philolog.us")
         // .path("/")
         .secure(true)
         .http_only(true)
-        .same_site(SameSite::None)
+        .same_site(SameSite::None) //this must be None for oauth
         .finish();
     cookies.add(cookie);
     cookies.add(cookie_nonce);
@@ -495,14 +495,14 @@ pub async fn oauth_login_google(session: Session, cookies: Cookies) -> impl Into
         // .path("/")
         .secure(true)
         .http_only(true)
-        .same_site(SameSite::None)
+        .same_site(SameSite::None) //this must be None for oauth
         .finish();
     let cookie_nonce = Cookie::build(OAUTH_COOKIE_NONCE, nonce.to_string())
         // .domain("hoplite-challenge.philolog.us")
         // .path("/")
         .secure(true)
         .http_only(true)
-        .same_site(SameSite::None)
+        .same_site(SameSite::None) //this must be None for oauth
         .finish();
     cookies.add(cookie);
     cookies.add(cookie_nonce);
@@ -528,82 +528,95 @@ pub async fn oauth_auth_apple(
     cookies.remove(Cookie::new(OAUTH_COOKIE_NONCE, ""));
 
     if let Some(param_code) = &params.code {
-        let code = AuthorizationCode::new(param_code.clone());
-        let received_state = CsrfToken::new(params.state.clone());
-        let user = params.user.clone();
-        let id_token = params.id_token.clone();
+        let code = AuthorizationCode::new(param_code.to_string());
+        let received_state = CsrfToken::new(params.state);
 
         let _token = get_apple_client().exchange_code(code);
 
-        if let Some(ref id_token_ref) = id_token {
-            if saved_state.is_some() && saved_state.unwrap() == *received_state.secret() {
-                //println!("apple test test3");
-                if let Ok(result) = sign_in_with_apple::validate::<AppleClaims>(
-                    &env::var("APPLE_CLIENT_ID")
-                        .expect("Missing the APPLE_CLIENT_ID environment variable."),
-                    id_token_ref,
-                    false,
-                    Issuer::APPLE,
+        if let Some(id_token) = params.id_token {
+            if saved_state.is_none() || saved_state.clone().unwrap() == *received_state.secret() {
+                tracing::error!(
+                    "oauth2 state did not match: stored state: {:?}, received state: {:?}",
+                    saved_state,
+                    received_state.secret()
+                );
+                return Redirect::to("/login");
+            }
+
+            if let Ok(result) = sign_in_with_apple::validate::<AppleClaims>(
+                &env::var("APPLE_CLIENT_ID")
+                    .expect("Missing the APPLE_CLIENT_ID environment variable."),
+                &id_token,
+                false,
+                Issuer::APPLE,
+            )
+            .await
+            {
+                let (first_name, last_name, mut email) = match serde_json::from_str::<AppleOAuthUser>(
+                    &params.user.unwrap_or(String::from("")),
+                ) {
+                    Ok(apple_oauth_user) => (
+                        apple_oauth_user.name.first_name.unwrap_or(String::from("")),
+                        apple_oauth_user.name.last_name.unwrap_or(String::from("")),
+                        apple_oauth_user.email.unwrap_or(String::from("")),
+                    ),
+                    _ => (String::from(""), String::from(""), String::from("")),
+                };
+                email = if email.is_empty() {
+                    result.claims.email.unwrap_or(String::from(""))
+                } else {
+                    email
+                };
+
+                let sub = result.claims.sub;
+                let iss = result.claims.iss;
+                let nonce = result.claims.nonce.unwrap_or(String::from(""));
+
+                if oauth2_nonce.is_some() && oauth2_nonce.clone().unwrap() != nonce {
+                    tracing::error!(
+                        "oauth2 nonce did not match: stored nonce: {:?}, received nonce: {:?}",
+                        oauth2_nonce,
+                        nonce
+                    );
+                    return Redirect::to("/login");
+                }
+
+                let timestamp = libhc::get_timestamp();
+                match hc_create_oauth_user(
+                    &state.hcdb,
+                    &iss,
+                    &sub,
+                    if email.is_empty() { None } else { Some(&email) },
+                    &first_name,
+                    &last_name,
+                    &email,
+                    timestamp,
                 )
                 .await
                 {
-                    let (first_name, last_name, mut email) =
-                        match serde_json::from_str::<AppleOAuthUser>(
-                            &user.unwrap_or(String::from("")),
-                        ) {
-                            Ok(apple_oauth_user) => (
-                                apple_oauth_user.name.first_name.unwrap_or(String::from("")),
-                                apple_oauth_user.name.last_name.unwrap_or(String::from("")),
-                                apple_oauth_user.email.unwrap_or(String::from("")),
-                            ),
-                            _ => (String::from(""), String::from(""), String::from("")),
-                        };
-                    email = if email.is_empty() {
-                        result.claims.email.unwrap_or(String::from(""))
-                    } else {
-                        email
-                    };
-
-                    let sub = result.claims.sub;
-                    let iss = result.claims.iss;
-                    let nonce = result.claims.nonce.unwrap_or(String::from(""));
-
-                    if oauth2_nonce.is_some() && oauth2_nonce.unwrap() != nonce {
-                        return Redirect::to("/login");
-                    }
-
-                    let timestamp = libhc::get_timestamp();
-                    match hc_create_oauth_user(
-                        &state.hcdb,
-                        &iss,
-                        &sub,
-                        if email.is_empty() { None } else { Some(&email) },
-                        &first_name,
-                        &last_name,
-                        &email,
-                        timestamp,
-                    )
-                    .await
-                    {
-                        Ok((user_id, user_name)) => {
-                            session.clear(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-                            if session.insert("user_id", user_id).is_ok()
-                                && session.insert("username", user_name).is_ok()
-                            {
-                                return Redirect::to("/");
-                            }
+                    Ok((user_id, user_name)) => {
+                        session.clear(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+                        if session.insert("user_id", user_id).is_ok()
+                            && session.insert("username", user_name).is_ok()
+                        {
+                            return Redirect::to("/");
                         }
-                        Err(Database(_e)) => {
-                            //FlashMessage::error(e.to_string()).send();
-                            return Redirect::to("/login");
-                        }
-                        _ => (),
                     }
+                    Err(Database(e)) => {
+                        tracing::error!("oauth2 error logging in: {:?}", e);
+                        //FlashMessage::error(e.to_string()).send();
+                        //return Redirect::to("/login");
+                    }
+                    _ => (),
                 }
-
-                return Redirect::to("/login");
+            } else {
+                tracing::error!("oauth2 token is not valid");
             }
+        } else {
+            tracing::error!("oauth2 params.id_token is none");
         }
+    } else {
+        tracing::error!("oauth2 code not set");
     }
 
     Redirect::to("/login")
@@ -627,73 +640,85 @@ pub async fn oauth_auth_google(
     cookies.remove(Cookie::new(OAUTH_COOKIE_NONCE, ""));
 
     if let Some(param_code) = &params.code {
-        // println!("code code");
-        let code = AuthorizationCode::new(param_code.clone());
-        let received_state = CsrfToken::new(params.state.clone());
+        let code = AuthorizationCode::new(param_code.to_string());
+        let received_state = CsrfToken::new(params.state);
         //let user = params.user.clone(); //google doesn't send user this way
-        let id_token = params.id_token.clone();
 
-        // Exchange the code with a token.
         let _token = get_google_client().exchange_code(code);
 
-        if let Some(ref id_token_ref) = id_token {
-            if saved_state.is_some() && saved_state.unwrap() == *received_state.secret() {
-                // println!("cccccc {:?}", id_token_ref);
-                // println!("google test test3");
-                if let Ok(result) = sign_in_with_apple::validate::<GoogleClaims>(
-                    &env::var("GOOGLE_CLIENT_ID")
-                        .expect("Missing the GOOGLE_CLIENT_ID environment variable."),
-                    id_token_ref,
-                    false,
-                    Issuer::GOOGLE,
+        if let Some(id_token) = params.id_token {
+            if saved_state.is_none() || saved_state.clone().unwrap() == *received_state.secret() {
+                tracing::error!(
+                    "oauth2 state did not match: stored state: {:?}, received state: {:?}",
+                    saved_state,
+                    received_state.secret()
+                );
+                return Redirect::to("/login");
+            }
+
+            if let Ok(result) = sign_in_with_apple::validate::<GoogleClaims>(
+                &env::var("GOOGLE_CLIENT_ID")
+                    .expect("Missing the GOOGLE_CLIENT_ID environment variable."),
+                &id_token,
+                false,
+                Issuer::GOOGLE,
+            )
+            .await
+            {
+                let first_name = String::from("");
+                let last_name = String::from("");
+                let email = result.claims.email.unwrap_or(String::from(""));
+
+                let sub = result.claims.sub;
+                let iss = result.claims.iss;
+                let nonce = result.claims.nonce.unwrap_or(String::from(""));
+
+                if oauth2_nonce.is_some() && oauth2_nonce.clone().unwrap() != nonce {
+                    tracing::error!(
+                        "oauth2 nonce did not match: stored nonce: {:?}, received nonce: {:?}",
+                        oauth2_nonce,
+                        nonce
+                    );
+                    return Redirect::to("/login");
+                }
+
+                let timestamp = libhc::get_timestamp();
+
+                match hc_create_oauth_user(
+                    &state.hcdb,
+                    &iss,
+                    &sub,
+                    if email.is_empty() { None } else { Some(&email) },
+                    &first_name,
+                    &last_name,
+                    &email,
+                    timestamp,
                 )
                 .await
                 {
-                    let first_name = String::from("");
-                    let last_name = String::from("");
-                    let email = result.claims.email.unwrap_or(String::from(""));
-
-                    let sub = result.claims.sub;
-                    let iss = result.claims.iss;
-                    let nonce = result.claims.nonce.unwrap_or(String::from(""));
-
-                    if oauth2_nonce.is_some() && oauth2_nonce.unwrap() != nonce {
-                        return Redirect::to("/login");
-                    }
-
-                    let timestamp = libhc::get_timestamp();
-
-                    match hc_create_oauth_user(
-                        &state.hcdb,
-                        &iss,
-                        &sub,
-                        if email.is_empty() { None } else { Some(&email) },
-                        &first_name,
-                        &last_name,
-                        &email,
-                        timestamp,
-                    )
-                    .await
-                    {
-                        Ok((user_id, user_name)) => {
-                            session.clear(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-                            if session.insert("user_id", user_id).is_ok()
-                                && session.insert("username", user_name).is_ok()
-                            {
-                                return Redirect::to("/");
-                            }
+                    Ok((user_id, user_name)) => {
+                        session.clear(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+                        if session.insert("user_id", user_id).is_ok()
+                            && session.insert("username", user_name).is_ok()
+                        {
+                            return Redirect::to("/");
                         }
-                        Err(Database(_e)) => {
-                            //FlashMessage::error(e.to_string()).send();
-                            return Redirect::to("/login");
-                        }
-                        _ => (),
                     }
+                    Err(Database(e)) => {
+                        tracing::error!("oauth2 error logging in: {:?}", e);
+                        //FlashMessage::error(e.to_string()).send();
+                        //return Redirect::to("/login");
+                    }
+                    _ => (),
                 }
-
-                return Redirect::to("/login");
+            } else {
+                tracing::error!("oauth2 token is not valid");
             }
+        } else {
+            tracing::error!("oauth2 params.id_token is none");
         }
+    } else {
+        tracing::error!("oauth2 code not set");
     }
 
     Redirect::to("/login")
