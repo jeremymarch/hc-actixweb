@@ -1567,6 +1567,13 @@ a {color:blue;}
     if (data.response_to === 'ask' && data.success) {
       getSessions(false);
       uiModeAskResponse(data);
+    } else if (data.response_to === 'answerresponsepracticeprospective' && data.success) {
+      //getmove will load initially, then this
+      //add prospective bool to getmove request
+
+      //receiving here will only set global variables with info for next move, nothing in the ui is updated
+
+
     } else if ((data.response_to === 'answerresponse' || data.response_to === 'answerresponsepractice') && data.success) {
       // getSessions(false);
 
@@ -1826,6 +1833,11 @@ a {color:blue;}
   function sendAnswer (sessionId, answer, time, mfPressed, timedOut) {
     const sendData = { qtype: 'submit', answer, time, mf_pressed: mfPressed, timed_out: timedOut, session_id: sessionId };
     genericSendRequest('enter', sendData, null);
+  }
+
+  function sendAnswerProspective (sessionId, answer, time, mfPressed, timedOut) {
+    const sendData = { qtype: 'submitprospective', answer, time, mf_pressed: mfPressed, timed_out: timedOut, session_id: sessionId };
+    genericSendRequest('enterprospective', sendData, null);
   }
 
   function sendMF (sessionId, answer, time, mfPressed, timedOut) {

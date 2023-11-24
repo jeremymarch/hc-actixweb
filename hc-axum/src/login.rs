@@ -43,6 +43,7 @@ pub fn get_username(session: &Session) -> Option<String> {
 }
 
 const OAUTH_COOKIE: &str = "oauth_state";
+const OAUTH_COOKIE_NONCE: &str = "oauth_nonce";
 // pub fn get_oauth_state(session: &Session) -> Option<String> {
 //     if let Ok(s) = session.get::<String>(OAUTH_COOKIE) {
 //         s
@@ -457,7 +458,15 @@ pub async fn oauth_login_apple(session: Session, cookies: Cookies) -> impl IntoR
         .http_only(true)
         .same_site(SameSite::None)
         .finish();
+    let cookie_nonce = Cookie::build(OAUTH_COOKIE_NONCE, nonce.to_string())
+        // .domain("hoplite-challenge.philolog.us")
+        // .path("/")
+        .secure(true)
+        .http_only(true)
+        .same_site(SameSite::None)
+        .finish();
     cookies.add(cookie);
+    cookies.add(cookie_nonce);
 
     Redirect::to(&authorize_url.to_string())
 }
@@ -488,7 +497,15 @@ pub async fn oauth_login_google(session: Session, cookies: Cookies) -> impl Into
         .http_only(true)
         .same_site(SameSite::None)
         .finish();
+    let cookie_nonce = Cookie::build(OAUTH_COOKIE_NONCE, nonce.to_string())
+        // .domain("hoplite-challenge.philolog.us")
+        // .path("/")
+        .secure(true)
+        .http_only(true)
+        .same_site(SameSite::None)
+        .finish();
     cookies.add(cookie);
+    cookies.add(cookie_nonce);
 
     Redirect::to(&authorize_url.to_string())
 }
@@ -504,6 +521,11 @@ pub async fn oauth_auth_apple(
         None => None,
     };
     cookies.remove(Cookie::new(OAUTH_COOKIE, ""));
+    let oauth2_nonce = match cookies.get(OAUTH_COOKIE_NONCE) {
+        Some(v) => Some(v.value().to_string()),
+        None => None,
+    };
+    cookies.remove(Cookie::new(OAUTH_COOKIE_NONCE, ""));
 
     if let Some(param_code) = &params.code {
         let code = AuthorizationCode::new(param_code.clone());
@@ -544,6 +566,11 @@ pub async fn oauth_auth_apple(
 
                     let sub = result.claims.sub;
                     let iss = result.claims.iss;
+                    let nonce = result.claims.nonce.unwrap_or(String::from(""));
+
+                    if oauth2_nonce.is_some() && oauth2_nonce.unwrap() != nonce {
+                        return Redirect::to("/login");
+                    }
 
                     let timestamp = libhc::get_timestamp();
                     match hc_create_oauth_user(
@@ -593,6 +620,11 @@ pub async fn oauth_auth_google(
         None => None,
     };
     cookies.remove(Cookie::new(OAUTH_COOKIE, ""));
+    let oauth2_nonce = match cookies.get(OAUTH_COOKIE_NONCE) {
+        Some(v) => Some(v.value().to_string()),
+        None => None,
+    };
+    cookies.remove(Cookie::new(OAUTH_COOKIE_NONCE, ""));
 
     if let Some(param_code) = &params.code {
         // println!("code code");
@@ -623,6 +655,11 @@ pub async fn oauth_auth_google(
 
                     let sub = result.claims.sub;
                     let iss = result.claims.iss;
+                    let nonce = result.claims.nonce.unwrap_or(String::from(""));
+
+                    if oauth2_nonce.is_some() && oauth2_nonce.unwrap() != nonce {
+                        return Redirect::to("/login");
+                    }
 
                     let timestamp = libhc::get_timestamp();
 
