@@ -534,7 +534,7 @@ pub async fn oauth_auth_apple(
         let _token = get_apple_client().exchange_code(code);
 
         if let Some(id_token) = params.id_token {
-            if saved_state.is_none() || saved_state.clone().unwrap() == *received_state.secret() {
+            if saved_state.is_none() || saved_state.clone().unwrap() != *received_state.secret() {
                 tracing::error!(
                     "oauth2 state did not match: stored state: {:?}, received state: {:?}",
                     saved_state,
@@ -647,7 +647,7 @@ pub async fn oauth_auth_google(
         let _token = get_google_client().exchange_code(code);
 
         if let Some(id_token) = params.id_token {
-            if saved_state.is_none() || saved_state.clone().unwrap() == *received_state.secret() {
+            if saved_state.is_none() || saved_state.clone().unwrap() != *received_state.secret() {
                 tracing::error!(
                     "oauth2 state did not match: stored state: {:?}, received state: {:?}",
                     saved_state,
