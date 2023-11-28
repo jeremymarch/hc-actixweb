@@ -52,7 +52,9 @@ use libhc::dbpostgres::HcDbPostgres;
 use libhc::AnswerQuery;
 use libhc::AskQuery;
 use libhc::GetMoveQuery;
+use libhc::GetMovesQuery;
 use libhc::GetSessions;
+use libhc::MoveResult;
 use libhc::SessionState;
 use libhc::SessionsListResponse;
 use std::sync::Arc;
@@ -78,6 +80,14 @@ struct Username(String);
 pub struct AxumAppState {
     hcdb: HcDbPostgres,
     verbs: Vec<Arc<HcGreekVerb>>,
+}
+
+#[derive(Serialize)]
+struct GetMovesResponse {
+    response_to: String,
+    session_id: Uuid,
+    moves: Vec<MoveResult>,
+    success: bool,
 }
 //multiple states: https://stackoverflow.com/questions/75727029/axum-state-for-reqwest-client
 //but we don't seem to need the following?
@@ -255,6 +265,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/list", axum::routing::post(get_sessions))
         .route("/new", axum::routing::post(create_session))
         .route("/getmove", axum::routing::post(get_move))
+        .route("/getgamemoves", axum::routing::post(get_game_moves))
         .route("/enter", axum::routing::post(enter))
         .route("/mf", axum::routing::post(mf))
         .route("/ask", axum::routing::post(ask))
@@ -383,6 +394,28 @@ async fn get_move(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
+        Ok(Json(res))
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
+}
+
+async fn get_game_moves(
+    session: Session,
+    State(state): State<AxumAppState>,
+    extract::Form(payload): extract::Form<GetMovesQuery>,
+) -> Result<Json<GetMovesResponse>, StatusCode> {
+    //"ask", prev form to start from or null, prev answer and is_correct, correct answer
+
+    if let Some(user_id) = login::get_user_id(&session) {
+        let res = GetMovesResponse {
+            response_to: String::from("getgamemoves"),
+            session_id: payload.session_id,
+            moves: libhc::hc_get_game_moves(&state.hcdb, &payload)
+                .await
+                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
+            success: true,
+        };
         Ok(Json(res))
     } else {
         Err(StatusCode::UNAUTHORIZED)
