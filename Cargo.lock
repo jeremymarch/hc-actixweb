@@ -2751,8 +2751,8 @@ dependencies = [
 
 [[package]]
 name = "sign-in-with-apple"
-version = "0.4.1"
-source = "git+https://github.com/jeremymarch/sign-in-with-apple#3d1f2bd849154b9c30d64a1650441440023ac4e8"
+version = "0.4.2"
+source = "git+https://github.com/jeremymarch/sign-in-with-apple#f04e99cae8e8100927f666a76d0d5ca353907685"
 dependencies = [
  "hyper 0.14.27",
  "hyper-tls",

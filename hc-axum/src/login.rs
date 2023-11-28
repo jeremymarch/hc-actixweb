@@ -362,8 +362,8 @@ use oauth2::TokenUrl;
 use oauth2::{AuthorizationCode, CsrfToken, PkceCodeChallenge, Scope};
 use serde::Deserialize;
 use serde::Serialize;
-use sign_in_with_apple::AppleClaims;
-use sign_in_with_apple::GoogleClaims;
+use sign_in_with_apple::AppleOrGoogleClaims;
+//use sign_in_with_apple::GoogleClaims;
 use sign_in_with_apple::Issuer;
 use std::env;
 
@@ -543,7 +543,7 @@ pub async fn oauth_auth_apple(
                 return Redirect::to("/login");
             }
 
-            if let Ok(result) = sign_in_with_apple::validate::<AppleClaims>(
+            if let Ok(result) = sign_in_with_apple::validate::<AppleOrGoogleClaims>(
                 &env::var("APPLE_CLIENT_ID")
                     .expect("Missing the APPLE_CLIENT_ID environment variable."),
                 &id_token,
@@ -656,7 +656,7 @@ pub async fn oauth_auth_google(
                 return Redirect::to("/login");
             }
 
-            if let Ok(result) = sign_in_with_apple::validate::<GoogleClaims>(
+            if let Ok(result) = sign_in_with_apple::validate::<AppleOrGoogleClaims>(
                 &env::var("GOOGLE_CLIENT_ID")
                     .expect("Missing the GOOGLE_CLIENT_ID environment variable."),
                 &id_token,
