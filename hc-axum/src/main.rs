@@ -1,5 +1,5 @@
 /*
-hc-actix
+hc-axum
 
 Copyright (C) 2022  Jeremy March
 
@@ -24,16 +24,14 @@ use socketioxide::{
 };
 use std::sync::atomic::AtomicUsize;
 use tower::ServiceBuilder;
+use tower_cookies::cookie::SameSite;
 use tower_http::{cors::CorsLayer, services::ServeDir};
-use tower_sessions::cookie::SameSite;
+use tracing::Level;
 use tracing::{error, info};
 use tracing_subscriber::FmtSubscriber;
 
 use axum::response::Json;
-use axum::{
-    response::{Html, IntoResponse},
-    Server,
-};
+use axum::response::{Html, IntoResponse};
 use http::header::{HeaderMap, HeaderName, HeaderValue};
 
 use axum::debug_handler;
@@ -45,7 +43,9 @@ use sqlx::postgres::PgPoolOptions;
 use time::Duration;
 use tower::BoxError;
 use tower_cookies::CookieManagerLayer;
-use tower_sessions::{Expiry, MemoryStore, Session, SessionManagerLayer};
+use tower_sessions::{
+    ExpiredDeletion, Expiry, MemoryStore, PostgresStore, Session, SessionManagerLayer,
+};
 
 use hoplite_verbs_rs::*;
 use libhc::dbpostgres::HcDbPostgres;
@@ -118,10 +118,16 @@ static NUM_USERS: AtomicUsize = AtomicUsize::new(0);
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    if std::env::var_os("RUST_LOG").is_none() {
-        std::env::set_var("RUST_LOG", "hc-axum=debug,tower_http=debug")
-    }
-    let subscriber = FmtSubscriber::new();
+    // if std::env::var_os("RUST_LOG").is_none() {
+    //     std::env::set_var("RUST_LOG", "hc-axum=debug,tower_http=debug")
+    // }
+    // let subscriber = FmtSubscriber::new();
+    // tracing::subscriber::set_global_default(subscriber)?;
+
+    let subscriber = FmtSubscriber::builder()
+        .with_line_number(true)
+        .with_max_level(Level::DEBUG)
+        .finish();
     tracing::subscriber::set_global_default(subscriber)?;
     info!("Starting server");
     tracing::debug!("Starting server");
@@ -146,6 +152,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         });
 
         s.on("abc", |s: SocketRef, Data::<String>(msg)| {
+            tracing::error!("abc received");
             //let username = s.extensions.get::<Username>().unwrap().clone();
             let msg = Res::Message {
                 username: Username(String::from("blah")),
@@ -210,9 +217,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await
         .expect("Error creating database");
 
-    let cookie_secure = !cfg!(debug_assertions); //cookie is secure for release, not secure for debug builds
+    /*
+        let session_store = PostgresStore::new(hcdb.db.clone());
+        session_store.migrate().await?;
 
+        let deletion_task = tokio::task::spawn(
+            session_store
+                .clone()
+                .continuously_delete_expired(tokio::time::Duration::from_secs(60)),
+        );
+    */
     let session_store = MemoryStore::default();
+
+    let cookie_secure = !cfg!(debug_assertions); //cookie is secure for release, not secure for debug builds
     let session_service = ServiceBuilder::new()
         .layer(HandleErrorLayer::new(|_: BoxError| async {
             StatusCode::BAD_REQUEST
@@ -258,21 +275,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/logout", axum::routing::get(login::logout))
         .route("/healthzzz", axum::routing::get(health_check))
         .fallback_service(serve_dir) //for js, wasm, etc
-        .layer(
-            ServiceBuilder::new()
-                .layer(CorsLayer::permissive()) // Enable CORS policy
-                .layer(layer),
-        )
+        // .layer(
+        //     ServiceBuilder::new()
+        //         .layer(CorsLayer::permissive()) // Enable CORS policy
+        //         .layer(layer.with_hyper_v1()),
+        // )
         .with_state(app_state)
         .layer(session_service)
         .layer(CookieManagerLayer::new());
 
-    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], 8088));
-    let server = Server::bind(&addr).serve(app.into_make_service());
+    // let addr = std::net::SocketAddr::from(([0, 0, 0, 0], 8088));
+    // let server = Server::bind(&addr).serve(app.into_make_service());
+    // if let Err(e) = server.await {
+    //     error!("Error starting axum server: {}", e);
+    // }
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8088").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 
-    if let Err(e) = server.await {
-        error!("Error starting axum server: {}", e);
-    }
     Ok(())
 }
 

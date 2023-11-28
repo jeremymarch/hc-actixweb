@@ -8,9 +8,9 @@ use axum::response::Redirect;
 use libhc::hc_validate_credentials;
 use libhc::Credentials;
 use secrecy::Secret;
+use tower_cookies::cookie::SameSite;
 use tower_cookies::Cookie;
 use tower_cookies::Cookies;
-use tower_sessions::cookie::SameSite;
 use tower_sessions::Session;
 
 #[derive(serde::Deserialize)]
@@ -451,22 +451,22 @@ pub async fn oauth_login_apple(session: Session, cookies: Cookies) -> impl IntoR
 
     session.clear();
 
-    let cookie = Cookie::build(OAUTH_COOKIE, csrf_state.secret().to_string())
+    let cookie = Cookie::build((OAUTH_COOKIE, csrf_state.secret().to_string()))
         // .domain("hoplite-challenge.philolog.us")
         // .path("/")
         .secure(true)
         .http_only(true)
-        .same_site(SameSite::None) //this must be None for oauth
-        .finish();
-    let cookie_nonce = Cookie::build(OAUTH_COOKIE_NONCE, nonce.to_string())
+        .same_site(SameSite::None); //this must be None for oauth
+
+    let cookie_nonce = Cookie::build((OAUTH_COOKIE_NONCE, nonce.to_string()))
         // .domain("hoplite-challenge.philolog.us")
         // .path("/")
         .secure(true)
         .http_only(true)
-        .same_site(SameSite::None) //this must be None for oauth
-        .finish();
-    cookies.add(cookie);
-    cookies.add(cookie_nonce);
+        .same_site(SameSite::None); //this must be None for oauth
+
+    cookies.add(cookie.into());
+    cookies.add(cookie_nonce.into());
 
     Redirect::to(&authorize_url.to_string())
 }
@@ -490,22 +490,22 @@ pub async fn oauth_login_google(session: Session, cookies: Cookies) -> impl Into
 
     session.clear();
 
-    let cookie = Cookie::build(OAUTH_COOKIE, csrf_state.secret().to_string())
+    let cookie = Cookie::build((OAUTH_COOKIE, csrf_state.secret().to_string()))
         // .domain("hoplite-challenge.philolog.us")
         // .path("/")
         .secure(true)
         .http_only(true)
-        .same_site(SameSite::None) //this must be None for oauth
-        .finish();
-    let cookie_nonce = Cookie::build(OAUTH_COOKIE_NONCE, nonce.to_string())
+        .same_site(SameSite::None); //this must be None for oauth
+
+    let cookie_nonce = Cookie::build((OAUTH_COOKIE_NONCE, nonce.to_string()))
         // .domain("hoplite-challenge.philolog.us")
         // .path("/")
         .secure(true)
         .http_only(true)
-        .same_site(SameSite::None) //this must be None for oauth
-        .finish();
-    cookies.add(cookie);
-    cookies.add(cookie_nonce);
+        .same_site(SameSite::None); //this must be None for oauth
+
+    cookies.add(cookie.into());
+    cookies.add(cookie_nonce.into());
 
     Redirect::to(&authorize_url.to_string())
 }
@@ -572,7 +572,7 @@ pub async fn oauth_auth_apple(
                 let iss = result.claims.iss;
                 let nonce = result.claims.nonce.unwrap_or(String::from(""));
 
-                if oauth2_nonce.is_some() && oauth2_nonce.clone().unwrap() != nonce {
+                if oauth2_nonce.is_none() || oauth2_nonce.clone().unwrap() != nonce {
                     tracing::error!(
                         "oauth2 nonce did not match: stored nonce: {:?}, received nonce: {:?}",
                         oauth2_nonce,
@@ -673,7 +673,7 @@ pub async fn oauth_auth_google(
                 let iss = result.claims.iss;
                 let nonce = result.claims.nonce.unwrap_or(String::from(""));
 
-                if oauth2_nonce.is_some() && oauth2_nonce.clone().unwrap() != nonce {
+                if oauth2_nonce.is_none() || oauth2_nonce.clone().unwrap() != nonce {
                     tracing::error!(
                         "oauth2 nonce did not match: stored nonce: {:?}, received nonce: {:?}",
                         oauth2_nonce,
