@@ -176,6 +176,7 @@ pub struct SessionState {
     pub tense_prev: Option<i16>,
     pub voice_prev: Option<i16>,
     pub mood_prev: Option<i16>,
+    pub verb_prev: Option<i32>,
     pub time: Option<String>, //time for prev answer
     pub response_to: String,
     pub success: bool,
@@ -521,8 +522,8 @@ async fn hc_get_session_state_tx(
     let first = if !m.is_empty() { Some(&m[0]) } else { None };
     let (myturn, move_type) = hc_move_get_type(first, user_id, res.challenged_user_id);
 
-    let asking_new_verb: bool = move_type == MoveType::FirstMoveMyTurn; //don't old show desc when *asking* a new verb
-    let answering_new_verb = m.len() > 1 && m[0].verb_id != m[1].verb_id; //don't show old desc when *answering* a new verb
+    //let asking_new_verb: bool = move_type == MoveType::FirstMoveMyTurn; //don't old show desc when *asking* a new verb
+    //let answering_new_verb = m.len() > 1 && m[0].verb_id != m[1].verb_id; //don't show old desc when *answering* a new verb
 
     let r = SessionState {
         session_id,
@@ -554,28 +555,33 @@ async fn hc_get_session_state_tx(
         tense: if !m.is_empty() { m[0].tense } else { None },
         voice: if !m.is_empty() { m[0].voice } else { None },
         mood: if !m.is_empty() { m[0].mood } else { None },
-        person_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb {
+        person_prev: if m.len() == 2 {
             m[1].person
         } else {
             None
         },
-        number_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb {
+        number_prev: if m.len() == 2 {
             m[1].number
         } else {
             None
         },
-        tense_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb {
+        tense_prev: if m.len() == 2 {
             m[1].tense
         } else {
             None
         },
-        voice_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb {
+        voice_prev: if m.len() == 2 {
             m[1].voice
         } else {
             None
         },
-        mood_prev: if m.len() == 2 && !asking_new_verb && !answering_new_verb {
+        mood_prev: if m.len() == 2 {
             m[1].mood
+        } else {
+            None
+        },
+        verb_prev: if m.len() == 2 {
+            m[1].verb_id
         } else {
             None
         },
@@ -775,6 +781,7 @@ pub async fn hc_answer(
     //if practice session, add in is_correct and correct_answer back into session state here
     if s.challenged_user_id.is_none() {
         res.is_correct = Some(is_correct);
+        res.answer = Some(info.answer.clone());
         res.correct_answer = Some(correct_answer);
         res.response_to = String::from("answerresponsepractice");
     } else {
@@ -1843,6 +1850,7 @@ mod tests {
             tense_prev: None,
             voice_prev: None,
             mood_prev: None,
+            verb_prev: None,
             time: None,
             response_to: String::from("getmoves"),
             success: true,
@@ -1876,6 +1884,7 @@ mod tests {
             tense_prev: None,
             voice_prev: None,
             mood_prev: None,
+            verb_prev: None,
             time: None,
             response_to: String::from("getmoves"),
             success: true,
@@ -1931,6 +1940,7 @@ mod tests {
             tense_prev: None,
             voice_prev: None,
             mood_prev: None,
+            verb_prev: None,
             time: Some(String::from("25:01")),
             response_to: String::from("getmoves"),
             success: true,
@@ -1963,6 +1973,7 @@ mod tests {
             tense_prev: None,
             voice_prev: None,
             mood_prev: None,
+            verb_prev: None,
             time: Some(String::from("25:01")),
             response_to: String::from("getmoves"),
             success: true,
@@ -2013,6 +2024,7 @@ mod tests {
             tense_prev: Some(0),
             voice_prev: Some(0),
             mood_prev: Some(0),
+            verb_prev: Some(1),
             time: None,
             response_to: String::from("getmoves"),
             success: true,
@@ -2020,7 +2032,7 @@ mod tests {
             verbs: None,
         };
         //println!("1: {:?}", ss.as_ref().unwrap());
-        //println!("2: {:?}", ss_res);
+        //println!("2: {:?}", ss.as_ref().unwrap().verb_prev);
         assert!(ss.unwrap() == ss_res);
 
         let mut tx = db.begin_tx().await.unwrap();
@@ -2046,6 +2058,7 @@ mod tests {
             tense_prev: Some(0),
             voice_prev: Some(0),
             mood_prev: Some(0),
+            verb_prev: Some(1),
             time: None,
             response_to: String::from("getmoves"),
             success: true,
@@ -2116,11 +2129,12 @@ mod tests {
             tense: Some(0),
             voice: Some(0),
             mood: Some(0),
-            person_prev: None,
-            number_prev: None,
-            tense_prev: None,
-            voice_prev: None,
-            mood_prev: None,
+            person_prev: Some(0),
+            number_prev: Some(0),
+            tense_prev: Some(0),
+            voice_prev: Some(0),
+            mood_prev: Some(0),
+            verb_prev: Some(1),
             time: Some(String::from("25:01")),
             response_to: String::from("getmoves"),
             success: true,
@@ -2659,6 +2673,7 @@ mod tests {
             tense_prev: Some(0),
             voice_prev: Some(0),
             mood_prev: Some(0),
+            verb_prev: Some(1),
             time: Some(String::from("25:01")),
             response_to: String::from("getmoves"),
             success: true,
@@ -2705,11 +2720,12 @@ mod tests {
             tense: Some(1),
             voice: Some(1),
             mood: Some(1),
-            person_prev: None,
-            number_prev: None,
-            tense_prev: None,
-            voice_prev: None,
-            mood_prev: None,
+            person_prev: Some(1),
+            number_prev: Some(1),
+            tense_prev: Some(0),
+            voice_prev: Some(0),
+            mood_prev: Some(0),
+            verb_prev:Some(1),
             time: None,
             response_to: String::from("getmoves"),
             success: true,
@@ -2718,6 +2734,7 @@ mod tests {
         };
         //println!("1: {:?}", ss.as_ref().unwrap());
         //println!("2: {:?}", ss_res);
+        
         assert!(ss.unwrap() == ss_res);
 
         let mut tx = db.begin_tx().await.unwrap();
@@ -2738,11 +2755,12 @@ mod tests {
             tense: Some(1),
             voice: Some(1),
             mood: Some(1),
-            person_prev: None,
-            number_prev: None,
-            tense_prev: None,
-            voice_prev: None,
-            mood_prev: None,
+            person_prev: Some(1),
+            number_prev: Some(1),
+            tense_prev: Some(0),
+            voice_prev: Some(0),
+            mood_prev: Some(0),
+            verb_prev: Some(1),
             time: None,
             response_to: String::from("getmoves"),
             success: true,
@@ -2751,6 +2769,7 @@ mod tests {
         };
         //println!("1: {:?}", ss2.as_ref().unwrap());
         //println!("2: {:?}", ss_res2);
+        
         assert!(ss2.unwrap() == ss_res2);
     }
 

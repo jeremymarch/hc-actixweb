@@ -1760,7 +1760,7 @@ a {color:blue;}
 
   function makeMoveRow (row, prevRow) {
     // console.log('moves: ' + row.session_id); // fix me to do
-    const paramsStr = desc(row.person, row.number, row.tense, row.mood, row.voice, prevRow.person, prevRow.number, prevRow.tense, prevRow.mood, prevRow.voice, true);
+    const paramsStr = desc(row.person, row.number, row.tense, row.mood, row.voice, row.verb, prevRow.person, prevRow.number, prevRow.tense, prevRow.mood, prevRow.voice, prevRow.verb, true);
 
     let answer = '';
     if (row.is_correct) {
@@ -2163,33 +2163,34 @@ a {color:blue;}
   const tensesAbbrev = ['pres.', 'imperf.', 'fut.', 'aor.', 'perf.', 'plup.'];
   const voicesAbbrev = ['act.', 'mid.', 'pass.'];
   const moodsAbbrev = ['indic.', 'subj.', 'opt.', 'imper.'];
-  function desc (person, number, tense, mood, voice, prevp, prevn, prevt, prevm, prevv, abbrev) {
+  function desc (person, number, tense, mood, voice, verb, prevp, prevn, prevt, prevm, prevv, prev_verb, abbrev) {
     let personStr = '';
     let numberStr = '';
     let tenseStr = '';
     let moodStr = '';
     let voiceStr = '';
-    if (person !== prevp && prevp !== null) {
+    const newVerb = (verb !== prev_verb);
+    if (person !== prevp && prevp !== null && !newVerb) {
       personStr = '<span class="changedParam">' + (abbrev ? personsAbbrev[person] : persons[person]) + '</span>';
     } else {
       personStr = (abbrev ? personsAbbrev[person] : persons[person]);
     }
-    if (number !== prevn && prevn !== null) {
+    if (number !== prevn && prevn !== null && !newVerb) {
       numberStr = '<span class="changedParam">' + (abbrev ? numbersAbbrev[number] : numbers[number]) + '</span>';
     } else {
       numberStr = (abbrev ? numbersAbbrev[number] : numbers[number]);
     }
-    if (tense !== prevt && prevt !== null) {
+    if (tense !== prevt && prevt !== null && !newVerb) {
       tenseStr = '<span class="changedParam">' + (abbrev ? tensesAbbrev[tense] : tenses[tense]) + '</span>';
     } else {
       tenseStr = (abbrev ? tensesAbbrev[tense] : tenses[tense]);
     }
-    if (mood !== prevm && prevm !== null) {
+    if (mood !== prevm && prevm !== null && !newVerb) {
       moodStr = '<span class="changedParam">' + (abbrev ? moodsAbbrev[mood] : moods[mood]) + '</span>';
     } else {
       moodStr = (abbrev ? moodsAbbrev[mood] : moods[mood]);
     }
-    if (voice !== prevv && prevv !== null) {
+    if (voice !== prevv && prevv !== null && !newVerb) {
       voiceStr = '<span class="changedParam">' + (abbrev ? voicesAbbrev[voice] : voices[voice]) + '</span>';
     } else {
       voiceStr = (abbrev ? voicesAbbrev[voice] : voices[voice]);
@@ -2216,10 +2217,10 @@ a {color:blue;}
     submitbutton.disabled = false;
     submitbutton.innerText = 'Go';
     globalStartingForm = data.starting_form;
-    globalChangeDesc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, false);
+    globalChangeDesc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.verb, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, data.verb_prev, false);
     // q("#statusmesg").innerHTML = "Click Go to answer!"
     q('#statusmesg').innerHTML = 'Practice Mode';
-    q('#changedesc').innerHTML = (data.person_prev !== null) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, null, null, null, null, null, false) : '';
+    q('#changedesc').innerHTML = (data.verb !== data.verb_prev) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, data.verb_prev, null, null, null, null, null, null, false) : '';
     q('#answerform').value = '';
     q('#answerform').disabled = true;
     q('#mfbutton').disabled = true;
@@ -2237,9 +2238,9 @@ a {color:blue;}
     submitbutton.disabled = false;
     submitbutton.innerText = 'Go';
     globalStartingForm = data.starting_form;
-    globalChangeDesc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, false);
+    globalChangeDesc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.verb, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, data.verb_prev, false);
     q('#statusmesg').innerHTML = 'Click Go to answer!';
-    q('#changedesc').innerHTML = (data.person_prev !== null) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, null, null, null, null, null, false) : '';
+    q('#changedesc').innerHTML = (data.verb !== data.verb_prev) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, data.verb_prev, null, null, null, null, null, null, false) : '';
     q('#answerform').value = '';
     q('#answerform').disabled = true;
     q('#mfbutton').disabled = true;
@@ -2288,7 +2289,7 @@ a {color:blue;}
 
     globalSeconds = parseInt(q('.gamerow.selectedGame').getAttribute('data-max-time'));
 
-    q('#changedesc').innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, false);
+    q('#changedesc').innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.verb, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, data.verb_prev, false);
     q('#submitbutton').style.display = 'none';
     q('#mfbutton').disabled = true;
     q('#mainTime').innerText = globalSeconds + ':00';
@@ -2313,7 +2314,7 @@ a {color:blue;}
       q('#changedesc').innerHTML = '';
       q('#correctanswer').innerHTML = '';
     } else {
-      q('#changedesc').innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, false);
+      q('#changedesc').innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.verb, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, data.verb_prev, false);
       q('#correctanswer').innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + ' ' + ((!data.is_correct || globalShowCorrect) ? data.correct_answer : '');
     }
     q('#verbchooser').style.display = 'none';
@@ -2331,7 +2332,7 @@ a {color:blue;}
     if (data.starting_form) {
       q('#startingform').innerText = data.starting_form;
     }
-    q('#changedesc').innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, false);
+    q('#changedesc').innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.verb, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, data.verb_prev, false);
   }
 
   function uiModeAskForm (data, maxParamsToChange) {
@@ -2362,7 +2363,7 @@ a {color:blue;}
       q('#askparamsdiv').style.display = 'none';
       q('#statusmesg').innerHTML = 'Click Continue to ask the next form.';
       q('#startingform').innerText = data.starting_form;
-      q('#changedesc').innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, false);
+      q('#changedesc').innerHTML = desc(data.person, data.number, data.tense, data.mood, data.voice, data.verb, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, data.verb_prev, false);
       q('#answerform').value = data.answer;
       q('#correctanswer').style.visibility = 'visible';
       q('#correctanswer').innerHTML = ((data.is_correct) ? correctIcon : incorrectIcon) + ' ' + ((!data.is_correct || globalShowCorrect) ? data.correct_answer : '');
@@ -2410,7 +2411,7 @@ a {color:blue;}
     globalSeconds = parseInt(q('.gamerow.selectedGame').getAttribute('data-max-time'));
     q('#mainTime').innerHTML = globalSeconds + ':00';
     q('#askparamsdiv').style.display = 'block';
-    q('#changedesc').innerHTML = '';// desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, false);
+    q('#changedesc').innerHTML = '';// desc(data.person, data.number, data.tense, data.mood, data.voice, data.verb, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, data.verb_prev, false);
     // q("#changedesc").style.display = "none";
     q('#answerform').value = '';
     q('#correctanswer').style.visibility = 'hidden';
@@ -2437,7 +2438,7 @@ a {color:blue;}
     if (data.move_type === 'Practice') {
       submitbutton.innerText = 'Go';
       globalStartingForm = data.starting_form;
-      globalChangeDesc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, false);
+      globalChangeDesc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.verb, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, data.verb_prev, false);
       q('#statusmesg').innerHTML = 'Click Go to answer the next form.';
     } else {
       submitbutton.innerText = 'Continue';

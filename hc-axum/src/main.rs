@@ -28,7 +28,8 @@ use tower_cookies::cookie::SameSite;
 use tower_http::{cors::CorsLayer, services::ServeDir};
 use tracing::Level;
 use tracing::{error, info};
-use tracing_subscriber::FmtSubscriber;
+//use tracing_subscriber::FmtSubscriber;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 use axum::response::Json;
 use axum::response::{Html, IntoResponse};
@@ -134,11 +135,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // let subscriber = FmtSubscriber::new();
     // tracing::subscriber::set_global_default(subscriber)?;
 
-    let subscriber = FmtSubscriber::builder()
-        .with_line_number(true)
-        .with_max_level(Level::DEBUG)
-        .finish();
-    tracing::subscriber::set_global_default(subscriber)?;
+    // let subscriber = FmtSubscriber::builder()
+    //     .with_line_number(true)
+    //     .with_max_level(Level::DEBUG)
+    //     .finish();
+    // tracing::subscriber::set_global_default(subscriber)?;
+
+
+    tracing_subscriber::registry()
+    .with(EnvFilter::new(std::env::var("RUST_LOGxxx").unwrap_or_else(
+        |_| "hc_axum=debug,sqlx=debug,tower_http=debug".into(),
+    )))
+    .with(tracing_subscriber::fmt::layer())
+    .try_init()?;
+
     info!("Starting server");
     tracing::debug!("Starting server");
 
