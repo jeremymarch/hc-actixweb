@@ -555,36 +555,12 @@ async fn hc_get_session_state_tx(
         tense: if !m.is_empty() { m[0].tense } else { None },
         voice: if !m.is_empty() { m[0].voice } else { None },
         mood: if !m.is_empty() { m[0].mood } else { None },
-        person_prev: if m.len() == 2 {
-            m[1].person
-        } else {
-            None
-        },
-        number_prev: if m.len() == 2 {
-            m[1].number
-        } else {
-            None
-        },
-        tense_prev: if m.len() == 2 {
-            m[1].tense
-        } else {
-            None
-        },
-        voice_prev: if m.len() == 2 {
-            m[1].voice
-        } else {
-            None
-        },
-        mood_prev: if m.len() == 2 {
-            m[1].mood
-        } else {
-            None
-        },
-        verb_prev: if m.len() == 2 {
-            m[1].verb_id
-        } else {
-            None
-        },
+        person_prev: if m.len() == 2 { m[1].person } else { None },
+        number_prev: if m.len() == 2 { m[1].number } else { None },
+        tense_prev: if m.len() == 2 { m[1].tense } else { None },
+        voice_prev: if m.len() == 2 { m[1].voice } else { None },
+        mood_prev: if m.len() == 2 { m[1].mood } else { None },
+        verb_prev: if m.len() == 2 { m[1].verb_id } else { None },
         time: if !m.is_empty() {
             m[0].time.clone()
         } else {
@@ -2725,7 +2701,7 @@ mod tests {
             tense_prev: Some(0),
             voice_prev: Some(0),
             mood_prev: Some(0),
-            verb_prev:Some(1),
+            verb_prev: Some(1),
             time: None,
             response_to: String::from("getmoves"),
             success: true,
@@ -2734,7 +2710,7 @@ mod tests {
         };
         //println!("1: {:?}", ss.as_ref().unwrap());
         //println!("2: {:?}", ss_res);
-        
+
         assert!(ss.unwrap() == ss_res);
 
         let mut tx = db.begin_tx().await.unwrap();
@@ -2769,7 +2745,7 @@ mod tests {
         };
         //println!("1: {:?}", ss2.as_ref().unwrap());
         //println!("2: {:?}", ss_res2);
-        
+
         assert!(ss2.unwrap() == ss_res2);
     }
 

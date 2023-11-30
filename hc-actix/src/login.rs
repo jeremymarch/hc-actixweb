@@ -34,8 +34,9 @@ use secrecy::Secret;
 //use std::collections::HashMap;
 use std::fmt::Write;
 
-use sign_in_with_apple::AppleClaims;
-use sign_in_with_apple::GoogleClaims;
+use sign_in_with_apple::AppleOrGoogleClaims;
+//use sign_in_with_apple::AppleClaims;
+//use sign_in_with_apple::GoogleClaims;
 use sign_in_with_apple::Issuer;
 
 #[derive(serde::Deserialize)]
@@ -664,7 +665,7 @@ pub async fn oauth_auth_apple(
         if let Some(ref id_token_ref) = id_token {
             if saved_state.is_some() && saved_state.unwrap() == *received_state.secret() {
                 //println!("apple test test3");
-                if let Ok(result) = sign_in_with_apple::validate::<AppleClaims>(
+                if let Ok(result) = sign_in_with_apple::validate::<AppleOrGoogleClaims>(
                     &env::var("APPLE_CLIENT_ID")
                         .expect("Missing the APPLE_CLIENT_ID environment variable."),
                     id_token_ref,
@@ -766,7 +767,7 @@ pub async fn oauth_auth_google(
             if saved_state.is_some() && saved_state.unwrap() == *received_state.secret() {
                 // println!("cccccc {:?}", id_token_ref);
                 // println!("google test test3");
-                if let Ok(result) = sign_in_with_apple::validate::<GoogleClaims>(
+                if let Ok(result) = sign_in_with_apple::validate::<AppleOrGoogleClaims>(
                     &env::var("GOOGLE_CLIENT_ID")
                         .expect("Missing the GOOGLE_CLIENT_ID environment variable."),
                     id_token_ref,

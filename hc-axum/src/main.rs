@@ -141,13 +141,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     .finish();
     // tracing::subscriber::set_global_default(subscriber)?;
 
-
     tracing_subscriber::registry()
-    .with(EnvFilter::new(std::env::var("RUST_LOGxxx").unwrap_or_else(
-        |_| "hc_axum=debug,sqlx=debug,tower_http=debug".into(),
-    )))
-    .with(tracing_subscriber::fmt::layer())
-    .try_init()?;
+        .with(EnvFilter::new(std::env::var("RUST_LOGxxx").unwrap_or_else(
+            |_| "hc_axum=debug,sqlx=debug,tower_http=debug".into(),
+        )))
+        .with(tracing_subscriber::fmt::layer())
+        .try_init()?;
 
     info!("Starting server");
     tracing::debug!("Starting server");
