@@ -2220,7 +2220,7 @@ a {color:blue;}
     globalChangeDesc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.verb, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, data.verb_prev, false);
     // q("#statusmesg").innerHTML = "Click Go to answer!"
     q('#statusmesg').innerHTML = 'Practice Mode';
-    q('#changedesc').innerHTML = (data.verb !== data.verb_prev) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, data.verb_prev, null, null, null, null, null, null, false) : '';
+    q('#changedesc').innerHTML = (data.verb === data.verb_prev && data.verb_prev !== null) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, data.verb_prev, null, null, null, null, null, null, false) : '';
     q('#answerform').value = '';
     q('#answerform').disabled = true;
     q('#mfbutton').disabled = true;
@@ -2240,7 +2240,7 @@ a {color:blue;}
     globalStartingForm = data.starting_form;
     globalChangeDesc = desc(data.person, data.number, data.tense, data.mood, data.voice, data.verb, data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, data.verb_prev, false);
     q('#statusmesg').innerHTML = 'Click Go to answer!';
-    q('#changedesc').innerHTML = (data.verb !== data.verb_prev) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, data.verb_prev, null, null, null, null, null, null, false) : '';
+    q('#changedesc').innerHTML = (data.verb === data.verb_prev && data.verb_prev !== null) ? desc(data.person_prev, data.number_prev, data.tense_prev, data.mood_prev, data.voice_prev, data.verb_prev, null, null, null, null, null, null, false) : '';
     q('#answerform').value = '';
     q('#answerform').disabled = true;
     q('#mfbutton').disabled = true;
