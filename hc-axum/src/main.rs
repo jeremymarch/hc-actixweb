@@ -143,7 +143,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     tracing_subscriber::registry()
         .with(EnvFilter::new(std::env::var("RUST_LOGxxx").unwrap_or_else(
-            |_| "hc_axum=debug,sqlx=debug,tower_http=debug".into(),
+            |_| "hc_axum=debug,libhc=debug,sqlx=debug,tower_http=debug".into(),
         )))
         .with(tracing_subscriber::fmt::layer())
         .try_init()?;

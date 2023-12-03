@@ -25,7 +25,7 @@ uuid = "1.6.1"
 sqlx = { version = "0.7.3", features = ["postgres", "runtime-tokio-rustls", "uuid"] }
 time = "0.3.30"
 secrecy = { version = "0.8.0", features = ["serde"] }
-hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.4.0" }
+hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.4.1" }
 
 oauth2 = "4.4.2"
 sign-in-with-apple = { git = "https://github.com/jeremymarch/sign-in-with-apple", version = "0.4.2" }

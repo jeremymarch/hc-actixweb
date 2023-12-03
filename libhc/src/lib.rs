@@ -20,7 +20,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //must set feature sqlite or postgres or both
 #[cfg(not(any(feature = "sqlite", feature = "postgres")))]
 compile_error!("Either feature \"sqlite\" or \"postgres\" must be enabled for this crate.");
-
 use argon2::password_hash::SaltString;
 use argon2::Algorithm;
 use argon2::Argon2;
@@ -37,7 +36,9 @@ use rand::prelude::SliceRandom;
 use secrecy::ExposeSecret;
 use secrecy::Secret;
 use std::collections::HashSet;
+use std::fmt::Debug;
 use tokio::task::spawn_blocking;
+use tracing::debug;
 use uuid::Uuid;
 #[cfg(feature = "postgres")]
 pub mod dbpostgres;
@@ -124,7 +125,7 @@ pub struct AskQuery {
     pub verb: i32,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct SessionResult {
     session_id: Uuid,
     challenger_user_id: Uuid,
@@ -265,7 +266,7 @@ pub trait HcDb: Send + Sync {
 }
 
 #[async_trait]
-pub trait HcTrx: Send + Sync {
+pub trait HcTrx: Send + Sync + Debug {
     async fn commit_tx(self: Box<Self>) -> Result<(), HcError>;
     async fn rollback_tx(self: Box<Self>) -> Result<(), HcError>;
 
@@ -950,6 +951,7 @@ fn hc_change_verbs(verb_history: &Vec<i32>, reps: usize) -> bool {
     len == 0 || (len >= reps && verb_history[0] == verb_history[reps - 1])
 }
 
+#[tracing::instrument(skip(tx, verbs))]
 async fn hc_ask_practice(
     tx: &mut Box<dyn HcTrx>,
     mut prev_form: HcGreekVerbForm,
@@ -958,6 +960,7 @@ async fn hc_ask_practice(
     asktimestamp: i64,
     verbs: &[Arc<HcGreekVerb>],
 ) -> Result<(), HcError> {
+    debug!("hc_ask_practice()");
     let verb_params = VerbParameters::from_option(session.custom_params.clone());
 
     let max_per_verb = match session.practice_reps_per_verb {
@@ -970,6 +973,23 @@ async fn hc_ask_practice(
         .iter()
         .filter_map(|m| m.verb_id.map(|_| m.verb_id.unwrap()))
         .collect::<Vec<i32>>();
+
+    let last_verbs: HashSet<u32> = moves
+        .iter()
+        .map(|r| {
+            HcGreekVerbForm {
+                verb: verbs[r.verb_id.unwrap() as usize].clone(),
+                person: Some(HcPerson::from_i16(r.person.unwrap())),
+                number: Some(HcNumber::from_i16(r.number.unwrap())),
+                tense: HcTense::from_i16(r.tense.unwrap()),
+                voice: HcVoice::from_i16(r.voice.unwrap()),
+                mood: HcMood::from_i16(r.mood.unwrap()),
+                gender: None,
+                case: None,
+            }
+            .param_hash()
+        })
+        .collect();
 
     let verb_id: i32 = if hc_change_verbs(&last_verb_ids, max_per_verb as usize) {
         let verbs = hc_get_available_verbs_practice(
@@ -989,6 +1009,7 @@ async fn hc_ask_practice(
         session.max_changes.try_into().unwrap(),
         session.highest_unit,
         &verb_params,
+        Some(&last_verbs),
     );
 
     //let vf = pf.get_form(false);

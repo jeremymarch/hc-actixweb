@@ -41,7 +41,7 @@ sign-in-with-apple = { git = "https://github.com/jeremymarch/sign-in-with-apple"
 uuid = { version = "1.5.0", features = ["v4", "serde"] }
 
 #hoplite_verbs_rs = { path = "../hoplite_verbs_rs" }
-hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.4.0" }
+hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.4.1" }
 
 [profile.release]
 opt-level = 3

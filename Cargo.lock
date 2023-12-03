@@ -1438,8 +1438,8 @@ dependencies = [
 
 [[package]]
 name = "hoplite_verbs_rs"
-version = "0.4.0"
-source = "git+https://github.com/jeremymarch/hoplite_verbs_rs#8f067d79398bcac0d442a8c6683f1d1d73983d66"
+version = "0.4.1"
+source = "git+https://github.com/jeremymarch/hoplite_verbs_rs#596e411971fb4cea817fa1dba3d86d77d7c7b14b"
 dependencies = [
  "itertools 0.12.0",
  "polytonic-greek",
@@ -1799,6 +1799,7 @@ dependencies = [
  "sqlx",
  "thiserror",
  "tokio",
+ "tracing",
  "uuid",
 ]
 

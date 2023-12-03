@@ -65,6 +65,7 @@ pub struct HcDbPostgres {
     pub db: sqlx::postgres::PgPool,
 }
 
+#[derive(Debug)]
 pub struct HcDbPostgresTrx<'a> {
     pub tx: Transaction<'a, Postgres>,
 }
