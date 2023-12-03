@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //must set feature sqlite or postgres or both
 #[cfg(not(any(feature = "sqlite", feature = "postgres")))]
 compile_error!("Either feature \"sqlite\" or \"postgres\" must be enabled for this crate.");
+
 use argon2::password_hash::SaltString;
 use argon2::Algorithm;
 use argon2::Argon2;
@@ -581,7 +582,7 @@ pub async fn hc_ask(
     user_id: Uuid,
     info: &AskQuery,
     timestamp: i64,
-    verbs: &Vec<Arc<HcGreekVerb>>,
+    verbs: &[Arc<HcGreekVerb>],
 ) -> Result<SessionState, HcError> {
     //todo check that user_id is either challenger_user_id or challenged_user_id
     //todo check that user_id == challenger_user_id if this is first move
@@ -653,7 +654,7 @@ pub async fn hc_ask(
 //     user_id: Uuid,
 //     info: &AnswerQuery,
 //     timestamp: i64,
-//     verbs: &Vec<Arc<HcGreekVerb>>,
+//     verbs: &[Arc<HcGreekVerb>],
 // ) -> Result<SessionState, HcError> {
 
 //     //get and record answer, is_correct for last move
@@ -667,7 +668,7 @@ pub async fn hc_answer(
     user_id: Uuid,
     info: &AnswerQuery,
     timestamp: i64,
-    verbs: &Vec<Arc<HcGreekVerb>>,
+    verbs: &[Arc<HcGreekVerb>],
 ) -> Result<SessionState, HcError> {
     //todo check that user_id is either challenger_user_id or challenged_user_id
     let mut tx = db.begin_tx().await?;
@@ -787,7 +788,7 @@ pub async fn hc_mf_pressed(
     user_id: Uuid,
     info: &AnswerQuery,
     timestamp: i64,
-    verbs: &Vec<Arc<HcGreekVerb>>,
+    verbs: &[Arc<HcGreekVerb>],
 ) -> Result<SessionState, HcError> {
     let mut tx = db.begin_tx().await?;
 
@@ -1039,7 +1040,7 @@ async fn hc_ask_practice(
 pub async fn hc_get_sessions(
     db: &dyn HcDb,
     user_id: Uuid,
-    verbs: &Vec<Arc<HcGreekVerb>>,
+    verbs: &[Arc<HcGreekVerb>],
     username: Option<String>,
     info: &GetSessions,
 ) -> Result<SessionsListResponse, HcError> {
@@ -1066,7 +1067,7 @@ pub async fn hc_get_move(
     user_id: Uuid,
     opponent_id: bool,
     session_id: Uuid,
-    verbs: &Vec<Arc<HcGreekVerb>>,
+    verbs: &[Arc<HcGreekVerb>],
 ) -> Result<SessionState, HcError> {
     let mut tx = db.begin_tx().await?;
     let res = hc_get_move_tr(&mut tx, user_id, opponent_id, session_id, verbs).await?;
@@ -1081,7 +1082,7 @@ pub async fn hc_get_move_tr(
     user_id: Uuid,
     opponent_id: bool,
     session_id: Uuid,
-    verbs: &Vec<Arc<HcGreekVerb>>,
+    verbs: &[Arc<HcGreekVerb>],
 ) -> Result<SessionState, HcError> {
     let s = tx.get_session_tx(session_id).await?;
 
@@ -1326,7 +1327,7 @@ async fn hc_get_available_verbs(
     _user_id: Uuid,
     session_id: Uuid,
     top_unit: Option<i16>,
-    verbs: &Vec<Arc<HcGreekVerb>>,
+    verbs: &[Arc<HcGreekVerb>],
 ) -> Result<Vec<HCVerbOption>, HcError> {
     let mut res_verbs: Vec<HCVerbOption> = vec![];
 
@@ -1389,7 +1390,7 @@ pub fn hc_load_verbs(_path: &str) -> Vec<Arc<HcGreekVerb>> {
 }
 
 /*
-pub async fn hc_get_verbs(db: &HcDb, _user_id:Uuid, session_id:Uuid, top_unit:Option<i16>, verbs:&Vec<Arc<HcGreekVerb>>) -> Result<Vec<HCVerbOption>, HcError> {
+pub async fn hc_get_verbs(db: &HcDb, _user_id:Uuid, session_id:Uuid, top_unit:Option<i16>, verbs:&[Arc<HcGreekVerb>]) -> Result<Vec<HCVerbOption>, HcError> {
     let mut res_verbs:Vec<HCVerbOption> = vec![];
 
     let used_verbs = db.get_used_verbs(session_id).await?;
