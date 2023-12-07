@@ -30,6 +30,7 @@ use argon2::PasswordHasher;
 use argon2::PasswordVerifier;
 use argon2::Version;
 use chrono::prelude::*;
+pub use hoplite_verbs_rs::HcGreekVerb;
 use hoplite_verbs_rs::*;
 use polytonic_greek::hgk_compare_multiple_forms;
 use polytonic_greek::hgk_compare_sqlite; //note: this does not actually depend on sqlite
@@ -975,6 +976,21 @@ async fn hc_ask_practice(
         .filter_map(|m| m.verb_id.map(|_| m.verb_id.unwrap()))
         .collect::<Vec<i32>>();
 
+    let mut changed_params: Vec<HcParameters> = Vec::new();
+    if moves.len() > 1 {
+        if moves[0].person.unwrap() != moves[1].person.unwrap() {
+            changed_params.push(HcParameters::Person);
+        } else if moves[0].number.unwrap() != moves[1].number.unwrap() {
+            changed_params.push(HcParameters::Number);
+        } else if moves[0].tense != moves[1].tense {
+            changed_params.push(HcParameters::Tense);
+        } else if moves[0].mood != moves[1].mood {
+            changed_params.push(HcParameters::Mood);
+        } else if moves[0].voice != moves[1].voice {
+            changed_params.push(HcParameters::Voice);
+        }
+    }
+
     let last_verbs: HashSet<u32> = moves
         .iter()
         .map(|r| {
@@ -1006,7 +1022,7 @@ async fn hc_ask_practice(
     };
 
     prev_form.verb = verbs[verb_id as usize].clone();
-    let pf = prev_form.random_form(
+    let (pf, _diag) = prev_form.random_form(
         session.max_changes.try_into().unwrap(),
         session.highest_unit,
         &verb_params,

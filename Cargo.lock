@@ -467,9 +467,9 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "axum"
-version = "0.7.1"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "810a80b128d70e6ed2bdf3fe8ed72c0ae56f5f5948d01c2753282dd92a84fce8"
+checksum = "202651474fe73c62d9e0a56c6133f7a0ff1dc1c8cf7a5b03381af2a26553ac9d"
 dependencies = [
  "async-trait",
  "axum-core",
@@ -501,9 +501,9 @@ dependencies = [
 
 [[package]]
 name = "axum-core"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de0ddc355eab88f4955090a823715df47acf0b7660aab7a69ad5ce6301ee3b73"
+checksum = "77cb22c689c44d4c07b0ab44ebc25d69d8ae601a2f28fb8d672d344178fa17aa"
 dependencies = [
  "async-trait",
  "bytes",
@@ -969,9 +969,9 @@ dependencies = [
 
 [[package]]
 name = "engineioxide"
-version = "0.7.2"
+version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b303078277e24915ec769f3bf8359964c5a05d341f1f44e1eb332b202e45aaf8"
+checksum = "a2cb8b649570e8ed01de4d938d10eb8b41103a16485397a37be921a6710d8dfa"
 dependencies = [
  "base64 0.21.0",
  "bytes",
@@ -1355,7 +1355,6 @@ name = "hc-axum"
 version = "0.1.0"
 dependencies = [
  "axum",
- "hoplite_verbs_rs",
  "http 1.0.0",
  "libhc",
  "oauth2",
@@ -1438,12 +1437,13 @@ dependencies = [
 
 [[package]]
 name = "hoplite_verbs_rs"
-version = "0.4.1"
-source = "git+https://github.com/jeremymarch/hoplite_verbs_rs#596e411971fb4cea817fa1dba3d86d77d7c7b14b"
+version = "0.4.3"
+source = "git+https://github.com/jeremymarch/hoplite_verbs_rs#bb1fdcffe3e242e6a5d21cc1851c5c715700352b"
 dependencies = [
  "itertools 0.12.0",
  "polytonic-greek",
  "rand",
+ "tracing",
  "unicode-normalization",
  "unicode-segmentation",
 ]
@@ -2850,9 +2850,9 @@ dependencies = [
 
 [[package]]
 name = "socketioxide"
-version = "0.7.2"
+version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97855ef2f270f9c1cd3116eec1c1a9dab7fed8d51a3c7e3b611ad8a216024b53"
+checksum = "6bbb4f207f50771008b68e4246ae6193b771f46362839f9f9fb29fbfdfbf2e3d"
 dependencies = [
  "dashmap",
  "engineioxide",

@@ -48,13 +48,13 @@ use tower_sessions::{
     ExpiredDeletion, Expiry, MemoryStore, PostgresStore, Session, SessionManagerLayer,
 };
 
-use hoplite_verbs_rs::*;
 use libhc::dbpostgres::HcDbPostgres;
 use libhc::AnswerQuery;
 use libhc::AskQuery;
 use libhc::GetMoveQuery;
 use libhc::GetMovesQuery;
 use libhc::GetSessions;
+use libhc::HcGreekVerb;
 use libhc::MoveResult;
 use libhc::SessionState;
 use libhc::SessionsListResponse;
@@ -143,7 +143,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     tracing_subscriber::registry()
         .with(EnvFilter::new(std::env::var("RUST_LOGxxx").unwrap_or_else(
-            |_| "hc_axum=debug,libhc=debug,sqlx=debug,tower_http=debug".into(),
+            |_| {
+                "hc_axum=debug,libhc=debug,sqlx=debug,tower_http=debug,hoplite_verbs_rs=debug"
+                    .into()
+            },
         )))
         .with(tracing_subscriber::fmt::layer())
         .try_init()?;

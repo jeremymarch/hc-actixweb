@@ -9,8 +9,8 @@ path = "src/main.rs"
 
 [dependencies]
 libhc = { path = "../libhc", features= ["postgres"]}
-socketioxide = { version = "0.7.2", features = ["extensions"]}
-axum = { version = "0.7.1" , features = ["macros"]}
+socketioxide = { version = "0.7.3", features = ["extensions"]}
+axum = { version = "0.7.2" , features = ["macros"]}
 tokio = { version = "1.34.0", features = ["rt-multi-thread", "macros"] }
 tower-http = { version = "0.5.0", features = ["trace", "cors", "fs"] }
 tower = "0.4.13"
@@ -25,7 +25,6 @@ uuid = "1.6.1"
 sqlx = { version = "0.7.3", features = ["postgres", "runtime-tokio-rustls", "uuid"] }
 time = "0.3.30"
 secrecy = { version = "0.8.0", features = ["serde"] }
-hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.4.1" }
 
 oauth2 = "4.4.2"
 sign-in-with-apple = { git = "https://github.com/jeremymarch/sign-in-with-apple", version = "0.4.2" }
