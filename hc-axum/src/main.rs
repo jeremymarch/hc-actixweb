@@ -22,6 +22,7 @@ use socketioxide::{
     extract::{Data, SocketRef},
     SocketIo,
 };
+use socketioxide::socket::DisconnectReason;
 use std::sync::atomic::AtomicUsize;
 use tower::ServiceBuilder;
 use tower_cookies::cookie::SameSite;
@@ -212,7 +213,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .ok();
         });
 
-        s.on_disconnect(move |s, _| async move {
+        s.on_disconnect(move |s: SocketRef, _: DisconnectReason| async move {
             if let Some(username) = s.extensions.get::<Username>() {
                 let i = NUM_USERS.fetch_sub(1, std::sync::atomic::Ordering::SeqCst) - 1;
                 let res = Res::UserEvent {

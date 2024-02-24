@@ -10,9 +10,9 @@ use crate::GetSessions;
 use crate::HcDbPostgres;
 use crate::MoveType;
 use crate::StatusResponse;
-use hoplite_verbs_rs::HcGreekVerb;
 use libhc::HcDb;
 use libhc::HcError;
+use libhc::HcGreekVerb;
 use std::sync::Arc;
 
 /// How often heartbeat pings are sent

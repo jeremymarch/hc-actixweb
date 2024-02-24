@@ -44,6 +44,7 @@ use libhc::GetMoveQuery;
 use libhc::GetMovesQuery;
 use libhc::GetSessions;
 use libhc::HcError;
+use libhc::HcGreekVerb;
 use libhc::MoveResult;
 use libhc::MoveType;
 use thiserror::Error;
@@ -72,8 +73,6 @@ use sqlx::postgres::PgPoolOptions;
 // use std::str::FromStr;
 
 use sqlx::types::Uuid;
-
-use hoplite_verbs_rs::*;
 
 use crate::login::AppState; //for oauth
 
