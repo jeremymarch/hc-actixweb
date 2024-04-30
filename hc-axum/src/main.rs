@@ -16,13 +16,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+use libhc::hgk_compare_multiple_forms;
+use std::time::SystemTime;
+use std::time::UNIX_EPOCH;
+
 use axum::response::Response;
 use serde::{Deserialize, Serialize};
+use socketioxide::socket::DisconnectReason;
 use socketioxide::{
     extract::{Data, SocketRef},
     SocketIo,
 };
-use socketioxide::socket::DisconnectReason;
 use std::sync::atomic::AtomicUsize;
 use tower::ServiceBuilder;
 use tower_cookies::cookie::SameSite;
@@ -55,11 +59,17 @@ use libhc::AskQuery;
 use libhc::GetMoveQuery;
 use libhc::GetMovesQuery;
 use libhc::GetSessions;
+use libhc::HcDb;
 use libhc::HcGreekVerb;
 use libhc::MoveResult;
 use libhc::SessionState;
 use libhc::SessionsListResponse;
 use std::sync::Arc;
+
+use libhc::synopsis::get_forms;
+use libhc::synopsis::SaverResults;
+use libhc::synopsis::SynopsisJsonResult;
+use libhc::synopsis::SynopsisSaverRequest;
 
 use uuid::Uuid;
 
@@ -298,6 +308,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/newuser", axum::routing::post(login::new_user_post))
         .route("/logout", axum::routing::get(login::logout))
         .route("/healthzzz", axum::routing::get(health_check))
+        // .route("/greek-synopsis-result", axum::routing::get(greek_synopsis_result))
+        // .route("/greek-synopsis-list", axum::routing::get(greek_synopsis_list))
+        .route(
+            "/greek-synopsis-saver",
+            axum::routing::post(greek_synopsis_saver),
+        )
+        // .route("/latin-synopsis-result", axum::routing::get(latin_synopsis_result))
+        // .route("/latin-synopsis-list", axum::routing::get(latin_synopsis_list))
+        // .route("/latin-synopsis-saver", axum::routing::get(latin_synopsis_saver))
+        // .route("/latin-synopsis", axum::routing::get(latin_synopsis))
+        .route("/synopsis-json", axum::routing::post(synopsis_json))
         .fallback_service(serve_dir) //for js, wasm, etc
         // .layer(
         //     ServiceBuilder::new()
@@ -387,6 +408,152 @@ async fn create_session(
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }
+}
+
+async fn greek_synopsis_saver(
+    session: Session,
+    State(state): State<AxumAppState>,
+    extract::Json(payload): extract::Json<SynopsisSaverRequest>,
+) -> Result<Json<SynopsisJsonResult>, StatusCode> {
+    //let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+    //let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
+
+    let time_stamp = SystemTime::now().duration_since(UNIX_EPOCH);
+    let time_stamp_ms = if let Ok(time_stamp) = time_stamp {
+        time_stamp.as_millis()
+    } else {
+        0
+    };
+    //let user_agent = get_user_agent(&req).unwrap_or("");
+    //https://stackoverflow.com/questions/66989780/how-to-retrieve-the-ip-address-of-the-client-from-httprequest-in-actix-web
+    // let ip = if req.peer_addr().is_some() {
+    //     req.peer_addr().unwrap().ip().to_string()
+    // } else {
+    //     "".to_string()
+    // };
+
+    let verb_id = payload.verb;
+    let correct_answers = get_forms(
+        &state.verbs,
+        verb_id,
+        payload.person,
+        payload.number,
+        payload.ptccase,
+        payload.ptcgender,
+    );
+    let mut is_correct = Vec::new();
+    // let is_correct = hgk_compare_multiple_forms(&correct_answer, &info.answer.replace("---", "—"));
+    for (i, f) in payload.r.iter().enumerate() {
+        if let Some(a) = &correct_answers[i] {
+            is_correct.push(hgk_compare_multiple_forms(a, &f.replace("---", "—"), true));
+        } else {
+            is_correct.push(true);
+        }
+    }
+
+    let mut res_forms = Vec::<SaverResults>::new();
+    for (n, i) in correct_answers.into_iter().enumerate() {
+        res_forms.push(SaverResults {
+            given: payload.r[n].clone(),
+            correct: i,
+            is_correct: is_correct[n],
+        });
+    }
+
+    let res = SynopsisJsonResult {
+        verb_id,
+        person: payload.person,
+        number: payload.number,
+        case: payload.ptccase,
+        gender: payload.ptcgender,
+        unit: payload.unit,
+        pp: payload.pp.clone(),
+        // pp: verbs[verb_id]
+        //     .pps
+        //     .iter()
+        //     .map(|x| x.replace('/', " or ").replace("  ", " "))
+        //     .collect::<Vec<_>>()
+        //     .join(", "),
+        name: payload.sname.clone(),
+        advisor: payload.advisor.clone(),
+        f: res_forms,
+    };
+
+    let mut tx = state
+        .hcdb
+        .begin_tx()
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let _ = tx
+        .greek_insert_synopsis(
+            &payload,
+            time_stamp_ms,
+            //ip.as_str(),
+            //user_agent,
+        )
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    tx.commit_tx()
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    //Ok(HttpResponse::Ok().finish())
+    //let res = 1;
+    //Ok(HttpResponse::Ok().json(res))
+    Ok(Json(res))
+}
+
+async fn synopsis_json(
+    session: Session,
+    State(state): State<AxumAppState>,
+    extract::Json(payload): extract::Json<SynopsisSaverRequest>,
+) -> Result<Json<SynopsisJsonResult>, StatusCode> {
+    // let is_correct = hgk_compare_multiple_forms(&correct_answer, &info.answer.replace("---", "—"));
+    //let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
+    // let pp = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+    // let verb = Arc::new(HcGreekVerb::from_string(1, pp, REGULAR, 0).unwrap());
+    let verb_id: usize = payload.verb;
+
+    let forms = get_forms(
+        &state.verbs,
+        verb_id,
+        payload.person,
+        payload.number,
+        payload.ptccase,
+        payload.ptcgender,
+    );
+
+    let mut res = Vec::<SaverResults>::new();
+    for f in forms {
+        res.push(SaverResults {
+            given: f.unwrap_or("".to_string()),
+            correct: None,
+            is_correct: true,
+        });
+    }
+
+    let res = SynopsisJsonResult {
+        verb_id: payload.verb,
+        person: payload.person,
+        number: payload.number,
+        case: payload.ptccase,
+        gender: payload.ptcgender,
+        unit: payload.unit,
+        pp: state.verbs[verb_id]
+            .pps
+            .iter()
+            .map(|x| x.replace('/', " or ").replace("  ", " "))
+            .collect::<Vec<_>>()
+            .join(", "),
+        name: "".to_string(),
+        advisor: "".to_string(),
+        f: res,
+    };
+
+    //Ok(HttpResponse::Ok().json(res))
+    Ok(Json(res))
 }
 
 async fn get_move(

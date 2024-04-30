@@ -32,7 +32,7 @@ use argon2::Version;
 use chrono::prelude::*;
 pub use hoplite_verbs_rs::HcGreekVerb;
 use hoplite_verbs_rs::*;
-use polytonic_greek::hgk_compare_multiple_forms;
+pub use polytonic_greek::hgk_compare_multiple_forms;
 use polytonic_greek::hgk_compare_sqlite; //note: this does not actually depend on sqlite
 use rand::prelude::SliceRandom;
 use secrecy::ExposeSecret;
@@ -42,10 +42,14 @@ use std::fmt::Debug;
 use tokio::task::spawn_blocking;
 use tracing::debug;
 use uuid::Uuid;
+
+use crate::synopsis::SynopsisSaverRequest;
+
 #[cfg(feature = "postgres")]
 pub mod dbpostgres;
 #[cfg(feature = "sqlite")]
 pub mod dbsqlite;
+pub mod synopsis;
 
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -271,6 +275,14 @@ pub trait HcDb: Send + Sync {
 pub trait HcTrx: Send + Sync + Debug {
     async fn commit_tx(self: Box<Self>) -> Result<(), HcError>;
     async fn rollback_tx(self: Box<Self>) -> Result<(), HcError>;
+
+    async fn greek_insert_synopsis(
+        &mut self,
+        info: &SynopsisSaverRequest,
+        accessed: u128,
+        // ip: &str,
+        // agent: &str,
+    ) -> Result<(), HcError>;
 
     async fn add_to_score(
         &mut self,
