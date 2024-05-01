@@ -1434,10 +1434,10 @@ dependencies = [
 
 [[package]]
 name = "hoplite_verbs_rs"
-version = "0.4.3"
-source = "git+https://github.com/jeremymarch/hoplite_verbs_rs#3705c3d727c8670c4cee6c10cb5af65e9798897d"
+version = "0.4.4"
+source = "git+https://github.com/jeremymarch/hoplite_verbs_rs#5511cdc61f7e5857beb480deaca2bbd72d250810"
 dependencies = [
- "itertools 0.12.0",
+ "itertools 0.12.1",
  "polytonic-greek",
  "rand",
  "tracing",
@@ -1702,9 +1702,9 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.12.0"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25db6b064527c5d482d0423354fcd07a89a2dfe07b67892e62411946db7f07b0"
+checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
 dependencies = [
  "either",
 ]
@@ -2300,8 +2300,8 @@ checksum = "26072860ba924cbfa98ea39c8c19b4dd6a4a25423dbdf219c1eca91aa0cf6964"
 
 [[package]]
 name = "polytonic-greek"
-version = "0.5.0"
-source = "git+https://github.com/jeremymarch/polytonic-greek#d6022ead30ebd9c9bc95e1d0a6eac107ee1f7aa3"
+version = "0.5.1"
+source = "git+https://github.com/jeremymarch/polytonic-greek#7531ff7a189210fdd6ff21bad4a611f89213e1d2"
 dependencies = [
  "unicode-normalization",
 ]
