@@ -91,18 +91,20 @@ impl HcTrx for HcDbPostgresTrx<'_> {
     async fn rollback_tx(self: Box<Self>) -> Result<(), HcError> {
         self.tx.rollback().await.map_err(map_sqlx_error)
     }
-    /*
-    pub async fn greek_get_synopsis_list(
-        pool: &SqlitePool,
-    ) -> Result<Vec<(i64, i64, String, String, String)>, sqlx::Error> {
+
+    async fn greek_get_synopsis_list(
+        &mut self,
+    ) -> Result<Vec<(Uuid, i64, String, String, String)>, HcError> {
         let query =
             "SELECT id, updated, sname, advisor, selectedverb FROM greeksynopsisresults ORDER BY updated DESC;";
-        let res: Vec<(i64, i64, String, String, String)> =
-            sqlx::query_as(query).fetch_all(pool).await?;
+        let res: Vec<(Uuid, i64, String, String, String)> = sqlx::query_as(query)
+            .fetch_all(&mut *self.tx)
+            .await
+            .map_err(map_sqlx_error)?;
 
         Ok(res)
     }
-
+    /*
     pub async fn greek_get_synopsis_result(
         pool: &SqlitePool,
         id: u32,
@@ -121,6 +123,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
 
     async fn greek_insert_synopsis(
         &mut self,
+        user_id: Option<sqlx::types::Uuid>,
         info: &SynopsisSaverRequest,
         accessed: u128,
         // ip: &str,
@@ -129,12 +132,27 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         let ip = "";
         let agent = "";
         let uuid = sqlx::types::Uuid::new_v4();
-        let query = format!("INSERT INTO greeksynopsisresults VALUES ('{}', {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', {}, '{}')", 
-            uuid, accessed, info.sname, info.advisor, info.unit, info.verb, info.pp,
-            info.number, info.person, info.ptcgender.unwrap_or(999), info.ptcnumber.unwrap_or(999), info.ptccase.unwrap_or(999), ip, agent, 1,
+        let query = format!("INSERT INTO greeksynopsisresults VALUES ($1, $2, {}, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, '{}')", 
+            accessed,
             info.r.join("', '"));
-        println!("aaa: {}", query);
+        //println!("aaa: {}", query);
         sqlx::query(&query)
+            .bind(uuid)
+            .bind(user_id)
+            //.bind(accessed)
+            .bind(info.sname.clone())
+            .bind(info.advisor.clone())
+            .bind(info.unit)
+            .bind(info.verb)
+            .bind(info.pp.clone())
+            .bind(info.number)
+            .bind(info.person)
+            .bind(info.ptcgender.unwrap_or(999))
+            .bind(info.ptcnumber.unwrap_or(999))
+            .bind(info.ptccase.unwrap_or(999))
+            .bind(ip)
+            .bind(agent)
+            .bind(1)
             .execute(&mut *self.tx)
             .await
             .map_err(map_sqlx_error)?;
@@ -716,7 +734,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             .await
             .map_err(map_sqlx_error)?;
 
-        let query = r#"CREATE TABLE IF NOT EXISTS greeksynopsisresults ( id UUID PRIMARY KEY NOT NULL, updated BIGINT NOT NULL, sname TEXT NOT NULL, advisor TEXT NOT NULL, sgiday INTEGER NOT NULL, selectedverb TEXT NOT NULL, pp TEXT NOT NULL, verbnumber TEXT NOT NULL, verbperson TEXT NOT NULL, verbptcgender TEXT NOT NULL, verbptcnumber TEXT NOT NULL, verbptccase TEXT NOT NULL, ip TEXT NOT NULL, ua TEXT NOT NULL, status INTEGER NOT NULL, f0 TEXT NOT NULL, f1 TEXT NOT NULL, f2 TEXT NOT NULL, f3 TEXT NOT NULL, f4 TEXT NOT NULL, f5 TEXT NOT NULL, f6 TEXT NOT NULL, f7 TEXT NOT NULL, f8 TEXT NOT NULL, f9 TEXT NOT NULL, f10 TEXT NOT NULL, f11 TEXT NOT NULL, f12 TEXT NOT NULL, f13 TEXT NOT NULL, f14 TEXT NOT NULL, f15 TEXT NOT NULL, f16 TEXT NOT NULL, f17 TEXT NOT NULL, f18 TEXT NOT NULL, f19 TEXT NOT NULL, f20 TEXT NOT NULL, f21 TEXT NOT NULL, f22 TEXT NOT NULL, f23 TEXT NOT NULL, f24 TEXT NOT NULL, f25 TEXT NOT NULL, f26 TEXT NOT NULL, f27 TEXT NOT NULL, f28 TEXT NOT NULL, f29 TEXT NOT NULL, f30 TEXT NOT NULL, f31 TEXT NOT NULL, f32 TEXT NOT NULL, f33 TEXT NOT NULL, f34 TEXT NOT NULL, f35 TEXT NOT NULL, f36 TEXT NOT NULL, f37 TEXT NOT NULL, f38 TEXT NOT NULL, f39 TEXT NOT NULL, f40 TEXT NOT NULL, f41 TEXT NOT NULL, f42 TEXT NOT NULL, f43 TEXT NOT NULL, f44 TEXT NOT NULL, f45 TEXT NOT NULL, f46 TEXT NOT NULL, f47 TEXT NOT NULL, f48 TEXT NOT NULL, f49 TEXT NOT NULL, f50 TEXT NOT NULL, f51 TEXT NOT NULL, f52 TEXT NOT NULL, f53 TEXT NOT NULL, f54 TEXT NOT NULL, f55 TEXT NOT NULL, f56 TEXT NOT NULL, f57 TEXT NOT NULL, f58 TEXT NOT NULL, f59 TEXT NOT NULL, f60 TEXT NOT NULL, f61 TEXT NOT NULL, f62 TEXT NOT NULL);"#;
+        let query = r#"CREATE TABLE IF NOT EXISTS greeksynopsisresults ( id UUID PRIMARY KEY NOT NULL, user_id UUID, updated BIGINT NOT NULL, sname TEXT NOT NULL, advisor TEXT NOT NULL, sgiday INTEGER NOT NULL, selectedverb TEXT NOT NULL, pp TEXT NOT NULL, verbnumber TEXT NOT NULL, verbperson TEXT NOT NULL, verbptcgender TEXT NOT NULL, verbptcnumber TEXT NOT NULL, verbptccase TEXT NOT NULL, ip TEXT NOT NULL, ua TEXT NOT NULL, status INTEGER NOT NULL, f0 TEXT NOT NULL, f1 TEXT NOT NULL, f2 TEXT NOT NULL, f3 TEXT NOT NULL, f4 TEXT NOT NULL, f5 TEXT NOT NULL, f6 TEXT NOT NULL, f7 TEXT NOT NULL, f8 TEXT NOT NULL, f9 TEXT NOT NULL, f10 TEXT NOT NULL, f11 TEXT NOT NULL, f12 TEXT NOT NULL, f13 TEXT NOT NULL, f14 TEXT NOT NULL, f15 TEXT NOT NULL, f16 TEXT NOT NULL, f17 TEXT NOT NULL, f18 TEXT NOT NULL, f19 TEXT NOT NULL, f20 TEXT NOT NULL, f21 TEXT NOT NULL, f22 TEXT NOT NULL, f23 TEXT NOT NULL, f24 TEXT NOT NULL, f25 TEXT NOT NULL, f26 TEXT NOT NULL, f27 TEXT NOT NULL, f28 TEXT NOT NULL, f29 TEXT NOT NULL, f30 TEXT NOT NULL, f31 TEXT NOT NULL, f32 TEXT NOT NULL, f33 TEXT NOT NULL, f34 TEXT NOT NULL, f35 TEXT NOT NULL, f36 TEXT NOT NULL, f37 TEXT NOT NULL, f38 TEXT NOT NULL, f39 TEXT NOT NULL, f40 TEXT NOT NULL, f41 TEXT NOT NULL, f42 TEXT NOT NULL, f43 TEXT NOT NULL, f44 TEXT NOT NULL, f45 TEXT NOT NULL, f46 TEXT NOT NULL, f47 TEXT NOT NULL, f48 TEXT NOT NULL, f49 TEXT NOT NULL, f50 TEXT NOT NULL, f51 TEXT NOT NULL, f52 TEXT NOT NULL, f53 TEXT NOT NULL, f54 TEXT NOT NULL, f55 TEXT NOT NULL, f56 TEXT NOT NULL, f57 TEXT NOT NULL, f58 TEXT NOT NULL, f59 TEXT NOT NULL, f60 TEXT NOT NULL, f61 TEXT NOT NULL, f62 TEXT NOT NULL, FOREIGN KEY (user_id) REFERENCES users(user_id) );"#;
         let _res = sqlx::query(query)
             .execute(&mut *self.tx)
             .await

@@ -308,8 +308,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/newuser", axum::routing::post(login::new_user_post))
         .route("/logout", axum::routing::get(login::logout))
         .route("/healthzzz", axum::routing::get(health_check))
-        // .route("/greek-synopsis-result", axum::routing::get(greek_synopsis_result))
-        // .route("/greek-synopsis-list", axum::routing::get(greek_synopsis_list))
+        .route(
+            "/greek-synopsis-result",
+            axum::routing::get(greek_synopsis_result),
+        )
+        .route(
+            "/greek-synopsis-list",
+            axum::routing::get(greek_synopsis_list),
+        )
+        .route("/greek-synopsis", axum::routing::get(greek_synopsis))
         .route(
             "/greek-synopsis-saver",
             axum::routing::post(greek_synopsis_saver),
@@ -339,6 +346,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+static SYNOPSIS_PAGE: &str = include_str!("greek-synopsis.html");
 
 static INDEX_PAGE: &str = include_str!("../../hc-actix/src/index.html");
 static CSP: &str = "style-src 'nonce-%NONCE%';script-src 'nonce-%NONCE%' 'wasm-unsafe-eval' \
@@ -410,6 +419,90 @@ async fn create_session(
     }
 }
 
+use chrono::FixedOffset;
+use chrono::LocalResult;
+use chrono::TimeZone;
+
+async fn greek_synopsis_result() -> impl IntoResponse {
+    let csp_nonce: String = Uuid::new_v4().to_string(); //.simple().encode_upper(&mut Uuid::encode_buffer()).to_string();
+
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        HeaderName::from_static("content-security-policy"),
+        HeaderValue::from_str(&CSP.replace("%NONCE%", &csp_nonce)).unwrap(),
+    );
+
+    let page = SYNOPSIS_PAGE
+        .replace("%NONCE%", &csp_nonce)
+        .replace("%ISRESULTCSS%", "synopsis-result")
+        .replace("%ISRESULT%", "true");
+    (headers, Html(page))
+}
+
+async fn greek_synopsis() -> impl IntoResponse {
+    let csp_nonce: String = Uuid::new_v4().to_string(); //.simple().encode_upper(&mut Uuid::encode_buffer()).to_string();
+
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        HeaderName::from_static("content-security-policy"),
+        HeaderValue::from_str(&CSP.replace("%NONCE%", &csp_nonce)).unwrap(),
+    );
+
+    let page = SYNOPSIS_PAGE
+        .replace("%NONCE%", &csp_nonce)
+        .replace("%ISRESULTCSS%", "synopsis-form")
+        .replace("%ISRESULT%", "false");
+
+    (headers, Html(page))
+}
+
+async fn greek_synopsis_list(
+    session: Session,
+    State(state): State<AxumAppState>,
+) -> impl IntoResponse {
+    //let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+
+    let mut tx = state.hcdb.begin_tx().await.unwrap();
+
+    let list = tx.greek_get_synopsis_list().await.unwrap();
+
+    tx.commit_tx().await.unwrap();
+
+    let mut res = String::from(
+        r#"<!DOCTYPE html>
+    <html>
+    <head>
+    <meta charset="UTF-8">
+    <style nonce="2726c7f26c">
+        .synlist { width: 600px;
+            margin: 0px auto;
+            border-collapse: collapse;
+            font-size: 16pt;
+            font-family:helvetica,arial;
+        }
+        .synlist td { padding: 3px; }
+        .headerrow {border-bottom:1px solid black;font-weight:bold;}
+    </style>
+    </head>
+    <body><table class='synlist'>
+    <tr><td class='headerrow'>Date</td><td class='headerrow'>Name</td><td class='headerrow'>Advisor</td><td class='headerrow'>Verb</td></tr>"#,
+    );
+    for l in list {
+        let eastern_daylight_tz = FixedOffset::west_opt(4 * 60 * 60).unwrap();
+        let d = eastern_daylight_tz.timestamp_millis_opt(l.1);
+        let timestamp_str = match d {
+            LocalResult::Single(t) => t.format("%Y-%m-%d %H:%M:%S").to_string(),
+            _ => "".to_string(),
+        };
+
+        res.push_str(format!("<tr><td><a href='greek-synopsis-result?id={}'>{}</a></td><td>{}</td><td>{}</td><td>{}</td></tr>", l.0, timestamp_str, l.2, l.3,l.4).as_str());
+    }
+    res.push_str("</table></body></html>");
+
+    //Ok(HttpResponse::Ok().content_type("text/html").body(res))
+    Html(res)
+}
+
 async fn greek_synopsis_saver(
     session: Session,
     State(state): State<AxumAppState>,
@@ -432,7 +525,7 @@ async fn greek_synopsis_saver(
     //     "".to_string()
     // };
 
-    let verb_id = payload.verb;
+    let verb_id = payload.verb.try_into().unwrap();
     let correct_answers = get_forms(
         &state.verbs,
         verb_id,
@@ -461,7 +554,7 @@ async fn greek_synopsis_saver(
     }
 
     let res = SynopsisJsonResult {
-        verb_id,
+        verb_id: payload.verb,
         person: payload.person,
         number: payload.number,
         case: payload.ptccase,
@@ -487,6 +580,7 @@ async fn greek_synopsis_saver(
 
     let _ = tx
         .greek_insert_synopsis(
+            None,
             &payload,
             time_stamp_ms,
             //ip.as_str(),
@@ -514,7 +608,7 @@ async fn synopsis_json(
     //let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
     // let pp = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
     // let verb = Arc::new(HcGreekVerb::from_string(1, pp, REGULAR, 0).unwrap());
-    let verb_id: usize = payload.verb;
+    let verb_id: usize = payload.verb.try_into().unwrap();
 
     let forms = get_forms(
         &state.verbs,

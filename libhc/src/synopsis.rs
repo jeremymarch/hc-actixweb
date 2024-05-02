@@ -8,16 +8,16 @@ use std::sync::Arc;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SynopsisSaverRequest {
     pub advisor: String,
-    pub unit: usize,
+    pub unit: i32,
     pub sname: String,
-    pub number: usize,
-    pub person: usize,
+    pub number: i32,
+    pub person: i32,
     pub pp: String,
-    pub ptccase: Option<usize>,
-    pub ptcgender: Option<usize>,
-    pub ptcnumber: Option<usize>,
+    pub ptccase: Option<i32>,
+    pub ptcgender: Option<i32>,
+    pub ptcnumber: Option<i32>,
     pub r: Vec<String>,
-    pub verb: usize,
+    pub verb: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -171,12 +171,12 @@ pub struct SaverResults {
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
 pub struct SynopsisJsonResult {
-    pub verb_id: usize,
-    pub person: usize,
-    pub number: usize,
-    pub case: Option<usize>,
-    pub gender: Option<usize>,
-    pub unit: usize,
+    pub verb_id: i32,
+    pub person: i32,
+    pub number: i32,
+    pub case: Option<i32>,
+    pub gender: Option<i32>,
+    pub unit: i32,
     pub pp: String,
     pub name: String,
     pub advisor: String,
@@ -186,10 +186,10 @@ pub struct SynopsisJsonResult {
 pub fn get_forms(
     verbs: &[Arc<HcGreekVerb>],
     verb_id: usize,
-    person: usize,
-    number: usize,
-    case: Option<usize>,
-    gender: Option<usize>,
+    person: i32,
+    number: i32,
+    case: Option<i32>,
+    gender: Option<i32>,
 ) -> Vec<Option<String>> {
     let mut forms = Vec::new();
 
@@ -350,46 +350,6 @@ pub fn get_forms(
 //     Ok(HttpResponse::Ok().json(res))
 // }
 /*
-pub async fn greek_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
-    let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
-
-    let list = greek_get_synopsis_list(&db2.0)
-        .await
-        .map_err(map_sqlx_error)?;
-
-    let mut res = String::from(
-        r#"<!DOCTYPE html>
-    <html>
-    <head>
-    <meta charset="UTF-8">
-    <style nonce="2726c7f26c">
-        .synlist { width: 600px;
-            margin: 0px auto;
-            border-collapse: collapse;
-            font-size: 16pt;
-            font-family:helvetica,arial;
-        }
-        .synlist td { padding: 3px; }
-        .headerrow {border-bottom:1px solid black;font-weight:bold;}
-    </style>
-    </head>
-    <body><table class='synlist'>
-    <tr><td class='headerrow'>Date</td><td class='headerrow'>Name</td><td class='headerrow'>Advisor</td><td class='headerrow'>Verb</td></tr>"#,
-    );
-    for l in list {
-        let eastern_daylight_tz = FixedOffset::west_opt(4 * 60 * 60).unwrap();
-        let d = eastern_daylight_tz.timestamp_millis_opt(l.1);
-        let timestamp_str = match d {
-            LocalResult::Single(t) => t.format("%Y-%m-%d %H:%M:%S").to_string(),
-            _ => "".to_string(),
-        };
-
-        res.push_str(format!("<tr><td><a href='greek-synopsis-result?id={}'>{}</a></td><td>{}</td><td>{}</td><td>{}</td></tr>", l.0, timestamp_str, l.2, l.3,l.4).as_str());
-    }
-    res.push_str("</table></body></html>");
-
-    Ok(HttpResponse::Ok().content_type("text/html").body(res))
-}
 
 pub async fn greek_synopsis_result(
     (info, req): (web::Query<SynopsisResultRequest>, HttpRequest),

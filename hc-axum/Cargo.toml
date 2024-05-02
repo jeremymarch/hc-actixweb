@@ -10,7 +10,7 @@ path = "src/main.rs"
 [dependencies]
 libhc = { path = "../libhc", features= ["postgres"]}
 socketioxide = { version = "0.10.2", features = ["extensions"]}
-axum = { version = "0.7.4" , features = ["macros"]}
+axum = { version = "0.7.5" , features = ["macros"]}
 tokio = { version = "1.36.0", features = ["rt-multi-thread", "macros"] }
 tower-http = { version = "0.5.2", features = ["trace", "cors", "fs"] }
 tower = "0.4.13"
@@ -25,6 +25,7 @@ uuid = "1.7.0"
 sqlx = { version = "0.7.3", features = ["postgres", "runtime-tokio-rustls", "uuid"] }
 time = "0.3.34"
 secrecy = { version = "0.8.0", features = ["serde"] }
+chrono = "0.4.34"
 
 oauth2 = "4.4.2"
 sign-in-with-apple = { git = "https://github.com/jeremymarch/sign-in-with-apple", version = "0.4.2" }

@@ -276,8 +276,13 @@ pub trait HcTrx: Send + Sync + Debug {
     async fn commit_tx(self: Box<Self>) -> Result<(), HcError>;
     async fn rollback_tx(self: Box<Self>) -> Result<(), HcError>;
 
+    async fn greek_get_synopsis_list(
+        &mut self,
+    ) -> Result<Vec<(Uuid, i64, String, String, String)>, HcError>;
+
     async fn greek_insert_synopsis(
         &mut self,
+        user_id: Option<sqlx::types::Uuid>,
         info: &SynopsisSaverRequest,
         accessed: u128,
         // ip: &str,
