@@ -278,13 +278,12 @@ pub trait HcTrx: Send + Sync + Debug {
 
     async fn greek_get_synopsis_list(
         &mut self,
-    ) -> Result<Vec<(Uuid, i64, String, String, String)>, HcError>;
+    ) -> Result<Vec<(Uuid, chrono::NaiveDateTime, String, String, String)>, HcError>;
 
     async fn greek_insert_synopsis(
         &mut self,
         user_id: Option<sqlx::types::Uuid>,
         info: &SynopsisSaverRequest,
-        accessed: u128,
         // ip: &str,
         // agent: &str,
     ) -> Result<(), HcError>;

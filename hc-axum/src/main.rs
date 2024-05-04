@@ -460,12 +460,8 @@ async fn greek_synopsis_list(
     session: Session,
     State(state): State<AxumAppState>,
 ) -> impl IntoResponse {
-    //let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
-
     let mut tx = state.hcdb.begin_tx().await.unwrap();
-
     let list = tx.greek_get_synopsis_list().await.unwrap();
-
     tx.commit_tx().await.unwrap();
 
     let mut res = String::from(
@@ -483,23 +479,45 @@ async fn greek_synopsis_list(
         .synlist td { padding: 3px; }
         .headerrow {border-bottom:1px solid black;font-weight:bold;}
     </style>
+
     </head>
-    <body><table class='synlist'>
-    <tr><td class='headerrow'>Date</td><td class='headerrow'>Name</td><td class='headerrow'>Advisor</td><td class='headerrow'>Verb</td></tr>"#,
+    <body><table id='table1' class='synlist'>
+    <tr><td class='headerrow'>Date</td><td class='headerrow'>Verb</td></tr></table>
+    <script nonce="2726c7f26c">
+    const rows = ["#,
     );
+
     for l in list {
-        let eastern_daylight_tz = FixedOffset::west_opt(4 * 60 * 60).unwrap();
-        let d = eastern_daylight_tz.timestamp_millis_opt(l.1);
-        let timestamp_str = match d {
-            LocalResult::Single(t) => t.format("%Y-%m-%d %H:%M:%S").to_string(),
-            _ => "".to_string(),
-        };
-
-        res.push_str(format!("<tr><td><a href='greek-synopsis-result?id={}'>{}</a></td><td>{}</td><td>{}</td><td>{}</td></tr>", l.0, timestamp_str, l.2, l.3,l.4).as_str());
+        res.push_str(format!("['{}','{}','{}'],", l.0, l.1, l.4).as_str());
     }
-    res.push_str("</table></body></html>");
 
-    //Ok(HttpResponse::Ok().content_type("text/html").body(res))
+    res.push_str(r#"
+        ];
+
+        function formatDate(date) {
+            return new Date(date + 'Z').toLocaleString('en-CA');
+        }
+
+        const dFrag = document.createDocumentFragment();
+        let count = 0;
+        for (let r = 0; r < rows.length; r++) {
+            const tr = document.createElement('tr');
+
+            const td = document.createElement('td');
+            //td.classList.add('moodrows');
+            td.innerHTML = "<a href='greek-synopsis-result?id=" + rows[r][0] + "'>" + formatDate(rows[r][1]) + "</a>";
+            tr.append(td);
+
+            const td2 = document.createElement('td');
+            td2.innerText = rows[r][2];
+            tr.append(td2);
+
+            dFrag.appendChild(tr);
+        }
+        document.getElementById('table1').appendChild(dFrag);
+      
+    </script></body></html>"#);
+
     Html(res)
 }
 
@@ -511,12 +529,6 @@ async fn greek_synopsis_saver(
     //let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
     //let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
-    let time_stamp = SystemTime::now().duration_since(UNIX_EPOCH);
-    let time_stamp_ms = if let Ok(time_stamp) = time_stamp {
-        time_stamp.as_millis()
-    } else {
-        0
-    };
     //let user_agent = get_user_agent(&req).unwrap_or("");
     //https://stackoverflow.com/questions/66989780/how-to-retrieve-the-ip-address-of-the-client-from-httprequest-in-actix-web
     // let ip = if req.peer_addr().is_some() {
@@ -582,7 +594,6 @@ async fn greek_synopsis_saver(
         .greek_insert_synopsis(
             None,
             &payload,
-            time_stamp_ms,
             //ip.as_str(),
             //user_agent,
         )
