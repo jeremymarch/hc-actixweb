@@ -82,11 +82,12 @@ pub struct LatinSynopsisResult {
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
 pub struct GreekSynopsisResult {
-    pub id: i64,
-    pub updated: i64,
+    pub id: Uuid,
+    pub user_id: Option<Uuid>,
+    pub updated: Option<chrono::NaiveDateTime>,
     pub sname: String,
     pub advisor: String,
-    pub sgiday: i64,
+    pub sgiday: i32,
     pub selectedverb: String,
     pub pp: String,
     pub verbnumber: String,
@@ -96,7 +97,7 @@ pub struct GreekSynopsisResult {
     pub verbptccase: String,
     pub ip: String,
     pub ua: String,
-    pub status: i64,
+    pub status: i32,
     pub f0: String,
     pub f1: String,
     pub f2: String,

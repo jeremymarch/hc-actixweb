@@ -285,6 +285,9 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
 <script nonce="%NONCE%">
   'use strict';
   const unicodeMode = 0;
+
+  %RESULTJSON%
+
   function toggleDiacritic (str, pos, diacritic, unicodeMode) {
     if (pos < 0 || pos > str.length) {
       return { str, pos: str.length };
@@ -355,7 +358,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
 
     return true; // true allows most punctuation, etc. pass through
   }
-  
+
   function submitSynopsis () {
     const json = {};
     const verb = document.getElementById('selectedverb').value;
@@ -440,7 +443,11 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       document.querySelector('.tophelp').style.display = 'none';
     }
 
-    retrievefields();
+    const isResult=%ISRESULT%;
+
+    if (!isResult) {
+      retrievefields();
+    }
 
     // add event handlers
     document.querySelectorAll('.gkinput').forEach(e => {
@@ -455,12 +462,16 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     document.getElementById('unitfilter').addEventListener('change', setunit);
     document.getElementById('legendtoggle').addEventListener('click', togglelegend);
 
-    const isResult=%ISRESULT%;
+    
 
     if (isResult) {
       document.querySelectorAll('.gkinput').forEach(e => {
         e.contentEditable = false;
       });
+    }
+
+    if (typeof(resultJson) != 'undefined') {
+      setAnswers (resultJson);
     }
   }
 

@@ -44,6 +44,7 @@ use tracing::debug;
 use uuid::Uuid;
 
 use crate::synopsis::SynopsisSaverRequest;
+use crate::synopsis::GreekSynopsisResult;
 
 #[cfg(feature = "postgres")]
 pub mod dbpostgres;
@@ -279,6 +280,11 @@ pub trait HcTrx: Send + Sync + Debug {
     async fn greek_get_synopsis_list(
         &mut self,
     ) -> Result<Vec<(Uuid, chrono::NaiveDateTime, String, String, String)>, HcError>;
+
+    async fn greek_get_synopsis_result(
+        &mut self,
+        id: Uuid,
+    ) -> Result<GreekSynopsisResult, HcError>;
 
     async fn greek_insert_synopsis(
         &mut self,

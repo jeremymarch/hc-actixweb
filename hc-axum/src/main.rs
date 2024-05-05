@@ -20,6 +20,7 @@ use libhc::hgk_compare_multiple_forms;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
+use axum::extract::Query;
 use axum::response::Response;
 use serde::{Deserialize, Serialize};
 use socketioxide::socket::DisconnectReason;
@@ -419,11 +420,366 @@ async fn create_session(
     }
 }
 
+#[derive(Serialize, Deserialize)]
+struct SynopsisResultUuid {
+    id: Uuid,
+}
+
 use chrono::FixedOffset;
 use chrono::LocalResult;
 use chrono::TimeZone;
 
-async fn greek_synopsis_result() -> impl IntoResponse {
+#[debug_handler]
+async fn greek_synopsis_result(
+    Query(id): axum::extract::Query<SynopsisResultUuid>,
+    State(state): State<AxumAppState>,
+) -> impl IntoResponse {
+
+    let a = id.id;
+
+    let mut tx = state.hcdb.begin_tx().await.unwrap();
+    let result = tx.greek_get_synopsis_result(a).await.unwrap(); //need to store is_correct and correct/incorrect answers
+    tx.commit_tx().await.unwrap();
+
+
+    let mut res_forms = Vec::<SaverResults>::new();
+    res_forms.push(SaverResults {
+        given: result.f0,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f1,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f2,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f3,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f4,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f5,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f6,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f7,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f8,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f9,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f10,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f11,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f12,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f13,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f14,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f15,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f16,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f17,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f18,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f19,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f20,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f21,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f22,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f23,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f24,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f25,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f26,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f27,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f28,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f29,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f30,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f31,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f32,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f33,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f34,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f35,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f36,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f37,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f38,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f39,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f40,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f41,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f42,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f43,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f44,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f45,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f46,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f47,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f48,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f49,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f50,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f51,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f52,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f53,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f54,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f55,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f56,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f57,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f58,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f59,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f60,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f61,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    res_forms.push(SaverResults {
+        given: result.f62,
+        correct: Some(String::from("")),
+        is_correct: true,
+    });
+    
+    let res = SynopsisJsonResult {
+        verb_id: result.selectedverb.parse::<i32>().unwrap(),
+        person: result.verbperson.parse::<i32>().unwrap(),
+        number: result.verbnumber.parse::<i32>().unwrap(),
+        case: Some(result.verbptccase.parse::<i32>().unwrap_or(999)),
+        gender: Some(result.verbptcgender.parse::<i32>().unwrap_or(999)),
+        unit: 0,
+        pp: result.pp,
+        // pp: verbs[verb_id]
+        //     .pps
+        //     .iter()
+        //     .map(|x| x.replace('/', " or ").replace("  ", " "))
+        //     .collect::<Vec<_>>()
+        //     .join(", "),
+        name: result.sname.clone(),
+        advisor: result.advisor.clone(),
+        f: res_forms,
+    };
+
+    let json = serde_json::to_string(&res).unwrap();
+
     let csp_nonce: String = Uuid::new_v4().to_string(); //.simple().encode_upper(&mut Uuid::encode_buffer()).to_string();
 
     let mut headers = HeaderMap::new();
@@ -435,7 +791,8 @@ async fn greek_synopsis_result() -> impl IntoResponse {
     let page = SYNOPSIS_PAGE
         .replace("%NONCE%", &csp_nonce)
         .replace("%ISRESULTCSS%", "synopsis-result")
-        .replace("%ISRESULT%", "true");
+        .replace("%ISRESULT%", "true")
+        .replace("%RESULTJSON%", format!("const resultJson = {}", json).as_str());
     (headers, Html(page))
 }
 
@@ -451,7 +808,8 @@ async fn greek_synopsis() -> impl IntoResponse {
     let page = SYNOPSIS_PAGE
         .replace("%NONCE%", &csp_nonce)
         .replace("%ISRESULTCSS%", "synopsis-form")
-        .replace("%ISRESULT%", "false");
+        .replace("%ISRESULT%", "false")
+        .replace("%RESULTJSON%", "");
 
     (headers, Html(page))
 }

@@ -38,6 +38,7 @@ use sqlx::Postgres;
 use sqlx::Transaction;
 
 use crate::synopsis::SynopsisSaverRequest;
+use crate::synopsis::GreekSynopsisResult;
 
 fn map_sqlx_error(err: sqlx::Error) -> HcError {
     match err {
@@ -104,22 +105,21 @@ impl HcTrx for HcDbPostgresTrx<'_> {
 
         Ok(res)
     }
-    /*
-    pub async fn greek_get_synopsis_result(
-        pool: &SqlitePool,
-        id: u32,
-    ) -> Result<Vec<GreekSynopsisResult>, sqlx::Error> {
-        let query = format!(
-            "SELECT * FROM greeksynopsisresults WHERE id={} ORDER BY updated DESC;",
-            id
-        );
-        let res: Vec<GreekSynopsisResult> = sqlx::query_as::<_, GreekSynopsisResult>(&query)
-            .fetch_all(pool)
-            .await?;
+    
+    async fn greek_get_synopsis_result(
+        &mut self,
+        id: Uuid,
+    ) -> Result<GreekSynopsisResult, HcError> {
+        let query = r#"SELECT * FROM greeksynopsisresults WHERE id = $1;"#;
+        let res: GreekSynopsisResult = sqlx::query_as(&query)
+            .bind(id)
+            .fetch_one(&mut *self.tx)
+            .await
+            .map_err(map_sqlx_error)?;
 
         Ok(res)
     }
-    */
+    
 
     async fn greek_insert_synopsis(
         &mut self,
@@ -732,7 +732,24 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             .await
             .map_err(map_sqlx_error)?;
 
-        let query = r#"CREATE TABLE IF NOT EXISTS greeksynopsisresults ( id UUID PRIMARY KEY NOT NULL, user_id UUID, updated timestamp default (now() at time zone 'utc'), sname TEXT NOT NULL, advisor TEXT NOT NULL, sgiday INTEGER NOT NULL, selectedverb TEXT NOT NULL, pp TEXT NOT NULL, verbnumber TEXT NOT NULL, verbperson TEXT NOT NULL, verbptcgender TEXT NOT NULL, verbptcnumber TEXT NOT NULL, verbptccase TEXT NOT NULL, ip TEXT NOT NULL, ua TEXT NOT NULL, status INTEGER NOT NULL, f0 TEXT NOT NULL, f1 TEXT NOT NULL, f2 TEXT NOT NULL, f3 TEXT NOT NULL, f4 TEXT NOT NULL, f5 TEXT NOT NULL, f6 TEXT NOT NULL, f7 TEXT NOT NULL, f8 TEXT NOT NULL, f9 TEXT NOT NULL, f10 TEXT NOT NULL, f11 TEXT NOT NULL, f12 TEXT NOT NULL, f13 TEXT NOT NULL, f14 TEXT NOT NULL, f15 TEXT NOT NULL, f16 TEXT NOT NULL, f17 TEXT NOT NULL, f18 TEXT NOT NULL, f19 TEXT NOT NULL, f20 TEXT NOT NULL, f21 TEXT NOT NULL, f22 TEXT NOT NULL, f23 TEXT NOT NULL, f24 TEXT NOT NULL, f25 TEXT NOT NULL, f26 TEXT NOT NULL, f27 TEXT NOT NULL, f28 TEXT NOT NULL, f29 TEXT NOT NULL, f30 TEXT NOT NULL, f31 TEXT NOT NULL, f32 TEXT NOT NULL, f33 TEXT NOT NULL, f34 TEXT NOT NULL, f35 TEXT NOT NULL, f36 TEXT NOT NULL, f37 TEXT NOT NULL, f38 TEXT NOT NULL, f39 TEXT NOT NULL, f40 TEXT NOT NULL, f41 TEXT NOT NULL, f42 TEXT NOT NULL, f43 TEXT NOT NULL, f44 TEXT NOT NULL, f45 TEXT NOT NULL, f46 TEXT NOT NULL, f47 TEXT NOT NULL, f48 TEXT NOT NULL, f49 TEXT NOT NULL, f50 TEXT NOT NULL, f51 TEXT NOT NULL, f52 TEXT NOT NULL, f53 TEXT NOT NULL, f54 TEXT NOT NULL, f55 TEXT NOT NULL, f56 TEXT NOT NULL, f57 TEXT NOT NULL, f58 TEXT NOT NULL, f59 TEXT NOT NULL, f60 TEXT NOT NULL, f61 TEXT NOT NULL, f62 TEXT NOT NULL, FOREIGN KEY (user_id) REFERENCES users(user_id) );"#;
+        let query = r#"CREATE TABLE IF NOT EXISTS greeksynopsisresults ( 
+            id UUID PRIMARY KEY NOT NULL, 
+            user_id UUID, 
+            updated timestamp default (now() at time zone 'utc'), 
+            sname TEXT NOT NULL, 
+            advisor TEXT NOT NULL, 
+            sgiday INTEGER NOT NULL, 
+            selectedverb TEXT NOT NULL, 
+            pp TEXT NOT NULL, 
+            verbnumber TEXT NOT NULL, 
+            verbperson TEXT NOT NULL, 
+            verbptcgender TEXT NOT NULL, 
+            verbptcnumber TEXT NOT NULL, 
+            verbptccase TEXT NOT NULL, 
+            ip TEXT NOT NULL, 
+            ua TEXT NOT NULL, 
+            status INTEGER NOT NULL, 
+            f0 TEXT NOT NULL, f1 TEXT NOT NULL, f2 TEXT NOT NULL, f3 TEXT NOT NULL, f4 TEXT NOT NULL, f5 TEXT NOT NULL, f6 TEXT NOT NULL, f7 TEXT NOT NULL, f8 TEXT NOT NULL, f9 TEXT NOT NULL, f10 TEXT NOT NULL, f11 TEXT NOT NULL, f12 TEXT NOT NULL, f13 TEXT NOT NULL, f14 TEXT NOT NULL, f15 TEXT NOT NULL, f16 TEXT NOT NULL, f17 TEXT NOT NULL, f18 TEXT NOT NULL, f19 TEXT NOT NULL, f20 TEXT NOT NULL, f21 TEXT NOT NULL, f22 TEXT NOT NULL, f23 TEXT NOT NULL, f24 TEXT NOT NULL, f25 TEXT NOT NULL, f26 TEXT NOT NULL, f27 TEXT NOT NULL, f28 TEXT NOT NULL, f29 TEXT NOT NULL, f30 TEXT NOT NULL, f31 TEXT NOT NULL, f32 TEXT NOT NULL, f33 TEXT NOT NULL, f34 TEXT NOT NULL, f35 TEXT NOT NULL, f36 TEXT NOT NULL, f37 TEXT NOT NULL, f38 TEXT NOT NULL, f39 TEXT NOT NULL, f40 TEXT NOT NULL, f41 TEXT NOT NULL, f42 TEXT NOT NULL, f43 TEXT NOT NULL, f44 TEXT NOT NULL, f45 TEXT NOT NULL, f46 TEXT NOT NULL, f47 TEXT NOT NULL, f48 TEXT NOT NULL, f49 TEXT NOT NULL, f50 TEXT NOT NULL, f51 TEXT NOT NULL, f52 TEXT NOT NULL, f53 TEXT NOT NULL, f54 TEXT NOT NULL, f55 TEXT NOT NULL, f56 TEXT NOT NULL, f57 TEXT NOT NULL, f58 TEXT NOT NULL, f59 TEXT NOT NULL, f60 TEXT NOT NULL, f61 TEXT NOT NULL, f62 TEXT NOT NULL, FOREIGN KEY (user_id) REFERENCES users(user_id) );"#;
         let _res = sqlx::query(query)
             .execute(&mut *self.tx)
             .await
