@@ -43,8 +43,8 @@ use tokio::task::spawn_blocking;
 use tracing::debug;
 use uuid::Uuid;
 
-use crate::synopsis::SynopsisSaverRequest;
 use crate::synopsis::GreekSynopsisResult;
+use crate::synopsis::SynopsisSaverRequest;
 
 #[cfg(feature = "postgres")]
 pub mod dbpostgres;
@@ -281,15 +281,14 @@ pub trait HcTrx: Send + Sync + Debug {
         &mut self,
     ) -> Result<Vec<(Uuid, chrono::NaiveDateTime, String, String, String)>, HcError>;
 
-    async fn greek_get_synopsis_result(
-        &mut self,
-        id: Uuid,
-    ) -> Result<GreekSynopsisResult, HcError>;
+    async fn greek_get_synopsis_result(&mut self, id: Uuid)
+        -> Result<GreekSynopsisResult, HcError>;
 
     async fn greek_insert_synopsis(
         &mut self,
         user_id: Option<sqlx::types::Uuid>,
         info: &SynopsisSaverRequest,
+        res: &Vec<String>,
         // ip: &str,
         // agent: &str,
     ) -> Result<(), HcError>;

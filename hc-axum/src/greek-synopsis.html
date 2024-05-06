@@ -629,7 +629,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
         if (data.f[i]) {
           // e.value = data.f[i].given;
           setValue(e, data.f[i].given);
-          if (!data.f[i].is_correct && data.f[i].correct) {
+          if (!data.f[i].is_correct) { // && data.f[i].correct) {
             e.classList.add('incorrect');
           } else {
             e.classList.remove('incorrect');

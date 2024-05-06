@@ -37,8 +37,8 @@ use sqlx::postgres::PgRow;
 use sqlx::Postgres;
 use sqlx::Transaction;
 
-use crate::synopsis::SynopsisSaverRequest;
 use crate::synopsis::GreekSynopsisResult;
+use crate::synopsis::SynopsisSaverRequest;
 
 fn map_sqlx_error(err: sqlx::Error) -> HcError {
     match err {
@@ -105,7 +105,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
 
         Ok(res)
     }
-    
+
     async fn greek_get_synopsis_result(
         &mut self,
         id: Uuid,
@@ -119,12 +119,12 @@ impl HcTrx for HcDbPostgresTrx<'_> {
 
         Ok(res)
     }
-    
 
     async fn greek_insert_synopsis(
         &mut self,
         user_id: Option<sqlx::types::Uuid>,
         info: &SynopsisSaverRequest,
+        res: &Vec<String>,
         // ip: &str,
         // agent: &str,
     ) -> Result<(), HcError> {
@@ -132,7 +132,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         let agent = "";
         let uuid = sqlx::types::Uuid::new_v4();
         let query = format!("INSERT INTO greeksynopsisresults VALUES ($1, $2, DEFAULT, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, '{}')", 
-            info.r.join("', '"));
+            res.join("', '"));
         //println!("aaa: {}", query);
         sqlx::query(&query)
             .bind(uuid)
@@ -749,7 +749,70 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             ip TEXT NOT NULL, 
             ua TEXT NOT NULL, 
             status INTEGER NOT NULL, 
-            f0 TEXT NOT NULL, f1 TEXT NOT NULL, f2 TEXT NOT NULL, f3 TEXT NOT NULL, f4 TEXT NOT NULL, f5 TEXT NOT NULL, f6 TEXT NOT NULL, f7 TEXT NOT NULL, f8 TEXT NOT NULL, f9 TEXT NOT NULL, f10 TEXT NOT NULL, f11 TEXT NOT NULL, f12 TEXT NOT NULL, f13 TEXT NOT NULL, f14 TEXT NOT NULL, f15 TEXT NOT NULL, f16 TEXT NOT NULL, f17 TEXT NOT NULL, f18 TEXT NOT NULL, f19 TEXT NOT NULL, f20 TEXT NOT NULL, f21 TEXT NOT NULL, f22 TEXT NOT NULL, f23 TEXT NOT NULL, f24 TEXT NOT NULL, f25 TEXT NOT NULL, f26 TEXT NOT NULL, f27 TEXT NOT NULL, f28 TEXT NOT NULL, f29 TEXT NOT NULL, f30 TEXT NOT NULL, f31 TEXT NOT NULL, f32 TEXT NOT NULL, f33 TEXT NOT NULL, f34 TEXT NOT NULL, f35 TEXT NOT NULL, f36 TEXT NOT NULL, f37 TEXT NOT NULL, f38 TEXT NOT NULL, f39 TEXT NOT NULL, f40 TEXT NOT NULL, f41 TEXT NOT NULL, f42 TEXT NOT NULL, f43 TEXT NOT NULL, f44 TEXT NOT NULL, f45 TEXT NOT NULL, f46 TEXT NOT NULL, f47 TEXT NOT NULL, f48 TEXT NOT NULL, f49 TEXT NOT NULL, f50 TEXT NOT NULL, f51 TEXT NOT NULL, f52 TEXT NOT NULL, f53 TEXT NOT NULL, f54 TEXT NOT NULL, f55 TEXT NOT NULL, f56 TEXT NOT NULL, f57 TEXT NOT NULL, f58 TEXT NOT NULL, f59 TEXT NOT NULL, f60 TEXT NOT NULL, f61 TEXT NOT NULL, f62 TEXT NOT NULL, FOREIGN KEY (user_id) REFERENCES users(user_id) );"#;
+            f0 TEXT NOT NULL, c0 BOOLEAN NOT NULL,
+            f1 TEXT NOT NULL, c1 BOOLEAN NOT NULL,
+            f2 TEXT NOT NULL, c2 BOOLEAN NOT NULL,
+            f3 TEXT NOT NULL, c3 BOOLEAN NOT NULL,
+            f4 TEXT NOT NULL, c4 BOOLEAN NOT NULL,
+            f5 TEXT NOT NULL, c5 BOOLEAN NOT NULL,
+            f6 TEXT NOT NULL, c6 BOOLEAN NOT NULL,
+            f7 TEXT NOT NULL, c7 BOOLEAN NOT NULL,
+            f8 TEXT NOT NULL, c8 BOOLEAN NOT NULL,
+            f9 TEXT NOT NULL, c9 BOOLEAN NOT NULL,
+            f10 TEXT NOT NULL, c10 BOOLEAN NOT NULL,
+            f11 TEXT NOT NULL, c11 BOOLEAN NOT NULL,
+            f12 TEXT NOT NULL, c12 BOOLEAN NOT NULL,
+            f13 TEXT NOT NULL, c13 BOOLEAN NOT NULL,
+            f14 TEXT NOT NULL, c14 BOOLEAN NOT NULL,
+            f15 TEXT NOT NULL, c15 BOOLEAN NOT NULL,
+            f16 TEXT NOT NULL, c16 BOOLEAN NOT NULL,
+            f17 TEXT NOT NULL, c17 BOOLEAN NOT NULL,
+            f18 TEXT NOT NULL, c18 BOOLEAN NOT NULL,
+            f19 TEXT NOT NULL, c19 BOOLEAN NOT NULL,
+            f20 TEXT NOT NULL, c20 BOOLEAN NOT NULL,
+            f21 TEXT NOT NULL, c21 BOOLEAN NOT NULL,
+            f22 TEXT NOT NULL, c22 BOOLEAN NOT NULL,
+            f23 TEXT NOT NULL, c23 BOOLEAN NOT NULL,
+            f24 TEXT NOT NULL, c24 BOOLEAN NOT NULL,
+            f25 TEXT NOT NULL, c25 BOOLEAN NOT NULL,
+            f26 TEXT NOT NULL, c26 BOOLEAN NOT NULL,
+            f27 TEXT NOT NULL, c27 BOOLEAN NOT NULL,
+            f28 TEXT NOT NULL, c28 BOOLEAN NOT NULL,
+            f29 TEXT NOT NULL, c29 BOOLEAN NOT NULL,
+            f30 TEXT NOT NULL, c30 BOOLEAN NOT NULL,
+            f31 TEXT NOT NULL, c31 BOOLEAN NOT NULL,
+            f32 TEXT NOT NULL, c32 BOOLEAN NOT NULL,
+            f33 TEXT NOT NULL, c33 BOOLEAN NOT NULL,
+            f34 TEXT NOT NULL, c34 BOOLEAN NOT NULL,
+            f35 TEXT NOT NULL, c35 BOOLEAN NOT NULL,
+            f36 TEXT NOT NULL, c36 BOOLEAN NOT NULL,
+            f37 TEXT NOT NULL, c37 BOOLEAN NOT NULL,
+            f38 TEXT NOT NULL, c38 BOOLEAN NOT NULL,
+            f39 TEXT NOT NULL, c39 BOOLEAN NOT NULL,
+            f40 TEXT NOT NULL, c40 BOOLEAN NOT NULL,
+            f41 TEXT NOT NULL, c41 BOOLEAN NOT NULL,
+            f42 TEXT NOT NULL, c42 BOOLEAN NOT NULL,
+            f43 TEXT NOT NULL, c43 BOOLEAN NOT NULL,
+            f44 TEXT NOT NULL, c44 BOOLEAN NOT NULL,
+            f45 TEXT NOT NULL, c45 BOOLEAN NOT NULL,
+            f46 TEXT NOT NULL, c46 BOOLEAN NOT NULL,
+            f47 TEXT NOT NULL, c47 BOOLEAN NOT NULL,
+            f48 TEXT NOT NULL, c48 BOOLEAN NOT NULL,
+            f49 TEXT NOT NULL, c49 BOOLEAN NOT NULL,
+            f50 TEXT NOT NULL, c50 BOOLEAN NOT NULL,
+            f51 TEXT NOT NULL, c51 BOOLEAN NOT NULL,
+            f52 TEXT NOT NULL, c52 BOOLEAN NOT NULL,
+            f53 TEXT NOT NULL, c53 BOOLEAN NOT NULL,
+            f54 TEXT NOT NULL, c54 BOOLEAN NOT NULL,
+            f55 TEXT NOT NULL, c55 BOOLEAN NOT NULL,
+            f56 TEXT NOT NULL, c56 BOOLEAN NOT NULL,
+            f57 TEXT NOT NULL, c57 BOOLEAN NOT NULL,
+            f58 TEXT NOT NULL, c58 BOOLEAN NOT NULL,
+            f59 TEXT NOT NULL, c59 BOOLEAN NOT NULL,
+            f60 TEXT NOT NULL, c60 BOOLEAN NOT NULL,
+            f61 TEXT NOT NULL, c61 BOOLEAN NOT NULL,
+            f62 TEXT NOT NULL, c62 BOOLEAN NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(user_id) );"#;
         let _res = sqlx::query(query)
             .execute(&mut *self.tx)
             .await
