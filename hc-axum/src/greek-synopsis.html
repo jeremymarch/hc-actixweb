@@ -23,6 +23,10 @@
   src: url('/newathu5_8.ttf') format('truetype');
 }  
 
+#namecell {
+  display:none;
+}
+
 .rotate { 
     transform: rotate(-42deg);
     width: 10%;
@@ -414,6 +418,10 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       error: function () { alert('There was an error submitting the synopsis. Check your internet connection and try submitting again.'); }
     });
   }
+
+  function isResult () {
+    return (typeof(resultJson) != 'undefined' && resultJson);
+  }
   
   // eslint-disable-next-line no-unused-vars
   function start () {
@@ -443,9 +451,8 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       document.querySelector('.tophelp').style.display = 'none';
     }
 
-    const isResult=%ISRESULT%;
-
-    if (!isResult) {
+ 
+    if ( !isResult() ) {
       retrievefields();
     }
 
@@ -463,15 +470,12 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     document.getElementById('legendtoggle').addEventListener('click', togglelegend);
 
     
-
-    if (isResult) {
+    if ( isResult() ) {
       document.querySelectorAll('.gkinput').forEach(e => {
         e.contentEditable = false;
       });
-    }
 
-    if (typeof(resultJson) != 'undefined') {
-      setAnswers (resultJson);
+      setAnswers(resultJson);
     }
   }
 
