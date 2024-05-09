@@ -309,10 +309,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/newuser", axum::routing::post(login::new_user_post))
         .route("/logout", axum::routing::get(login::logout))
         .route("/healthzzz", axum::routing::get(health_check))
-        .route(
-            "/greek-synopsis-result",
-            axum::routing::get(greek_synopsis_result),
-        )
+        // .route(
+        //     "/greek-synopsis-result",
+        //     axum::routing::get(greek_synopsis_result),
+        // )
         .route(
             "/greek-synopsis-list",
             axum::routing::get(greek_synopsis_list),
@@ -430,14 +430,13 @@ use chrono::LocalResult;
 use chrono::TimeZone;
 
 #[debug_handler]
-async fn greek_synopsis_result(
+async fn greek_synopsis(
     Query(id): axum::extract::Query<SynopsisResultUuid>,
     State(state): State<AxumAppState>,
 ) -> impl IntoResponse {
     let mut json = String::from("false");
 
     if let Some(a) = id.id {
-
         let mut tx = state.hcdb.begin_tx().await.unwrap();
         let result = tx.greek_get_synopsis_result(a).await.unwrap(); //need to store is_correct and correct/incorrect answers
         tx.commit_tx().await.unwrap();
@@ -789,33 +788,30 @@ async fn greek_synopsis_result(
         HeaderValue::from_str(&CSP.replace("%NONCE%", &csp_nonce)).unwrap(),
     );
 
-    let page = SYNOPSIS_PAGE
-        .replace("%NONCE%", &csp_nonce)
-        .replace("%ISRESULTCSS%", "synopsis-result")
-        .replace(
-            "%RESULTJSON%",
-            format!("const resultJson = {};", json).as_str(),
-        );
-
-    (headers, Html(page))
-}
-
-async fn greek_synopsis() -> impl IntoResponse {
-    let csp_nonce: String = Uuid::new_v4().to_string(); //.simple().encode_upper(&mut Uuid::encode_buffer()).to_string();
-
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        HeaderName::from_static("content-security-policy"),
-        HeaderValue::from_str(&CSP.replace("%NONCE%", &csp_nonce)).unwrap(),
+    let page = SYNOPSIS_PAGE.replace("%NONCE%", &csp_nonce).replace(
+        "%RESULTJSON%",
+        format!("const resultJson = {};", json).as_str(),
     );
 
-    let page = SYNOPSIS_PAGE
-        .replace("%NONCE%", &csp_nonce)
-        .replace("%ISRESULTCSS%", "synopsis-form")
-        .replace("%RESULTJSON%", "const resultJson = false;");
-
     (headers, Html(page))
 }
+
+// async fn greek_synopsis() -> impl IntoResponse {
+//     let csp_nonce: String = Uuid::new_v4().to_string(); //.simple().encode_upper(&mut Uuid::encode_buffer()).to_string();
+
+//     let mut headers = HeaderMap::new();
+//     headers.insert(
+//         HeaderName::from_static("content-security-policy"),
+//         HeaderValue::from_str(&CSP.replace("%NONCE%", &csp_nonce)).unwrap(),
+//     );
+
+//     let page = SYNOPSIS_PAGE
+//         .replace("%NONCE%", &csp_nonce)
+//         .replace("%ISRESULTCSS%", "synopsis-form")
+//         .replace("%RESULTJSON%", "const resultJson = false;");
+
+//     (headers, Html(page))
+// }
 
 async fn greek_synopsis_list(
     session: Session,
@@ -831,6 +827,10 @@ async fn greek_synopsis_list(
     <head>
     <meta charset="UTF-8">
     <style nonce="2726c7f26c">
+        body {
+            font-family: helvetica, arial;
+            margin:0px;
+        }
         .synlist { width: 600px;
             margin: 0px auto;
             border-collapse: collapse;
@@ -839,10 +839,92 @@ async fn greek_synopsis_list(
         }
         .synlist td { padding: 3px; }
         .headerrow {border-bottom:1px solid black;font-weight:bold;}
+    #hamburgercontainer {
+        padding: 0px;
+        margin: 0px;
+      }
+      #hamburger {
+        background-color: white;
+        border: 1px solid #666;
+        border-radius: 4px;
+        cursor: pointer;
+        height: 20px;
+        width: 20px;
+      }
+      #hamburger {
+        z-index: 999;
+        position: relative;
+      }
+      #hamburger rect {
+        fill: black;
+      }
+      #appTitle {
+        font-weight: bold;
+        position: relative;
+        right: 10px;
+      }
+      #menubar {
+        height: 1.5rem;
+        border-bottom: 1px solid black;
+        display: flex;
+        justify-content: flex-end;
+        background-color: white;
+        position: relative;
+        z-index: 900;
+        padding: 0.2rem 1rem;
+      }
+      #loginContainer {
+        padding: 0px 20px;
+      }
+      #loginlink {
+        display: inline;
+      }
+      #logoutlink {
+        display: none;
+      }
+      .dark #menubar {
+        color: white;
+      }
+      .dark #hamburger {
+        background-color: black;
+      }
+      .dark #hamburger rect {
+        fill: white;
+      }
+      .dark a {
+        color: #03A5F3;
+      }
+      .dark #menubar {
+        background-color: black;
+        color: white;
+        border-bottom: 1px solid white;
+      }
+      * {
+        box-sizing: border-box;
+      }
     </style>
 
     </head>
-    <body><table id='table1' class='synlist'>
+    <body>
+    <div id="menubar"><a href="greek-synopsis">New</a>
+    <div id="loginContainer"><a id="loginlink" href="login">login</a>
+        <span id="logoutlink">
+          <span id="username"></span> 
+          (<a href="logout">logout</a>)
+        </span>
+    </div>
+    <div id="appTitle">SYNOPSIS</div>
+
+    <div id="hamburgercontainer">
+      <svg id="hamburger" viewBox="0 0 120 120">
+          <rect x="10" y="30" width="100" height="12"></rect>
+          <rect x="10" y="56" width="100" height="12"></rect>
+          <rect x="10" y="82" width="100" height="12"></rect>
+      </svg>
+  </div>
+
+</div>
+    <table id='table1' class='synlist'>
     <tr><td class='headerrow'>Date</td><td class='headerrow'>Verb</td></tr></table>
     <script nonce="2726c7f26c">
     const rows = ["#,
@@ -866,7 +948,7 @@ async fn greek_synopsis_list(
 
             const td = document.createElement('td');
             //td.classList.add('moodrows');
-            td.innerHTML = "<a href='greek-synopsis-result?id=" + rows[r][0] + "'>" + formatDate(rows[r][1]) + "</a>";
+            td.innerHTML = "<a href='greek-synopsis?id=" + rows[r][0] + "'>" + formatDate(rows[r][1]) + "</a>";
             tr.append(td);
 
             const td2 = document.createElement('td');
