@@ -1436,6 +1436,7 @@ dependencies = [
 [[package]]
 name = "hoplite_verbs_rs"
 version = "0.4.4"
+source = "git+https://github.com/jeremymarch/hoplite_verbs_rs#a80716d8bfdcc5ccef1e565fc10d0091b55deabb"
 dependencies = [
  "itertools 0.12.1",
  "polytonic-greek",

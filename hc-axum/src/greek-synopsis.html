@@ -540,6 +540,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     return (typeof(resultJson) != 'undefined' && resultJson);
   }
   
+  const maxUnit = 20;
   // eslint-disable-next-line no-unused-vars
   function start () {
     makeTable();
@@ -547,7 +548,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     verbs.sort(function (a, b) { return a.s - b.s; });
     const vc = document.getElementById('selectedverb');
     for (let i = 0; i < verbs.length; i++) {
-      if (verbs[i].i !== 78 && verbs[i].i !== 79 && verbs[i].i !== 122 && verbs[i].i !== 127) {
+      if (verbs[i].i !== 78 && verbs[i].i !== 79 && verbs[i].i !== 122 && verbs[i].i !== 127 && verbs[i].u <= maxUnit) {
         const o = document.createElement('option');
         o.value = verbs[i].i;
         o.text = verbs[i].pp;
@@ -626,14 +627,24 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     h.classList.add('synopsis-form');
 
     document.querySelectorAll('.gkinput').forEach(e => {
-      e.contentEditable = true;
+      if (useContentEditable) {
+        e.contentEditable = true;
+      }
+      else {
+        e.disabled = false;
+      }
     });
   }
 
   //sets page properties for a result
   function makePageResult () {
     document.querySelectorAll('.gkinput').forEach(e => {
-      e.contentEditable = false;
+      if (useContentEditable) {
+        e.contentEditable = false;
+      }
+      else {
+        e.disabled = true;
+      }
     });
 
     const h = document.getElementsByTagName('HTML')[0];
@@ -1025,7 +1036,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     { i: 127, s: 126, pp: 'χρή', u: 20 }
   ];
 
-  const useContentEditable = true;
+  const useContentEditable = false;
   function makeTable () {
     const dFrag = document.createDocumentFragment();
     let count = 0;
