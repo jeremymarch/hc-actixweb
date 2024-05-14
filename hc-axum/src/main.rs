@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 use libhc::hgk_compare_multiple_forms;
-use std::time::SystemTime;
-use std::time::UNIX_EPOCH;
+//use std::time::SystemTime;
+//use std::time::UNIX_EPOCH;
 
 use axum::extract::Query;
 use axum::response::Response;
@@ -31,9 +31,8 @@ use socketioxide::{
 use std::sync::atomic::AtomicUsize;
 use tower::ServiceBuilder;
 use tower_cookies::cookie::SameSite;
-use tower_http::{cors::CorsLayer, services::ServeDir};
-use tracing::Level;
-use tracing::{error, info};
+use tower_http::{/*cors::CorsLayer,*/ services::ServeDir};
+use tracing::{/*error, Level,*/ info};
 //use tracing_subscriber::FmtSubscriber;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
@@ -51,7 +50,7 @@ use time::Duration;
 use tower::BoxError;
 use tower_cookies::CookieManagerLayer;
 use tower_sessions::{
-    ExpiredDeletion, Expiry, MemoryStore, PostgresStore, Session, SessionManagerLayer,
+    /*ExpiredDeletion, PostgresStore*/ Expiry, MemoryStore, Session, SessionManagerLayer,
 };
 
 use libhc::dbpostgres::HcDbPostgres;
@@ -75,6 +74,15 @@ use libhc::synopsis::SynopsisSaverRequest;
 use uuid::Uuid;
 
 mod login;
+
+#[derive(Serialize, Deserialize)]
+struct SynopsisResultUuid {
+    id: Option<Uuid>,
+}
+
+// use chrono::FixedOffset;
+// use chrono::LocalResult;
+// use chrono::TimeZone;
 
 use libhc::CreateSessionQuery;
 use libhc::HcError;
@@ -174,7 +182,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
        s.join(["game-uuid"]).leave(["old-game-uuid"]);
     */
 
-    let (layer, io) = SocketIo::new_layer();
+    let (_layer, io) = SocketIo::new_layer();
     io.ns("/", |s: SocketRef| {
         s.on("new message", |s: SocketRef, Data::<String>(msg)| {
             let username = s.extensions.get::<Username>().unwrap().clone();
@@ -419,15 +427,6 @@ async fn create_session(
         Err(StatusCode::UNAUTHORIZED)
     }
 }
-
-#[derive(Serialize, Deserialize)]
-struct SynopsisResultUuid {
-    id: Option<Uuid>,
-}
-
-use chrono::FixedOffset;
-use chrono::LocalResult;
-use chrono::TimeZone;
 
 #[debug_handler]
 async fn greek_synopsis(
@@ -817,8 +816,11 @@ async fn greek_synopsis_list(
     session: Session,
     State(state): State<AxumAppState>,
 ) -> impl IntoResponse {
+    let user_id = login::get_user_id(&session);
+    let username = login::get_username(&session);
+
     let mut tx = state.hcdb.begin_tx().await.unwrap();
-    let list = tx.greek_get_synopsis_list().await.unwrap();
+    let list = tx.greek_get_synopsis_list(user_id).await.unwrap();
     tx.commit_tx().await.unwrap();
 
     let mut res = String::from(
@@ -882,6 +884,8 @@ async fn greek_synopsis_list(
       #logoutlink {
         display: none;
       }
+      .loggedin #loginlink { display: none; }
+      .loggedin #logoutlink { display: inline; }
       .dark #menubar {
         color: white;
       }
@@ -903,7 +907,6 @@ async fn greek_synopsis_list(
         box-sizing: border-box;
       }
     </style>
-
     </head>
     <body>
     <div id="menubar"><a href="greek-synopsis">New</a>
@@ -927,16 +930,34 @@ async fn greek_synopsis_list(
     <table id='table1' class='synlist'>
     <tr><td class='headerrow'>Date</td><td class='headerrow'>Verb</td></tr></table>
     <script nonce="2726c7f26c">
+    let username = %USERNAME%;
     const rows = ["#,
     );
 
+    let name = if username.is_some() {
+        format!("'{}'", username.unwrap())
+    } else {
+        String::from("false")
+    };
+    res = res.replace("%USERNAME%", name.as_str());
+
     for l in list {
-        res.push_str(format!("['{}','{}','{}'],", l.0, l.1, l.4).as_str());
+        let verb = &state.verbs[l.4.parse::<usize>().unwrap()].pps[0];
+        res.push_str(
+            format!(
+                "['{}','{}','{}','{}'],",
+                l.0,
+                l.1,
+                verb,
+                l.2.unwrap_or(String::from(""))
+            )
+            .as_str(),
+        );
     }
 
     res.push_str(r#"
         ];
-
+        function q (i) { return document.querySelector(i); }
         function formatDate(date) {
             return new Date(date + 'Z').toLocaleString('en-CA');
         }
@@ -952,12 +973,27 @@ async fn greek_synopsis_list(
             tr.append(td);
 
             const td2 = document.createElement('td');
-            td2.innerText = rows[r][2];
+            td2.innerText = rows[r][3];
             tr.append(td2);
+
+            const td3 = document.createElement('td');
+            td3.innerText = rows[r][2];
+            tr.append(td3);
 
             dFrag.appendChild(tr);
         }
         document.getElementById('table1').appendChild(dFrag);
+
+        if (username) {
+            const userName = username ? username : 'anon';
+            document.body.classList.add('loggedin');
+            q('#username').innerText = userName;
+            //globalUserName = userName;
+          } else {
+            document.body.classList.remove('loggedin');
+            q('#username').innerText = '';
+            //globalUserName = null;
+          }
       
     </script></body></html>"#);
 
@@ -967,7 +1003,7 @@ async fn greek_synopsis_list(
 async fn greek_synopsis_saver(
     session: Session,
     State(state): State<AxumAppState>,
-    extract::Json(payload): extract::Json<SynopsisSaverRequest>,
+    extract::Json(mut payload): extract::Json<SynopsisSaverRequest>,
 ) -> Result<Json<SynopsisJsonResult>, StatusCode> {
     //let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
     //let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
@@ -979,6 +1015,8 @@ async fn greek_synopsis_saver(
     // } else {
     //     "".to_string()
     // };
+
+    let user_id = login::get_user_id(&session);
 
     let verb_id = payload.verb.try_into().unwrap();
     let correct_answers = get_forms(
@@ -1038,9 +1076,11 @@ async fn greek_synopsis_saver(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
+    payload.r = db_insert; //add correct boolean and correct answers here to save to db
+
     let _ = tx
         .greek_insert_synopsis(
-            None, &payload, &db_insert,
+            user_id, &payload,
             //ip.as_str(),
             //user_agent,
         )
@@ -1058,7 +1098,7 @@ async fn greek_synopsis_saver(
 }
 
 async fn synopsis_json(
-    session: Session,
+    _session: Session,
     State(state): State<AxumAppState>,
     extract::Json(payload): extract::Json<SynopsisSaverRequest>,
 ) -> Result<Json<SynopsisJsonResult>, StatusCode> {
@@ -1139,7 +1179,7 @@ async fn get_game_moves(
 ) -> Result<Json<GetMovesResponse>, StatusCode> {
     //"ask", prev form to start from or null, prev answer and is_correct, correct answer
 
-    if let Some(user_id) = login::get_user_id(&session) {
+    if let Some(_user_id) = login::get_user_id(&session) {
         let res = GetMovesResponse {
             response_to: String::from("getgamemoves"),
             session_id: payload.session_id,

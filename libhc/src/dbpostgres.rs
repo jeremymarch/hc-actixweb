@@ -95,13 +95,26 @@ impl HcTrx for HcDbPostgresTrx<'_> {
 
     async fn greek_get_synopsis_list(
         &mut self,
-    ) -> Result<Vec<(Uuid, chrono::NaiveDateTime, String, String, String)>, HcError> {
-        let query =
-            "SELECT id, updated, sname, advisor, selectedverb FROM greeksynopsisresults ORDER BY updated DESC;";
-        let res: Vec<(Uuid, chrono::NaiveDateTime, String, String, String)> = sqlx::query_as(query)
-            .fetch_all(&mut *self.tx)
-            .await
-            .map_err(map_sqlx_error)?;
+        user_id: Option<Uuid>,
+    ) -> Result<Vec<(Uuid, chrono::NaiveDateTime, Option<String>, String, String)>, HcError> {
+        let res: Vec<(Uuid, chrono::NaiveDateTime, Option<String>, String, String)> = if user_id
+            .is_some()
+        {
+            let query =
+                "SELECT id, updated, sname, advisor, selectedverb FROM greeksynopsisresults WHERE user_id = $1 ORDER BY updated DESC;";
+            sqlx::query_as(query)
+                .bind(user_id)
+                .fetch_all(&mut *self.tx)
+                .await
+                .map_err(map_sqlx_error)?
+        } else {
+            let query =
+            "SELECT id, updated, b.user_name, advisor, selectedverb FROM greeksynopsisresults a LEFT JOIN users b ON a.user_id = b.user_id ORDER BY updated DESC;";
+            sqlx::query_as(query)
+                .fetch_all(&mut *self.tx)
+                .await
+                .map_err(map_sqlx_error)?
+        };
 
         Ok(res)
     }
@@ -111,7 +124,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         id: Uuid,
     ) -> Result<GreekSynopsisResult, HcError> {
         let query = r#"SELECT * FROM greeksynopsisresults WHERE id = $1;"#;
-        let res: GreekSynopsisResult = sqlx::query_as(&query)
+        let res: GreekSynopsisResult = sqlx::query_as(query)
             .bind(id)
             .fetch_one(&mut *self.tx)
             .await
@@ -124,7 +137,6 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         &mut self,
         user_id: Option<sqlx::types::Uuid>,
         info: &SynopsisSaverRequest,
-        res: &Vec<String>,
         // ip: &str,
         // agent: &str,
     ) -> Result<(), HcError> {
@@ -132,7 +144,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         let agent = "";
         let uuid = sqlx::types::Uuid::new_v4();
         let query = format!("INSERT INTO greeksynopsisresults VALUES ($1, $2, DEFAULT, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, '{}')", 
-            res.join("', '"));
+            info.r.join("', '"));
         //println!("aaa: {}", query);
         sqlx::query(&query)
             .bind(uuid)

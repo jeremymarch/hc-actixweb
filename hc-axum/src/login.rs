@@ -27,6 +27,8 @@ pub struct CreateUserFormData {
     email: String,
 }
 
+const LOGGED_IN_LANDING_PAGE: &str = "/greek-synopsis-list";
+
 pub fn get_user_id(session: &Session) -> Option<uuid::Uuid> {
     if let Ok(s) = session.get::<uuid::Uuid>("user_id") {
         s
@@ -186,7 +188,7 @@ pub async fn login_post(
         if session.insert("user_id", user_id).is_ok()
             && session.insert("username", form.username).is_ok()
         {
-            return Redirect::to("/"); //index.html
+            return Redirect::to(LOGGED_IN_LANDING_PAGE); //index.html
         }
     }
 
@@ -599,7 +601,7 @@ pub async fn oauth_auth_apple(
                         if session.insert("user_id", user_id).is_ok()
                             && session.insert("username", user_name).is_ok()
                         {
-                            return Redirect::to("/");
+                            return Redirect::to(LOGGED_IN_LANDING_PAGE);
                         }
                     }
                     Err(Database(e)) => {
@@ -701,7 +703,7 @@ pub async fn oauth_auth_google(
                         if session.insert("user_id", user_id).is_ok()
                             && session.insert("username", user_name).is_ok()
                         {
-                            return Redirect::to("/");
+                            return Redirect::to(LOGGED_IN_LANDING_PAGE);
                         }
                     }
                     Err(Database(e)) => {

@@ -279,7 +279,8 @@ pub trait HcTrx: Send + Sync + Debug {
 
     async fn greek_get_synopsis_list(
         &mut self,
-    ) -> Result<Vec<(Uuid, chrono::NaiveDateTime, String, String, String)>, HcError>;
+        user_id: Option<Uuid>,
+    ) -> Result<Vec<(Uuid, chrono::NaiveDateTime, Option<String>, String, String)>, HcError>;
 
     async fn greek_get_synopsis_result(&mut self, id: Uuid)
         -> Result<GreekSynopsisResult, HcError>;
@@ -288,7 +289,6 @@ pub trait HcTrx: Send + Sync + Debug {
         &mut self,
         user_id: Option<sqlx::types::Uuid>,
         info: &SynopsisSaverRequest,
-        res: &Vec<String>,
         // ip: &str,
         // agent: &str,
     ) -> Result<(), HcError>;
@@ -935,7 +935,7 @@ pub async fn hc_mf_pressed(
 
 fn hc_get_available_verbs_practice(
     available_verbs_str: &Option<String>,
-    used_verbs: &Vec<i32>,
+    used_verbs: &[i32],
     reps: usize,
 ) -> Vec<i32> {
     let available_verbs: HashSet<i32> = match available_verbs_str {
@@ -969,7 +969,7 @@ fn hc_get_available_verbs_practice(
         .collect::<Vec<i32>>()
 }
 
-fn hc_change_verbs(verb_history: &Vec<i32>, reps: usize) -> bool {
+fn hc_change_verbs(verb_history: &[i32], reps: usize) -> bool {
     let len = verb_history.len();
     len == 0 || (len >= reps && verb_history[0] == verb_history[reps - 1])
 }
