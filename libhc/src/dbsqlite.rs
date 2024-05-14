@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 use crate::AnswerQuery;
 use crate::AskQuery;
 use crate::CreateSessionQuery;
+use crate::GreekSynopsisResult;
 use crate::HcDb;
 use crate::HcError;
 use crate::HcTrx;
@@ -27,6 +28,7 @@ use crate::MoveResult;
 use crate::MoveType;
 use crate::SessionResult;
 use crate::SessionsListQuery;
+use crate::SynopsisSaverRequest;
 use crate::UserResult;
 use secrecy::ExposeSecret;
 use secrecy::Secret;
@@ -63,6 +65,7 @@ pub struct HcDbSqlite {
     pub db: SqlitePool,
 }
 
+#[derive(Debug)]
 pub struct HcDbSqliteTrx<'a> {
     pub tx: Transaction<'a, sqlx::Sqlite>,
 }
@@ -86,6 +89,133 @@ impl HcTrx for HcDbSqliteTrx<'_> {
     async fn rollback_tx(self: Box<Self>) -> Result<(), HcError> {
         self.tx.rollback().await.map_err(map_sqlx_error)
     }
+
+    async fn greek_get_synopsis_list(
+        &mut self,
+        user_id: Option<Uuid>,
+    ) -> Result<Vec<(Uuid, chrono::NaiveDateTime, Option<String>, String, String)>, HcError> {
+        let res: Vec<(Uuid, chrono::NaiveDateTime, Option<String>, String, String)> = if user_id
+            .is_some()
+        {
+            let query =
+                "SELECT id, updated, sname, advisor, selectedverb FROM greeksynopsisresults WHERE user_id = $1 ORDER BY updated DESC;";
+            sqlx::query_as(query)
+                .bind(user_id)
+                .fetch_all(&mut *self.tx)
+                .await
+                .map_err(map_sqlx_error)?
+        } else {
+            let query =
+            "SELECT id, updated, b.user_name, advisor, selectedverb FROM greeksynopsisresults a LEFT JOIN users b ON a.user_id = b.user_id ORDER BY updated DESC;";
+            sqlx::query_as(query)
+                .fetch_all(&mut *self.tx)
+                .await
+                .map_err(map_sqlx_error)?
+        };
+
+        Ok(res)
+    }
+
+    async fn greek_get_synopsis_result(
+        &mut self,
+        id: Uuid,
+    ) -> Result<GreekSynopsisResult, HcError> {
+        let query = r#"SELECT * FROM greeksynopsisresults WHERE id = $1;"#;
+        let res: GreekSynopsisResult = sqlx::query_as(query)
+            .bind(id)
+            .fetch_one(&mut *self.tx)
+            .await
+            .map_err(map_sqlx_error)?;
+
+        Ok(res)
+    }
+
+    async fn greek_insert_synopsis(
+        &mut self,
+        user_id: Option<sqlx::types::Uuid>,
+        info: &SynopsisSaverRequest,
+        // ip: &str,
+        // agent: &str,
+    ) -> Result<(), HcError> {
+        let ip = "";
+        let agent = "";
+        let uuid = sqlx::types::Uuid::new_v4();
+        let query = format!("INSERT INTO greeksynopsisresults VALUES ($1, $2, DEFAULT, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, '{}')", 
+            info.r.join("', '"));
+        //println!("aaa: {}", query);
+        sqlx::query(&query)
+            .bind(uuid)
+            .bind(user_id)
+            //.bind(accessed)
+            .bind(info.sname.clone())
+            .bind(info.advisor.clone())
+            .bind(info.unit)
+            .bind(info.verb)
+            .bind(info.pp.clone())
+            .bind(info.number)
+            .bind(info.person)
+            .bind(info.ptcgender.unwrap_or(999))
+            .bind(info.ptcnumber.unwrap_or(999))
+            .bind(info.ptccase.unwrap_or(999))
+            .bind(ip)
+            .bind(agent)
+            .bind(1)
+            .bind("0")
+            .execute(&mut *self.tx)
+            .await
+            .map_err(map_sqlx_error)?;
+
+        Ok(())
+    }
+    /*
+    pub async fn latin_get_synopsis_list(
+        pool: &SqlitePool,
+    ) -> Result<Vec<(i64, i64, String, String, String)>, sqlx::Error> {
+        let query =
+            "SELECT id, updated, sname, advisor, selectedverb FROM latinsynopsisresults ORDER BY updated DESC;";
+        let res: Vec<(i64, i64, String, String, String)> =
+            sqlx::query_as(query).fetch_all(pool).await?;
+
+        Ok(res)
+    }
+
+    pub async fn latin_get_synopsis_result(
+        pool: &SqlitePool,
+        id: u32,
+    ) -> Result<Vec<LatinSynopsisResult>, sqlx::Error> {
+        let query = format!(
+            "SELECT * FROM latinsynopsisresults WHERE id={} ORDER BY updated DESC;",
+            id
+        );
+        let res: Vec<LatinSynopsisResult> = sqlx::query_as::<_, LatinSynopsisResult>(&query)
+            .fetch_all(pool)
+            .await?;
+
+        Ok(res)
+    }
+
+    // let rec = sqlx::query_as::<_, DefRow>(query)
+    //         .bind(word)
+    //         .bind(table)
+    //         .fetch_one(pool)
+    //         .await?;
+
+    pub async fn latin_insert_synopsis(
+        pool: &SqlitePool,
+        info: &SynopsisSaverRequest,
+        accessed: u128,
+        ip: &str,
+        agent: &str,
+    ) -> Result<u32, sqlx::Error> {
+        let query = format!("INSERT INTO latinsynopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', {}, '{}')",
+            accessed, info.sname, info.advisor, info.unit, info.verb, info.pp,
+            info.number, info.person, info.ptcgender.unwrap_or(999), info.ptcnumber.unwrap_or(999), info.ptccase.unwrap_or(999), ip, agent, 1,
+            info.r.join("', '"));
+        sqlx::query(&query).execute(pool).await?;
+
+        Ok(1)
+    }
+    */
 
     async fn add_to_score(
         &mut self,
@@ -603,6 +733,93 @@ impl HcTrx for HcDbSqliteTrx<'_> {
             .map_err(map_sqlx_error)?;
 
         let query = "CREATE INDEX IF NOT EXISTS move_session_id_idx ON moves (session_id);";
+        let _res = sqlx::query(query)
+            .execute(&mut *self.tx)
+            .await
+            .map_err(map_sqlx_error)?;
+
+        let query = r#"CREATE TABLE IF NOT EXISTS greeksynopsisresults ( 
+                id UUID PRIMARY KEY NOT NULL, 
+                user_id UUID, 
+                updated timestamp default (now() at time zone 'utc'), 
+                sname TEXT NOT NULL, 
+                advisor TEXT NOT NULL, 
+                sgiday INTEGER NOT NULL, 
+                selectedverb TEXT NOT NULL, 
+                pp TEXT NOT NULL, 
+                verbnumber TEXT NOT NULL, 
+                verbperson TEXT NOT NULL, 
+                verbptcgender TEXT NOT NULL, 
+                verbptcnumber TEXT NOT NULL, 
+                verbptccase TEXT NOT NULL, 
+                ip TEXT NOT NULL, 
+                ua TEXT NOT NULL, 
+                status INTEGER NOT NULL, 
+                score TEXT NOT NULL,
+                f0 TEXT NOT NULL, a0 TEXT NOT NULL, c0 BOOLEAN NOT NULL,
+                f1 TEXT NOT NULL, a1 TEXT NOT NULL, c1 BOOLEAN NOT NULL,
+                f2 TEXT NOT NULL, a2 TEXT NOT NULL, c2 BOOLEAN NOT NULL,
+                f3 TEXT NOT NULL, a3 TEXT NOT NULL, c3 BOOLEAN NOT NULL,
+                f4 TEXT NOT NULL, a4 TEXT NOT NULL, c4 BOOLEAN NOT NULL,
+                f5 TEXT NOT NULL, a5 TEXT NOT NULL, c5 BOOLEAN NOT NULL,
+                f6 TEXT NOT NULL, a6 TEXT NOT NULL, c6 BOOLEAN NOT NULL,
+                f7 TEXT NOT NULL, a7 TEXT NOT NULL, c7 BOOLEAN NOT NULL,
+                f8 TEXT NOT NULL, a8 TEXT NOT NULL, c8 BOOLEAN NOT NULL,
+                f9 TEXT NOT NULL, a9 TEXT NOT NULL, c9 BOOLEAN NOT NULL,
+                f10 TEXT NOT NULL, a10 TEXT NOT NULL, c10 BOOLEAN NOT NULL,
+                f11 TEXT NOT NULL, a11 TEXT NOT NULL, c11 BOOLEAN NOT NULL,
+                f12 TEXT NOT NULL, a12 TEXT NOT NULL, c12 BOOLEAN NOT NULL,
+                f13 TEXT NOT NULL, a13 TEXT NOT NULL, c13 BOOLEAN NOT NULL,
+                f14 TEXT NOT NULL, a14 TEXT NOT NULL, c14 BOOLEAN NOT NULL,
+                f15 TEXT NOT NULL, a15 TEXT NOT NULL, c15 BOOLEAN NOT NULL,
+                f16 TEXT NOT NULL, a16 TEXT NOT NULL, c16 BOOLEAN NOT NULL,
+                f17 TEXT NOT NULL, a17 TEXT NOT NULL, c17 BOOLEAN NOT NULL,
+                f18 TEXT NOT NULL, a18 TEXT NOT NULL, c18 BOOLEAN NOT NULL,
+                f19 TEXT NOT NULL, a19 TEXT NOT NULL, c19 BOOLEAN NOT NULL,
+                f20 TEXT NOT NULL, a20 TEXT NOT NULL, c20 BOOLEAN NOT NULL,
+                f21 TEXT NOT NULL, a21 TEXT NOT NULL, c21 BOOLEAN NOT NULL,
+                f22 TEXT NOT NULL, a22 TEXT NOT NULL, c22 BOOLEAN NOT NULL,
+                f23 TEXT NOT NULL, a23 TEXT NOT NULL, c23 BOOLEAN NOT NULL,
+                f24 TEXT NOT NULL, a24 TEXT NOT NULL, c24 BOOLEAN NOT NULL,
+                f25 TEXT NOT NULL, a25 TEXT NOT NULL, c25 BOOLEAN NOT NULL,
+                f26 TEXT NOT NULL, a26 TEXT NOT NULL, c26 BOOLEAN NOT NULL,
+                f27 TEXT NOT NULL, a27 TEXT NOT NULL, c27 BOOLEAN NOT NULL,
+                f28 TEXT NOT NULL, a28 TEXT NOT NULL, c28 BOOLEAN NOT NULL,
+                f29 TEXT NOT NULL, a29 TEXT NOT NULL, c29 BOOLEAN NOT NULL,
+                f30 TEXT NOT NULL, a30 TEXT NOT NULL, c30 BOOLEAN NOT NULL,
+                f31 TEXT NOT NULL, a31 TEXT NOT NULL, c31 BOOLEAN NOT NULL,
+                f32 TEXT NOT NULL, a32 TEXT NOT NULL, c32 BOOLEAN NOT NULL,
+                f33 TEXT NOT NULL, a33 TEXT NOT NULL, c33 BOOLEAN NOT NULL,
+                f34 TEXT NOT NULL, a34 TEXT NOT NULL, c34 BOOLEAN NOT NULL,
+                f35 TEXT NOT NULL, a35 TEXT NOT NULL, c35 BOOLEAN NOT NULL,
+                f36 TEXT NOT NULL, a36 TEXT NOT NULL, c36 BOOLEAN NOT NULL,
+                f37 TEXT NOT NULL, a37 TEXT NOT NULL, c37 BOOLEAN NOT NULL,
+                f38 TEXT NOT NULL, a38 TEXT NOT NULL, c38 BOOLEAN NOT NULL,
+                f39 TEXT NOT NULL, a39 TEXT NOT NULL, c39 BOOLEAN NOT NULL,
+                f40 TEXT NOT NULL, a40 TEXT NOT NULL, c40 BOOLEAN NOT NULL,
+                f41 TEXT NOT NULL, a41 TEXT NOT NULL, c41 BOOLEAN NOT NULL,
+                f42 TEXT NOT NULL, a42 TEXT NOT NULL, c42 BOOLEAN NOT NULL,
+                f43 TEXT NOT NULL, a43 TEXT NOT NULL, c43 BOOLEAN NOT NULL,
+                f44 TEXT NOT NULL, a44 TEXT NOT NULL, c44 BOOLEAN NOT NULL,
+                f45 TEXT NOT NULL, a45 TEXT NOT NULL, c45 BOOLEAN NOT NULL,
+                f46 TEXT NOT NULL, a46 TEXT NOT NULL, c46 BOOLEAN NOT NULL,
+                f47 TEXT NOT NULL, a47 TEXT NOT NULL, c47 BOOLEAN NOT NULL,
+                f48 TEXT NOT NULL, a48 TEXT NOT NULL, c48 BOOLEAN NOT NULL,
+                f49 TEXT NOT NULL, a49 TEXT NOT NULL, c49 BOOLEAN NOT NULL,
+                f50 TEXT NOT NULL, a50 TEXT NOT NULL, c50 BOOLEAN NOT NULL,
+                f51 TEXT NOT NULL, a51 TEXT NOT NULL, c51 BOOLEAN NOT NULL,
+                f52 TEXT NOT NULL, a52 TEXT NOT NULL, c52 BOOLEAN NOT NULL,
+                f53 TEXT NOT NULL, a53 TEXT NOT NULL, c53 BOOLEAN NOT NULL,
+                f54 TEXT NOT NULL, a54 TEXT NOT NULL, c54 BOOLEAN NOT NULL,
+                f55 TEXT NOT NULL, a55 TEXT NOT NULL, c55 BOOLEAN NOT NULL,
+                f56 TEXT NOT NULL, a56 TEXT NOT NULL, c56 BOOLEAN NOT NULL,
+                f57 TEXT NOT NULL, a57 TEXT NOT NULL, c57 BOOLEAN NOT NULL,
+                f58 TEXT NOT NULL, a58 TEXT NOT NULL, c58 BOOLEAN NOT NULL,
+                f59 TEXT NOT NULL, a59 TEXT NOT NULL, c59 BOOLEAN NOT NULL,
+                f60 TEXT NOT NULL, a60 TEXT NOT NULL, c60 BOOLEAN NOT NULL,
+                f61 TEXT NOT NULL, a61 TEXT NOT NULL, c61 BOOLEAN NOT NULL,
+                f62 TEXT NOT NULL, a62 TEXT NOT NULL, c62 BOOLEAN NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(user_id) );"#;
         let _res = sqlx::query(query)
             .execute(&mut *self.tx)
             .await
