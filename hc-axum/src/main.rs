@@ -788,7 +788,7 @@ async fn greek_synopsis(
     );
 
     let page = SYNOPSIS_PAGE.replace("%NONCE%", &csp_nonce).replace(
-        "let resultJson = false;",
+        "const resultJson = false;",
         format!("const resultJson = {};", json).as_str(),
     );
 
@@ -807,7 +807,7 @@ async fn greek_synopsis(
 //     let page = SYNOPSIS_PAGE
 //         .replace("%NONCE%", &csp_nonce)
 //         .replace("%ISRESULTCSS%", "synopsis-form")
-//         .replace("let resultJson = false;", "const resultJson = false;");
+//         .replace("const resultJson = false;", "const resultJson = false;");
 
 //     (headers, Html(page))
 // }
