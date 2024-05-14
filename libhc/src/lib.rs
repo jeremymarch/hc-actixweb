@@ -1499,6 +1499,7 @@ mod tests {
         };
 
         //need to call these here, setup_test_db() doesn't work for sqlite
+        let _ = db.db.execute("DROP TABLE IF EXISTS greeksynopsisresults;").await;
         let _ = db.db.execute("DROP TABLE IF EXISTS moves;").await;
         let _ = db.db.execute("DROP TABLE IF EXISTS sessions;").await;
         let _ = db.db.execute("DROP TABLE IF EXISTS users;").await;
@@ -1515,6 +1516,7 @@ mod tests {
     async fn setup_test_db() {
         let db = get_db().await;
 
+        let _ = db.db.execute("DROP TABLE IF EXISTS greeksynopsisresults;").await;
         let _ = db.db.execute("DROP TABLE IF EXISTS moves;").await;
         let _ = db.db.execute("DROP TABLE IF EXISTS sessions;").await;
         let _ = db.db.execute("DROP TABLE IF EXISTS users;").await;
