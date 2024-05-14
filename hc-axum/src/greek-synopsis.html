@@ -551,7 +551,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
   'use strict';
   const unicodeMode = 0;
 
-  //%RESULTJSON%
+  let resultJson = false;
 
   function toggleSettingsOn () {
     document.body.classList.add('settingsOn');
@@ -632,10 +632,10 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       //   this.innerText = text.slice(0, start) + '\n' + text.slice(start);
       //   ContentEditableCursor.setPosition(start + 1, this);
       // } else if (typeof (this.selectionStart) === 'number') { }
-      //document.execCommand('insertHTML', false, '<br/>');
-        // prevent the default behaviour of return key pressed
+      // document.execCommand('insertHTML', false, '<br/>');
+      // prevent the default behaviour of return key pressed
 
-      e.preventDefault(); //block enter key
+      e.preventDefault(); // block enter key
       return false;
     } else if (!isNaN(parseInt(key))) {
       if (parseInt(key) > 0) {
@@ -721,14 +721,14 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       url: 'greek-synopsis-saver',
       method: 'POST',
       data: JSON.stringify(json),
-      success: function (data, textStatus, jqXHR) { alert('Submitted!'); setParamResultDisplay();makePageResult();setAnswers(data); /* clearForm(); */ },
+      success: function (data, textStatus, jqXHR) { alert('Submitted!'); setParamResultDisplay(); makePageResult(); setAnswers(data); /* clearForm(); */ },
       warning: function (e) { console.log(e); },
       error: function () { alert('There was an error submitting the synopsis. Check your internet connection and try submitting again.'); }
     });
   }
 
   function isResult () {
-    return (typeof(resultJson) != 'undefined' && resultJson);
+    return (typeof (resultJson) !== 'undefined' && resultJson);
   }
   
   const maxUnit = 20;
@@ -779,12 +779,11 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     document.getElementById('darkModeDark').addEventListener('click', darkModeClick, false);
     document.getElementById('darkModeLight').addEventListener('click', darkModeClick, false);
 
-    if ( isResult() ) {
+    if (isResult()) {
       setParamResultDisplay();
       makePageResult();
       setAnswers(resultJson);
-    }
-    else {
+    } else {
       retrievefieldsFromLocalStorage();
       makePageForm();
     }
@@ -809,7 +808,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     const g = document.getElementById('ptcgender');
     const gIdx = g.selectedIndex;
     if (gIdx > -1) {
-      document.getElementById('ptcgenderResultDisplay').innerText =  ', ' + g.options[gIdx].text;
+      document.getElementById('ptcgenderResultDisplay').innerText = ', ' + g.options[gIdx].text;
     }
     const c = document.getElementById('ptccase');
     const cIdx = c.selectedIndex;
@@ -826,20 +825,18 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     document.querySelectorAll('.gkinput').forEach(e => {
       if (useContentEditable) {
         e.contentEditable = true;
-      }
-      else {
+      } else {
         e.disabled = false;
       }
     });
   }
 
-  //sets page properties for a result
+  // sets page properties for a result
   function makePageResult () {
     document.querySelectorAll('.gkinput').forEach(e => {
       if (useContentEditable) {
         e.contentEditable = false;
-      }
-      else {
+      } else {
         e.disabled = true;
       }
     });
@@ -1074,6 +1071,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     });
   }
 
+  // eslint-disable-next-line no-unused-vars
   function serialize (obj) {
     const str = [];
     for (const p in obj) {
