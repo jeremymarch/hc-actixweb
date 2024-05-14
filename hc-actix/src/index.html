@@ -1791,7 +1791,7 @@ a {color:blue;}
     //     wsconnect(sendUrl, sendData);
     //     return;
     // }
-    
+
     if (socket) {
       socket.emit('abc', sendData);
       console.log('send abc');
@@ -1833,6 +1833,7 @@ a {color:blue;}
     genericSendRequest('enter', sendData, null);
   }
 
+  // eslint-disable-next-line
   function sendAnswerProspective (sessionId, answer, time, mfPressed, timedOut) {
     const sendData = { qtype: 'submitprospective', answer, time, mf_pressed: mfPressed, timed_out: timedOut, session_id: sessionId };
     genericSendRequest('enterprospective', sendData, null);
@@ -2161,13 +2162,13 @@ a {color:blue;}
   const tensesAbbrev = ['pres.', 'imperf.', 'fut.', 'aor.', 'perf.', 'plup.'];
   const voicesAbbrev = ['act.', 'mid.', 'pass.'];
   const moodsAbbrev = ['indic.', 'subj.', 'opt.', 'imper.'];
-  function desc (person, number, tense, mood, voice, verb, prevp, prevn, prevt, prevm, prevv, prev_verb, abbrev) {
+  function desc (person, number, tense, mood, voice, verb, prevp, prevn, prevt, prevm, prevv, prevVerb, abbrev) {
     let personStr = '';
     let numberStr = '';
     let tenseStr = '';
     let moodStr = '';
     let voiceStr = '';
-    const newVerb = (verb !== prev_verb);
+    const newVerb = (verb !== prevVerb);
     if (person !== prevp && prevp !== null && !newVerb) {
       personStr = '<span class="changedParam">' + (abbrev ? personsAbbrev[person] : persons[person]) + '</span>';
     } else {
