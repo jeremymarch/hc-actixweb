@@ -1568,11 +1568,10 @@ a {color:blue;}
       getSessions(false);
       uiModeAskResponse(data);
     } else if (data.response_to === 'answerresponsepracticeprospective' && data.success) {
-      //getmove will load initially, then this
-      //add prospective bool to getmove request
+      // getmove will load initially, then this
+      // add prospective bool to getmove request
 
-      //receiving here will only set global variables with info for next move, nothing in the ui is updated
-
+      // receiving here will only set global variables with info for next move, nothing in the ui is updated
 
     } else if ((data.response_to === 'answerresponse' || data.response_to === 'answerresponsepractice') && data.success) {
       // getSessions(false);
@@ -1792,11 +1791,10 @@ a {color:blue;}
     //     wsconnect(sendUrl, sendData);
     //     return;
     // }
-
     
     if (socket) {
-      socket.emit("abc", sendData);
-      console.log("send abc");
+      socket.emit('abc', sendData);
+      console.log('send abc');
     }
 
     if (supportsWebSockets && socket) {
@@ -2971,14 +2969,12 @@ a {color:blue;}
     integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+"
     crossorigin="anonymous"></script>
   <script nonce="%NONCE%">
-
-    console.log("set up socket");
+    console.log('set up socket');
+    // eslint-disable-next-line no-undef
     socket = io();
     socket.on('abc', (data) => {
-        console.log("received abc: " + data);
+      console.log('received abc: ' + data);
     });
-
-
   </script>
 </body>
 </html>
