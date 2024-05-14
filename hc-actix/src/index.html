@@ -953,7 +953,7 @@ a {color:blue;}
 <div id="mesg"></div>
 <div id="backdrop"></div>
 <script nonce="%NONCE%" type="module">
-  // eslint-disable-next-line import/no-named-default
+  // eslint-disable-next-line import/no-named-default, camelcase
   import { toggle, translit, compare_multiple_forms, default as init } from './hoplitekb_wasm_rs.js';
 
   async function run () {
@@ -961,6 +961,7 @@ a {color:blue;}
     // make the function available to the browser
     window.toggle = toggle;
     window.translit = translit;
+    // eslint-disable-next-line camelcase
     window.compare_multiple_forms = compare_multiple_forms;
   }
   run();
@@ -2973,6 +2974,7 @@ a {color:blue;}
     console.log('set up socket');
     // eslint-disable-next-line no-undef
     socket = io();
+    // eslint-disable-next-line no-undef
     socket.on('abc', (data) => {
       console.log('received abc: ' + data);
     });
