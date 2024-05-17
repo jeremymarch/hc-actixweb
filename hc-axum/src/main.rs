@@ -361,6 +361,7 @@ static SYNOPSIS_PAGE: &str = include_str!("greek-synopsis.html");
 static INDEX_PAGE: &str = include_str!("../../hc-actix/src/index.html");
 static CSP: &str = "style-src 'nonce-%NONCE%';script-src 'nonce-%NONCE%' 'wasm-unsafe-eval' \
                     'unsafe-inline'; object-src 'none'; base-uri 'none'";
+static CSP_HEADER: &str = "content-security-policy";
 
 async fn index() -> impl IntoResponse {
     // let mut rng = rand::thread_rng();
@@ -369,7 +370,7 @@ async fn index() -> impl IntoResponse {
 
     let mut headers = HeaderMap::new();
     headers.insert(
-        HeaderName::from_static("content-security-policy"),
+        HeaderName::from_static(CSP_HEADER),
         HeaderValue::from_str(&CSP.replace("%NONCE%", &csp_nonce)).unwrap(),
     );
 
@@ -438,361 +439,363 @@ async fn greek_synopsis(
 
     if let Some(a) = id.id {
         let mut tx = state.hcdb.begin_tx().await.unwrap();
-        let result = tx.greek_get_synopsis_result(a).await.unwrap(); //need to store is_correct and correct/incorrect answers
-        tx.commit_tx().await.unwrap();
+        if let Ok(result) = tx.greek_get_synopsis_result(a).await {
+            //need to store is_correct and correct/incorrect answers
+            tx.commit_tx().await.unwrap();
 
-        let mut res_forms = Vec::<SaverResults>::new();
-        res_forms.push(SaverResults {
-            given: result.f0,
-            correct: result.a0,
-            is_correct: result.c0,
-        });
-        res_forms.push(SaverResults {
-            given: result.f1,
-            correct: result.a1,
-            is_correct: result.c1,
-        });
-        res_forms.push(SaverResults {
-            given: result.f2,
-            correct: result.a2,
-            is_correct: result.c2,
-        });
-        res_forms.push(SaverResults {
-            given: result.f3,
-            correct: result.a3,
-            is_correct: result.c3,
-        });
-        res_forms.push(SaverResults {
-            given: result.f4,
-            correct: result.a4,
-            is_correct: result.c4,
-        });
-        res_forms.push(SaverResults {
-            given: result.f5,
-            correct: result.a5,
-            is_correct: result.c5,
-        });
-        res_forms.push(SaverResults {
-            given: result.f6,
-            correct: result.a6,
-            is_correct: result.c6,
-        });
-        res_forms.push(SaverResults {
-            given: result.f7,
-            correct: result.a7,
-            is_correct: result.c7,
-        });
-        res_forms.push(SaverResults {
-            given: result.f8,
-            correct: result.a8,
-            is_correct: result.c8,
-        });
-        res_forms.push(SaverResults {
-            given: result.f9,
-            correct: result.a9,
-            is_correct: result.c9,
-        });
-        res_forms.push(SaverResults {
-            given: result.f10,
-            correct: result.a10,
-            is_correct: result.c10,
-        });
-        res_forms.push(SaverResults {
-            given: result.f11,
-            correct: result.a11,
-            is_correct: result.c11,
-        });
-        res_forms.push(SaverResults {
-            given: result.f12,
-            correct: result.a12,
-            is_correct: result.c12,
-        });
-        res_forms.push(SaverResults {
-            given: result.f13,
-            correct: result.a13,
-            is_correct: result.c13,
-        });
-        res_forms.push(SaverResults {
-            given: result.f14,
-            correct: result.a14,
-            is_correct: result.c14,
-        });
-        res_forms.push(SaverResults {
-            given: result.f15,
-            correct: result.a15,
-            is_correct: result.c15,
-        });
-        res_forms.push(SaverResults {
-            given: result.f16,
-            correct: result.a16,
-            is_correct: result.c16,
-        });
-        res_forms.push(SaverResults {
-            given: result.f17,
-            correct: result.a17,
-            is_correct: result.c17,
-        });
-        res_forms.push(SaverResults {
-            given: result.f18,
-            correct: result.a18,
-            is_correct: result.c18,
-        });
-        res_forms.push(SaverResults {
-            given: result.f19,
-            correct: result.a19,
-            is_correct: result.c19,
-        });
-        res_forms.push(SaverResults {
-            given: result.f20,
-            correct: result.a20,
-            is_correct: result.c20,
-        });
-        res_forms.push(SaverResults {
-            given: result.f21,
-            correct: result.a21,
-            is_correct: result.c21,
-        });
-        res_forms.push(SaverResults {
-            given: result.f22,
-            correct: result.a22,
-            is_correct: result.c22,
-        });
-        res_forms.push(SaverResults {
-            given: result.f23,
-            correct: result.a23,
-            is_correct: result.c23,
-        });
-        res_forms.push(SaverResults {
-            given: result.f24,
-            correct: result.a24,
-            is_correct: result.c24,
-        });
-        res_forms.push(SaverResults {
-            given: result.f25,
-            correct: result.a25,
-            is_correct: result.c25,
-        });
-        res_forms.push(SaverResults {
-            given: result.f26,
-            correct: result.a26,
-            is_correct: result.c26,
-        });
-        res_forms.push(SaverResults {
-            given: result.f27,
-            correct: result.a27,
-            is_correct: result.c27,
-        });
-        res_forms.push(SaverResults {
-            given: result.f28,
-            correct: result.a28,
-            is_correct: result.c28,
-        });
-        res_forms.push(SaverResults {
-            given: result.f29,
-            correct: result.a29,
-            is_correct: result.c29,
-        });
-        res_forms.push(SaverResults {
-            given: result.f30,
-            correct: result.a30,
-            is_correct: result.c30,
-        });
-        res_forms.push(SaverResults {
-            given: result.f31,
-            correct: result.a31,
-            is_correct: result.c31,
-        });
-        res_forms.push(SaverResults {
-            given: result.f32,
-            correct: result.a32,
-            is_correct: result.c32,
-        });
-        res_forms.push(SaverResults {
-            given: result.f33,
-            correct: result.a33,
-            is_correct: result.c33,
-        });
-        res_forms.push(SaverResults {
-            given: result.f34,
-            correct: result.a34,
-            is_correct: result.c34,
-        });
-        res_forms.push(SaverResults {
-            given: result.f35,
-            correct: result.a35,
-            is_correct: result.c35,
-        });
-        res_forms.push(SaverResults {
-            given: result.f36,
-            correct: result.a36,
-            is_correct: result.c36,
-        });
-        res_forms.push(SaverResults {
-            given: result.f37,
-            correct: result.a37,
-            is_correct: result.c37,
-        });
-        res_forms.push(SaverResults {
-            given: result.f38,
-            correct: result.a38,
-            is_correct: result.c38,
-        });
-        res_forms.push(SaverResults {
-            given: result.f39,
-            correct: result.a39,
-            is_correct: result.c39,
-        });
-        res_forms.push(SaverResults {
-            given: result.f40,
-            correct: result.a40,
-            is_correct: result.c40,
-        });
-        res_forms.push(SaverResults {
-            given: result.f41,
-            correct: result.a41,
-            is_correct: result.c41,
-        });
-        res_forms.push(SaverResults {
-            given: result.f42,
-            correct: result.a42,
-            is_correct: result.c42,
-        });
-        res_forms.push(SaverResults {
-            given: result.f43,
-            correct: result.a43,
-            is_correct: result.c43,
-        });
-        res_forms.push(SaverResults {
-            given: result.f44,
-            correct: result.a44,
-            is_correct: result.c44,
-        });
-        res_forms.push(SaverResults {
-            given: result.f45,
-            correct: result.a45,
-            is_correct: result.c45,
-        });
-        res_forms.push(SaverResults {
-            given: result.f46,
-            correct: result.a46,
-            is_correct: result.c46,
-        });
-        res_forms.push(SaverResults {
-            given: result.f47,
-            correct: result.a47,
-            is_correct: result.c47,
-        });
-        res_forms.push(SaverResults {
-            given: result.f48,
-            correct: result.a48,
-            is_correct: result.c48,
-        });
-        res_forms.push(SaverResults {
-            given: result.f49,
-            correct: result.a49,
-            is_correct: result.c49,
-        });
-        res_forms.push(SaverResults {
-            given: result.f50,
-            correct: result.a50,
-            is_correct: result.c50,
-        });
-        res_forms.push(SaverResults {
-            given: result.f51,
-            correct: result.a51,
-            is_correct: result.c51,
-        });
-        res_forms.push(SaverResults {
-            given: result.f52,
-            correct: result.a52,
-            is_correct: result.c52,
-        });
-        res_forms.push(SaverResults {
-            given: result.f53,
-            correct: result.a53,
-            is_correct: result.c53,
-        });
-        res_forms.push(SaverResults {
-            given: result.f54,
-            correct: result.a54,
-            is_correct: result.c54,
-        });
-        res_forms.push(SaverResults {
-            given: result.f55,
-            correct: result.a55,
-            is_correct: result.c55,
-        });
-        res_forms.push(SaverResults {
-            given: result.f56,
-            correct: result.a56,
-            is_correct: result.c56,
-        });
-        res_forms.push(SaverResults {
-            given: result.f57,
-            correct: result.a57,
-            is_correct: result.c57,
-        });
-        res_forms.push(SaverResults {
-            given: result.f58,
-            correct: result.a58,
-            is_correct: result.c58,
-        });
-        res_forms.push(SaverResults {
-            given: result.f59,
-            correct: result.a59,
-            is_correct: result.c59,
-        });
-        res_forms.push(SaverResults {
-            given: result.f60,
-            correct: result.a60,
-            is_correct: result.c60,
-        });
-        res_forms.push(SaverResults {
-            given: result.f61,
-            correct: result.a61,
-            is_correct: result.c61,
-        });
-        res_forms.push(SaverResults {
-            given: result.f62,
-            correct: result.a62,
-            is_correct: result.c62,
-        });
+            let mut res_forms = Vec::<SaverResults>::new();
+            res_forms.push(SaverResults {
+                given: result.f0,
+                correct: result.a0,
+                is_correct: result.c0,
+            });
+            res_forms.push(SaverResults {
+                given: result.f1,
+                correct: result.a1,
+                is_correct: result.c1,
+            });
+            res_forms.push(SaverResults {
+                given: result.f2,
+                correct: result.a2,
+                is_correct: result.c2,
+            });
+            res_forms.push(SaverResults {
+                given: result.f3,
+                correct: result.a3,
+                is_correct: result.c3,
+            });
+            res_forms.push(SaverResults {
+                given: result.f4,
+                correct: result.a4,
+                is_correct: result.c4,
+            });
+            res_forms.push(SaverResults {
+                given: result.f5,
+                correct: result.a5,
+                is_correct: result.c5,
+            });
+            res_forms.push(SaverResults {
+                given: result.f6,
+                correct: result.a6,
+                is_correct: result.c6,
+            });
+            res_forms.push(SaverResults {
+                given: result.f7,
+                correct: result.a7,
+                is_correct: result.c7,
+            });
+            res_forms.push(SaverResults {
+                given: result.f8,
+                correct: result.a8,
+                is_correct: result.c8,
+            });
+            res_forms.push(SaverResults {
+                given: result.f9,
+                correct: result.a9,
+                is_correct: result.c9,
+            });
+            res_forms.push(SaverResults {
+                given: result.f10,
+                correct: result.a10,
+                is_correct: result.c10,
+            });
+            res_forms.push(SaverResults {
+                given: result.f11,
+                correct: result.a11,
+                is_correct: result.c11,
+            });
+            res_forms.push(SaverResults {
+                given: result.f12,
+                correct: result.a12,
+                is_correct: result.c12,
+            });
+            res_forms.push(SaverResults {
+                given: result.f13,
+                correct: result.a13,
+                is_correct: result.c13,
+            });
+            res_forms.push(SaverResults {
+                given: result.f14,
+                correct: result.a14,
+                is_correct: result.c14,
+            });
+            res_forms.push(SaverResults {
+                given: result.f15,
+                correct: result.a15,
+                is_correct: result.c15,
+            });
+            res_forms.push(SaverResults {
+                given: result.f16,
+                correct: result.a16,
+                is_correct: result.c16,
+            });
+            res_forms.push(SaverResults {
+                given: result.f17,
+                correct: result.a17,
+                is_correct: result.c17,
+            });
+            res_forms.push(SaverResults {
+                given: result.f18,
+                correct: result.a18,
+                is_correct: result.c18,
+            });
+            res_forms.push(SaverResults {
+                given: result.f19,
+                correct: result.a19,
+                is_correct: result.c19,
+            });
+            res_forms.push(SaverResults {
+                given: result.f20,
+                correct: result.a20,
+                is_correct: result.c20,
+            });
+            res_forms.push(SaverResults {
+                given: result.f21,
+                correct: result.a21,
+                is_correct: result.c21,
+            });
+            res_forms.push(SaverResults {
+                given: result.f22,
+                correct: result.a22,
+                is_correct: result.c22,
+            });
+            res_forms.push(SaverResults {
+                given: result.f23,
+                correct: result.a23,
+                is_correct: result.c23,
+            });
+            res_forms.push(SaverResults {
+                given: result.f24,
+                correct: result.a24,
+                is_correct: result.c24,
+            });
+            res_forms.push(SaverResults {
+                given: result.f25,
+                correct: result.a25,
+                is_correct: result.c25,
+            });
+            res_forms.push(SaverResults {
+                given: result.f26,
+                correct: result.a26,
+                is_correct: result.c26,
+            });
+            res_forms.push(SaverResults {
+                given: result.f27,
+                correct: result.a27,
+                is_correct: result.c27,
+            });
+            res_forms.push(SaverResults {
+                given: result.f28,
+                correct: result.a28,
+                is_correct: result.c28,
+            });
+            res_forms.push(SaverResults {
+                given: result.f29,
+                correct: result.a29,
+                is_correct: result.c29,
+            });
+            res_forms.push(SaverResults {
+                given: result.f30,
+                correct: result.a30,
+                is_correct: result.c30,
+            });
+            res_forms.push(SaverResults {
+                given: result.f31,
+                correct: result.a31,
+                is_correct: result.c31,
+            });
+            res_forms.push(SaverResults {
+                given: result.f32,
+                correct: result.a32,
+                is_correct: result.c32,
+            });
+            res_forms.push(SaverResults {
+                given: result.f33,
+                correct: result.a33,
+                is_correct: result.c33,
+            });
+            res_forms.push(SaverResults {
+                given: result.f34,
+                correct: result.a34,
+                is_correct: result.c34,
+            });
+            res_forms.push(SaverResults {
+                given: result.f35,
+                correct: result.a35,
+                is_correct: result.c35,
+            });
+            res_forms.push(SaverResults {
+                given: result.f36,
+                correct: result.a36,
+                is_correct: result.c36,
+            });
+            res_forms.push(SaverResults {
+                given: result.f37,
+                correct: result.a37,
+                is_correct: result.c37,
+            });
+            res_forms.push(SaverResults {
+                given: result.f38,
+                correct: result.a38,
+                is_correct: result.c38,
+            });
+            res_forms.push(SaverResults {
+                given: result.f39,
+                correct: result.a39,
+                is_correct: result.c39,
+            });
+            res_forms.push(SaverResults {
+                given: result.f40,
+                correct: result.a40,
+                is_correct: result.c40,
+            });
+            res_forms.push(SaverResults {
+                given: result.f41,
+                correct: result.a41,
+                is_correct: result.c41,
+            });
+            res_forms.push(SaverResults {
+                given: result.f42,
+                correct: result.a42,
+                is_correct: result.c42,
+            });
+            res_forms.push(SaverResults {
+                given: result.f43,
+                correct: result.a43,
+                is_correct: result.c43,
+            });
+            res_forms.push(SaverResults {
+                given: result.f44,
+                correct: result.a44,
+                is_correct: result.c44,
+            });
+            res_forms.push(SaverResults {
+                given: result.f45,
+                correct: result.a45,
+                is_correct: result.c45,
+            });
+            res_forms.push(SaverResults {
+                given: result.f46,
+                correct: result.a46,
+                is_correct: result.c46,
+            });
+            res_forms.push(SaverResults {
+                given: result.f47,
+                correct: result.a47,
+                is_correct: result.c47,
+            });
+            res_forms.push(SaverResults {
+                given: result.f48,
+                correct: result.a48,
+                is_correct: result.c48,
+            });
+            res_forms.push(SaverResults {
+                given: result.f49,
+                correct: result.a49,
+                is_correct: result.c49,
+            });
+            res_forms.push(SaverResults {
+                given: result.f50,
+                correct: result.a50,
+                is_correct: result.c50,
+            });
+            res_forms.push(SaverResults {
+                given: result.f51,
+                correct: result.a51,
+                is_correct: result.c51,
+            });
+            res_forms.push(SaverResults {
+                given: result.f52,
+                correct: result.a52,
+                is_correct: result.c52,
+            });
+            res_forms.push(SaverResults {
+                given: result.f53,
+                correct: result.a53,
+                is_correct: result.c53,
+            });
+            res_forms.push(SaverResults {
+                given: result.f54,
+                correct: result.a54,
+                is_correct: result.c54,
+            });
+            res_forms.push(SaverResults {
+                given: result.f55,
+                correct: result.a55,
+                is_correct: result.c55,
+            });
+            res_forms.push(SaverResults {
+                given: result.f56,
+                correct: result.a56,
+                is_correct: result.c56,
+            });
+            res_forms.push(SaverResults {
+                given: result.f57,
+                correct: result.a57,
+                is_correct: result.c57,
+            });
+            res_forms.push(SaverResults {
+                given: result.f58,
+                correct: result.a58,
+                is_correct: result.c58,
+            });
+            res_forms.push(SaverResults {
+                given: result.f59,
+                correct: result.a59,
+                is_correct: result.c59,
+            });
+            res_forms.push(SaverResults {
+                given: result.f60,
+                correct: result.a60,
+                is_correct: result.c60,
+            });
+            res_forms.push(SaverResults {
+                given: result.f61,
+                correct: result.a61,
+                is_correct: result.c61,
+            });
+            res_forms.push(SaverResults {
+                given: result.f62,
+                correct: result.a62,
+                is_correct: result.c62,
+            });
 
-        let res = SynopsisJsonResult {
-            verb_id: result.selectedverb.parse::<i32>().unwrap(),
-            person: result.verbperson.parse::<i32>().unwrap(),
-            number: result.verbnumber.parse::<i32>().unwrap(),
-            case: if result.verbptccase.is_some() {
-                Some(result.verbptccase.unwrap().parse::<i32>().unwrap())
-            } else {
-                None
-            },
-            gender: if result.verbptcgender.is_some() {
-                Some(result.verbptcgender.unwrap().parse::<i32>().unwrap())
-            } else {
-                None
-            },
-            unit: result.sgiday,
-            pp: result.pp,
-            // pp: verbs[verb_id]
-            //     .pps
-            //     .iter()
-            //     .map(|x| x.replace('/', " or ").replace("  ", " "))
-            //     .collect::<Vec<_>>()
-            //     .join(", "),
-            name: result.sname.clone(),
-            advisor: result.advisor.clone(),
-            f: res_forms,
-        };
+            let res = SynopsisJsonResult {
+                verb_id: result.selectedverb.parse::<i32>().unwrap(),
+                person: result.verbperson.parse::<i32>().unwrap(),
+                number: result.verbnumber.parse::<i32>().unwrap(),
+                case: if result.verbptccase.is_some() {
+                    Some(result.verbptccase.unwrap().parse::<i32>().unwrap())
+                } else {
+                    None
+                },
+                gender: if result.verbptcgender.is_some() {
+                    Some(result.verbptcgender.unwrap().parse::<i32>().unwrap())
+                } else {
+                    None
+                },
+                unit: result.sgiday,
+                pp: result.pp,
+                // pp: verbs[verb_id]
+                //     .pps
+                //     .iter()
+                //     .map(|x| x.replace('/', " or ").replace("  ", " "))
+                //     .collect::<Vec<_>>()
+                //     .join(", "),
+                name: result.sname.clone(),
+                advisor: result.advisor.clone(),
+                f: res_forms,
+            };
 
-        json = serde_json::to_string(&res).unwrap();
+            json = serde_json::to_string(&res).unwrap();
+        }
     }
 
     let csp_nonce: String = Uuid::new_v4().to_string(); //.simple().encode_upper(&mut Uuid::encode_buffer()).to_string();
 
     let mut headers = HeaderMap::new();
     headers.insert(
-        HeaderName::from_static("content-security-policy"),
+        HeaderName::from_static(CSP_HEADER),
         HeaderValue::from_str(&CSP.replace("%NONCE%", &csp_nonce)).unwrap(),
     );
 
@@ -820,7 +823,7 @@ async fn greek_synopsis(
 
 //     let mut headers = HeaderMap::new();
 //     headers.insert(
-//         HeaderName::from_static("content-security-policy"),
+//         HeaderName::from_static(CSP_HEADER),
 //         HeaderValue::from_str(&CSP.replace("%NONCE%", &csp_nonce)).unwrap(),
 //     );
 

@@ -819,32 +819,29 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
   function setParamResultDisplay () {
     const v = document.getElementById('selectedverb');
     const vIdx = v.selectedIndex;
-    if (vIdx > -1) {
-      document.getElementById('verbResultDisplay').innerText = v.options[vIdx].text;
-    }
     const p = document.getElementById('person');
     const pIdx = p.selectedIndex;
-    if (pIdx > -1) {
-      document.getElementById('personResultDisplay').innerText = '. ' + p.options[pIdx].text;
-    }
     const n = document.getElementById('number');
     const nIdx = n.selectedIndex;
-    if (nIdx > -1) {
-      document.getElementById('numberResultDisplay').innerText = ', ' + n.options[nIdx].text;
-    }
     const g = document.getElementById('ptcgender');
     const gIdx = g.selectedIndex;
-    if (gIdx > -1) {
-      document.getElementById('ptcgenderResultDisplay').innerText = ', ' + g.options[gIdx].text;
-    } else {
-      document.getElementById('ptcgenderResultDisplay').innerText = '';
-    }
     const c = document.getElementById('ptccase');
     const cIdx = c.selectedIndex;
+
+    if (vIdx > -1) {
+      document.getElementById('verbResultDisplay').innerText = v.options[vIdx].text + '. ';
+    }
+    if (pIdx > -1) {
+      document.getElementById('personResultDisplay').innerText = p.options[pIdx].text + ', ';
+    }
+    if (nIdx > -1) {
+      document.getElementById('numberResultDisplay').innerText = n.options[nIdx].text + ((gIdx > -1) ? ', ' : '');
+    }
+    if (gIdx > -1) {
+      document.getElementById('ptcgenderResultDisplay').innerText = g.options[gIdx].text + ((cIdx > -1) ? ', ' : '');
+    }
     if (cIdx > -1) {
-      document.getElementById('ptccaseResultDisplay').innerText = ', ' + c.options[cIdx].text;
-    } else {
-      document.getElementById('ptccaseResultDisplay').innerText = '';
+      document.getElementById('ptccaseResultDisplay').innerText = c.options[cIdx].text;
     }
   }
 
