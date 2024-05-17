@@ -137,13 +137,9 @@ day22	u16
 #submitcell { 
   display:auto; 
 }
-
-#selectedverb { 
+.verbparam {
   font-family: NewAthenaUnicode, WebNewAthenaUnicode,helvetica,arial;
-}
-
-.verbparam { 
-  font-size: 14pt; 
+  font-size: 14pt;
 }
 
 #unitfilter {
@@ -485,10 +481,6 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
         <tr><td width="4%" id="paramcell">Synopsis of </td>
           <td>
           <span id="verbResultDisplay" class="paramDisplay"></span>
-          <span id="personResultDisplay" class="paramDisplay"></span>
-          <span id="numberResultDisplay" class="paramDisplay"></span>
-          <span id="ptcgenderResultDisplay" class="paramDisplay"></span>
-          <span id="ptccaseResultDisplay" class="paramDisplay"></span>
 
             <!-- <input type="text" id="selectedverb" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/> -->
             <select id="selectedverb" class="verbparam">
@@ -738,7 +730,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       url: 'greek-synopsis-saver',
       method: 'POST',
       data: JSON.stringify(json),
-      success: function (data, textStatus, jqXHR) { alert('Submitted!'); setParamResultDisplay(); makePageResult(); setAnswers(data); /* clearForm(); */ },
+      success: function (data, textStatus, jqXHR) { alert('Submitted!'); setParamResultDisplay(data); makePageResult(); setAnswers(data); /* clearForm(); */ },
       warning: function (e) { console.log(e); },
       error: function () { alert('There was an error submitting the synopsis. Check your internet connection and try submitting again.'); }
     });
@@ -809,40 +801,41 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     if (isResult()) {
       makePageResult();
       setAnswers(resultJson);
-      setParamResultDisplay();
+      setParamResultDisplay(resultJson);
     } else {
       retrievefieldsFromLocalStorage();
       makePageForm();
     }
   }
 
-  function setParamResultDisplay () {
+  function setParamResultDisplay (data) {
     const v = document.getElementById('selectedverb');
-    const vIdx = v.selectedIndex;
     const p = document.getElementById('person');
-    const pIdx = p.selectedIndex;
     const n = document.getElementById('number');
-    const nIdx = n.selectedIndex;
     const g = document.getElementById('ptcgender');
-    const gIdx = g.selectedIndex;
     const c = document.getElementById('ptccase');
-    const cIdx = c.selectedIndex;
+    let str = '';
 
-    if (vIdx > -1) {
-      document.getElementById('verbResultDisplay').innerText = v.options[vIdx].text + '. ';
+    if (data.verb_id !== null && data.verb_id > -1) {
+      str += v.options[data.verb_id].text + '. ';
     }
-    if (pIdx > -1) {
-      document.getElementById('personResultDisplay').innerText = p.options[pIdx].text + ', ';
+    if (data.person !== null && data.person > -1) {
+      str += p.options[data.person].text + ', ';
     }
-    if (nIdx > -1) {
-      document.getElementById('numberResultDisplay').innerText = n.options[nIdx].text + ((gIdx > -1) ? ', ' : '');
+    if (data.number !== null && data.number > -1) {
+      str += n.options[data.number].text + ((data.gender !== null && data.gender > -1) ? ', ' : '');
     }
-    if (gIdx > -1) {
-      document.getElementById('ptcgenderResultDisplay').innerText = g.options[gIdx].text + ((cIdx > -1) ? ', ' : '');
+    if (data.gender !== null && data.gender > -1) {
+      str += g.options[data.gender].text + ((data.case !== null && data.case > -1) ? ', ' : '');
     }
-    if (cIdx > -1) {
-      document.getElementById('ptccaseResultDisplay').innerText = c.options[cIdx].text;
+    if (data.case !== null && data.case > -1) {
+      str += c.options[data.case].text;
     }
+    if (data.unit !== null && data.unit > -1) {
+      str += '. (unit ' + data.unit + ')';
+    }
+
+    document.getElementById('verbResultDisplay').innerText = str;
   }
 
   function makePageForm () {
