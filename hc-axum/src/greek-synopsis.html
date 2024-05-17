@@ -807,9 +807,9 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     }
 
     if (isResult()) {
-      setParamResultDisplay();
       makePageResult();
       setAnswers(resultJson);
+      setParamResultDisplay();
     } else {
       retrievefieldsFromLocalStorage();
       makePageForm();
@@ -836,11 +836,15 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     const gIdx = g.selectedIndex;
     if (gIdx > -1) {
       document.getElementById('ptcgenderResultDisplay').innerText = ', ' + g.options[gIdx].text;
+    } else {
+      document.getElementById('ptcgenderResultDisplay').innerText = '';
     }
     const c = document.getElementById('ptccase');
     const cIdx = c.selectedIndex;
     if (cIdx > -1) {
       document.getElementById('ptccaseResultDisplay').innerText = ', ' + c.options[cIdx].text;
+    } else {
+      document.getElementById('ptccaseResultDisplay').innerText = '';
     }
   }
 
@@ -970,7 +974,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
 
   function setUnit (unit) {
     document.body.classList = 'unit' + unit;
-    if (parseInt(unit) > 7) {
+    if (parseInt(unit) < 8) {
       document.getElementById('ptcgender').selectedIndex = -1;
       document.getElementById('ptccase').selectedIndex = -1;
     }
@@ -995,6 +999,8 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     console.log(data);
     clearForm();
 
+    setUnit(data.unit);
+
     const e = document.getElementById('pppppp0');
     if (e) {
       setValue(e, data.pp);
@@ -1012,12 +1018,16 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       number.value = data.number;
     }
     const ptccase = document.getElementById('ptccase');
-    if (ptccase) {
+    if (ptccase && data.case !== null) {
       ptccase.value = data.case;
+    } else {
+      ptccase.selectedIndex = -1;
     }
     const ptcgender = document.getElementById('ptcgender');
-    if (ptcgender) {
+    if (ptcgender && data.gender !== null) {
       ptcgender.value = data.gender;
+    } else {
+      ptcgender.selectedIndex = -1;
     }
     const name = document.getElementById('sname');
     if (name) {
@@ -1031,7 +1041,6 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     if (unit) {
       unit.value = data.unit;
     }
-    setUnit(data.unit);
 
     for (let i = 0; i < data.f.length; i++) {
       const e = document.getElementById('gkform' + i);

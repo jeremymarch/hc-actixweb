@@ -762,8 +762,16 @@ async fn greek_synopsis(
             verb_id: result.selectedverb.parse::<i32>().unwrap(),
             person: result.verbperson.parse::<i32>().unwrap(),
             number: result.verbnumber.parse::<i32>().unwrap(),
-            case: Some(result.verbptccase.parse::<i32>().unwrap_or(999)),
-            gender: Some(result.verbptcgender.parse::<i32>().unwrap_or(999)),
+            case: if result.verbptccase.is_some() {
+                Some(result.verbptccase.unwrap().parse::<i32>().unwrap())
+            } else {
+                None
+            },
+            gender: if result.verbptcgender.is_some() {
+                Some(result.verbptcgender.unwrap().parse::<i32>().unwrap())
+            } else {
+                None
+            },
             unit: result.sgiday,
             pp: result.pp,
             // pp: verbs[verb_id]

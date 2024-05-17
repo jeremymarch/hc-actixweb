@@ -157,9 +157,9 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             .bind(info.pp.clone())
             .bind(info.number)
             .bind(info.person)
-            .bind(info.ptcgender.unwrap_or(999))
-            .bind(info.ptcnumber.unwrap_or(999))
-            .bind(info.ptccase.unwrap_or(999))
+            .bind(info.ptcgender)
+            .bind(info.ptcnumber)
+            .bind(info.ptccase)
             .bind(ip)
             .bind(agent)
             .bind(1)
@@ -756,9 +756,9 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             pp TEXT NOT NULL, 
             verbnumber TEXT NOT NULL, 
             verbperson TEXT NOT NULL, 
-            verbptcgender TEXT NOT NULL, 
-            verbptcnumber TEXT NOT NULL, 
-            verbptccase TEXT NOT NULL, 
+            verbptcgender TEXT, 
+            verbptcnumber TEXT, 
+            verbptccase TEXT, 
             ip TEXT NOT NULL, 
             ua TEXT NOT NULL, 
             status INTEGER NOT NULL, 
