@@ -947,11 +947,16 @@ async fn greek_synopsis_list(
 
 </div>
     <table id='table1' class='synlist'>
-    <tr><td class='headerrow'>Date</td><td class='headerrow'>User</td><td class='headerrow'>Verb</td></tr></table>
-    <script nonce="2726c7f26c">
+    <tr><td class='headerrow'>Date</td>"#);
+
+    if username.is_none() {
+        res.push_str(r#"<td class='headerrow'>User</td>"#);
+    }
+
+    res.push_str(r#"<td class='headerrow'>Verb</td></tr>
+    </table><script nonce="2726c7f26c">
     let username = %USERNAME%;
-    const rows = ["#,
-    );
+    const rows = ["#);
 
     let name = if username.is_some() {
         format!("'{}'", username.unwrap())
@@ -991,9 +996,11 @@ async fn greek_synopsis_list(
             td.innerHTML = "<a href='greek-synopsis?id=" + rows[r][0] + "'>" + formatDate(rows[r][1]) + "</a>";
             tr.append(td);
 
-            const td2 = document.createElement('td');
-            td2.innerText = rows[r][3];
-            tr.append(td2);
+            if (!username) {
+                const td2 = document.createElement('td');
+                td2.innerText = rows[r][3];
+                tr.append(td2);
+            }
 
             const td3 = document.createElement('td');
             td3.classList.add('greekFont')
