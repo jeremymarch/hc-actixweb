@@ -796,17 +796,13 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     document.getElementById('darkModeLight').addEventListener('click', darkModeClick, false);
 
     if (username) {
-      // eslint-disable-next-line no-unneeded-ternary
-      const userName = username ? username : 'anon';
       document.getElementsByTagName('HTML')[0].classList.add('loggedin');
       // eslint-disable-next-line no-undef
-      q('#username').innerText = userName;
-      // globalUserName = userName;
+      q('#username').innerText = username;
     } else {
       document.getElementsByTagName('HTML')[0].classList.remove('loggedin');
       // eslint-disable-next-line no-undef
       q('#username').innerText = '';
-      // globalUserName = null;
     }
 
     if (isResult()) {
