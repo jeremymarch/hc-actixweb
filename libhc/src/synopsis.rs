@@ -84,7 +84,7 @@ pub struct LatinSynopsisResult {
 pub struct GreekSynopsisResult {
     pub id: Uuid,
     pub user_id: Option<Uuid>,
-    pub updated: chrono::NaiveDateTime,
+    pub updated: Option<chrono::NaiveDateTime>,
     pub sname: String,
     pub advisor: String,
     pub sgiday: i32,

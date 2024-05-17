@@ -764,7 +764,7 @@ async fn greek_synopsis(
             number: result.verbnumber.parse::<i32>().unwrap(),
             case: Some(result.verbptccase.parse::<i32>().unwrap_or(999)),
             gender: Some(result.verbptcgender.parse::<i32>().unwrap_or(999)),
-            unit: 0,
+            unit: result.sgiday,
             pp: result.pp,
             // pp: verbs[verb_id]
             //     .pps
@@ -947,16 +947,19 @@ async fn greek_synopsis_list(
 
 </div>
     <table id='table1' class='synlist'>
-    <tr><td class='headerrow'>Date</td>"#);
+    <tr><td class='headerrow'>Date</td>"#,
+    );
 
     if username.is_none() {
         res.push_str(r#"<td class='headerrow'>User</td>"#);
     }
 
-    res.push_str(r#"<td class='headerrow'>Verb</td></tr>
+    res.push_str(
+        r#"<td class='headerrow'>Verb</td></tr>
     </table><script nonce="2726c7f26c">
     let username = %USERNAME%;
-    const rows = ["#);
+    const rows = ["#,
+    );
 
     let name = if username.is_some() {
         format!("'{}'", username.unwrap())

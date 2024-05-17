@@ -524,7 +524,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
         <tr>
             <td width="4%">Principal Parts</td>
             <td id="ppcell" class="formcell">
-                <input type="text" id="pppppp0" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
+                <!-- <input type="text" id="pppppp0" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/> -->
             </td>
         </tr>
       </table>
@@ -717,7 +717,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     }
     json.number = parseInt(number);
 
-    json.pp = document.getElementById('pppppp0').value.trim();
+    json.pp = getValue(document.getElementById('pppppp0')).trim();
 
     const ptccase = document.getElementById('ptccase').value;
     json.ptccase = ptccase ? parseInt(ptccase) : null;
@@ -730,9 +730,10 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
   
     json.r = [];
     document.querySelectorAll('.formcellinput').forEach(e => {
-      json.r[parseInt(e.id.substring(6))] = getValue(e).trim();
+      const i = parseInt(e.id.substring(6));
+      json.r[i] = getValue(e);
     });
-  
+
     microAjax({
       url: 'greek-synopsis-saver',
       method: 'POST',
@@ -786,7 +787,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     document.getElementById('submitbutton').addEventListener('click', submitSynopsis);
     document.getElementById('checkbutton').addEventListener('click', check);
     document.getElementById('clearbutton').addEventListener('click', clearForm);
-    document.getElementById('unitfilter').addEventListener('change', setunit);
+    document.getElementById('unitfilter').addEventListener('change', unitChanged);
     document.getElementById('legendtoggle').addEventListener('click', togglelegend);
 
     document.getElementById('hamburger').addEventListener('click', toggleSettings, false);
@@ -961,14 +962,18 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
   }
   
   // eslint-disable-next-line no-unused-vars
-  function setunit () {
+  function unitChanged () {
     const unit = document.getElementById('unitfilter').value;
+    setUnit(unit);
+    setCookie('unit', unit, 365);
+  }
+
+  function setUnit (unit) {
     document.body.classList = 'unit' + unit;
     if (parseInt(unit) > 7) {
       document.getElementById('ptcgender').selectedIndex = -1;
       document.getElementById('ptccase').selectedIndex = -1;
     }
-    setCookie('unit', unit, 365);
   }
   
   function setCookie (name, value, days) {
@@ -989,9 +994,10 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
   function setAnswers (data) {
     console.log(data);
     clearForm();
+
     const e = document.getElementById('pppppp0');
     if (e) {
-      e.value = data.pp;
+      setValue(e, data.pp);
     }
     const verb = document.getElementById('selectedverb');
     if (verb) {
@@ -1025,6 +1031,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     if (unit) {
       unit.value = data.unit;
     }
+    setUnit(data.unit);
 
     for (let i = 0; i < data.f.length; i++) {
       const e = document.getElementById('gkform' + i);
@@ -1075,7 +1082,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     }
     json.number = parseInt(number);
 
-    json.pp = document.getElementById('pppppp0').value.trim();
+    json.pp = getValue(document.getElementById('pppppp0')).trim();
 
     const ptccase = document.getElementById('ptccase').value;
     json.ptccase = ptccase ? parseInt(ptccase) : null;
@@ -1290,25 +1297,14 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
         td.classList.add('formcell', voices[c].toLowerCase(), labels[r].toLowerCase(), moods[currentMood].toLowerCase());
         const div = document.createElement('div');
         div.classList.add('formcellInner');
+
         let input;
         if (useContentEditable) {
-          input = document.createElement('div');
-          input.setAttribute('contenteditable', 'true');
-          input.setAttribute('spellcheck', 'false');
-          input.setAttribute('autocapitalize', 'off');
-          input.setAttribute('autocomplete', 'off');
-          input.id = 'gkform' + count++;
-          input.classList.add('gkinput', 'formcellinput');
-          input.style.display = 'block';
+          input = gkinputDiv('gkform' + count);
         } else {
-          input = document.createElement('input');
-          input.type = 'text';
-          input.id = 'gkform' + count++;
-          input.classList.add('gkinput', 'formcellinput');
-          input.setAttribute('spellcheck', 'false');
-          input.setAttribute('autocapitalize', 'off');
-          input.setAttribute('autocomplete', 'off');
+          input = gkinputInput('gkform' + count);
         }
+        count++;
 
         div.appendChild(input);
         td.appendChild(div);
@@ -1316,7 +1312,39 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       }
       dFrag.appendChild(tr);
     }
+    const ppcell = document.getElementById('ppcell');
+    ppcell.appendChild(gkinputDiv('pppppp0'));
+
     document.getElementById('table3').appendChild(dFrag);
+  }
+
+  function gkinputDiv (id) {
+    const input = document.createElement('div');
+    input.setAttribute('contenteditable', 'true');
+    input.setAttribute('spellcheck', 'false');
+    input.setAttribute('autocapitalize', 'off');
+    input.setAttribute('autocomplete', 'off');
+    input.id = id;
+    input.classList.add('gkinput');
+    if (id !== 'pppppp0') {
+      input.classList.add('formcellinput');
+    }
+    input.style.display = 'block';
+    return input;
+  }
+
+  function gkinputInput (id) {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = id;
+    input.classList.add('gkinput');
+    if (id !== 'pppppp0') {
+      input.classList.add('formcellinput');
+    }
+    input.setAttribute('spellcheck', 'false');
+    input.setAttribute('autocapitalize', 'off');
+    input.setAttribute('autocomplete', 'off');
+    return input;
   }
 
   const voices = ['Active', 'Middle', 'Passive'];
