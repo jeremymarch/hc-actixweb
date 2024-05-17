@@ -134,27 +134,33 @@ day22	u16
 }
 /* .unit16 { everything } */
 
-#submitcell { display:auto; }
+#submitcell { 
+  display:auto; 
+}
 
-#selectedverb { font-family: NewAthenaUnicode, WebNewAthenaUnicode,helvetica,arial;}
+#selectedverb { 
+  font-family: NewAthenaUnicode, WebNewAthenaUnicode,helvetica,arial;
+}
 
-.verbparam { font-size:14pt; }
+.verbparam { 
+  font-size: 14pt; 
+}
 
 #unitfilter {
-    position: absolute;
-    right: 20px;
-    top: 34px;
+  position: absolute;
+  right: 20px;
+  top: 34px;
 }
 #legendlink {
-    position:absolute;
-    right:20px;
-    top:88px;
+  position:absolute;
+  right:20px;
+  top:120px;
 }
 
 #clearbutton {
     position:absolute;
     right:20px;
-    top:61px;
+    top:90px;
 }
 .tablestyle {
   width:100%;margin:0px auto;
@@ -177,8 +183,8 @@ day22	u16
   position: relative;
 }
 #submitcell {
-  right:0px;
-  top: 30px;
+  right:20px;
+  top: 61px;
   position:absolute;
 }
 .gkinput.formcellinput.incorrect {
@@ -190,10 +196,6 @@ day22	u16
 .moodrows {
   font-weight: bold;
   height: 40px;
-}
-
-.synopsis-form {
-
 }
 
 .tophelp { display:none; }
@@ -267,97 +269,101 @@ day22	u16
   display: none;
 }
 #settingsdiv ul {
-            list-style-type: none;
-            margin: 0px;
-            padding: 0px;
-            text-align: left;
-        }
-        .settings {
-            position: absolute;
-            top: 70px;
-            right: 11px;
-            width: 230px;
-            z-index: 999;
-            padding: 10px;
-        }
-        #settingsdiv {
-            background-color: white;
-            color: black;
-            border: 2px solid black;
-            border-radius: 10px;
-        }
+  list-style-type: none;
+  margin: 0px;
+  padding: 0px;
+  text-align: left;
+}
+.settings {
+  position: absolute;
+  top: 70px;
+  right: 11px;
+  width: 230px;
+  z-index: 999;
+  padding: 10px;
+}
+#settingsdiv {
+  background-color: white;
+  color: black;
+  border: 2px solid black;
+  border-radius: 10px;
+}
 
 #settingsdiv {
-          display:none;
-        }
-        #settingsdiv .settingsItem {
-            background-color: white;
-            color: black;
-            display: block;
-            padding: 6px 10px;
-            cursor: pointer;
-            border: 2px solid white;
-        }
-        #settingsdiv .settingsItem:hover {
-            border: 2px solid black;
-        }
-        #settingsdiv div:focus {
-            border: 2px solid black;
-            outline: 0px solid black;
-        }
-        .settingsOn #settingsdiv {
-          display:block;
-        }
-        .settingsOn #backdrop {
-          display:block;
-        }
-        .settingsDarkMode {
-          text-align:right;
-          float:right;
-          padding:0px;
-          border:none;
-        }
-        #settingsDarkMode {
-          height:70px;
-        }
-        #backdrop {
-            position: absolute;
-            top: 0px;
-            left: 0px;
-            width: 100%;
-            height: 100%;
-            z-index: 900;
-            display:none;
-        }
-
+  display:none;
+}
+#settingsdiv .settingsItem {
+  background-color: white;
+  color: black;
+  display: block;
+  padding: 6px 10px;
+  cursor: pointer;
+  border: 2px solid white;
+}
+#settingsdiv .settingsItem:hover {
+  border: 2px solid black;
+}
+#settingsdiv div:focus {
+  border: 2px solid black;
+  outline: 0px solid black;
+}
+.settingsOn #settingsdiv {
+  display:block;
+}
+.settingsOn #backdrop {
+  display:block;
+}
+.settingsDarkMode {
+  text-align:right;
+  float:right;
+  padding:0px;
+  border:none;
+}
+#settingsDarkMode {
+  height:70px;
+}
+#backdrop {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  z-index: 900;
+  display:none;
+}
+#verbResultDisplay {
+  padding-left: 20px;
+}
+.loggedin #loginlink { display: none; }
+.loggedin #logoutlink { display: inline; }
 @media screen {
-    .dark body {
+  .dark body {
     background-color:black;
     color:white;
   }
-        .dark #settingsdiv {
-            background-color: black;
-            color: white;
-            border: 2px solid white;
-        }
-        .dark #settingsdiv li {
-            color: white;
-        }
+  .dark #settingsdiv {
+    background-color: black;
+    color: white;
+    border: 2px solid white;
+  }
+  .dark #settingsdiv li {
+    color: white;
+  }
   .dark #settingsdiv .settingsItem {
-            background-color: black;
-            color: white;
-            display: block;
-            padding: 6px 10px;
-            cursor: pointer;
-            border: 2px solid black;
-        }
-        .dark #settingsdiv .settingsItem:hover {
-            border: 2px solid white;
-        }
-        .dark #settingsdiv div:focus {
-            border: 2px solid white;
-            outline: 0px solid white;
-        }
+    background-color: black;
+    color: white;
+    display: block;
+    padding: 6px 10px;
+    cursor: pointer;
+    border: 2px solid black;
+  }
+  .dark #settingsdiv .settingsItem:hover {
+    border: 2px solid white;
+  }
+  .dark #settingsdiv div:focus {
+    border: 2px solid white;
+    outline: 0px solid white;
+  }
   .dark #menubar {
     color: white;
   }
@@ -430,7 +436,13 @@ day22	u16
             <tr><td class="dnum">1</td><td class="dnum">2</td><td class="dnum">3</td><td class="dnum">4</td><td class="dnum">5</td><td class="dnum">6</td><td class="dnum">7</td><td class="dnum">8</td><td class="dnum">9</td><td class="dnum">0</td></tr>
         </table>
     </div>-->
-    <div id="legendlink"><span tabindex="-1" id="legendtoggle">keys</span></div>
+    <div id="legendlink">
+      <span tabindex="-1" id="legendtoggle">keys</span>
+    </div>
+    <span id="submitcell">
+      <button id="submitbutton">Submit</button>
+      <button id="checkbutton">Check</button>
+    </span>
     <button id="clearbutton" tabindex="-1">Clear</button>
     <table id="table1" class="tablestyle" cellpadding=0 cellspacing=0>
         <tr>
@@ -464,48 +476,51 @@ day22	u16
                     <tr><td colspan='4' align="right" id="namecell">
                       Name: <input type="text" id="sname" class="" spellcheck="false" autocapitalize="off" autocomplete="off"/>
 Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapitalize="off" autocomplete="off"/>
-                  </td></tr>
-                    <tr><td width="50%" id="paramcell"><h3>Synopsis of 
-                      <span id="verbResultDisplay" class="paramDisplay"></span>
-                      <span id="personResultDisplay" class="paramDisplay"></span>
-                      <span id="numberResultDisplay" class="paramDisplay"></span>
-                      <span id="ptcgenderResultDisplay" class="paramDisplay"></span>
-                      <span id="ptccaseResultDisplay" class="paramDisplay"></span>
-
-                        <!-- <input type="text" id="selectedverb" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/> -->
-                        <select id="selectedverb" class="verbparam">
-                        </select>
-                        <select id="person" class="verbparam">
-                            <option value="0">First Person</option>
-                            <option value="1">Second Person</option>
-                            <option value="2">Third Person</option>
-                        </select>
-                        <select id="number" class="verbparam">
-                            <option value="0">Singular</option>
-                            <option value="1">Plural</option>
-                        </select>
-                        <select id="ptcgender" class="verbparam">
-                            <option value="0">Masculine</option>
-                            <option value="1">Feminine</option>
-                            <option value="2">Neuter</option>
-                        </select>
-                        <!--<select id="ptcnumber" class="verbparam">
-                            <option value=""></option>
-                            <option value="ptcsing">Singular</option>
-                            <option value="ptcpl">Plural</option>
-                        </select>-->
-                        <select id="ptccase" class="verbparam">
-                            <option value="0">Nominative</option>
-                            <option value="1">Genitive</option>
-                            <option value="2">Dative</option>
-                            <option value="3">Accusative</option>
-                            <option value="4">Vocative</option>
-                        </select>
-                            
-                    <span align="right" colspan="2" id="submitcell"><button id="submitbutton">Submit</button><button id="checkbutton">Check</button></span></h3></td></tr>
+                      </td>
+                    </tr>
+                    
         </table>
         </td>
         </tr>
+        <tr><td width="4%" id="paramcell">Synopsis of </td>
+          <td>
+          <span id="verbResultDisplay" class="paramDisplay"></span>
+          <span id="personResultDisplay" class="paramDisplay"></span>
+          <span id="numberResultDisplay" class="paramDisplay"></span>
+          <span id="ptcgenderResultDisplay" class="paramDisplay"></span>
+          <span id="ptccaseResultDisplay" class="paramDisplay"></span>
+
+            <!-- <input type="text" id="selectedverb" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/> -->
+            <select id="selectedverb" class="verbparam">
+            </select>
+            <select id="person" class="verbparam">
+                <option value="0">First Person</option>
+                <option value="1">Second Person</option>
+                <option value="2">Third Person</option>
+            </select>
+            <select id="number" class="verbparam">
+                <option value="0">Singular</option>
+                <option value="1">Plural</option>
+            </select>
+            <select id="ptcgender" class="verbparam">
+                <option value="0">Masculine</option>
+                <option value="1">Feminine</option>
+                <option value="2">Neuter</option>
+            </select>
+            <!--<select id="ptcnumber" class="verbparam">
+                <option value=""></option>
+                <option value="ptcsing">Singular</option>
+                <option value="ptcpl">Plural</option>
+            </select>-->
+            <select id="ptccase" class="verbparam">
+                <option value="0">Nominative</option>
+                <option value="1">Genitive</option>
+                <option value="2">Dative</option>
+                <option value="3">Accusative</option>
+                <option value="4">Vocative</option>
+            </select>
+      </td>
+      </tr>
         <tr>
             <td width="4%">Principal Parts</td>
             <td id="ppcell" class="formcell">
@@ -551,6 +566,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
   'use strict';
   const unicodeMode = 0;
 
+  const username = false;
   const resultJson = false;
 
   function toggleSettingsOn () {
@@ -778,6 +794,20 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     document.getElementById('darkModeSystem').addEventListener('click', darkModeClick, false);
     document.getElementById('darkModeDark').addEventListener('click', darkModeClick, false);
     document.getElementById('darkModeLight').addEventListener('click', darkModeClick, false);
+
+    if (username) {
+      // eslint-disable-next-line no-unneeded-ternary
+      const userName = username ? username : 'anon';
+      document.getElementsByTagName('HTML')[0].classList.add('loggedin');
+      // eslint-disable-next-line no-undef
+      q('#username').innerText = userName;
+      // globalUserName = userName;
+    } else {
+      document.getElementsByTagName('HTML')[0].classList.remove('loggedin');
+      // eslint-disable-next-line no-undef
+      q('#username').innerText = '';
+      // globalUserName = null;
+    }
 
     if (isResult()) {
       setParamResultDisplay();

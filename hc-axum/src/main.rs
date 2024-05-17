@@ -430,6 +430,7 @@ async fn create_session(
 
 #[debug_handler]
 async fn greek_synopsis(
+    session: Session,
     Query(id): axum::extract::Query<SynopsisResultUuid>,
     State(state): State<AxumAppState>,
 ) -> impl IntoResponse {
@@ -787,10 +788,21 @@ async fn greek_synopsis(
         HeaderValue::from_str(&CSP.replace("%NONCE%", &csp_nonce)).unwrap(),
     );
 
-    let page = SYNOPSIS_PAGE.replace("%NONCE%", &csp_nonce).replace(
-        "const resultJson = false;",
-        format!("const resultJson = {};", json).as_str(),
-    );
+    //let user_id = login::get_user_id(&session);
+    let username = login::get_username(&session);
+    let name = if username.is_some() {
+        format!("const username = '{}';", username.unwrap())
+    } else {
+        String::from("const username = false;")
+    };
+
+    let page = SYNOPSIS_PAGE
+        .replace("%NONCE%", &csp_nonce)
+        .replace("const username = false;", name.as_str())
+        .replace(
+            "const resultJson = false;",
+            format!("const resultJson = {};", json).as_str(),
+        );
 
     (headers, Html(page))
 }
@@ -829,6 +841,10 @@ async fn greek_synopsis_list(
     <head>
     <meta charset="UTF-8">
     <style nonce="2726c7f26c">
+    @font-face {
+        font-family: 'WebNewAthenaUnicode';
+        src: url('/newathu5_8.ttf') format('truetype');
+      }  
         body {
             font-family: helvetica, arial;
             margin:0px;
@@ -886,6 +902,9 @@ async fn greek_synopsis_list(
       }
       .loggedin #loginlink { display: none; }
       .loggedin #logoutlink { display: inline; }
+      .greekFont { 
+        font-family: NewAthenaUnicode, WebNewAthenaUnicode,helvetica,arial;
+      }
       .dark #menubar {
         color: white;
       }
@@ -928,7 +947,7 @@ async fn greek_synopsis_list(
 
 </div>
     <table id='table1' class='synlist'>
-    <tr><td class='headerrow'>Date</td><td class='headerrow'>Verb</td></tr></table>
+    <tr><td class='headerrow'>Date</td><td class='headerrow'>User</td><td class='headerrow'>Verb</td></tr></table>
     <script nonce="2726c7f26c">
     let username = %USERNAME%;
     const rows = ["#,
@@ -977,6 +996,7 @@ async fn greek_synopsis_list(
             tr.append(td2);
 
             const td3 = document.createElement('td');
+            td3.classList.add('greekFont')
             td3.innerText = rows[r][2];
             tr.append(td3);
 
