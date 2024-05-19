@@ -282,6 +282,10 @@ pub trait HcTrx: Send + Sync + Debug {
         user_id: Option<Uuid>,
     ) -> Result<Vec<(Uuid, chrono::NaiveDateTime, Option<String>, String, String)>, HcError>;
 
+    async fn greek_get_synopsis_list_all(
+        &mut self,
+    ) -> Result<Vec<(Uuid, chrono::NaiveDateTime, Option<String>, String, String)>, HcError>;
+
     async fn greek_get_synopsis_result(&mut self, id: Uuid)
         -> Result<GreekSynopsisResult, HcError>;
 

@@ -97,25 +97,27 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         &mut self,
         user_id: Option<Uuid>,
     ) -> Result<Vec<(Uuid, chrono::NaiveDateTime, Option<String>, String, String)>, HcError> {
-        let res: Vec<(Uuid, chrono::NaiveDateTime, Option<String>, String, String)> = if user_id
-            .is_some()
-        {
-            let query =
-                "SELECT id, updated, sname, advisor, selectedverb FROM greeksynopsisresults WHERE user_id = $1 ORDER BY updated DESC;";
+        let query = "SELECT id, updated, sname, advisor, selectedverb FROM greeksynopsisresults WHERE user_id = $1 ORDER BY updated DESC;";
+
+        let res: Vec<(Uuid, chrono::NaiveDateTime, Option<String>, String, String)> =
             sqlx::query_as(query)
                 .bind(user_id)
                 .fetch_all(&mut *self.tx)
                 .await
-                .map_err(map_sqlx_error)?
-        } else {
-            let query =
-            "SELECT id, updated, b.user_name, advisor, selectedverb FROM greeksynopsisresults a LEFT JOIN users b ON a.user_id = b.user_id ORDER BY updated DESC;";
-            sqlx::query_as(query)
+                .map_err(map_sqlx_error)?;
+        Ok(res)
+    }
+
+    async fn greek_get_synopsis_list_all(
+        &mut self,
+    ) -> Result<Vec<(Uuid, chrono::NaiveDateTime, Option<String>, String, String)>, HcError> {
+        let query_all = "SELECT id, updated, b.user_name, advisor, selectedverb FROM greeksynopsisresults a LEFT JOIN users b ON a.user_id = b.user_id ORDER BY updated DESC;";
+
+        let res: Vec<(Uuid, chrono::NaiveDateTime, Option<String>, String, String)> =
+            sqlx::query_as(query_all)
                 .fetch_all(&mut *self.tx)
                 .await
-                .map_err(map_sqlx_error)?
-        };
-
+                .map_err(map_sqlx_error)?;
         Ok(res)
     }
 
