@@ -35,13 +35,14 @@
   font-family: 'WebNewAthenaUnicode';
   src: url('/newathu5_8.ttf') format('truetype');
 }  
-
-
-
+.realAnswer {
+  padding-left:11px;
+  font-family: NewAthenaUnicode, WebNewAthenaUnicode,helvetica,arial;
+  font-size:20pt;
+}
 #namecell {
   display:none;
 }
-
 .rotate { 
     transform: rotate(-42deg);
     width: 10%;
@@ -137,9 +138,13 @@ day22	u16
 #submitcell { 
   display:auto; 
 }
-.verbparam {
+#selectedverb {
   font-family: NewAthenaUnicode, WebNewAthenaUnicode,helvetica,arial;
+}
+.verbparam {
+  font-family: Helvetica, Arial, sans-serif;
   font-size: 14pt;
+  height:30px;
 }
 
 #unitfilter {
@@ -1040,6 +1045,10 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
           setValue(e, data.f[i].given);
           if (!data.f[i].is_correct) { // && data.f[i].correct) {
             e.classList.add('incorrect');
+            const realForm = document.createElement('div');
+            realForm.classList.add('realAnswer');
+            realForm.innerText = '(' + data.f[i].correct + ')';
+            e.parentNode.appendChild(realForm);
           } else {
             e.classList.remove('incorrect');
           }
