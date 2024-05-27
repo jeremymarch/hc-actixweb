@@ -911,10 +911,104 @@ async fn greek_synopsis_list(
       #logoutlink {
         display: none;
       }
+      #newSynopsisLink { 
+        display:none; 
+      }
+      #table1 { 
+        display:none; 
+      }
       .loggedin #loginlink { display: none; }
       .loggedin #logoutlink { display: inline; }
+      .loggedin #newSynopsisLink { display: inline; }
+      .loggedin #table1 { display: table; }
       .greekFont { 
         font-family: NewAthenaUnicode, WebNewAthenaUnicode,helvetica,arial;
+      }
+      #settingsdiv ul {
+        list-style-type: none;
+        margin: 0px;
+        padding: 0px;
+        text-align: left;
+      }
+      .settings {
+        position: absolute;
+        top: 70px;
+        right: 11px;
+        width: 230px;
+        z-index: 999;
+        padding: 10px;
+      }
+      #settingsdiv {
+        background-color: white;
+        color: black;
+        border: 2px solid black;
+        border-radius: 10px;
+      }
+      
+      #settingsdiv {
+        display:none;
+      }
+      #settingsdiv .settingsItem {
+        background-color: white;
+        color: black;
+        display: block;
+        padding: 6px 10px;
+        cursor: pointer;
+        border: 2px solid white;
+      }
+      #settingsdiv .settingsItem:hover {
+        border: 2px solid black;
+      }
+      #settingsdiv div:focus {
+        border: 2px solid black;
+        outline: 0px solid black;
+      }
+      .settingsOn #settingsdiv {
+        display:block;
+      }
+      .settingsOn #backdrop {
+        display:block;
+      }
+      .settingsDarkMode {
+        text-align:right;
+        float:right;
+        padding:0px;
+        border:none;
+      }
+      #settingsDarkMode {
+        height:70px;
+      }
+      #backdrop {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        height: 100%;
+        z-index: 900;
+        display:none;
+      }
+      .dark #settingsdiv {
+        background-color: black;
+        color: white;
+        border: 2px solid white;
+      }
+      .dark #settingsdiv li {
+        color: white;
+      }
+      .dark #settingsdiv .settingsItem {
+        background-color: black;
+        color: white;
+        display: block;
+        padding: 6px 10px;
+        cursor: pointer;
+        border: 2px solid black;
+      }
+      .dark #settingsdiv .settingsItem:hover {
+        border: 2px solid white;
+      }
+      .dark #settingsdiv div:focus {
+        border: 2px solid white;
+        outline: 0px solid white;
       }
       .dark #menubar {
         color: white;
@@ -924,6 +1018,10 @@ async fn greek_synopsis_list(
       }
       .dark #hamburger rect {
         fill: white;
+      }
+      .dark body {
+        background-color: black;
+        color: white;
       }
       .dark a {
         color: #03A5F3;
@@ -937,9 +1035,22 @@ async fn greek_synopsis_list(
         box-sizing: border-box;
       }
     </style>
+    <script nonce="%NONCE%" type="text/javascript">
+        'use strict';
+        function q (i) { return document.querySelector(i); }
+        function setTheme () {
+            const mode = localStorage.getItem('mode');
+            if ((window.matchMedia('(prefers-color-scheme: dark)').matches || mode === 'dark') && mode !== 'light') {
+            q('HTML').classList.add('dark');
+            } else {
+            q('HTML').classList.remove('dark');
+            }
+        }
+        setTheme();
+    </script>
     </head>
     <body>
-    <div id="menubar"><a href="greek-synopsis">New</a>
+    <div id="menubar"><a id="newSynopsisLink" href="greek-synopsis">New</a>
     <div id="loginContainer"><a id="loginlink" href="login">login</a>
         <span id="logoutlink">
           <span id="username"></span> 
@@ -967,7 +1078,36 @@ async fn greek_synopsis_list(
 
     res.push_str(
         r#"<td class='headerrow'>Verb</td></tr>
-    </table><script nonce="2726c7f26c">
+    </table>
+    <div id="settingsdiv" class="settings">
+  Settings<br>
+  <ul>
+    <!-- <li>
+      <div id='aboutButton' tabindex='0' class='menulink settingsItem'>about</div>
+    </li>
+    <li>
+      <div id='iOSButton' tabindex='0' class='menulink settingsItem'>iOS/Android app</div>
+    </li> -->
+    <!--<li><div id='configureButton' tabindex='0' class='menulink settingsItem'>configure</div></li>-->
+    <!--<li>
+      <div id='toggleHistoryButton' tabindex='0' class='menulink settingsItem'>show/hide history</div>
+    </li>-->
+    <li>
+      <div id="settingsDarkMode" tabindex='0' class="settingsItem">dark mode:
+        <div class='settingsDarkMode'>
+          <label for='darkModeSystem'>system</label> 
+          <input id='darkModeSystem' type='radio' name='darkmode' value='system'/><br>
+          <label for='darkModeDark'>dark</label> 
+          <input id='darkModeDark' type='radio' name='darkmode' value='dark'/><br>
+          <label for='darkModeLight'>light</label><input id='darkModeLight' type='radio' name='darkmode' value='light'/>
+        </div>
+      </div>
+    </li>
+  </ul>
+</div>
+    <div id="mesg"></div>
+    <div id="backdrop"></div>
+    <script nonce="2726c7f26c">
     let username = %USERNAME%;
     const rows = ["#,
     );
@@ -1036,6 +1176,54 @@ async fn greek_synopsis_list(
             //globalUserName = null;
           }
       
+          function toggleSettingsOn () {
+            document.body.classList.add('settingsOn');
+          }
+          function toggleSettingsOff () {
+            document.body.classList.remove('settingsOn');
+          }
+        
+          function toggleSettings () {
+            if (document.body.classList.contains('settingsOn')) {
+              toggleSettingsOff();
+            } else {
+              const mode = window.localStorage.getItem('mode');
+              switch (mode) {
+                case 'dark':
+                  document.querySelector('#darkModeDark').checked = true;
+                  break;
+                case 'light':
+                  document.querySelector('#darkModeLight').checked = true;
+                  break;
+                default:
+                  document.querySelector('#darkModeSystem').checked = true;
+                  break;
+              }
+              toggleSettingsOn();
+            }
+          }
+        
+          function darkModeClick () {
+            switch (this.id) {
+              case 'darkModeDark':
+                window.localStorage.setItem('mode', 'dark');
+                break;
+              case 'darkModeLight':
+                window.localStorage.setItem('mode', 'light');
+                break;
+              default:
+                window.localStorage.removeItem('mode');
+                break;
+            }
+            // eslint-disable-next-line no-undef
+            setTheme();
+          }
+
+          document.getElementById('hamburger').addEventListener('click', toggleSettings, false);
+    document.getElementById('backdrop').addEventListener('click', toggleSettings, false);
+    document.getElementById('darkModeSystem').addEventListener('click', darkModeClick, false);
+    document.getElementById('darkModeDark').addEventListener('click', darkModeClick, false);
+    document.getElementById('darkModeLight').addEventListener('click', darkModeClick, false);
     </script></body></html>"#);
 
     Html(res)
