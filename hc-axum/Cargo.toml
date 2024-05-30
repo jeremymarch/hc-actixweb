@@ -29,6 +29,7 @@ chrono = { version="0.4.34", features = ["serde"] }
 
 oauth2 = "4.4.2"
 sign-in-with-apple = { git = "https://github.com/jeremymarch/sign-in-with-apple", version = "0.4.2" }
+itertools = "0.13.0"
 #sign-in-with-apple = { path = "../../sign-in-with-apple", version = "0.4.2" }
 
 [profile.release]

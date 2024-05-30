@@ -39,6 +39,7 @@ sign-in-with-apple = { git = "https://github.com/jeremymarch/sign-in-with-apple"
 #google-signin = { git = "https://github.com/wyyerd/google-signin-rs", version = "0.4.0" }
 
 uuid = { version = "1.6.1", features = ["v4", "serde"] }
+itertools = "0.13.0"
 
 [profile.release]
 opt-level = 3

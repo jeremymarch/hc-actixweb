@@ -16,9 +16,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+use libhc::check_pps;
 use libhc::hgk_compare_multiple_forms;
 //use std::time::SystemTime;
 //use std::time::UNIX_EPOCH;
+
+use itertools::Itertools;
 
 use axum::extract::Query;
 use axum::response::Response;
@@ -330,6 +333,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/greek-synopsis-saver",
             axum::routing::post(greek_synopsis_saver),
         )
+        .route("/sgi", axum::routing::post(sgi_schedule))
         // .route("/latin-synopsis-result", axum::routing::get(latin_synopsis_result))
         // .route("/latin-synopsis-list", axum::routing::get(latin_synopsis_list))
         // .route("/latin-synopsis-saver", axum::routing::get(latin_synopsis_saver))
@@ -776,6 +780,8 @@ async fn greek_synopsis(
                 },
                 unit: result.sgiday,
                 pp: result.pp,
+                pp_correct: result.pp_correct,
+                pp_is_correct: result.pp_is_correct,
                 // pp: verbs[verb_id]
                 //     .pps
                 //     .iter()
@@ -834,6 +840,15 @@ async fn greek_synopsis(
 
 //     (headers, Html(page))
 // }
+
+async fn sgi_schedule(session: Session) -> impl IntoResponse {
+    let _user_id = login::get_user_id(&session);
+    let _username = login::get_username(&session);
+
+    let res = "<!DOCTYPE html><html><body>SGI Schedule</body></html>";
+
+    Html(res)
+}
 
 async fn greek_synopsis_list(
     session: Session,
@@ -1219,7 +1234,7 @@ async fn greek_synopsis_list(
             setTheme();
           }
 
-          document.getElementById('hamburger').addEventListener('click', toggleSettings, false);
+    document.getElementById('hamburger').addEventListener('click', toggleSettings, false);
     document.getElementById('backdrop').addEventListener('click', toggleSettings, false);
     document.getElementById('darkModeSystem').addEventListener('click', darkModeClick, false);
     document.getElementById('darkModeDark').addEventListener('click', darkModeClick, false);
@@ -1234,9 +1249,6 @@ async fn greek_synopsis_saver(
     State(state): State<AxumAppState>,
     extract::Json(mut payload): extract::Json<SynopsisSaverRequest>,
 ) -> Result<Json<SynopsisJsonResult>, StatusCode> {
-    //let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
-    //let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
-
     //let user_agent = get_user_agent(&req).unwrap_or("");
     //https://stackoverflow.com/questions/66989780/how-to-retrieve-the-ip-address-of-the-client-from-httprequest-in-actix-web
     // let ip = if req.peer_addr().is_some() {
@@ -1266,6 +1278,8 @@ async fn greek_synopsis_saver(
         }
     }
 
+    let is_correct_pps: Vec<bool> = check_pps(&payload.pp, &state.verbs[verb_id]);
+
     let mut db_insert = Vec::<String>::new();
 
     let mut res_forms = Vec::<SaverResults>::new();
@@ -1288,6 +1302,19 @@ async fn greek_synopsis_saver(
         gender: payload.ptcgender,
         unit: payload.unit,
         pp: payload.pp.clone(),
+        pp_correct: format!(
+            "{}, {}, {}, {}, {}, {}",
+            &state.verbs[verb_id].pps[0],
+            &state.verbs[verb_id].pps[1],
+            &state.verbs[verb_id].pps[2],
+            &state.verbs[verb_id].pps[3],
+            &state.verbs[verb_id].pps[4],
+            &state.verbs[verb_id].pps[5]
+        ),
+        pp_is_correct: is_correct_pps
+            .into_iter()
+            .map(|x| (x as i32).to_string())
+            .join(","),
         // pp: verbs[verb_id]
         //     .pps
         //     .iter()
@@ -1306,6 +1333,8 @@ async fn greek_synopsis_saver(
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     payload.r = db_insert; //add correct boolean and correct answers here to save to db
+    payload.pp_correct = res.pp_correct.clone();
+    payload.pp_is_correct = res.pp_is_correct.clone();
 
     let _ = tx
         .greek_insert_synopsis(
@@ -1368,6 +1397,8 @@ async fn synopsis_json(
             .map(|x| x.replace('/', " or ").replace("  ", " "))
             .collect::<Vec<_>>()
             .join(", "),
+        pp_correct: "".to_string(),
+        pp_is_correct: "".to_string(),
         name: "".to_string(),
         advisor: "".to_string(),
         f: res,

@@ -1334,6 +1334,7 @@ dependencies = [
  "env_logger",
  "futures",
  "hex",
+ "itertools 0.13.0",
  "libhc",
  "log",
  "oauth2",
@@ -1354,6 +1355,7 @@ dependencies = [
  "axum",
  "chrono",
  "http 1.0.0",
+ "itertools 0.13.0",
  "libhc",
  "oauth2",
  "secrecy",
@@ -1436,7 +1438,6 @@ dependencies = [
 [[package]]
 name = "hoplite_verbs_rs"
 version = "0.4.4"
-source = "git+https://github.com/jeremymarch/hoplite_verbs_rs#a80716d8bfdcc5ccef1e565fc10d0091b55deabb"
 dependencies = [
  "itertools 0.12.1",
  "polytonic-greek",
@@ -1706,6 +1707,15 @@ name = "itertools"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
 dependencies = [
  "either",
 ]

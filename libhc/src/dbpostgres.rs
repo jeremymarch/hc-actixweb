@@ -145,7 +145,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         let ip = "";
         let agent = "";
         let uuid = sqlx::types::Uuid::new_v4();
-        let query = format!("INSERT INTO greeksynopsisresults VALUES ($1, $2, DEFAULT, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, '{}')", 
+        let query = format!("INSERT INTO greeksynopsisresults VALUES ($1, $2, DEFAULT, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, '{}')", 
             info.r.join("', '"));
         //println!("aaa: {}", query);
         sqlx::query(&query)
@@ -157,6 +157,8 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             .bind(info.unit)
             .bind(info.verb)
             .bind(info.pp.clone())
+            .bind(info.pp_correct.clone())
+            .bind(info.pp_is_correct.clone())
             .bind(info.number)
             .bind(info.person)
             .bind(info.ptcgender)
@@ -756,6 +758,8 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             sgiday INTEGER NOT NULL, 
             selectedverb TEXT NOT NULL, 
             pp TEXT NOT NULL, 
+            pp_correct TEXT NOT NULL, 
+            pp_is_correct TEXT NOT NULL,
             verbnumber TEXT NOT NULL, 
             verbperson TEXT NOT NULL, 
             verbptcgender TEXT, 

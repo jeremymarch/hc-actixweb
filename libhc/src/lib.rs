@@ -30,6 +30,7 @@ use argon2::PasswordHasher;
 use argon2::PasswordVerifier;
 use argon2::Version;
 use chrono::prelude::*;
+pub use hoplite_verbs_rs::check_pps;
 pub use hoplite_verbs_rs::HcGreekVerb;
 use hoplite_verbs_rs::*;
 pub use polytonic_greek::hgk_compare_multiple_forms;

@@ -191,6 +191,9 @@ day22	u16
 .gkinput.formcellinput.incorrect {
   color:red;
 }
+#ppcell .ppincorrect {
+  color:red;
+}
 .spacer {
   width: 40px;
 }
@@ -405,7 +408,7 @@ day22	u16
   .synopsis-form #checkbutton { display:none; }
   .synopsis-form #menubar { display: none; }
 
-  .gkinput { font-size: 14pt; min-height: auto; }
+  .gkinput, .realAnswer { font-size: 14pt; min-height: auto; }
 }
 </style>
 </head>
@@ -715,6 +718,8 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     json.number = parseInt(number);
 
     json.pp = getValue(document.getElementById('pppppp0')).trim();
+    json.pp_correct = '';
+    json.pp_is_correct = '';
 
     const ptccase = document.getElementById('ptccase').value;
     json.ptccase = ptccase ? parseInt(ptccase) : null;
@@ -836,9 +841,10 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     if (data.case !== null && data.case > -1) {
       str += c.options[data.case].text;
     }
-    if (data.unit !== null && data.unit > -1) {
-      str += '. (unit ' + data.unit + ')';
-    }
+    // display unit?
+    // if (data.unit !== null && data.unit > -1) {
+    //   str += '. (unit ' + data.unit + ')';
+    // }
 
     document.getElementById('verbResultDisplay').innerText = str;
   }
@@ -882,7 +888,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
 
   function setValue (el, value) {
     if (el.nodeName.toUpperCase() === 'DIV' && el.contentEditable) {
-      el.innerText = value;
+      el.innerHTML = value;
     } else {
       el.value = value;
     }
@@ -998,8 +1004,39 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
 
     const e = document.getElementById('pppppp0');
     if (e) {
-      setValue(e, data.pp);
+      if (data.pp_is_correct.indexOf('0') > -1) {
+        e.classList.add('incorrect');
+        const realForm = document.createElement('div');
+        realForm.classList.add('realAnswer');
+        realForm.innerText = '(' + data.pp_correct + ')';
+        e.parentNode.appendChild(realForm);
+
+        const c = data.pp_is_correct.split(',');
+        const pps = data.pp.split(',');
+        let res = '';
+
+        if (c.length === 6 && pps.length === 6) {
+          for (let i = 0; i < c.length; i++) {
+            if (c[i] === '1') {
+              res += '<span class="ppcorrect">' + pps[i] + '</span>';
+            } else {
+              res += '<span class="ppincorrect">' + pps[i] + '</span>';
+            }
+            if (i !== c.length - 1) {
+              res += ',';
+            }
+          }
+        } else {
+          // if lengths are not 6, mark them all wrong
+          res = '<span class="ppincorrect">' + data.pp + '</span>';
+        }
+
+        setValue(e, res);
+      } else {
+        setValue(e, data.pp);
+      }
     }
+
     const verb = document.getElementById('selectedverb');
     if (verb) {
       verb.value = data.verb_id;
@@ -1091,6 +1128,8 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     json.number = parseInt(number);
 
     json.pp = getValue(document.getElementById('pppppp0')).trim();
+    json.pp_correct = '';
+    json.pp_is_correct = '';
 
     const ptccase = document.getElementById('ptccase').value;
     json.ptccase = ptccase ? parseInt(ptccase) : null;
@@ -1336,6 +1375,8 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     input.classList.add('gkinput');
     if (id !== 'pppppp0') {
       input.classList.add('formcellinput');
+    } else {
+      input.classList.add('ppcellinput');
     }
     input.style.display = 'block';
     return input;
