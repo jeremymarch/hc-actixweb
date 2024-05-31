@@ -18,7 +18,7 @@
             <class type="lecture" start="1:30 pm" end="3:30 pm" name="Accents" />
         </day>
         <day n="2">
-            <class type="morningOptional" start="8:30 am" end="9:15 am" name="(Optional) Review and Extra Help" />
+            <class type="morningOptional" who="JM" start="8:30 am" end="9:15 am" name="(Optional) Review and Extra Help" />
             <class type="drill1" start="9:30 am" end="10:30 am">
                 <section group="E" who="JM" room="" />
                 <section group="F/G" who="HH" room="" />
@@ -40,7 +40,7 @@
                     </doc>
                 </docs>
             </class>
-            <class type="lecture" start="1:00 pm" end="2:30 pm">
+            <class type="lecture" who="HH" start="1:00 pm">
                 <docs>
                     <doc type="lectureHandout">
                         <docdesc>Unit 1 Lecture Handout</docdesc>
@@ -49,7 +49,109 @@
                     </doc>
                 </docs>
             </class>
-            <class type="vocNotes" start="2:30 pm" end="4:00 pm"></class>
+            <class type="vocNotes" who="JM" end="4:00 pm"></class>
+        </day>
+        <day n="3">
+            <class type="morningOptional" who="JM" start="8:30 am" end="9:15 am" name="(Optional) Review and Extra Help" />
+            <class type="drill1" start="9:30 am" end="10:30 am">
+                <section group="E" who="JM" room="" />
+                <section group="F/G" who="HH" room="" />
+                <section group="H" who="EBH" room="" />
+            </class>
+            <class type="drill2" start="10:40 am" end="11:30 am">
+                <section group="E" who="EBH" room="" />
+                <section group="F/G" who="JM" room="" />
+                <section group="H" who="HH" room="" />
+            </class>
+            <class type="noonOptional" who="EBH" start="12:15 pm" end="12:45 pm">
+                <section who="EBH" room="" name="Additional Accent Drill" />
+                <section who="HH" room="" name="Reading Aloud and Pronunciation Drill" />
+                <docs>
+                    <doc type="optionalHandout">
+                        <docdesc>Optional Accent Review</docdesc>
+                        <path type="docx"></path>
+                        <path type="pdf"></path>
+                    </doc>
+                </docs>
+            </class>
+            <class type="lecture" who="HH" start="1:00 pm">
+                <docs>
+                    <doc type="lectureHandout">
+                        <docdesc>Unit 1 Lecture Handout</docdesc>
+                        <path type="docx"></path>
+                        <path type="pdf"></path>
+                    </doc>
+                </docs>
+            </class>
+            <class type="vocNotes" who="JM" end="4:00 pm"></class>
+        </day>
+        <day n="4">
+            <class type="morningOptional" who="JM" start="8:30 am" end="9:15 am" name="(Optional) Review and Extra Help" />
+            <class type="drill1" start="9:30 am" end="10:30 am">
+                <section group="E" who="JM" room="" />
+                <section group="F/G" who="HH" room="" />
+                <section group="H" who="EBH" room="" />
+            </class>
+            <class type="drill2" start="10:40 am" end="11:30 am">
+                <section group="E" who="EBH" room="" />
+                <section group="F/G" who="JM" room="" />
+                <section group="H" who="HH" room="" />
+            </class>
+            <class type="noonOptional" who="EBH" start="12:15 pm" end="12:45 pm">
+                <section who="EBH" room="" name="Additional Accent Drill" />
+                <section who="HH" room="" name="Reading Aloud and Pronunciation Drill" />
+                <docs>
+                    <doc type="optionalHandout">
+                        <docdesc>Optional Accent Review</docdesc>
+                        <path type="docx"></path>
+                        <path type="pdf"></path>
+                    </doc>
+                </docs>
+            </class>
+            <class type="lecture" who="HH" start="1:00 pm">
+                <docs>
+                    <doc type="lectureHandout">
+                        <docdesc>Unit 1 Lecture Handout</docdesc>
+                        <path type="docx"></path>
+                        <path type="pdf"></path>
+                    </doc>
+                </docs>
+            </class>
+            <class type="vocNotes" who="JM" end="4:00 pm"></class>
+        </day>
+        <day n="5">
+            <class type="morningOptional" who="JM" start="8:30 am" end="9:15 am" name="(Optional) Review and Extra Help" />
+            <class type="drill1" start="9:30 am" end="10:30 am">
+                <section group="E" who="JM" room="" />
+                <section group="F/G" who="HH" room="" />
+                <section group="H" who="EBH" room="" />
+            </class>
+            <class type="drill2" start="10:40 am" end="11:30 am">
+                <section group="E" who="EBH" room="" />
+                <section group="F/G" who="JM" room="" />
+                <section group="H" who="HH" room="" />
+            </class>
+            <class type="noonOptional" who="EBH" start="12:15 pm" end="12:45 pm">
+                <section who="EBH" room="" name="Additional Accent Drill" />
+                <section who="HH" room="" name="Reading Aloud and Pronunciation Drill" />
+                <docs>
+                    <doc type="optionalHandout">
+                        <docdesc>Optional Accent Review</docdesc>
+                        <path type="docx"></path>
+                        <path type="pdf"></path>
+                    </doc>
+                </docs>
+            </class>
+            <class type="lecture" who="HH" start="1:00 pm">
+                <docs>
+                    <doc type="lectureHandout">
+                        <docdesc>Unit 1 Lecture Handout</docdesc>
+                        <path type="docx"></path>
+                        <path type="pdf"></path>
+                    </doc>
+                </docs>
+            </class>
+            <class type="vocNotes" who="JM" end="4:00 pm"></class>
         </day>
     </days>
 </sgi>

@@ -880,8 +880,8 @@ struct LgiSection {
 
 struct LgiClass {
     class_type: LgiClassType,
-    start_time: NaiveTime,
-    end_time: NaiveTime,
+    start_time: Option<NaiveTime>,
+    end_time: Option<NaiveTime>,
     desc: String,
     faculty: String,
     room: String,
@@ -980,8 +980,18 @@ fn make_schedule() -> LgiCourse {
                         }
                         let c = LgiClass {
                             class_type: LgiClassType::MorningOptional,
-                            start_time: NaiveTime::parse_from_str(&start, "%I:%M %P").unwrap(),
-                            end_time: NaiveTime::parse_from_str(&end, "%I:%M %P").unwrap(),
+                            start_time: if let Ok(a) = NaiveTime::parse_from_str(&start, "%I:%M %P") {
+                                    Some(a)
+                                } 
+                                else {
+                                     None 
+                                },
+                            end_time: if let Ok(a) = NaiveTime::parse_from_str(&end, "%I:%M %P") {
+                                    Some(a)
+                                } 
+                                else {
+                                    None 
+                                },
                             desc: String::from(""),
                             faculty: faculty,
                             room: String::from(""),
@@ -1060,7 +1070,19 @@ async fn sgi_schedule(session: Session) -> impl IntoResponse {
         res.push_str("</td>");
         for j in i.classes.iter() {
             res.push_str("<td>");
-            res.push_str(j.start_time.format("%l:%M").to_string().as_str());
+            if j.start_time.is_some() {
+                res.push_str(j.start_time.unwrap().format("%l:%M").to_string().as_str());
+            }
+            if j.start_time.is_some() && j.end_time.is_some() {
+                res.push_str(" - ");
+            }
+            if j.end_time.is_some() {
+                res.push_str(j.end_time.unwrap().format("%l:%M").to_string().as_str());
+            }
+            if j.sections.len() == 0 {
+                res.push_str("<br/>");
+                res.push_str(&j.faculty);
+            }
             for k in j.sections.iter() {
                 res.push_str("<br/>");
                 res.push_str(&k.group);
