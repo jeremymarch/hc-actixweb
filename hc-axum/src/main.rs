@@ -333,7 +333,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/greek-synopsis-saver",
             axum::routing::post(greek_synopsis_saver),
         )
-        .route("/sgi", axum::routing::post(sgi_schedule))
+        .route("/sgi", axum::routing::get(sgi_schedule))
         // .route("/latin-synopsis-result", axum::routing::get(latin_synopsis_result))
         // .route("/latin-synopsis-list", axum::routing::get(latin_synopsis_list))
         // .route("/latin-synopsis-saver", axum::routing::get(latin_synopsis_saver))
@@ -841,11 +841,237 @@ async fn greek_synopsis(
 //     (headers, Html(page))
 // }
 
+use chrono::Days;
+use chrono::NaiveDate;
+use chrono::NaiveTime;
+use quick_xml::events::Event;
+use quick_xml::name::QName;
+use quick_xml::reader::Reader;
+
+enum LgiClassType {
+    MorningOptional,
+    Drill1,
+    Drill2,
+    NoonOptional,
+    Lecture,
+    ProseComp,
+    ProseCompSmall,
+    VocNotes,
+    SpecialLecture,
+    FridayReview,
+    Exam,
+    AfternoonOptional,
+    Elective,
+    SundayReview,
+    RestAndStudy,
+}
+
+struct LgiDoc {
+    desc: String,
+    docx: String,
+    pdf: String,
+}
+
+struct LgiSection {
+    group: String,
+    faculty: String,
+    room: String,
+}
+
+struct LgiClass {
+    class_type: LgiClassType,
+    start_time: NaiveTime,
+    end_time: NaiveTime,
+    desc: String,
+    faculty: String,
+    room: String,
+    docs: Vec<LgiDoc>,
+    sections: Vec<LgiSection>,
+}
+
+struct LgiDay {
+    day: NaiveDate,
+    day_num: u32,
+    week: u32,
+    classes: Vec<LgiClass>,
+}
+
+struct LgiCourse {
+    day1: NaiveDate,
+    days: Vec<LgiDay>,
+    holidays: Vec<NaiveDate>,
+}
+
+fn make_schedule() -> LgiCourse {
+    let xml: &str = include_str!("sgi.xml");
+    let mut reader = Reader::from_str(xml);
+    reader.trim_text(true);
+
+    //let mut count = 0;
+    let mut txt = Vec::new();
+    let mut buf = Vec::new();
+
+    let mut sgi = LgiCourse {
+        day1: NaiveDate::parse_from_str("2000-01-01", "%Y-%m-%d").unwrap(),
+        days: vec![],
+        holidays: vec![],
+    };
+
+    let mut day_count = 0;
+    loop {
+        match reader.read_event_into(&mut buf) {
+            Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
+            Ok(Event::Eof) => break, // exits the loop when reaching end of file
+
+            Ok(Event::Start(e)) | Ok(Event::Empty(e)) => {
+                match e.name().as_ref() {
+                    b"sgi" => {
+                        for a in e.attributes() {
+                            if a.as_ref().unwrap().key == QName(b"day1") {
+                                let d = std::str::from_utf8(&a.unwrap().value).unwrap().to_string();
+                                sgi.day1 = NaiveDate::parse_from_str(&d, "%Y-%m-%d").unwrap();
+                            }
+                        }
+                    }
+                    b"holiday" => {
+                        for a in e.attributes() {
+                            if a.as_ref().unwrap().key == QName(b"date") {
+                                let d = std::str::from_utf8(&a.unwrap().value).unwrap().to_string();
+                                sgi.holidays
+                                    .push(NaiveDate::parse_from_str(&d, "%Y-%m-%d").unwrap());
+                            }
+                            // else if a.as_ref().unwrap().key == QName(b"name") {
+                            //     let d = std::str::from_utf8(&a.unwrap().value).unwrap().to_string();
+                            //     sgi.day1 = NaiveDate::parse_from_str(&d, "%Y-%m-%d").unwrap();
+                            // }
+                        }
+                    }
+                    b"day" => {
+                        for a in e.attributes() {
+                            if a.as_ref().unwrap().key == QName(b"n") {
+                                let day = LgiDay {
+                                    day: sgi.day1 + Days::new(day_count),
+                                    day_num: std::str::from_utf8(&a.unwrap().value)
+                                        .unwrap()
+                                        .to_string()
+                                        .parse::<u32>()
+                                        .unwrap(),
+                                    week: 0,
+                                    classes: vec![],
+                                };
+                                sgi.days.push(day);
+                                day_count += 1;
+                            }
+                        }
+                    }
+                    b"class" => {
+                        let mut faculty = String::from("");
+                        let mut start = String::from("");
+                        let mut end = String::from("");
+                        for a in e.attributes() {
+                            if a.as_ref().unwrap().key == QName(b"start") {
+                                start = std::str::from_utf8(&a.unwrap().value).unwrap().to_string();
+                            } else if a.as_ref().unwrap().key == QName(b"end") {
+                                end = std::str::from_utf8(&a.unwrap().value).unwrap().to_string();
+                            } else if a.as_ref().unwrap().key == QName(b"who") {
+                                faculty =
+                                    std::str::from_utf8(&a.unwrap().value).unwrap().to_string();
+                            }
+                        }
+                        let c = LgiClass {
+                            class_type: LgiClassType::MorningOptional,
+                            start_time: NaiveTime::parse_from_str(&start, "%I:%M %P").unwrap(),
+                            end_time: NaiveTime::parse_from_str(&end, "%I:%M %P").unwrap(),
+                            desc: String::from(""),
+                            faculty: faculty,
+                            room: String::from(""),
+                            docs: vec![],
+                            sections: vec![],
+                        };
+                        sgi.days.last_mut().unwrap().classes.push(c);
+
+                        // let days: &mut Vec<LgiDay> = &mut sgi.days;
+                        // let day: &mut LgiDay = &mut days.last().unwrap();
+                        // day.classes.push(c);
+                    }
+                    b"section" => {
+                        let mut faculty = String::from("");
+                        let mut group = String::from("");
+                        let mut room = String::from("");
+                        for a in e.attributes() {
+                            if a.as_ref().unwrap().key == QName(b"who") {
+                                faculty =
+                                    std::str::from_utf8(&a.unwrap().value).unwrap().to_string();
+                            } else if a.as_ref().unwrap().key == QName(b"group") {
+                                group = std::str::from_utf8(&a.unwrap().value).unwrap().to_string();
+                            } else if a.as_ref().unwrap().key == QName(b"room") {
+                                room = std::str::from_utf8(&a.unwrap().value).unwrap().to_string();
+                            }
+                        }
+
+                        let s = LgiSection {
+                            group: group,
+                            faculty: faculty,
+                            room: room,
+                        };
+                        sgi.days
+                            .last_mut()
+                            .unwrap()
+                            .classes
+                            .last_mut()
+                            .unwrap()
+                            .sections
+                            .push(s);
+                    }
+                    b"doc" => {}
+                    _ => (),
+                }
+            }
+            Ok(Event::Text(e)) => txt.push(e.unescape().unwrap().into_owned()),
+
+            _ => (),
+        }
+        // if we don't keep a borrow elsewhere, we can clear the buffer to keep memory usage low
+        buf.clear();
+    }
+    sgi
+}
+
+// sgiDropbox
+//     handouts
+//     years
+//         2023
+//         2024
+
 async fn sgi_schedule(session: Session) -> impl IntoResponse {
     let _user_id = login::get_user_id(&session);
     let _username = login::get_username(&session);
 
-    let res = "<!DOCTYPE html><html><body>SGI Schedule</body></html>";
+    let sgi = make_schedule();
+
+    let mut res = String::from("<!DOCTYPE html><html><head><style>td {text-align:center;vertical-align:middle;}</style></head><body><table cellspacing=0 cellpadding=0 border=1 style='width: 90%;margin: 0px auto;'>");
+    for i in sgi.days.iter() {
+        res.push_str("<tr><td>");
+        res.push_str(i.day.format("%A").to_string().as_str());
+        res.push_str("<br/>");
+        res.push_str(i.day.format("%B %d").to_string().as_str());
+        res.push_str("<br/>Day ");
+        res.push_str(i.day_num.to_string().as_str());
+        res.push_str("</td>");
+        for j in i.classes.iter() {
+            res.push_str("<td>");
+            res.push_str(j.start_time.format("%l:%M").to_string().as_str());
+            for k in j.sections.iter() {
+                res.push_str("<br/>");
+                res.push_str(&k.group);
+                res.push_str(" - ");
+                res.push_str(&k.faculty);
+            }
+            res.push_str("</td>");
+        }
+        res.push_str("</tr>");
+    }
+    res.push_str("</table></body></html>");
 
     Html(res)
 }

@@ -26,6 +26,7 @@ sqlx = { version = "0.7.3", features = ["postgres", "runtime-tokio-rustls", "uui
 time = "0.3.34"
 secrecy = { version = "0.8.0", features = ["serde"] }
 chrono = { version="0.4.34", features = ["serde"] }
+quick-xml = "0.31.0"
 
 oauth2 = "4.4.2"
 sign-in-with-apple = { git = "https://github.com/jeremymarch/sign-in-with-apple", version = "0.4.2" }
