@@ -1,0 +1,55 @@
+<sgi day1="2024-06-10">
+    <holidays>
+        <holiday name="Juneteenth" date="2024-06-19" />
+        <holiday name="July 4th" date="2024-07-04" />
+    </holidays>
+    <faculty>
+        <f name="Jeremy March" initials="JM" weeks="1-10" />
+        <f name="Hardy Hansen" initials="HH" weeks="1-3" />
+        <f name="Bill Pagonis" initials="BP" weeks="1-6" />
+        <f name="Eric Bayless-Hall" initials="EBH" weeks="1-10" />
+        <f name="Rebecca Rosenthal" initials="RR" weeks="7-10" />
+    </faculty>
+    <days>
+        <day n="1">
+            <class type="orientation" start="9:00 am" end="9:30 am" name="General Orientation" />
+            <class type="lecture" start="9:40 am" end="10:50 am" name="Grammar Review" />
+            <class type="lecture" start="11:00 am" end="12:30 pm" name="Introduction: Alphabet, Pronunciation" />
+            <class type="lecture" start="1:30 pm" end="3:30 pm" name="Accents" />
+        </day>
+        <day n="2">
+            <class type="morningOptional" start="8:30 am" end="9:15 am" name="(Optional) Review and Extra Help" />
+            <class type="drill1" start="9:30 am" end="10:30 am">
+                <section group="E" who="JM" room="" />
+                <section group="F/G" who="HH" room="" />
+                <section group="H" who="EBH" room="" />
+            </class>
+            <class type="drill2" start="10:40 am" end="11:30 am">
+                <section group="E" who="EBH" room="" />
+                <section group="F/G" who="JM" room="" />
+                <section group="H" who="HH" room="" />
+            </class>
+            <class type="noonOptional" who="EBH" start="12:15 pm" end="12:45 pm">
+                <section who="EBH" room="" name="Additional Accent Drill" />
+                <section who="HH" room="" name="Reading Aloud and Pronunciation Drill" />
+                <docs>
+                    <doc type="optionalHandout">
+                        <docdesc>Optional Accent Review</docdesc>
+                        <path type="docx"></path>
+                        <path type="pdf"></path>
+                    </doc>
+                </docs>
+            </class>
+            <class type="lecture" start="1:00 pm" end="2:30 pm">
+                <docs>
+                    <doc type="lectureHandout">
+                        <docdesc>Unit 1 Lecture Handout</docdesc>
+                        <path type="docx"></path>
+                        <path type="pdf"></path>
+                    </doc>
+                </docs>
+            </class>
+            <class type="vocNotes" start="2:30 pm" end="4:00 pm"></class>
+        </day>
+    </days>
+</sgi>
