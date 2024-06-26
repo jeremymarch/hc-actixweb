@@ -68,6 +68,7 @@
     padding-left: 6px;
     border: 0px solid #666;
     font-family: NewAthenaUnicode, WebNewAthenaUnicode,helvetica,arial;
+    line-height: 1.7;
 }
 .colheader {
   text-align: left;
@@ -827,7 +828,12 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     let str = '';
 
     if (data.verb_id !== null && data.verb_id > -1) {
-      str += v.options[data.verb_id].text + '. ';
+      for (let i = 0; i < verbs.length; i++) {
+        if (data.verb_id == verbs[i].i) {
+          str += verbs[i].pp + '. ';
+          break;
+        }
+      }
     }
     if (data.person !== null && data.person > -1) {
       str += p.options[data.person].text + ', ';

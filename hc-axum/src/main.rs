@@ -848,7 +848,17 @@ use quick_xml::events::Event;
 use quick_xml::name::QName;
 use quick_xml::reader::Reader;
 
+#[derive(PartialEq)]
+enum LgiDayType {
+    Normal,
+    RestAndStudy,
+    SundayReview,
+    Holiday,
+}
+
+#[derive(PartialEq)]
 enum LgiClassType {
+    None,
     MorningOptional,
     Drill1,
     Drill2,
@@ -876,6 +886,7 @@ struct LgiSection {
     group: String,
     faculty: String,
     room: String,
+    name: String,
 }
 
 struct LgiClass {
@@ -887,9 +898,11 @@ struct LgiClass {
     room: String,
     docs: Vec<LgiDoc>,
     sections: Vec<LgiSection>,
+    name: String,
 }
 
 struct LgiDay {
+    day_type: LgiDayType,
     day: NaiveDate,
     day_num: u32,
     week: u32,
@@ -900,6 +913,15 @@ struct LgiCourse {
     day1: NaiveDate,
     days: Vec<LgiDay>,
     holidays: Vec<NaiveDate>,
+}
+
+fn is_holiday(date: &NaiveDate, holidays: &Vec<NaiveDate>) -> bool {
+    for h in holidays.iter() {
+        if date == h {
+            return true;
+        }
+    }
+    false
 }
 
 fn make_schedule() -> LgiCourse {
@@ -947,27 +969,71 @@ fn make_schedule() -> LgiCourse {
                         }
                     }
                     b"day" => {
+                        let mut day_num = String::from("0");
                         for a in e.attributes() {
                             if a.as_ref().unwrap().key == QName(b"n") {
-                                let day = LgiDay {
-                                    day: sgi.day1 + Days::new(day_count),
-                                    day_num: std::str::from_utf8(&a.unwrap().value)
-                                        .unwrap()
-                                        .to_string()
-                                        .parse::<u32>()
-                                        .unwrap(),
-                                    week: 0,
-                                    classes: vec![],
-                                };
-                                sgi.days.push(day);
-                                day_count += 1;
+                                day_num = std::str::from_utf8(&a.unwrap().value)
+                                .unwrap()
+                                .to_string()
                             }
                         }
+                        let mut the_day = sgi.day1 + Days::new(day_count);
+                        if is_holiday(&the_day, &sgi.holidays) {
+                            let day = LgiDay {
+                                day_type: LgiDayType::Holiday,
+                                day: the_day,
+                                day_num: 0,
+                                week: 0,
+                                classes: vec![],
+                            };
+                            
+                            sgi.days.push(day);
+                            day_count += 1;
+                            the_day = sgi.day1 + Days::new(day_count);
+                        }
+                        else if the_day.format("%A").to_string() == "Saturday" {
+                            let day = LgiDay {
+                                day_type: LgiDayType::RestAndStudy,
+                                day: the_day,
+                                day_num: 0,
+                                week: 0,
+                                classes: vec![],
+                            };
+                            
+                            sgi.days.push(day);
+                            day_count += 1;
+                            the_day = sgi.day1 + Days::new(day_count);
+
+                            let day = LgiDay {
+                                day_type: LgiDayType::SundayReview,
+                                day: the_day,
+                                day_num: 0,
+                                week: 0,
+                                classes: vec![],
+                            };
+                            
+                            sgi.days.push(day);
+                            day_count += 1;
+                            the_day = sgi.day1 + Days::new(day_count);
+                        }
+
+                        let day = LgiDay {
+                            day_type: LgiDayType::Normal,
+                            day: the_day,
+                            day_num: day_num.parse::<u32>().unwrap(),
+                            week: 0,
+                            classes: vec![],
+                        };
+                        
+                        sgi.days.push(day);
+                        day_count += 1;
                     }
                     b"class" => {
                         let mut faculty = String::from("");
                         let mut start = String::from("");
                         let mut end = String::from("");
+                        let mut name = String::from("");
+                        let mut item_type = String::from("");
                         for a in e.attributes() {
                             if a.as_ref().unwrap().key == QName(b"start") {
                                 start = std::str::from_utf8(&a.unwrap().value).unwrap().to_string();
@@ -977,9 +1043,22 @@ fn make_schedule() -> LgiCourse {
                                 faculty =
                                     std::str::from_utf8(&a.unwrap().value).unwrap().to_string();
                             }
+                            else if a.as_ref().unwrap().key == QName(b"name") {
+                                name =
+                                    std::str::from_utf8(&a.unwrap().value).unwrap().to_string();
+                            }
+                            else if a.as_ref().unwrap().key == QName(b"type") {
+                                item_type =
+                                    std::str::from_utf8(&a.unwrap().value).unwrap().to_string();
+                            }
                         }
                         let c = LgiClass {
-                            class_type: LgiClassType::MorningOptional,
+                            class_type: match item_type.as_str() {
+                                "vocNotes" => LgiClassType::VocNotes,
+                                "morningOptional" => LgiClassType::MorningOptional,
+                                "noonOptional" => LgiClassType::NoonOptional,
+                                _ => LgiClassType::None,
+                            },
                             start_time: if let Ok(a) = NaiveTime::parse_from_str(&start, "%I:%M %P") {
                                     Some(a)
                                 } 
@@ -997,6 +1076,7 @@ fn make_schedule() -> LgiCourse {
                             room: String::from(""),
                             docs: vec![],
                             sections: vec![],
+                            name: name,
                         };
                         sgi.days.last_mut().unwrap().classes.push(c);
 
@@ -1008,6 +1088,7 @@ fn make_schedule() -> LgiCourse {
                         let mut faculty = String::from("");
                         let mut group = String::from("");
                         let mut room = String::from("");
+                        let mut name = String::from("");
                         for a in e.attributes() {
                             if a.as_ref().unwrap().key == QName(b"who") {
                                 faculty =
@@ -1016,6 +1097,8 @@ fn make_schedule() -> LgiCourse {
                                 group = std::str::from_utf8(&a.unwrap().value).unwrap().to_string();
                             } else if a.as_ref().unwrap().key == QName(b"room") {
                                 room = std::str::from_utf8(&a.unwrap().value).unwrap().to_string();
+                            } else if a.as_ref().unwrap().key == QName(b"name") {
+                                name = std::str::from_utf8(&a.unwrap().value).unwrap().to_string();
                             }
                         }
 
@@ -1023,6 +1106,7 @@ fn make_schedule() -> LgiCourse {
                             group: group,
                             faculty: faculty,
                             room: room,
+                            name: name,
                         };
                         sgi.days
                             .last_mut()
@@ -1065,8 +1149,10 @@ async fn sgi_schedule(session: Session) -> impl IntoResponse {
         res.push_str(i.day.format("%A").to_string().as_str());
         res.push_str("<br/>");
         res.push_str(i.day.format("%B %d").to_string().as_str());
-        res.push_str("<br/>Day ");
-        res.push_str(i.day_num.to_string().as_str());
+        if i.day_num > 0 {
+            res.push_str("<br/>Day ");
+            res.push_str(i.day_num.to_string().as_str());
+        }
         res.push_str("</td>");
         for j in i.classes.iter() {
             res.push_str("<td>");
@@ -1079,14 +1165,32 @@ async fn sgi_schedule(session: Session) -> impl IntoResponse {
             if j.end_time.is_some() {
                 res.push_str(j.end_time.unwrap().format("%l:%M").to_string().as_str());
             }
+            if !j.name.is_empty() {
+                res.push_str("<br/>");
+                res.push_str(&j.name)
+            }
+            else if j.class_type == LgiClassType::VocNotes {
+                res.push_str("<br/>Vocabulary Notes");
+            }
+            else if j.class_type == LgiClassType::MorningOptional || j.class_type == LgiClassType::NoonOptional {
+                res.push_str("<br/>(optional)");
+            }
             if j.sections.len() == 0 {
                 res.push_str("<br/>");
                 res.push_str(&j.faculty);
             }
             for k in j.sections.iter() {
                 res.push_str("<br/>");
-                res.push_str(&k.group);
-                res.push_str(" - ");
+                
+                if !k.name.is_empty() {
+                    res.push_str(&k.name);
+                    res.push_str(" – ");
+                }
+                else if !k.group.is_empty() {
+                    res.push_str(&k.group);
+                    res.push_str(" – ");
+                }
+
                 res.push_str(&k.faculty);
             }
             res.push_str("</td>");
