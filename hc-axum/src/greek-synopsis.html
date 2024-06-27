@@ -824,7 +824,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
   }
 
   function setParamResultDisplay (data) {
-    const v = document.getElementById('selectedverb');
+    // const v = document.getElementById('selectedverb');
     const p = document.getElementById('person');
     const n = document.getElementById('number');
     const g = document.getElementById('ptcgender');
@@ -833,7 +833,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
 
     if (data.verb_id !== null && data.verb_id > -1) {
       for (let i = 0; i < verbs.length; i++) {
-        if (data.verb_id == verbs[i].i) {
+        if (data.verb_id === verbs[i].i) {
           str += verbs[i].pp + '. ';
           break;
         }

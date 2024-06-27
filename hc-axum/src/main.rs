@@ -972,9 +972,8 @@ fn make_schedule() -> LgiCourse {
                         let mut day_num = String::from("0");
                         for a in e.attributes() {
                             if a.as_ref().unwrap().key == QName(b"n") {
-                                day_num = std::str::from_utf8(&a.unwrap().value)
-                                .unwrap()
-                                .to_string()
+                                day_num =
+                                    std::str::from_utf8(&a.unwrap().value).unwrap().to_string()
                             }
                         }
                         let mut the_day = sgi.day1 + Days::new(day_count);
@@ -986,12 +985,11 @@ fn make_schedule() -> LgiCourse {
                                 week: 0,
                                 classes: vec![],
                             };
-                            
+
                             sgi.days.push(day);
                             day_count += 1;
                             the_day = sgi.day1 + Days::new(day_count);
-                        }
-                        else if the_day.format("%A").to_string() == "Saturday" {
+                        } else if the_day.format("%A").to_string() == "Saturday" {
                             let day = LgiDay {
                                 day_type: LgiDayType::RestAndStudy,
                                 day: the_day,
@@ -999,7 +997,7 @@ fn make_schedule() -> LgiCourse {
                                 week: 0,
                                 classes: vec![],
                             };
-                            
+
                             sgi.days.push(day);
                             day_count += 1;
                             the_day = sgi.day1 + Days::new(day_count);
@@ -1011,7 +1009,7 @@ fn make_schedule() -> LgiCourse {
                                 week: 0,
                                 classes: vec![],
                             };
-                            
+
                             sgi.days.push(day);
                             day_count += 1;
                             the_day = sgi.day1 + Days::new(day_count);
@@ -1024,7 +1022,7 @@ fn make_schedule() -> LgiCourse {
                             week: 0,
                             classes: vec![],
                         };
-                        
+
                         sgi.days.push(day);
                         day_count += 1;
                     }
@@ -1042,12 +1040,9 @@ fn make_schedule() -> LgiCourse {
                             } else if a.as_ref().unwrap().key == QName(b"who") {
                                 faculty =
                                     std::str::from_utf8(&a.unwrap().value).unwrap().to_string();
-                            }
-                            else if a.as_ref().unwrap().key == QName(b"name") {
-                                name =
-                                    std::str::from_utf8(&a.unwrap().value).unwrap().to_string();
-                            }
-                            else if a.as_ref().unwrap().key == QName(b"type") {
+                            } else if a.as_ref().unwrap().key == QName(b"name") {
+                                name = std::str::from_utf8(&a.unwrap().value).unwrap().to_string();
+                            } else if a.as_ref().unwrap().key == QName(b"type") {
                                 item_type =
                                     std::str::from_utf8(&a.unwrap().value).unwrap().to_string();
                             }
@@ -1059,18 +1054,17 @@ fn make_schedule() -> LgiCourse {
                                 "noonOptional" => LgiClassType::NoonOptional,
                                 _ => LgiClassType::None,
                             },
-                            start_time: if let Ok(a) = NaiveTime::parse_from_str(&start, "%I:%M %P") {
-                                    Some(a)
-                                } 
-                                else {
-                                     None 
-                                },
+                            start_time: if let Ok(a) = NaiveTime::parse_from_str(&start, "%I:%M %P")
+                            {
+                                Some(a)
+                            } else {
+                                None
+                            },
                             end_time: if let Ok(a) = NaiveTime::parse_from_str(&end, "%I:%M %P") {
-                                    Some(a)
-                                } 
-                                else {
-                                    None 
-                                },
+                                Some(a)
+                            } else {
+                                None
+                            },
                             desc: String::from(""),
                             faculty: faculty,
                             room: String::from(""),
@@ -1168,11 +1162,11 @@ async fn sgi_schedule(session: Session) -> impl IntoResponse {
             if !j.name.is_empty() {
                 res.push_str("<br/>");
                 res.push_str(&j.name)
-            }
-            else if j.class_type == LgiClassType::VocNotes {
+            } else if j.class_type == LgiClassType::VocNotes {
                 res.push_str("<br/>Vocabulary Notes");
-            }
-            else if j.class_type == LgiClassType::MorningOptional || j.class_type == LgiClassType::NoonOptional {
+            } else if j.class_type == LgiClassType::MorningOptional
+                || j.class_type == LgiClassType::NoonOptional
+            {
                 res.push_str("<br/>(optional)");
             }
             if j.sections.len() == 0 {
@@ -1181,12 +1175,11 @@ async fn sgi_schedule(session: Session) -> impl IntoResponse {
             }
             for k in j.sections.iter() {
                 res.push_str("<br/>");
-                
+
                 if !k.name.is_empty() {
                     res.push_str(&k.name);
                     res.push_str(" – ");
-                }
-                else if !k.group.is_empty() {
+                } else if !k.group.is_empty() {
                     res.push_str(&k.group);
                     res.push_str(" – ");
                 }
