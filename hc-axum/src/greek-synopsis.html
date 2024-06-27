@@ -34,7 +34,11 @@
 @font-face {
   font-family: 'WebNewAthenaUnicode';
   src: url('/newathu5_8.ttf') format('truetype');
-}  
+}
+
+.RowLabel {width:122px;}
+.FullRowLabel {width:162px;}
+
 .realAnswer {
   padding-left:11px;
   font-family: NewAthenaUnicode, WebNewAthenaUnicode,helvetica,arial;
@@ -132,7 +136,7 @@ day22	u16
   width: 42%;
 }
 #ppcell.formcell {
-  width: 27%;
+  width: auto;
 }
 /* .unit16 { everything } */
 
@@ -487,7 +491,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
         </table>
         </td>
         </tr>
-        <tr><td width="4%" id="paramcell">Synopsis of </td>
+        <tr><td class="FullRowLabel" id="paramcell">Synopsis of </td>
           <td>
           <span id="verbResultDisplay" class="paramDisplay"></span>
 
@@ -523,7 +527,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       </td>
       </tr>
         <tr>
-            <td width="4%">Principal Parts</td>
+            <td class="FullRowLabel">Principal Parts</td>
             <td id="ppcell" class="formcell">
                 <!-- <input type="text" id="pppppp0" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/> -->
             </td>
@@ -1341,6 +1345,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       tr.append(spacertd);
 
       const td = document.createElement('td');
+      td.classList.add('RowLabel');
       td.classList.add(labels[r].toLowerCase(), moods[currentMood].toLowerCase());
       td.innerText = labels[r];
       tr.appendChild(td);
