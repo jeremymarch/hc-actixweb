@@ -1741,7 +1741,10 @@ async fn synopsis_json(
         pp: state.verbs[verb_id]
             .pps
             .iter()
-            .map(|x| x/*.replace('/', " or ")*/.replace("  ", " "))
+            .map(|x| {
+                x /*.replace('/', " or ")*/
+                    .replace("  ", " ")
+            })
             .collect::<Vec<_>>()
             .join(", "),
         pp_correct: "".to_string(),
