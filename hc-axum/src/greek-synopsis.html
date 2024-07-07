@@ -164,13 +164,13 @@ day22	u16
 #legendlink {
   position:absolute;
   right:20px;
-  top:120px;
+  top:90px;
 }
 
 #clearbutton {
     position:absolute;
-    right:20px;
-    top:90px;
+    right:0px;
+    top:0px;
 }
 .tablestyle {
   width:100%;margin:0px auto;
@@ -215,8 +215,8 @@ day22	u16
 #unitfilter { display:none; }
 #clearbutton { display:none; }
 #legendtoggle { display:none; }
-#submitbutton { display:none; }
-#checkbutton { display:none;float:right; }
+#submitbutton { display:none; position:absolute; left:-112px; }
+#checkbutton { display:none; float:right; }
 
 .synopsis-form .tophelp { display: initial; }
 .synopsis-form #unitfilter { display: initial; }
@@ -459,10 +459,10 @@ day22	u16
     <div id="legendlink">
       <span tabindex="-1" id="legendtoggle">keys</span>
     </div>
-    <span id="submitcell">
+    <div id="submitcell">
       <button id="submitbutton">Submit</button>
-    </span>
-    <button id="clearbutton" tabindex="-1">Clear</button>
+      <button id="clearbutton" tabindex="-1">Clear</button>
+    </div>
     <table id="table1" class="tablestyle" cellpadding=0 cellspacing=0>
         <tr>
             <td colspan="2">
@@ -765,7 +765,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     return (typeof (resultJson) !== 'undefined' && resultJson);
   }
   
-  const maxUnit = 14;
+  const maxUnit = 20;
   // eslint-disable-next-line no-unused-vars
   function start () {
     makeTable();
