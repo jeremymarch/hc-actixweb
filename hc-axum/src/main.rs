@@ -823,7 +823,7 @@ async fn greek_synopsis(
             "const resultJson = false;",
             format!("const resultJson = {};", json).as_str(),
         )
-        .replace("%SHOWCHECK%", if show_check {"initial" } else { "none" });
+        .replace("%SHOWCHECK%", if show_check { "initial" } else { "none" });
 
     (headers, Html(page))
 }
