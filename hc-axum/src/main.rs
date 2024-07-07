@@ -81,6 +81,7 @@ mod login;
 #[derive(Serialize, Deserialize)]
 struct SynopsisResultUuid {
     id: Option<Uuid>,
+    check: Option<bool>,
 }
 
 // use chrono::FixedOffset;
@@ -813,13 +814,16 @@ async fn greek_synopsis(
         String::from("const username = false;")
     };
 
+    let show_check: bool = id.check.is_some();
+
     let page = SYNOPSIS_PAGE
         .replace("%NONCE%", &csp_nonce)
         .replace("const username = false;", name.as_str())
         .replace(
             "const resultJson = false;",
             format!("const resultJson = {};", json).as_str(),
-        );
+        )
+        .replace("%SHOWCHECK%", if show_check {"initial" } else { "none" });
 
     (headers, Html(page))
 }
