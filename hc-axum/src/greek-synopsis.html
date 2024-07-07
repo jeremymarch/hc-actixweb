@@ -35,6 +35,10 @@
   font-family: 'WebNewAthenaUnicode';
   src: url('/newathu5_8.ttf') format('truetype');
 }
+.selectedVerbDisplay {
+  font-family: NewAthenaUnicode, WebNewAthenaUnicode,helvetica,arial;
+  font-size:20pt;
+}
 
 .RowLabel {width:122px;}
 .FullRowLabel {width:162px;}
@@ -212,7 +216,7 @@ day22	u16
 #clearbutton { display:none; }
 #legendtoggle { display:none; }
 #submitbutton { display:none; }
-#checkbutton { display:none; }
+#checkbutton { display:none;float:right; }
 
 .synopsis-form .tophelp { display: initial; }
 .synopsis-form #unitfilter { display: initial; }
@@ -223,7 +227,9 @@ day22	u16
 
 .paramDisplay {
   display: none;
+  font-size:16pt;
 }
+
 .synopsis-result .paramDisplay {
   display: inline;
   font-weight: normal;
@@ -346,6 +352,7 @@ day22	u16
 }
 .loggedin #loginlink { display: none; }
 .loggedin #logoutlink { display: inline; }
+#resultsLink {position:absolute;left:10px;}
 @media screen {
   .dark body {
     background-color:black;
@@ -415,11 +422,13 @@ day22	u16
   .synopsis-form #menubar { display: none; }
 
   .gkinput, .realAnswer { font-size: 14pt; min-height: auto;line-height:1.2; }
+  .selectedVerbDisplay { font-size: 14pt; }
+  .paramDisplay { font-size: 12pt; }
 }
 </style>
 </head>
 <body>
-  <div id="menubar"><a href="greek-synopsis-list">List</a>
+  <div id="menubar"><a id="resultsLink" href="greek-synopsis-results">Results</a>
     <div id="loginContainer"><a id="loginlink" href="login">login</a>
         <span id="logoutlink">
           <span id="username"></span> 
@@ -438,6 +447,7 @@ day22	u16
 
 </div>
 <div class="bodycontainer">
+  <button id="checkbutton">Cheat</button>
     <!--<div class="tophelp">
         <table style="width:100%;" cellspacing="0" cellpadding="0">
             <tbody><tr><td class="rotate" style="left: 20px;">rough</td><td class="rotate" style="left: 28px;">smooth</td><td class="rotate" style="left: 33px;">acute</td><td class="rotate" style="left: 45px;">grave</td><td class="rotate" style="left: 55px;top: -4px;">circumflex</td><td class="rotate" style="left: 45px;">macron</td><td class="rotate" style="left: 50px;">breve</td><td class="rotate" style="left: 55px;top: -13px;">iota subscript</td><td class="rotate" style="left: 24px;">diaeresis</td><td class="rotate" style="left: 20px;">underdot</td></tr>
@@ -451,7 +461,6 @@ day22	u16
     </div>
     <span id="submitcell">
       <button id="submitbutton">Submit</button>
-      <button id="checkbutton">Check</button>
     </span>
     <button id="clearbutton" tabindex="-1">Clear</button>
     <table id="table1" class="tablestyle" cellpadding=0 cellspacing=0>
@@ -746,7 +755,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       url: 'greek-synopsis-saver',
       method: 'POST',
       data: JSON.stringify(json),
-      success: function (data, textStatus, jqXHR) { alert('Submitted!'); setParamResultDisplay(data); makePageResult(); setAnswers(data); /* clearForm(); */ },
+      success: function (data, textStatus, jqXHR) { /*alert('Submitted!');*/ setParamResultDisplay(data); makePageResult(); setAnswers(data); /* clearForm(); */ },
       warning: function (e) { console.log(e); },
       error: function () { alert('There was an error submitting the synopsis. Check your internet connection and try submitting again.'); }
     });
@@ -835,7 +844,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     if (data.verb_id !== null && data.verb_id > -1) {
       for (let i = 0; i < verbs.length; i++) {
         if (data.verb_id === verbs[i].i) {
-          str += verbs[i].pp + '. ';
+          str += '<span class="selectedVerbDisplay">' + verbs[i].pp + '</span>. ';
           break;
         }
       }
@@ -857,7 +866,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     //   str += '. (unit ' + data.unit + ')';
     // }
 
-    document.getElementById('verbResultDisplay').innerText = str;
+    document.getElementById('verbResultDisplay').innerHTML = str;
   }
 
   function makePageForm () {

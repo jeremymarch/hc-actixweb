@@ -325,7 +325,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         //     axum::routing::get(greek_synopsis_result),
         // )
         .route(
-            "/greek-synopsis-list",
+            "/greek-synopsis-results",
             axum::routing::get(greek_synopsis_list),
         )
         .route("/greek-synopsis", axum::routing::get(greek_synopsis))
@@ -1273,6 +1273,8 @@ async fn greek_synopsis_list(
       }
       #newSynopsisLink { 
         display:none; 
+        position:absolute;
+        left: 10px;
       }
       #table1 { 
         display:none; 
@@ -1410,7 +1412,7 @@ async fn greek_synopsis_list(
     </script>
     </head>
     <body>
-    <div id="menubar"><a id="newSynopsisLink" href="greek-synopsis">New</a>
+    <div id="menubar"><a id="newSynopsisLink" href="greek-synopsis">New Synopsis</a>
     <div id="loginContainer"><a id="loginlink" href="login">login</a>
         <span id="logoutlink">
           <span id="username"></span> 
@@ -1739,7 +1741,7 @@ async fn synopsis_json(
         pp: state.verbs[verb_id]
             .pps
             .iter()
-            .map(|x| x.replace('/', " or ").replace("  ", " "))
+            .map(|x| x/*.replace('/', " or ")*/.replace("  ", " "))
             .collect::<Vec<_>>()
             .join(", "),
         pp_correct: "".to_string(),

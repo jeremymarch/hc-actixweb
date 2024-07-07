@@ -27,7 +27,7 @@ pub struct CreateUserFormData {
     email: String,
 }
 
-const LOGGED_IN_LANDING_PAGE: &str = "/greek-synopsis-list";
+const LOGGED_IN_LANDING_PAGE: &str = "/greek-synopsis-results";
 
 pub fn get_user_id(session: &Session) -> Option<uuid::Uuid> {
     if let Ok(s) = session.get::<uuid::Uuid>("user_id") {
