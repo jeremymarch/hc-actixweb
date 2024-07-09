@@ -45,7 +45,7 @@ pub struct SynopsisResultRequest {
     pub id: u32,
 }
 
-/* 
+/*
 #[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
 pub struct LatinSynopsisResult {
     pub id: i64,
