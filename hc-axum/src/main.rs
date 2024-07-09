@@ -1229,7 +1229,6 @@ async fn greek_synopsis_saver(
     State(state): State<AxumAppState>,
     extract::Json(payload): extract::Json<SynopsisSaverRequest>,
 ) -> Result<Json<SynopsisJsonResult>, StatusCode> {
-
     let user_id = login::get_user_id(&session);
 
     let res = synopsis::save_synopsis(payload, user_id, &state.verbs, &state.hcdb)
@@ -1244,7 +1243,6 @@ async fn synopsis_json(
     State(state): State<AxumAppState>,
     extract::Json(payload): extract::Json<SynopsisSaverRequest>,
 ) -> Result<Json<SynopsisJsonResult>, StatusCode> {
-
     let res = synopsis::get_synopsis(payload, &state.verbs);
 
     Ok(Json(res))
