@@ -1,9 +1,29 @@
-use super::*;
+use crate::hgk_compare_multiple_forms;
+use crate::HcDb;
+
+use hoplite_verbs_rs::check_pps;
+use hoplite_verbs_rs::HcCase;
+use hoplite_verbs_rs::HcGender;
+use hoplite_verbs_rs::HcGreekVerb;
+use hoplite_verbs_rs::HcGreekVerbForm;
+use hoplite_verbs_rs::HcMood;
+use hoplite_verbs_rs::HcNumber;
+use hoplite_verbs_rs::HcPerson;
+use hoplite_verbs_rs::HcTense;
+use hoplite_verbs_rs::HcVerbForms;
+use hoplite_verbs_rs::HcVoice;
+
+use serde::Deserialize;
+use serde::Serialize;
+use uuid::Uuid;
 //use crate::synopsis::polytonic_greek::hgk_compare_multiple_forms;
 //use chrono::LocalResult;
 //use hoplite_verbs_rs::*;
+use itertools::Itertools;
 use sqlx::FromRow;
 use std::sync::Arc;
+
+use crate::dbpostgres::HcDbPostgres;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SynopsisSaverRequest {
@@ -315,6 +335,502 @@ pub struct SynopsisJsonResult {
     pub name: String,
     pub advisor: String,
     pub f: Vec<SaverResults>,
+}
+
+pub fn get_synopsis(
+    payload: SynopsisSaverRequest,
+    verbs: &[Arc<HcGreekVerb>],
+) -> SynopsisJsonResult {
+    let verb_id: usize = payload.verb.try_into().unwrap();
+
+    let forms = get_forms(
+        verbs,
+        verb_id,
+        payload.person,
+        payload.number,
+        payload.ptccase,
+        payload.ptcgender,
+    );
+
+    let mut res = Vec::<SaverResults>::new();
+    for f in forms {
+        res.push(SaverResults {
+            given: f.unwrap_or("".to_string()),
+            correct: String::from(""),
+            is_correct: true,
+        });
+    }
+
+    SynopsisJsonResult {
+        verb_id: payload.verb,
+        person: payload.person,
+        number: payload.number,
+        case: payload.ptccase,
+        gender: payload.ptcgender,
+        unit: payload.unit,
+        pp: verbs[verb_id]
+            .pps
+            .iter()
+            .map(|x| {
+                x /*.replace('/', " or ")*/
+                    .replace("  ", " ")
+            })
+            .collect::<Vec<_>>()
+            .join(", "),
+        pp_correct: "".to_string(),
+        pp_is_correct: "".to_string(),
+        name: "".to_string(),
+        advisor: "".to_string(),
+        f: res,
+    }
+}
+
+pub async fn get_synopsis_result(id: Uuid, hcdb: &HcDbPostgres) -> Option<SynopsisJsonResult> {
+    let mut tx = hcdb.begin_tx().await.unwrap();
+    if let Ok(result) = tx.greek_get_synopsis_result(id).await {
+        //need to store is_correct and correct/incorrect answers
+        tx.commit_tx().await.unwrap();
+
+        let res_forms = vec![
+            SaverResults {
+                given: result.f0,
+                correct: result.a0,
+                is_correct: result.c0,
+            },
+            SaverResults {
+                given: result.f1,
+                correct: result.a1,
+                is_correct: result.c1,
+            },
+            SaverResults {
+                given: result.f2,
+                correct: result.a2,
+                is_correct: result.c2,
+            },
+            SaverResults {
+                given: result.f3,
+                correct: result.a3,
+                is_correct: result.c3,
+            },
+            SaverResults {
+                given: result.f4,
+                correct: result.a4,
+                is_correct: result.c4,
+            },
+            SaverResults {
+                given: result.f5,
+                correct: result.a5,
+                is_correct: result.c5,
+            },
+            SaverResults {
+                given: result.f6,
+                correct: result.a6,
+                is_correct: result.c6,
+            },
+            SaverResults {
+                given: result.f7,
+                correct: result.a7,
+                is_correct: result.c7,
+            },
+            SaverResults {
+                given: result.f8,
+                correct: result.a8,
+                is_correct: result.c8,
+            },
+            SaverResults {
+                given: result.f9,
+                correct: result.a9,
+                is_correct: result.c9,
+            },
+            SaverResults {
+                given: result.f10,
+                correct: result.a10,
+                is_correct: result.c10,
+            },
+            SaverResults {
+                given: result.f11,
+                correct: result.a11,
+                is_correct: result.c11,
+            },
+            SaverResults {
+                given: result.f12,
+                correct: result.a12,
+                is_correct: result.c12,
+            },
+            SaverResults {
+                given: result.f13,
+                correct: result.a13,
+                is_correct: result.c13,
+            },
+            SaverResults {
+                given: result.f14,
+                correct: result.a14,
+                is_correct: result.c14,
+            },
+            SaverResults {
+                given: result.f15,
+                correct: result.a15,
+                is_correct: result.c15,
+            },
+            SaverResults {
+                given: result.f16,
+                correct: result.a16,
+                is_correct: result.c16,
+            },
+            SaverResults {
+                given: result.f17,
+                correct: result.a17,
+                is_correct: result.c17,
+            },
+            SaverResults {
+                given: result.f18,
+                correct: result.a18,
+                is_correct: result.c18,
+            },
+            SaverResults {
+                given: result.f19,
+                correct: result.a19,
+                is_correct: result.c19,
+            },
+            SaverResults {
+                given: result.f20,
+                correct: result.a20,
+                is_correct: result.c20,
+            },
+            SaverResults {
+                given: result.f21,
+                correct: result.a21,
+                is_correct: result.c21,
+            },
+            SaverResults {
+                given: result.f22,
+                correct: result.a22,
+                is_correct: result.c22,
+            },
+            SaverResults {
+                given: result.f23,
+                correct: result.a23,
+                is_correct: result.c23,
+            },
+            SaverResults {
+                given: result.f24,
+                correct: result.a24,
+                is_correct: result.c24,
+            },
+            SaverResults {
+                given: result.f25,
+                correct: result.a25,
+                is_correct: result.c25,
+            },
+            SaverResults {
+                given: result.f26,
+                correct: result.a26,
+                is_correct: result.c26,
+            },
+            SaverResults {
+                given: result.f27,
+                correct: result.a27,
+                is_correct: result.c27,
+            },
+            SaverResults {
+                given: result.f28,
+                correct: result.a28,
+                is_correct: result.c28,
+            },
+            SaverResults {
+                given: result.f29,
+                correct: result.a29,
+                is_correct: result.c29,
+            },
+            SaverResults {
+                given: result.f30,
+                correct: result.a30,
+                is_correct: result.c30,
+            },
+            SaverResults {
+                given: result.f31,
+                correct: result.a31,
+                is_correct: result.c31,
+            },
+            SaverResults {
+                given: result.f32,
+                correct: result.a32,
+                is_correct: result.c32,
+            },
+            SaverResults {
+                given: result.f33,
+                correct: result.a33,
+                is_correct: result.c33,
+            },
+            SaverResults {
+                given: result.f34,
+                correct: result.a34,
+                is_correct: result.c34,
+            },
+            SaverResults {
+                given: result.f35,
+                correct: result.a35,
+                is_correct: result.c35,
+            },
+            SaverResults {
+                given: result.f36,
+                correct: result.a36,
+                is_correct: result.c36,
+            },
+            SaverResults {
+                given: result.f37,
+                correct: result.a37,
+                is_correct: result.c37,
+            },
+            SaverResults {
+                given: result.f38,
+                correct: result.a38,
+                is_correct: result.c38,
+            },
+            SaverResults {
+                given: result.f39,
+                correct: result.a39,
+                is_correct: result.c39,
+            },
+            SaverResults {
+                given: result.f40,
+                correct: result.a40,
+                is_correct: result.c40,
+            },
+            SaverResults {
+                given: result.f41,
+                correct: result.a41,
+                is_correct: result.c41,
+            },
+            SaverResults {
+                given: result.f42,
+                correct: result.a42,
+                is_correct: result.c42,
+            },
+            SaverResults {
+                given: result.f43,
+                correct: result.a43,
+                is_correct: result.c43,
+            },
+            SaverResults {
+                given: result.f44,
+                correct: result.a44,
+                is_correct: result.c44,
+            },
+            SaverResults {
+                given: result.f45,
+                correct: result.a45,
+                is_correct: result.c45,
+            },
+            SaverResults {
+                given: result.f46,
+                correct: result.a46,
+                is_correct: result.c46,
+            },
+            SaverResults {
+                given: result.f47,
+                correct: result.a47,
+                is_correct: result.c47,
+            },
+            SaverResults {
+                given: result.f48,
+                correct: result.a48,
+                is_correct: result.c48,
+            },
+            SaverResults {
+                given: result.f49,
+                correct: result.a49,
+                is_correct: result.c49,
+            },
+            SaverResults {
+                given: result.f50,
+                correct: result.a50,
+                is_correct: result.c50,
+            },
+            SaverResults {
+                given: result.f51,
+                correct: result.a51,
+                is_correct: result.c51,
+            },
+            SaverResults {
+                given: result.f52,
+                correct: result.a52,
+                is_correct: result.c52,
+            },
+            SaverResults {
+                given: result.f53,
+                correct: result.a53,
+                is_correct: result.c53,
+            },
+            SaverResults {
+                given: result.f54,
+                correct: result.a54,
+                is_correct: result.c54,
+            },
+            SaverResults {
+                given: result.f55,
+                correct: result.a55,
+                is_correct: result.c55,
+            },
+            SaverResults {
+                given: result.f56,
+                correct: result.a56,
+                is_correct: result.c56,
+            },
+            SaverResults {
+                given: result.f57,
+                correct: result.a57,
+                is_correct: result.c57,
+            },
+            SaverResults {
+                given: result.f58,
+                correct: result.a58,
+                is_correct: result.c58,
+            },
+            SaverResults {
+                given: result.f59,
+                correct: result.a59,
+                is_correct: result.c59,
+            },
+            SaverResults {
+                given: result.f60,
+                correct: result.a60,
+                is_correct: result.c60,
+            },
+            SaverResults {
+                given: result.f61,
+                correct: result.a61,
+                is_correct: result.c61,
+            },
+            SaverResults {
+                given: result.f62,
+                correct: result.a62,
+                is_correct: result.c62,
+            },
+        ];
+
+        let res = SynopsisJsonResult {
+            verb_id: result.selectedverb.parse::<i32>().unwrap(),
+            person: result.verbperson.parse::<i32>().unwrap(),
+            number: result.verbnumber.parse::<i32>().unwrap(),
+            case: if result.verbptccase.is_some() {
+                Some(result.verbptccase.unwrap().parse::<i32>().unwrap())
+            } else {
+                None
+            },
+            gender: if result.verbptcgender.is_some() {
+                Some(result.verbptcgender.unwrap().parse::<i32>().unwrap())
+            } else {
+                None
+            },
+            unit: result.sgiday,
+            pp: result.pp,
+            pp_correct: result.pp_correct,
+            pp_is_correct: result.pp_is_correct,
+            // pp: verbs[verb_id]
+            //     .pps
+            //     .iter()
+            //     .map(|x| x.replace('/', " or ").replace("  ", " "))
+            //     .collect::<Vec<_>>()
+            //     .join(", "),
+            name: result.sname.clone(),
+            advisor: result.advisor.clone(),
+            f: res_forms,
+        };
+        return Some(res);
+    }
+    None
+}
+
+pub async fn save_synopsis(
+    mut payload: SynopsisSaverRequest,
+    user_id: Option<Uuid>,
+    verbs: &[Arc<HcGreekVerb>],
+    hcdb: &HcDbPostgres,
+) -> Result<SynopsisJsonResult, Box<dyn std::error::Error>> {
+    let verb_id = payload.verb.try_into().unwrap();
+    let correct_answers = get_forms(
+        verbs,
+        verb_id,
+        payload.person,
+        payload.number,
+        payload.ptccase,
+        payload.ptcgender,
+    );
+    let mut is_correct = Vec::new();
+    // let is_correct = hgk_compare_multiple_forms(&correct_answer, &info.answer.replace("---", "—"));
+    for (i, f) in payload.r.iter().enumerate() {
+        if let Some(a) = &correct_answers[i] {
+            is_correct.push(hgk_compare_multiple_forms(a, &f.replace("---", "—"), true));
+        } else {
+            is_correct.push(true);
+        }
+    }
+
+    let is_correct_pps: Vec<bool> = check_pps(&payload.pp, &verbs[verb_id]);
+
+    let mut db_insert = Vec::<String>::new();
+
+    let mut res_forms = Vec::<SaverResults>::new();
+    for (n, i) in correct_answers.into_iter().enumerate() {
+        res_forms.push(SaverResults {
+            given: payload.r[n].clone(),
+            correct: i.clone().unwrap_or(String::from("")),
+            is_correct: is_correct[n],
+        });
+        db_insert.push(payload.r[n].clone());
+        db_insert.push(i.unwrap_or(String::from("")));
+        db_insert.push(is_correct[n].to_string());
+    }
+
+    let res = SynopsisJsonResult {
+        verb_id: payload.verb,
+        person: payload.person,
+        number: payload.number,
+        case: payload.ptccase,
+        gender: payload.ptcgender,
+        unit: payload.unit,
+        pp: payload.pp.clone(),
+        pp_correct: format!(
+            "{}, {}, {}, {}, {}, {}",
+            &verbs[verb_id].pps[0],
+            &verbs[verb_id].pps[1],
+            &verbs[verb_id].pps[2],
+            &verbs[verb_id].pps[3],
+            &verbs[verb_id].pps[4],
+            &verbs[verb_id].pps[5]
+        ),
+        pp_is_correct: is_correct_pps
+            .into_iter()
+            .map(|x| (x as i32).to_string())
+            .join(","),
+        // pp: verbs[verb_id]
+        //     .pps
+        //     .iter()
+        //     .map(|x| x.replace('/', " or ").replace("  ", " "))
+        //     .collect::<Vec<_>>()
+        //     .join(", "),
+        name: payload.sname.clone(),
+        advisor: payload.advisor.clone(),
+        f: res_forms,
+    };
+
+    let mut tx = hcdb.begin_tx().await?;
+
+    payload.r = db_insert; //add correct boolean and correct answers here to save to db
+    payload.pp_correct.clone_from(&res.pp_correct);
+    payload.pp_is_correct.clone_from(&res.pp_is_correct);
+
+    tx.greek_insert_synopsis(
+        user_id, &payload,
+        //ip.as_str(),
+        //user_agent,
+    )
+    .await?;
+
+    tx.commit_tx().await?;
+
+    Ok(res)
 }
 
 pub fn get_forms(

@@ -21,6 +21,7 @@ secrecy = { version = "0.8.0", features = ["serde"] }
 argon2 = { version = "0.5.2", features = ["std"] }
 tokio = { version = "1.34.0", features = ["rt", "macros"] }
 tracing = "0.1.40"
+itertools = "0.13.0"
 
 
 #hoplite_verbs_rs = { path = "../../hoplite_verbs_rs" }
