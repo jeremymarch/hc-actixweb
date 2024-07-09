@@ -474,23 +474,6 @@ async fn greek_synopsis(
     (headers, Html(page))
 }
 
-// async fn greek_synopsis() -> impl IntoResponse {
-//     let csp_nonce: String = Uuid::new_v4().to_string(); //.simple().encode_upper(&mut Uuid::encode_buffer()).to_string();
-
-//     let mut headers = HeaderMap::new();
-//     headers.insert(
-//         HeaderName::from_static(CSP_HEADER),
-//         HeaderValue::from_str(&CSP.replace("%NONCE%", &csp_nonce)).unwrap(),
-//     );
-
-//     let page = SYNOPSIS_PAGE
-//         .replace("%NONCE%", &csp_nonce)
-//         .replace("%ISRESULTCSS%", "synopsis-form")
-//         .replace("const resultJson = false;", "const resultJson = false;");
-
-//     (headers, Html(page))
-// }
-
 use chrono::Days;
 use chrono::NaiveDate;
 use chrono::NaiveTime;
@@ -1246,13 +1229,6 @@ async fn greek_synopsis_saver(
     State(state): State<AxumAppState>,
     extract::Json(payload): extract::Json<SynopsisSaverRequest>,
 ) -> Result<Json<SynopsisJsonResult>, StatusCode> {
-    //let user_agent = get_user_agent(&req).unwrap_or("");
-    //https://stackoverflow.com/questions/66989780/how-to-retrieve-the-ip-address-of-the-client-from-httprequest-in-actix-web
-    // let ip = if req.peer_addr().is_some() {
-    //     req.peer_addr().unwrap().ip().to_string()
-    // } else {
-    //     "".to_string()
-    // };
 
     let user_id = login::get_user_id(&session);
 
@@ -1260,9 +1236,6 @@ async fn greek_synopsis_saver(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    //Ok(HttpResponse::Ok().finish())
-    //let res = 1;
-    //Ok(HttpResponse::Ok().json(res))
     Ok(Json(res))
 }
 
@@ -1271,14 +1244,9 @@ async fn synopsis_json(
     State(state): State<AxumAppState>,
     extract::Json(payload): extract::Json<SynopsisSaverRequest>,
 ) -> Result<Json<SynopsisJsonResult>, StatusCode> {
-    // let is_correct = hgk_compare_multiple_forms(&correct_answer, &info.answer.replace("---", "—"));
-    //let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
-    // let pp = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
-    // let verb = Arc::new(HcGreekVerb::from_string(1, pp, REGULAR, 0).unwrap());
 
     let res = synopsis::get_synopsis(payload, &state.verbs);
 
-    //Ok(HttpResponse::Ok().json(res))
     Ok(Json(res))
 }
 
