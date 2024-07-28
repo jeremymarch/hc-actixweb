@@ -848,7 +848,7 @@ async fn greek_synopsis_list(
     @font-face {
         font-family: 'WebNewAthenaUnicode';
         src: url('/newathu5_8.ttf') format('truetype');
-      }  
+      }
         body {
             font-family: helvetica, arial;
             margin:0px;
@@ -904,19 +904,19 @@ async fn greek_synopsis_list(
       #logoutlink {
         display: none;
       }
-      #newSynopsisLink { 
-        display:none; 
+      #newSynopsisLink {
+        display:none;
         position:absolute;
         left: 10px;
       }
-      #table1 { 
-        display:none; 
+      #table1 {
+        display:none;
       }
       .loggedin #loginlink { display: none; }
       .loggedin #logoutlink { display: inline; }
       .loggedin #newSynopsisLink { display: inline; }
       .loggedin #table1 { display: table; }
-      .greekFont { 
+      .greekFont {
         font-family: NewAthenaUnicode, WebNewAthenaUnicode,helvetica,arial;
       }
       #settingsdiv ul {
@@ -939,7 +939,7 @@ async fn greek_synopsis_list(
         border: 2px solid black;
         border-radius: 10px;
       }
-      
+
       #settingsdiv {
         display:none;
       }
@@ -1048,7 +1048,7 @@ async fn greek_synopsis_list(
     <div id="menubar"><a id="newSynopsisLink" href="greek-synopsis">New Synopsis</a>
     <div id="loginContainer"><a id="loginlink" href="login">login</a>
         <span id="logoutlink">
-          <span id="username"></span> 
+          <span id="username"></span>
           (<a href="logout">logout</a>)
         </span>
     </div>
@@ -1090,9 +1090,9 @@ async fn greek_synopsis_list(
     <li>
       <div id="settingsDarkMode" tabindex='0' class="settingsItem">dark mode:
         <div class='settingsDarkMode'>
-          <label for='darkModeSystem'>system</label> 
+          <label for='darkModeSystem'>system</label>
           <input id='darkModeSystem' type='radio' name='darkmode' value='system'/><br>
-          <label for='darkModeDark'>dark</label> 
+          <label for='darkModeDark'>dark</label>
           <input id='darkModeDark' type='radio' name='darkmode' value='dark'/><br>
           <label for='darkModeLight'>light</label><input id='darkModeLight' type='radio' name='darkmode' value='light'/>
         </div>
@@ -1170,14 +1170,14 @@ async fn greek_synopsis_list(
             q('#username').innerText = '';
             //globalUserName = null;
           }
-      
+
           function toggleSettingsOn () {
             document.body.classList.add('settingsOn');
           }
           function toggleSettingsOff () {
             document.body.classList.remove('settingsOn');
           }
-        
+
           function toggleSettings () {
             if (document.body.classList.contains('settingsOn')) {
               toggleSettingsOff();
@@ -1197,7 +1197,7 @@ async fn greek_synopsis_list(
               toggleSettingsOn();
             }
           }
-        
+
           function darkModeClick () {
             switch (this.id) {
               case 'darkModeDark':
