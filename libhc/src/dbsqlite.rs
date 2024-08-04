@@ -116,6 +116,19 @@ impl HcTrx for HcDbSqliteTrx<'_> {
         Ok(res)
     }
 
+    async fn greek_get_synopsis_list_all(
+        &mut self,
+    ) -> Result<Vec<(Uuid, chrono::NaiveDateTime, Option<String>, String, String)>, HcError> {
+        let query_all = "SELECT id, updated, b.user_name, advisor, selectedverb FROM greeksynopsisresults a LEFT JOIN users b ON a.user_id = b.user_id ORDER BY updated DESC;";
+
+        let res: Vec<(Uuid, chrono::NaiveDateTime, Option<String>, String, String)> =
+            sqlx::query_as(query_all)
+                .fetch_all(&mut *self.tx)
+                .await
+                .map_err(map_sqlx_error)?;
+        Ok(res)
+    }
+
     async fn greek_get_synopsis_result(
         &mut self,
         id: Uuid,
@@ -140,7 +153,7 @@ impl HcTrx for HcDbSqliteTrx<'_> {
         let ip = "";
         let agent = "";
         let uuid = sqlx::types::Uuid::new_v4();
-        let query = format!("INSERT INTO greeksynopsisresults VALUES ($1, $2, DEFAULT, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, '{}')", 
+        let query = format!("INSERT INTO greeksynopsisresults VALUES ($1, $2, DEFAULT, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, '{}')",
             info.r.join("', '"));
         //println!("aaa: {}", query);
         sqlx::query(&query)
@@ -657,12 +670,12 @@ impl HcTrx for HcDbSqliteTrx<'_> {
     }
 
     async fn create_db(&mut self) -> Result<(), HcError> {
-        let query = r#"CREATE TABLE IF NOT EXISTS users ( 
-    user_id BLOB PRIMARY KEY NOT NULL, 
+        let query = r#"CREATE TABLE IF NOT EXISTS users (
+    user_id BLOB PRIMARY KEY NOT NULL,
     google_oauth_sub TEXT,
     apple_oauth_sub TEXT,
-    user_name TEXT, 
-    password TEXT, 
+    user_name TEXT,
+    password TEXT,
     email TEXT,
     first_name TEXT,
     last_name TEXT,
@@ -679,15 +692,15 @@ impl HcTrx for HcDbSqliteTrx<'_> {
             .await
             .map_err(map_sqlx_error)?;
 
-        let query = r#"CREATE TABLE IF NOT EXISTS sessions ( 
-    session_id BLOB PRIMARY KEY NOT NULL, 
-    challenger_user_id BLOB NOT NULL, 
-    challenged_user_id BLOB DEFAULT NULL, 
+        let query = r#"CREATE TABLE IF NOT EXISTS sessions (
+    session_id BLOB PRIMARY KEY NOT NULL,
+    challenger_user_id BLOB NOT NULL,
+    challenged_user_id BLOB DEFAULT NULL,
     current_move BLOB DEFAULT NULL,
     name TEXT DEFAULT NULL,
     highest_unit INT,
-    custom_verbs TEXT, 
-    custom_params TEXT, 
+    custom_verbs TEXT,
+    custom_params TEXT,
     max_changes INT,
     challenger_score INT,
     challenged_score INT,
@@ -696,7 +709,7 @@ impl HcTrx for HcDbSqliteTrx<'_> {
     max_time INT,
     timestamp INT NOT NULL DEFAULT 0,
     status INT NOT NULL DEFAULT 1,
-    FOREIGN KEY (challenger_user_id) REFERENCES users(user_id), 
+    FOREIGN KEY (challenger_user_id) REFERENCES users(user_id),
     FOREIGN KEY (challenged_user_id) REFERENCES users(user_id)
     ) STRICT;"#;
         let _res = sqlx::query(query)
@@ -705,27 +718,27 @@ impl HcTrx for HcDbSqliteTrx<'_> {
             .map_err(map_sqlx_error)?;
 
         let query = r#"CREATE TABLE IF NOT EXISTS moves (
-    move_id BLOB PRIMARY KEY NOT NULL, 
+    move_id BLOB PRIMARY KEY NOT NULL,
     session_id BLOB NOT NULL,
-    ask_user_id BLOB, 
-    answer_user_id BLOB, 
-    verb_id INT, 
-    person INT, 
-    number INT, 
-    tense INT, 
-    mood INT, 
-    voice INT, 
+    ask_user_id BLOB,
+    answer_user_id BLOB,
+    verb_id INT,
+    person INT,
+    number INT,
+    tense INT,
+    mood INT,
+    voice INT,
     answer TEXT,
     correct_answer TEXT,
     is_correct INT,
-    time TEXT, 
-    timed_out INT, 
-    mf_pressed INT, 
-    asktimestamp INT NOT NULL DEFAULT 0, 
-    answeredtimestamp INT, 
-    FOREIGN KEY (ask_user_id) REFERENCES users(user_id), 
-    FOREIGN KEY (answer_user_id) REFERENCES users(user_id), 
-    FOREIGN KEY (session_id) REFERENCES sessions(session_id) 
+    time TEXT,
+    timed_out INT,
+    mf_pressed INT,
+    asktimestamp INT NOT NULL DEFAULT 0,
+    answeredtimestamp INT,
+    FOREIGN KEY (ask_user_id) REFERENCES users(user_id),
+    FOREIGN KEY (answer_user_id) REFERENCES users(user_id),
+    FOREIGN KEY (session_id) REFERENCES sessions(session_id)
     ) STRICT;"#;
         let _res = sqlx::query(query)
             .execute(&mut *self.tx)
@@ -738,23 +751,23 @@ impl HcTrx for HcDbSqliteTrx<'_> {
             .await
             .map_err(map_sqlx_error)?;
 
-        let query = r#"CREATE TABLE IF NOT EXISTS greeksynopsisresults ( 
-                id UUID PRIMARY KEY NOT NULL, 
-                user_id UUID, 
-                updated timestamp default (now() at time zone 'utc'), 
-                sname TEXT NOT NULL, 
-                advisor TEXT NOT NULL, 
-                sgiday INTEGER NOT NULL, 
-                selectedverb TEXT NOT NULL, 
-                pp TEXT NOT NULL, 
-                verbnumber TEXT NOT NULL, 
-                verbperson TEXT NOT NULL, 
-                verbptcgender TEXT NOT NULL, 
-                verbptcnumber TEXT NOT NULL, 
-                verbptccase TEXT NOT NULL, 
-                ip TEXT NOT NULL, 
-                ua TEXT NOT NULL, 
-                status INTEGER NOT NULL, 
+        let query = r#"CREATE TABLE IF NOT EXISTS greeksynopsisresults (
+                id UUID PRIMARY KEY NOT NULL,
+                user_id UUID,
+                updated timestamp default (now() at time zone 'utc'),
+                sname TEXT NOT NULL,
+                advisor TEXT NOT NULL,
+                sgiday INTEGER NOT NULL,
+                selectedverb TEXT NOT NULL,
+                pp TEXT NOT NULL,
+                verbnumber TEXT NOT NULL,
+                verbperson TEXT NOT NULL,
+                verbptcgender TEXT NOT NULL,
+                verbptcnumber TEXT NOT NULL,
+                verbptccase TEXT NOT NULL,
+                ip TEXT NOT NULL,
+                ua TEXT NOT NULL,
+                status INTEGER NOT NULL,
                 score TEXT NOT NULL,
                 f0 TEXT NOT NULL, a0 TEXT NOT NULL, c0 BOOLEAN NOT NULL,
                 f1 TEXT NOT NULL, a1 TEXT NOT NULL, c1 BOOLEAN NOT NULL,

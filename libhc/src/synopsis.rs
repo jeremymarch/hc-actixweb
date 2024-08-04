@@ -21,8 +21,6 @@ use itertools::Itertools;
 use sqlx::FromRow;
 use std::sync::Arc;
 
-use crate::dbpostgres::HcDbPostgres;
-
 #[derive(Debug, Deserialize, Clone)]
 pub struct SynopsisSaverRequest {
     pub advisor: String,
@@ -385,7 +383,7 @@ pub fn get_synopsis(
     }
 }
 
-pub async fn get_synopsis_result(id: Uuid, hcdb: &HcDbPostgres) -> Option<SynopsisJsonResult> {
+pub async fn get_synopsis_result(id: Uuid, hcdb: &dyn HcDb) -> Option<SynopsisJsonResult> {
     let mut tx = hcdb.begin_tx().await.unwrap();
     if let Ok(result) = tx.greek_get_synopsis_result(id).await {
         //need to store is_correct and correct/incorrect answers
@@ -746,7 +744,7 @@ pub async fn save_synopsis(
     mut payload: SynopsisSaverRequest,
     user_id: Option<Uuid>,
     verbs: &[Arc<HcGreekVerb>],
-    hcdb: &HcDbPostgres,
+    hcdb: &dyn HcDb,
 ) -> Result<SynopsisJsonResult, Box<dyn std::error::Error>> {
     let verb_id = payload.verb.try_into().unwrap();
     let correct_answers = get_forms(
