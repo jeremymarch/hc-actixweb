@@ -29,15 +29,15 @@ pub struct CreateUserFormData {
 
 const LOGGED_IN_LANDING_PAGE: &str = "/greek-synopsis-results";
 
-pub fn get_user_id(session: &Session) -> Option<uuid::Uuid> {
-    if let Ok(s) = session.get::<uuid::Uuid>("user_id") {
+pub async fn get_user_id(session: &Session) -> Option<uuid::Uuid> {
+    if let Ok(s) = session.get::<uuid::Uuid>("user_id").await {
         s
     } else {
         None
     }
 }
-pub fn get_username(session: &Session) -> Option<String> {
-    if let Ok(s) = session.get::<String>("username") {
+pub async fn get_username(session: &Session) -> Option<String> {
+    if let Ok(s) = session.get::<String>("username").await {
         s
     } else {
         None
@@ -122,7 +122,7 @@ pub async fn login_get() -> impl IntoResponse {
                     <tbody>
                         <tr><td colspan="2" align="center">{error_html}</td></tr>
                         <tr>
-                            <td>               
+                            <td>
                                 <label for="username">Username</label>
                             </td>
                             <td>
@@ -174,7 +174,7 @@ pub async fn login_post(
     State(state): State<AxumAppState>,
     extract::Form(form): extract::Form<LoginFormData>,
 ) -> impl IntoResponse {
-    //session.clear();
+    //session.clear().await;
     //session.flush();
     let credentials = Credentials {
         username: form.username.clone(),
@@ -185,19 +185,19 @@ pub async fn login_post(
     //map_err(map_hc_error)
     //fix me, should handle error here in case db error, etc.
     {
-        if session.insert("user_id", user_id).is_ok()
-            && session.insert("username", form.username).is_ok()
+        if session.insert("user_id", user_id).await.is_ok()
+            && session.insert("username", form.username).await.is_ok()
         {
             return Redirect::to(LOGGED_IN_LANDING_PAGE); //index.html
         }
     }
 
-    //session.clear();
+    //session.clear().await;
     Redirect::to("/login")
 }
 
 pub async fn logout(session: Session) -> impl IntoResponse {
-    session.clear();
+    session.clear().await;
     //session.flush();
     //FlashMessage::error(String::from("Authentication error")).send();
     Redirect::to("/login")
@@ -271,7 +271,7 @@ pub async fn new_user_get() -> impl IntoResponse {
                     <tbody>
                     <tr><td colspan="2" align="center">{error_html}</td></tr>
                         <tr>
-                            <td>               
+                            <td>
                                 <label for="username">Username</label>
                             </td>
                             <td>
@@ -334,7 +334,7 @@ pub async fn new_user_post(
             //.map_err(map_hc_error)
         {
             Ok(_user_id) => {
-                //session.clear(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+                //session.clear().await; //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
                 //if session.insert("user_id", user_id).is_ok() {
                     Redirect::to("/login")
                 //}
@@ -451,7 +451,7 @@ pub async fn oauth_login_apple(session: Session, cookies: Cookies) -> impl IntoR
         .set_pkce_challenge(pkce_code_challenge) //apple does not support this, but no problem including it
         .url();
 
-    session.clear();
+    session.clear().await;
 
     let cookie = Cookie::build((OAUTH_COOKIE, csrf_state.secret().to_string()))
         // .domain("hoplite-challenge.philolog.us")
@@ -490,7 +490,7 @@ pub async fn oauth_login_google(session: Session, cookies: Cookies) -> impl Into
         .set_pkce_challenge(pkce_code_challenge) // apple does not support this
         .url();
 
-    session.clear();
+    session.clear().await;
 
     let cookie = Cookie::build((OAUTH_COOKIE, csrf_state.secret().to_string()))
         // .domain("hoplite-challenge.philolog.us")
@@ -597,9 +597,9 @@ pub async fn oauth_auth_apple(
                 .await
                 {
                     Ok((user_id, user_name)) => {
-                        session.clear(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-                        if session.insert("user_id", user_id).is_ok()
-                            && session.insert("username", user_name).is_ok()
+                        session.clear().await; //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+                        if session.insert("user_id", user_id).await.is_ok()
+                            && session.insert("username", user_name).await.is_ok()
                         {
                             return Redirect::to(LOGGED_IN_LANDING_PAGE);
                         }
@@ -699,9 +699,9 @@ pub async fn oauth_auth_google(
                 .await
                 {
                     Ok((user_id, user_name)) => {
-                        session.clear(); //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
-                        if session.insert("user_id", user_id).is_ok()
-                            && session.insert("username", user_name).is_ok()
+                        session.clear().await; //https://www.lpalmieri.com/posts/session-based-authentication-in-rust/#4-5-2-session
+                        if session.insert("user_id", user_id).await.is_ok()
+                            && session.insert("username", user_name).await.is_ok()
                         {
                             return Redirect::to(LOGGED_IN_LANDING_PAGE);
                         }

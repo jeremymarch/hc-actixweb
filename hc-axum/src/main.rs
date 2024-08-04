@@ -29,7 +29,6 @@ use socketioxide::{
     SocketIo,
 };
 use std::sync::atomic::AtomicUsize;
-use tower::ServiceBuilder;
 use tower_cookies::cookie::SameSite;
 use tower_http::{/*cors::CorsLayer,*/ services::ServeDir};
 use tracing::{/*error, Level,*/ info};
@@ -41,13 +40,11 @@ use axum::response::{Html, IntoResponse};
 use http::header::{HeaderMap, HeaderName, HeaderValue};
 
 use axum::debug_handler;
-use axum::error_handling::HandleErrorLayer;
 use axum::extract;
 use axum::extract::State;
 use http::StatusCode;
 use sqlx::postgres::PgPoolOptions;
 use time::Duration;
-use tower::BoxError;
 use tower_cookies::CookieManagerLayer;
 use tower_sessions::{
     /*ExpiredDeletion, PostgresStore*/ Expiry, MemoryStore, Session, SessionManagerLayer,
@@ -259,31 +256,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await
         .expect("Error creating database");
 
-    /*
-        let session_store = PostgresStore::new(hcdb.db.clone());
-        session_store.migrate().await?;
-
-        let deletion_task = tokio::task::spawn(
-            session_store
-                .clone()
-                .continuously_delete_expired(tokio::time::Duration::from_secs(60)),
-        );
-    */
+    let cookie_secure = !cfg!(debug_assertions);
     let session_store = MemoryStore::default();
-
-    let cookie_secure = !cfg!(debug_assertions); //cookie is secure for release, not secure for debug builds
-    let session_service = ServiceBuilder::new()
-        .layer(HandleErrorLayer::new(|_: BoxError| async {
-            StatusCode::BAD_REQUEST
-        }))
-        .layer(
-            SessionManagerLayer::new(session_store)
-                .with_secure(cookie_secure)
-                .with_expiry(Expiry::OnInactivity(Duration::days(365)))
-                .with_name("hcax")
-                .with_http_only(true)
-                .with_same_site(SameSite::Strict), //None, Strict, Lax //oauth needs None, but Chrome needs at least Lax for normal login to work
-        );
+    let session_layer = SessionManagerLayer::new(session_store)
+        .with_secure(cookie_secure)
+        .with_expiry(Expiry::OnInactivity(Duration::days(365)))
+        .with_name("hcax")
+        .with_http_only(true)
+        .with_same_site(SameSite::Strict); //None, Strict, Lax //oauth needs None, but Chrome needs at least Lax for normal login to work
 
     let verbs = libhc::hc_load_verbs("pp.txt");
 
@@ -343,7 +323,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         //         .layer(layer.with_hyper_v1()),
         // )
         .with_state(app_state)
-        .layer(session_service)
+        .layer(session_layer)
         .layer(CookieManagerLayer::new());
 
     // let addr = std::net::SocketAddr::from(([0, 0, 0, 0], 8088));
@@ -385,9 +365,9 @@ async fn get_sessions(
     State(state): State<AxumAppState>,
     extract::Form(payload): extract::Form<GetSessions>,
 ) -> Result<Json<SessionsListResponse>, StatusCode> {
-    if let Some(user_id) = login::get_user_id(&session) {
+    if let Some(user_id) = login::get_user_id(&session).await {
         //uuid!("96b875e7-fc53-4498-ad8d-9ce417e938b7");
-        let username = login::get_username(&session);
+        let username = login::get_username(&session).await;
 
         let res = libhc::hc_get_sessions(&state.hcdb, user_id, &state.verbs, username, &payload)
             .await
@@ -403,7 +383,7 @@ async fn create_session(
     State(state): State<AxumAppState>,
     extract::Form(mut payload): extract::Form<CreateSessionQuery>,
 ) -> Result<Json<StatusResponse>, StatusCode> {
-    if let Some(user_id) = login::get_user_id(&session) {
+    if let Some(user_id) = login::get_user_id(&session).await {
         let timestamp = libhc::get_timestamp();
 
         let (mesg, success) = match libhc::hc_insert_session(
@@ -453,7 +433,7 @@ async fn greek_synopsis(
     );
 
     //let user_id = login::get_user_id(&session);
-    let username = login::get_username(&session);
+    let username = login::get_username(&session).await;
     let name = if username.is_some() {
         format!("const username = '{}';", username.unwrap())
     } else {
@@ -765,8 +745,8 @@ fn make_schedule() -> LgiCourse {
 //         2024
 
 async fn sgi_schedule(session: Session) -> impl IntoResponse {
-    let _user_id = login::get_user_id(&session);
-    let _username = login::get_username(&session);
+    let _user_id = login::get_user_id(&session).await;
+    let _username = login::get_username(&session).await;
 
     let sgi = make_schedule();
 
@@ -832,8 +812,8 @@ async fn greek_synopsis_list(
     session: Session,
     State(state): State<AxumAppState>,
 ) -> impl IntoResponse {
-    let user_id = login::get_user_id(&session);
-    let username = login::get_username(&session);
+    let user_id = login::get_user_id(&session).await;
+    let username = login::get_username(&session).await;
 
     let mut tx = state.hcdb.begin_tx().await.unwrap();
     let list = tx.greek_get_synopsis_list(user_id).await.unwrap();
@@ -1229,7 +1209,7 @@ async fn greek_synopsis_saver(
     State(state): State<AxumAppState>,
     extract::Json(payload): extract::Json<SynopsisSaverRequest>,
 ) -> Result<Json<SynopsisJsonResult>, StatusCode> {
-    let user_id = login::get_user_id(&session);
+    let user_id = login::get_user_id(&session).await;
 
     let res = synopsis::save_synopsis(payload, user_id, &state.verbs, &state.hcdb)
         .await
@@ -1255,7 +1235,7 @@ async fn get_move(
 ) -> Result<Json<SessionState>, StatusCode> {
     //"ask", prev form to start from or null, prev answer and is_correct, correct answer
 
-    if let Some(user_id) = login::get_user_id(&session) {
+    if let Some(user_id) = login::get_user_id(&session).await {
         let res = libhc::hc_get_move(
             &state.hcdb,
             user_id,
@@ -1279,7 +1259,7 @@ async fn get_game_moves(
 ) -> Result<Json<GetMovesResponse>, StatusCode> {
     //"ask", prev form to start from or null, prev answer and is_correct, correct answer
 
-    if let Some(_user_id) = login::get_user_id(&session) {
+    if let Some(_user_id) = login::get_user_id(&session).await {
         let res = GetMovesResponse {
             response_to: String::from("getgamemoves"),
             session_id: payload.session_id,
@@ -1302,7 +1282,7 @@ async fn enter(
     tracing::info!("enter");
     let timestamp = libhc::get_timestamp();
 
-    if let Some(user_id) = login::get_user_id(&session) {
+    if let Some(user_id) = login::get_user_id(&session).await {
         let res = libhc::hc_answer(&state.hcdb, user_id, &payload, timestamp, &state.verbs)
             .await
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -1319,7 +1299,7 @@ async fn ask(
 ) -> Result<Json<SessionState>, StatusCode> {
     let timestamp = libhc::get_timestamp();
 
-    if let Some(user_id) = login::get_user_id(&session) {
+    if let Some(user_id) = login::get_user_id(&session).await {
         let res = libhc::hc_ask(&state.hcdb, user_id, &payload, timestamp, &state.verbs)
             .await
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -1337,7 +1317,7 @@ async fn mf(
 ) -> Result<Json<SessionState>, StatusCode> {
     let timestamp = libhc::get_timestamp();
 
-    if let Some(user_id) = login::get_user_id(&session) {
+    if let Some(user_id) = login::get_user_id(&session).await {
         let res = libhc::hc_mf_pressed(&state.hcdb, user_id, &payload, timestamp, &state.verbs)
             .await
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;

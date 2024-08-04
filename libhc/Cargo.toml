@@ -13,7 +13,7 @@ chrono = { version = "0.4.38", default-features = false, features = [
     "clock",
     "serde",
 ] }
-sqlx = { version = "0.7.4", features = [
+sqlx = { version = "0.8.0", features = [
     "sqlite",
     "postgres",
     "runtime-tokio-rustls",

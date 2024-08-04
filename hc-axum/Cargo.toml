@@ -14,10 +14,7 @@ axum = { version = "0.7.5", features = ["macros"] }
 tokio = { version = "1.39.2", features = ["rt-multi-thread", "macros"] }
 tower-http = { version = "0.5.2", features = ["trace", "cors", "fs"] }
 tower = "0.4.13"
-tower-sessions = { version = "0.7.0", features = [
-    "postgres-store",
-    "deletion-task",
-] }
+tower-sessions = "0.12.2"
 tower-cookies = "0.10.0"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 tracing = "0.1.40"
@@ -25,7 +22,7 @@ serde = "1.0.204"
 serde_json = "1.0.120"
 http = "1.1.0"
 uuid = "1.10.0"
-sqlx = { version = "0.7.4", features = [
+sqlx = { version = "0.8.0", features = [
     "postgres",
     "runtime-tokio-rustls",
     "uuid",
