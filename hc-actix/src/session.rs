@@ -31,7 +31,7 @@ pub struct WsHcGameSession {
     pub hb: Instant,
 
     /// joined room
-    pub room: Uuid,
+    pub _room: Uuid,
 
     /// peer name
     pub name: Option<String>,

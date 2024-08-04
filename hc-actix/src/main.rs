@@ -112,7 +112,7 @@ async fn ws_route(
             session::WsHcGameSession {
                 id: uuid,
                 hb: Instant::now(),
-                room: server::MAIN_ROOM,
+                _room: server::MAIN_ROOM,
                 name: None,
                 addr: srv.get_ref().clone(),
                 verbs: verbs.clone(),
