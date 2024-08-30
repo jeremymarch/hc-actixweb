@@ -381,24 +381,19 @@ async fn get_sessions(
 async fn create_session(
     session: Session,
     State(state): State<AxumAppState>,
-    extract::Form(mut payload): extract::Form<CreateSessionQuery>,
+    extract::Form(payload): extract::Form<CreateSessionQuery>,
 ) -> Result<Json<StatusResponse>, StatusCode> {
     if let Some(user_id) = login::get_user_id(&session).await {
         let timestamp = libhc::get_timestamp();
 
-        let (mesg, success) = match libhc::hc_insert_session(
-            &state.hcdb,
-            user_id,
-            &mut payload,
-            &state.verbs,
-            timestamp,
-        )
-        .await
-        {
-            Ok(_session_uuid) => (String::from("inserted!"), true),
-            Err(HcError::UnknownError) => (String::from("opponent not found!"), false),
-            Err(e) => (format!("error inserting: {e:?}"), false),
-        };
+        let (mesg, success) =
+            match libhc::hc_insert_session(&state.hcdb, user_id, &payload, &state.verbs, timestamp)
+                .await
+            {
+                Ok(_session_uuid) => (String::from("inserted!"), true),
+                Err(HcError::UnknownError) => (String::from("opponent not found!"), false),
+                Err(e) => (format!("error inserting: {e:?}"), false),
+            };
         let res = StatusResponse {
             response_to: String::from("newsession"),
             mesg,

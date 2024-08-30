@@ -190,7 +190,7 @@ async fn get_game_moves(
 }
 
 async fn create_session(
-    (session, mut info, req): (Session, web::Form<CreateSessionQuery>, HttpRequest),
+    (session, info, req): (Session, web::Form<CreateSessionQuery>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<HcDbPostgres>().unwrap();
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
@@ -199,7 +199,7 @@ async fn create_session(
         let timestamp = libhc::get_timestamp();
 
         let (mesg, success) =
-            match libhc::hc_insert_session(db, user_id, &mut info, verbs, timestamp).await {
+            match libhc::hc_insert_session(db, user_id, &info, verbs, timestamp).await {
                 Ok(_session_uuid) => (String::from("inserted!"), true),
                 Err(HcError::UnknownError) => (String::from("opponent not found!"), false),
                 Err(e) => (format!("error inserting: {e:?}"), false),

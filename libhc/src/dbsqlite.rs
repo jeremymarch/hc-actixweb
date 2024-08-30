@@ -754,7 +754,7 @@ impl HcTrx for HcDbSqliteTrx<'_> {
         let query = r#"CREATE TABLE IF NOT EXISTS greeksynopsisresults (
                 id UUID PRIMARY KEY NOT NULL,
                 user_id UUID,
-                updated timestamp default (now() at time zone 'utc'),
+                updated timestamp DEFAULT (datetime('now')),
                 sname TEXT NOT NULL,
                 advisor TEXT NOT NULL,
                 sgiday INTEGER NOT NULL,

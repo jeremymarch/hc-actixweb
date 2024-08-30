@@ -30,11 +30,11 @@ use argon2::PasswordHasher;
 use argon2::PasswordVerifier;
 use argon2::Version;
 use chrono::prelude::*;
-pub use hoplite_verbs_rs::check_pps;
-pub use hoplite_verbs_rs::HcGreekVerb;
-use hoplite_verbs_rs::*;
-pub use polytonic_greek::hgk_compare_multiple_forms;
-use polytonic_greek::hgk_compare_sqlite; //note: this does not actually depend on sqlite
+pub use hoplite_verb_chooser::check_pps;
+pub use hoplite_verb_chooser::HcGreekVerb;
+pub use hoplite_verb_chooser::*;
+
+pub use hoplite_verb_chooser::hgk_compare_multiple_forms;
 use rand::prelude::SliceRandom;
 use secrecy::ExposeSecret;
 use secrecy::Secret;
@@ -51,6 +51,8 @@ use crate::synopsis::SynopsisSaverRequest;
 pub mod dbpostgres;
 #[cfg(feature = "sqlite")]
 pub mod dbsqlite;
+#[cfg(feature = "sqlite")]
+pub mod hcblockingclient;
 pub mod synopsis;
 
 use serde::{Deserialize, Serialize};
@@ -215,7 +217,7 @@ pub struct MoveResult {
     answeredtimestamp: Option<i64>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct CreateSessionQuery {
     pub qtype: String,
     pub name: Option<String>,
@@ -1274,10 +1276,11 @@ pub async fn hc_get_game_moves(
 pub async fn hc_insert_session(
     db: &dyn HcDb,
     user_id: Uuid,
-    info: &mut CreateSessionQuery,
+    info_real: &CreateSessionQuery,
     verbs: &[Arc<HcGreekVerb>],
     timestamp: i64,
 ) -> Result<Uuid, HcError> {
+    let mut info = info_real.clone(); //mut so we can fiddle with verbs below
     let mut tx = db.begin_tx().await?;
 
     let opponent_user_id: Option<Uuid>;
@@ -1323,7 +1326,7 @@ pub async fn hc_insert_session(
     info.max_time = if info.countdown { info.max_time } else { 0 };
 
     match tx
-        .insert_session_tx(user_id, highest_unit, opponent_user_id, info, timestamp)
+        .insert_session_tx(user_id, highest_unit, opponent_user_id, &info, timestamp)
         .await
     {
         Ok(session_uuid) => {

@@ -13,7 +13,7 @@ chrono = { version = "0.4.38", default-features = false, features = [
     "clock",
     "serde",
 ] }
-sqlx = { version = "0.8.0", features = [
+sqlx = { version = "0.8.1", features = [
     "sqlite",
     "postgres",
     "runtime-tokio-rustls",
@@ -33,7 +33,10 @@ tracing = "0.1.40"
 itertools = "0.13.0"
 
 #hoplite_verbs_rs = { path = "../../hoplite_verbs_rs" }
-hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.4.9" }
+#hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.4.9" }
+
+#hoplite_verb_chooser = { path = "../../hoplite_verb_chooser" }
+hoplite_verb_chooser = { git = "https://github.com/jeremymarch/hoplite_verb_chooser", version = "0.1.0" }
 
 
 [features]

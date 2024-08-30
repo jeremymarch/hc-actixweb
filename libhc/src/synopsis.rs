@@ -1,17 +1,17 @@
 use crate::hgk_compare_multiple_forms;
 use crate::HcDb;
 
-use hoplite_verbs_rs::check_pps;
-use hoplite_verbs_rs::HcCase;
-use hoplite_verbs_rs::HcGender;
-use hoplite_verbs_rs::HcGreekVerb;
-use hoplite_verbs_rs::HcGreekVerbForm;
-use hoplite_verbs_rs::HcMood;
-use hoplite_verbs_rs::HcNumber;
-use hoplite_verbs_rs::HcPerson;
-use hoplite_verbs_rs::HcTense;
-use hoplite_verbs_rs::HcVerbForms;
-use hoplite_verbs_rs::HcVoice;
+use hoplite_verb_chooser::check_pps;
+use hoplite_verb_chooser::HcCase;
+use hoplite_verb_chooser::HcGender;
+use hoplite_verb_chooser::HcGreekVerb;
+use hoplite_verb_chooser::HcGreekVerbForm;
+use hoplite_verb_chooser::HcMood;
+use hoplite_verb_chooser::HcNumber;
+use hoplite_verb_chooser::HcPerson;
+use hoplite_verb_chooser::HcTense;
+use hoplite_verb_chooser::HcVerbForms;
+use hoplite_verb_chooser::HcVoice;
 
 use serde::Deserialize;
 use serde::Serialize;
