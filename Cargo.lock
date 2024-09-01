@@ -1414,8 +1414,8 @@ dependencies = [
 
 [[package]]
 name = "hoplite_verb_chooser"
-version = "0.1.0"
-source = "git+https://github.com/jeremymarch/hoplite_verb_chooser#3f4b4386b1e4cd34973069910cdc190570007539"
+version = "0.1.1"
+source = "git+https://github.com/jeremymarch/hoplite_verb_chooser#28b49996157f2a22bc162ac75ce5ad72524e2931"
 dependencies = [
  "hoplite_verbs_rs",
  "rand",
@@ -1423,8 +1423,8 @@ dependencies = [
 
 [[package]]
 name = "hoplite_verbs_rs"
-version = "0.5.0"
-source = "git+https://github.com/jeremymarch/hoplite_verbs_rs#0400380934de83a2c29225f82779b8825d801a82"
+version = "0.5.1"
+source = "git+https://github.com/jeremymarch/hoplite_verbs_rs#ad0bd98386bd1d6ac54de4fe945d68b00f99c94e"
 dependencies = [
  "polytonic-greek",
 ]
