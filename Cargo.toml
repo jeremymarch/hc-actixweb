@@ -5,7 +5,7 @@ members = [
     "hc-axum",
     "libhc",
 ]
-default-members = ["hc-actix"] # i.e. which to run by default, else "cargo run -phc-axum --bin hc-axum"
+default-members = ["hc-axum"] # i.e. which to run by default, else "cargo run -phc-axum --bin hc-axum"
 
 [workspace.package]
 version = "0.1.0"

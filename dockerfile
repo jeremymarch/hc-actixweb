@@ -4,7 +4,7 @@ FROM rust:1.81.0 AS build
 WORKDIR /usr/src/hc-axum
 COPY . .
 
-RUN cargo install -phc-axum --path .
+RUN cargo install --path hc-axum
 
 FROM gcr.io/distroless/cc-debian12
 
