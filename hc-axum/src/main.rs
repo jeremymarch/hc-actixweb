@@ -464,6 +464,7 @@ enum LgiDayType {
     Holiday,
 }
 
+#[allow(dead_code)]
 #[derive(PartialEq)]
 enum LgiClassType {
     None,
@@ -484,12 +485,14 @@ enum LgiClassType {
     RestAndStudy,
 }
 
+#[allow(dead_code)]
 struct LgiDoc {
     desc: String,
     docx: String,
     pdf: String,
 }
 
+#[allow(dead_code)]
 struct LgiSection {
     group: String,
     faculty: String,
@@ -497,6 +500,7 @@ struct LgiSection {
     name: String,
 }
 
+#[allow(dead_code)]
 struct LgiClass {
     class_type: LgiClassType,
     start_time: Option<NaiveTime>,
@@ -509,6 +513,7 @@ struct LgiClass {
     name: String,
 }
 
+#[allow(dead_code)]
 struct LgiDay {
     day_type: LgiDayType,
     day: NaiveDate,
@@ -535,7 +540,8 @@ fn is_holiday(date: &NaiveDate, holidays: &Vec<NaiveDate>) -> bool {
 fn make_schedule() -> LgiCourse {
     let xml: &str = include_str!("sgi.xml");
     let mut reader = Reader::from_str(xml);
-    reader.trim_text(true);
+    reader.config_mut().trim_text(true); //FIX ME: check docs, do we want true here?
+    reader.config_mut().enable_all_checks(true);
 
     //let mut count = 0;
     let mut txt = Vec::new();

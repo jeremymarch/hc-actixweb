@@ -133,7 +133,7 @@ pub async fn login_get(flash_messages: IncomingFlashMessages) -> Result<HttpResp
                 <tbody>
                     <tr><td colspan="2" align="center">{error_html}</td></tr>
                     <tr>
-                        <td>               
+                        <td>
                             <label for="username">Username</label>
                         </td>
                         <td>
@@ -280,7 +280,7 @@ pub async fn new_user_get(flash_messages: IncomingFlashMessages) -> Result<HttpR
                 <tbody>
                 <tr><td colspan="2" align="center">{error_html}</td></tr>
                     <tr>
-                        <td>               
+                        <td>
                             <label for="username">Username</label>
                         </td>
                         <td>
@@ -366,18 +366,11 @@ pub async fn new_user_post(
 }
 
 pub fn get_user_id(session: Session) -> Option<uuid::Uuid> {
-    if let Ok(s) = session.get::<uuid::Uuid>("user_id") {
-        s
-    } else {
-        None
-    }
+    session.get::<uuid::Uuid>("user_id").unwrap_or_default()
 }
+
 pub fn get_username(session: Session) -> Option<String> {
-    if let Ok(s) = session.get::<String>("username") {
-        s
-    } else {
-        None
-    }
+    session.get::<String>("username").unwrap_or_default()
 }
 
 /*
