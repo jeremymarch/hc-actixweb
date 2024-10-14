@@ -528,7 +528,7 @@ struct LgiCourse {
     holidays: Vec<NaiveDate>,
 }
 
-fn is_holiday(date: &NaiveDate, holidays: &Vec<NaiveDate>) -> bool {
+fn is_holiday(date: &NaiveDate, holidays: &[NaiveDate]) -> bool {
     for h in holidays.iter() {
         if date == h {
             return true;
@@ -680,11 +680,11 @@ fn make_schedule() -> LgiCourse {
                                 None
                             },
                             desc: String::from(""),
-                            faculty: faculty,
+                            faculty,
                             room: String::from(""),
                             docs: vec![],
                             sections: vec![],
-                            name: name,
+                            name,
                         };
                         sgi.days.last_mut().unwrap().classes.push(c);
 
@@ -711,10 +711,10 @@ fn make_schedule() -> LgiCourse {
                         }
 
                         let s = LgiSection {
-                            group: group,
-                            faculty: faculty,
-                            room: room,
-                            name: name,
+                            group,
+                            faculty,
+                            room,
+                            name,
                         };
                         sgi.days
                             .last_mut()
@@ -783,7 +783,7 @@ async fn sgi_schedule(session: Session) -> impl IntoResponse {
             {
                 res.push_str("<br/>(optional)");
             }
-            if j.sections.len() == 0 {
+            if j.sections.is_empty() {
                 res.push_str("<br/>");
                 res.push_str(&j.faculty);
             }

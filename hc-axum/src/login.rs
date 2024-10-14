@@ -30,18 +30,10 @@ pub struct CreateUserFormData {
 const LOGGED_IN_LANDING_PAGE: &str = "/greek-synopsis-results";
 
 pub async fn get_user_id(session: &Session) -> Option<uuid::Uuid> {
-    if let Ok(s) = session.get::<uuid::Uuid>("user_id").await {
-        s
-    } else {
-        None
-    }
+    (session.get::<uuid::Uuid>("user_id").await).unwrap_or_default()
 }
 pub async fn get_username(session: &Session) -> Option<String> {
-    if let Ok(s) = session.get::<String>("username").await {
-        s
-    } else {
-        None
-    }
+    (session.get::<String>("username").await).unwrap_or_default()
 }
 
 const OAUTH_COOKIE: &str = "oauth_state";
@@ -470,7 +462,7 @@ pub async fn oauth_login_apple(session: Session, cookies: Cookies) -> impl IntoR
     cookies.add(cookie.into());
     cookies.add(cookie_nonce.into());
 
-    Redirect::to(&authorize_url.to_string())
+    Redirect::to(authorize_url.as_ref())
 }
 
 pub async fn oauth_login_google(session: Session, cookies: Cookies) -> impl IntoResponse {
@@ -509,7 +501,7 @@ pub async fn oauth_login_google(session: Session, cookies: Cookies) -> impl Into
     cookies.add(cookie.into());
     cookies.add(cookie_nonce.into());
 
-    Redirect::to(&authorize_url.to_string())
+    Redirect::to(authorize_url.as_ref())
 }
 
 pub async fn oauth_auth_apple(
@@ -518,11 +510,13 @@ pub async fn oauth_auth_apple(
     State(state): State<AxumAppState>,
     extract::Form(params): extract::Form<AuthRequest>,
 ) -> impl IntoResponse {
+    #[allow(clippy::manual_map)]
     let saved_state = match cookies.get(OAUTH_COOKIE) {
         Some(v) => Some(v.value().to_string()),
         None => None,
     };
     cookies.remove(Cookie::new(OAUTH_COOKIE, ""));
+    #[allow(clippy::manual_map)]
     let oauth2_nonce = match cookies.get(OAUTH_COOKIE_NONCE) {
         Some(v) => Some(v.value().to_string()),
         None => None,
@@ -630,11 +624,13 @@ pub async fn oauth_auth_google(
     State(state): State<AxumAppState>,
     extract::Form(params): extract::Form<AuthRequest>,
 ) -> impl IntoResponse {
+    #[allow(clippy::manual_map)]
     let saved_state = match cookies.get(OAUTH_COOKIE) {
         Some(v) => Some(v.value().to_string()),
         None => None,
     };
     cookies.remove(Cookie::new(OAUTH_COOKIE, ""));
+    #[allow(clippy::manual_map)]
     let oauth2_nonce = match cookies.get(OAUTH_COOKIE_NONCE) {
         Some(v) => Some(v.value().to_string()),
         None => None,

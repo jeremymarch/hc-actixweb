@@ -8,7 +8,7 @@ members = [
 default-members = ["hc-axum"] # i.e. which to run by default, else "cargo run -phc-axum --bin hc-axum"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Jeremy March <jmarch@gradcenter.cuny.edu>"]
 
