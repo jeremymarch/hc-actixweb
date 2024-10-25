@@ -23,7 +23,7 @@
     setTheme();
 </script>
 <style nonce="%NONCE%">
-/* try to use local NewAthenaUnicode before downloading from server; 
+/* try to use local NewAthenaUnicode before downloading from server;
 does not work in Safari https://stackoverflow.com/questions/59986432/safari-user-installed-fonts-dont-render */
 @font-face {
     font-family: 'WebNewAthenaUnicode';
@@ -311,7 +311,7 @@ BUTTON:disabled {cursor:default}
     padding:0.2rem 1rem;
 }
 /* .myturn {
-   
+
 } */
 .selectedGame {
     background-color: lightgray;
@@ -478,7 +478,7 @@ a {color:blue;}
     line-height: 2;
     height:44px;
   }
-  #menubar { 
+  #menubar {
     padding:0px;
   }
   .startingform {
@@ -623,7 +623,7 @@ a {color:blue;}
     <div id="menubar">
         <div id="loginContainer"><a id="loginlink" href="login">login</a>
             <span id="logoutlink">
-              <span id="username"></span> 
+              <span id="username"></span>
               (<a href="logout">logout</a>)
             </span>
         </div>
@@ -685,7 +685,7 @@ a {color:blue;}
                             <label for="countdowninput">timer</label>
                           </li>
                         </ul>
-                      </div>  
+                      </div>
                     </div>
                     <div class="expand-container">
                       <div id="timertimerows" class="newrow expand-contract">
@@ -864,7 +864,7 @@ a {color:blue;}
         <button id="mfbutton" class="mfbutton" title="Multiple Forms Button">MF</button>
         <div id="mainstopwatch">
             <div id="mainTime">
-                
+
             </div>
         </div>
     </div>
@@ -918,7 +918,7 @@ a {color:blue;}
         </div>
     </div>
 </div>
-<textarea id="answerform" class="gkinput newform disablecopypaste" 
+<textarea id="answerform" class="gkinput newform disablecopypaste"
   disabled autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
 <div id="correctanswer" class="gkinput correctanswer"></div>
 <button id="submitbutton">Start</button>
@@ -940,9 +940,9 @@ a {color:blue;}
     <li>
       <div id="settingsDarkMode" tabindex='0' class="settingsItem">dark mode:
         <div class='settingsDarkMode'>
-          <label for='darkModeSystem'>system</label> 
+          <label for='darkModeSystem'>system</label>
           <input id='darkModeSystem' type='radio' name='darkmode' value='system'/><br>
-          <label for='darkModeDark'>dark</label> 
+          <label for='darkModeDark'>dark</label>
           <input id='darkModeDark' type='radio' name='darkmode' value='dark'/><br>
           <label for='darkModeLight'>light</label><input id='darkModeLight' type='radio' name='darkmode' value='light'/>
         </div>
@@ -1011,7 +1011,7 @@ a {color:blue;}
     if (!('WebSocket' in window)) {
       return;
     }
-  
+
     function ReconnectingWebSocket (url, protocols, options) {
       // Default settings
       const settings = {
@@ -1323,7 +1323,7 @@ a {color:blue;}
   for (let i = 0; i < hqUnitItems.length; i++) {
     hqUnitItems[i].addEventListener('click', hqUnitClicked, false);
   }
-  
+
   const paramItems = document.querySelectorAll('#askparamsdivinner SELECT');
   for (let i = 0; i < paramItems.length; i++) {
     paramItems[i].addEventListener('change', selectChanged, false);
@@ -1355,7 +1355,7 @@ a {color:blue;}
   function start () {
     verbList();
     globalTimerRef = q('#mainTime');
-  
+
     const supported = (() => {
       try {
         if (typeof WebAssembly === 'object' &&
@@ -1511,7 +1511,7 @@ a {color:blue;}
     }
     return true; // true allows most punctuation, etc. pass through
   }
-  
+
   // https://github.com/le717/microajax
   function microAjax (options) {
     'use strict';
@@ -1628,7 +1628,7 @@ a {color:blue;}
     } else if ((data.response_to === 'mfpressedresponse' || data.response_to === 'mfpressedresponsepractice') && data.success) {
       if (data.is_correct === false) {
         uiModeClickedEnter();
-  
+
         globalStartingForm = data.starting_form;
         globalChangeDesc = data.change_desc;
         uiModeAnswerResponseReceived(data);
@@ -1990,7 +1990,7 @@ a {color:blue;}
       const answer = q('#answerform').value.trim();
       const time = q('#mainTime').innerText.trim();
       console.log('Enter clicked: ' + answer + ', time: ' + time + ', mfPressed: ' + globalMFPressed + ', timedout: ' + globalTimedOut);
-  
+
       sendAnswer(globalSessionId, answer, time, globalMFPressed, globalTimedOut);
     } else if (submitbutton.innerText === 'Continue' || submitbutton.innerText === 'Start') {
       console.log(submitbutton.innerText + ' clicked');
@@ -2028,7 +2028,7 @@ a {color:blue;}
       sendMF(globalSessionId, answer, time, globalMFPressed, globalTimedOut);
     }
   }
-  
+
   function getMove () {
     document.querySelectorAll('.selectedGame').forEach((row) => {
       row.classList.remove('selectedGame');
@@ -2397,7 +2397,7 @@ a {color:blue;}
         verbchooser.add(o);
       }
       verbchooser.value = null;
-  
+
       q('#startingform').innerText = '';
       verbchooser.style.display = 'inline-block';
       q('#statusmesg').innerHTML = 'Choose a verb and set all parameters';
@@ -2726,7 +2726,7 @@ a {color:blue;}
       list.appendChild(li);
 
       verbs.sort(function (a, b) { return a.s - b.s; });
-  
+
       for (; i < verbs.length; i++) {
         if (verbs[i].i === 122 || verbs[i].i === 127 || verbs[i].i === 78 || verbs[i].i === 79) {
           continue;
@@ -2739,7 +2739,7 @@ a {color:blue;}
         }
         const li = document.createElement('li');
         li.classList.add('verbrow');
-  
+
         const input = document.createElement('input');
         input.classList.add('verblistck');
         input.classList.add('verblistckverb');
