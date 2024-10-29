@@ -161,7 +161,9 @@ pub async fn login_get() -> impl IntoResponse {
     Html(b)
 }
 
+use axum::extract::Host;
 pub async fn login_post(
+    Host(host): Host,
     session: Session,
     State(state): State<AxumAppState>,
     extract::Form(form): extract::Form<LoginFormData>,
@@ -180,7 +182,12 @@ pub async fn login_post(
         if session.insert("user_id", user_id).await.is_ok()
             && session.insert("username", form.username).await.is_ok()
         {
-            return Redirect::to(LOGGED_IN_LANDING_PAGE); //index.html
+            if host.to_lowercase().contains("synopsis") {
+                return Redirect::to("https://synopsis.philolog.us");
+            } else {
+                return Redirect::to("https://hoplite-challenge.philolog.us");
+            }
+            //return Redirect::to(LOGGED_IN_LANDING_PAGE); //index.html
         }
     }
 

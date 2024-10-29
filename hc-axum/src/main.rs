@@ -16,12 +16,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-
 //use std::time::SystemTime;
 //use std::time::UNIX_EPOCH;
 
 use axum::extract::Query;
+use axum::extract::Request;
 use axum::response::Response;
+use axum::ServiceExt;
+use http::Uri;
 use serde::{Deserialize, Serialize};
 use socketioxide::socket::DisconnectReason;
 use socketioxide::{
@@ -29,6 +31,7 @@ use socketioxide::{
     SocketIo,
 };
 use std::sync::atomic::AtomicUsize;
+use tower::Layer;
 use tower_cookies::cookie::SameSite;
 use tower_http::{/*cors::CorsLayer,*/ services::ServeDir};
 use tracing::{/*error, Level,*/ info};
@@ -141,6 +144,99 @@ enum Res {
         username: Username,
     },
 }
+
+// fn rewrite_request_uri<B>(req: Request<B>) -> Request<B> {
+//     println!(
+//         "hostee2: {:?} URIjwm {:?}",
+//         req.uri(),
+//         req.headers(),
+//         //req.uri().authority().unwrap().host()
+//     );
+
+//     let h = HeaderValue::from_static("abc");
+
+//     let req_host = req.headers().get("host").unwrap_or(&h).to_str();
+//     match req_host.as_ref() {
+//         Ok(&"synopsis.philolog.us") => {
+//             let new_path_and_query =
+//                 format!("/synopsis{}", req.uri().path_and_query().unwrap().as_str());
+//             let mut new_req = req;
+
+//             let new_uri = Uri::builder()
+//                 .scheme("https")
+//                 .authority("synopsis.philolog.us")
+//                 .path_and_query(new_path_and_query)
+//                 .build()
+//                 .unwrap();
+//             *new_req.uri_mut() = new_uri;
+//             new_req
+//         }
+//         _ => req,
+//     }
+// }
+
+//convert synopsis index to its own path
+//we only need to do this for the synopsis index, other paths are already unique
+fn rewrite_request_uri<B>(req: Request<B>) -> Request<B> {
+    if let Some(req_host) = req.headers().get("host") {
+        let host_bytes = req_host.as_bytes();
+        if let Ok(host_string) = String::from_utf8(host_bytes.to_vec()) {
+            if host_string.to_lowercase().trim() == "synopsis.philolog.us" {
+                if let Some(p) = req.uri().path_and_query() {
+                    if p.as_str() == "/" || p.as_str() == "" {
+                        let new_uri = Uri::builder()
+                            .scheme("https")
+                            .authority("synopsis.philolog.us")
+                            .path_and_query("/synopsisindex")
+                            .build()
+                            .unwrap();
+
+                        let mut new_req = req;
+                        *new_req.uri_mut() = new_uri;
+                        return new_req;
+                    }
+                }
+            }
+        }
+    }
+    req
+}
+
+// async fn my_middleware(Host(host): Host, request: Request, next: Next) -> Response {
+//     println!(
+//         "host3: {:?} - {:?}",
+//         host.to_lowercase(),
+//         request.uri().path_and_query()
+//     );
+//     let new_req = match host.to_lowercase().as_str() {
+//         "synopsis.philolog.us" => {
+//             let new_path_and_query = format!(
+//                 "/synopsis{}",
+//                 request.uri().path_and_query().unwrap().as_str()
+//             );
+//             let mut new_req = request;
+
+//             let new_uri = Uri::builder()
+//                 .scheme("https")
+//                 .authority("synopsis.philolog.us")
+//                 .path_and_query(new_path_and_query)
+//                 .build()
+//                 .unwrap();
+//             *new_req.uri_mut() = new_uri;
+//             new_req
+//         }
+//         _ => request,
+//     };
+//     println!("result: {:?}", new_req.uri());
+//     next.run(new_req).await
+
+//     // let lowcase_host = host.to_lowercase();
+//     // if lowcase_host == "example.com" || lowcase_host == "www.example.com" {
+//     //     return next.run(request).await;
+//     // }
+
+//     // StatusCode::NOT_FOUND.into_response()
+// }
 
 static NUM_USERS: AtomicUsize = AtomicUsize::new(0);
 
@@ -260,6 +356,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let session_store = MemoryStore::default();
     let session_layer = SessionManagerLayer::new(session_store)
         .with_secure(cookie_secure)
+        .with_domain("philolog.us")
         .with_expiry(Expiry::OnInactivity(Duration::days(365)))
         .with_name("hcax")
         .with_http_only(true)
@@ -270,6 +367,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app_state = AxumAppState { hcdb, verbs };
 
     let serve_dir = ServeDir::new("static"); //.not_found_service(axum::routing::get(index)); //not_found_service gives 404 status
+
+    let middleware = tower::util::MapRequestLayer::new(rewrite_request_uri);
 
     let app = axum::Router::new()
         .route("/", axum::routing::get(index))
@@ -301,6 +400,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         //     "/greek-synopsis-result",
         //     axum::routing::get(greek_synopsis_result),
         // )
+        .route("/synopsisindex", axum::routing::get(greek_synopsis_list))
         .route(
             "/greek-synopsis-results",
             axum::routing::get(greek_synopsis_list),
@@ -324,6 +424,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // )
         .with_state(app_state)
         .layer(session_layer)
+        //.layer(middleware)
+        //.layer(axum::middleware::from_fn(my_middleware))
         .layer(CookieManagerLayer::new());
 
     // let addr = std::net::SocketAddr::from(([0, 0, 0, 0], 8088));
@@ -331,8 +433,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // if let Err(e) = server.await {
     //     error!("Error starting axum server: {}", e);
     // }
+    //
+    let app_with_middleware = middleware.layer(app);
+
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8088").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app_with_middleware.into_make_service())
+        .await
+        .unwrap();
 
     Ok(())
 }
@@ -1114,6 +1221,10 @@ async fn greek_synopsis_list(
         function q (i) { return document.querySelector(i); }
         function formatDate(date) {
             return new Date(date + 'Z').toLocaleString('en-CA');
+        }
+
+        if (username === false) {
+            window.location.href = 'https://synopsis.philolog.us/login';
         }
 
         const dFrag = document.createDocumentFragment();

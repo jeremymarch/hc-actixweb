@@ -1,14 +1,12 @@
 [workspace]
 resolver = "2"
-members = [
-    "hc-actix",
+members = ["hc-actix", "hc-axum", "libhc"]
+default-members = [
     "hc-axum",
-    "libhc",
-]
-default-members = ["hc-axum"] # i.e. which to run by default, else "cargo run -phc-axum --bin hc-axum"
+] # i.e. which to run by default, else "cargo run -phc-axum --bin hc-axum"
 
 [workspace.package]
-version = "0.2.0"
+version = "0.2.20"
 edition = "2021"
 authors = ["Jeremy March <jmarch@gradcenter.cuny.edu>"]
 
