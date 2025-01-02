@@ -42,7 +42,6 @@ use axum::response::Json;
 use axum::response::{Html, IntoResponse};
 use http::header::{HeaderMap, HeaderName, HeaderValue};
 
-use axum::debug_handler;
 use axum::extract;
 use axum::extract::State;
 use http::StatusCode;
@@ -283,7 +282,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 username,
                 message: msg,
             };
-            s.broadcast().emit("new message", msg).ok();
+            s.broadcast().emit("new message", &msg).ok();
         });
 
         s.on("abc", |s: SocketRef, Data::<String>(msg)| {
@@ -293,7 +292,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 username: Username(String::from("blah")),
                 message: msg,
             };
-            s.broadcast().emit("abc", msg).ok();
+            s.broadcast().emit("abc", &msg).ok();
         });
 
         s.on("add user", |s: SocketRef, Data::<String>(username)| {
@@ -302,26 +301,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             let i = NUM_USERS.fetch_add(1, std::sync::atomic::Ordering::SeqCst) + 1;
             s.extensions.insert(Username(username.clone()));
-            s.emit("login", Res::Login { num_users: i }).ok();
+            s.emit("login", &Res::Login { num_users: i }).ok();
 
             let res = Res::UserEvent {
                 num_users: i,
                 username: Username(username),
             };
-            s.broadcast().emit("user joined", res).ok();
+            s.broadcast().emit("user joined", &res).ok();
         });
 
         s.on("typing", |s: SocketRef| {
             let username = s.extensions.get::<Username>().unwrap().clone();
             s.broadcast()
-                .emit("typing", Res::Username { username })
+                .emit("typing", &Res::Username { username })
                 .ok();
         });
 
         s.on("stop typing", |s: SocketRef| {
             let username = s.extensions.get::<Username>().unwrap().clone();
             s.broadcast()
-                .emit("stop typing", Res::Username { username })
+                .emit("stop typing", &Res::Username { username })
                 .ok();
         });
 
@@ -332,7 +331,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     num_users: i,
                     username: username.clone(),
                 };
-                s.broadcast().emit("user left", res).ok();
+                s.broadcast().emit("user left", &res).ok();
             }
         });
     });
@@ -466,11 +465,11 @@ async fn index() -> impl IntoResponse {
     (headers, Html(page))
 }
 
-#[debug_handler]
+#[axum::debug_handler]
 async fn get_sessions(
     session: Session,
     State(state): State<AxumAppState>,
-    extract::Form(payload): extract::Form<GetSessions>,
+    extract::Form(payload): axum::extract::Form<GetSessions>,
 ) -> Result<Json<SessionsListResponse>, StatusCode> {
     if let Some(user_id) = login::get_user_id(&session).await {
         //uuid!("96b875e7-fc53-4498-ad8d-9ce417e938b7");
@@ -512,7 +511,6 @@ async fn create_session(
     }
 }
 
-#[debug_handler]
 async fn greek_synopsis(
     session: Session,
     Query(id): axum::extract::Query<SynopsisResultUuid>,

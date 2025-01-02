@@ -9,13 +9,14 @@ path = "src/main.rs"
 
 [dependencies]
 libhc = { path = "../libhc", features = ["postgres"] }
-socketioxide = { version = "0.14.1", features = ["extensions"] }
-axum = { version = "0.7.7", features = ["macros"] }
+socketioxide = { version = "0.15.1", features = ["extensions"] }
+axum = { version = "0.8.1", features = ["macros"] }
+axum-extra = "0.10.0-rc.1"
 tokio = { version = "1.40.0", features = ["rt-multi-thread", "macros"] }
-tower-http = { version = "0.6.1", features = ["trace", "cors", "fs"] }
-tower = "0.5.1"
-tower-sessions = "0.13.0"
-tower-cookies = "0.10.0"
+tower-http = { version = "0.6.2", features = ["trace", "cors", "fs"] }
+tower = "0.5.2"
+tower-sessions = "0.14.0"
+tower-cookies = "0.11.0"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 tracing = "0.1.40"
 serde = "1.0.210"
