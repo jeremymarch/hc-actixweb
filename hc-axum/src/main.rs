@@ -773,17 +773,8 @@ fn make_schedule() -> LgiCourse {
                                 "noonOptional" => LgiClassType::NoonOptional,
                                 _ => LgiClassType::None,
                             },
-                            start_time: if let Ok(a) = NaiveTime::parse_from_str(&start, "%I:%M %P")
-                            {
-                                Some(a)
-                            } else {
-                                None
-                            },
-                            end_time: if let Ok(a) = NaiveTime::parse_from_str(&end, "%I:%M %P") {
-                                Some(a)
-                            } else {
-                                None
-                            },
+                            start_time: NaiveTime::parse_from_str(&start, "%I:%M %P").ok(),
+                            end_time: NaiveTime::parse_from_str(&end, "%I:%M %P").ok(),
                             desc: String::from(""),
                             faculty,
                             room: String::from(""),

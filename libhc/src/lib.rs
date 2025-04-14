@@ -1243,11 +1243,19 @@ pub async fn hc_get_sessions_tr(
     Ok(res)
 }
 
+fn clean_comma_separated_numeric_str(s: &str) -> String {
+    s.chars().filter(|c| c.is_numeric() || *c == ',').collect()
+}
+
 fn hc_get_verbs_by_unit(units: &str, verbs: &[Arc<HcGreekVerb>]) -> Option<String> {
-    let u: Vec<u32> = units
+    //remove all characters other than numbers and commas
+    let cleaned_units: String = clean_comma_separated_numeric_str(units);
+
+    let u: Vec<u32> = cleaned_units
         .split(',')
         .map(|x| x.parse::<u32>().unwrap())
         .collect();
+
     let mut verb_ids: Vec<u32> = vec![];
     for unit in u {
         for v in verbs {
@@ -1307,6 +1315,8 @@ pub async fn hc_insert_session(
     // if still no verbs, abort
     if info.verbs.is_none() {
         return Err(HcError::UnknownError);
+    } else {
+        info.verbs = Some(clean_comma_separated_numeric_str(&info.verbs.unwrap()));
     }
 
     let highest_unit = match info.highest_unit {
