@@ -240,6 +240,7 @@ pub struct SessionsListQuery {
     //pub opponent: Option<Uuid>,
     pub opponent_name: Option<String>,
     pub timestamp: i64,
+    pub updated: i64,
     pub myturn: bool,
     pub move_type: MoveType,
     pub my_score: Option<i32>,

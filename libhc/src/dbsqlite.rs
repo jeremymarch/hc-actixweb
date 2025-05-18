@@ -294,7 +294,8 @@ impl HcTrx for HcDbSqliteTrx<'_> {
             countdown,
             max_time,
             timestamp,
-            status) VALUES ($1,$2,$3,NULL,$4,$5,$6,$7,$8,0,0,$9,$10,$11,$12,1);"#;
+            updated,
+            status) VALUES ($1,$2,$3,NULL,$4,$5,$6,$7,$8,0,0,$9,$10,$11,$12,$13,1);"#;
         let _res = sqlx::query(query)
             .bind(uuid)
             .bind(user_id)
@@ -307,6 +308,7 @@ impl HcTrx for HcDbSqliteTrx<'_> {
             .bind(info.practice_reps_per_verb)
             .bind(info.countdown as i32)
             .bind(info.max_time)
+            .bind(timestamp)
             .bind(timestamp)
             .execute(&mut *self.tx)
             .await
@@ -360,11 +362,11 @@ impl HcTrx for HcDbSqliteTrx<'_> {
         //strftime('%Y-%m-%d %H:%M:%S', DATETIME(timestamp, 'unixepoch')) as timestamp,
         //    ORDER BY updated DESC \
         let query = "SELECT session_id AS session_id, name, challenged_user_id AS challenged, b.user_name AS username, challenger_score as myscore, challenged_score as theirscore, \
-        a.timestamp as timestamp, countdown, max_time, max_changes \
+        a.timestamp as timestamp, a.updated as updated, countdown, max_time, max_changes \
         FROM sessions a LEFT JOIN users b ON a.challenged_user_id = b.user_id \
         where challenger_user_id = $1 \
         UNION SELECT session_id AS session_id, name, challenged_user_id AS challenged, b.user_name AS username, challenged_score as myscore, challenger_score as theirscore, \
-        a.timestamp as timestamp, countdown, max_time, max_changes \
+        a.timestamp as timestamp, a.updated as updated, countdown, max_time, max_changes \
         FROM sessions a LEFT JOIN users b ON a.challenger_user_id = b.user_id \
         where challenged_user_id  = $2 \
         ORDER BY timestamp DESC \
@@ -381,6 +383,7 @@ impl HcTrx for HcDbSqliteTrx<'_> {
                     challenged: rec.get("challenged"), /*opponent:rec.get("opponent_user_id"),*/
                     opponent_name: rec.get("username"),
                     timestamp: rec.get("timestamp"),
+                    updated: rec.get("updated"),
                     myturn: false,
                     move_type: MoveType::Practice,
                     my_score: rec.get("myscore"),
@@ -539,6 +542,14 @@ impl HcTrx for HcDbSqliteTrx<'_> {
         info: &AskQuery,
         timestamp: i64,
     ) -> Result<Uuid, HcError> {
+        let query = "UPDATE sessions SET updated=$1 WHERE session_id=$2;";
+        let _res = sqlx::query(query)
+            .bind(timestamp)
+            .bind(info.session_id)
+            .execute(&mut *self.tx)
+            .await
+            .map_err(map_sqlx_error)?;
+
         let uuid = sqlx::types::Uuid::new_v4();
 
         let query = "INSERT INTO moves VALUES ($1,$2,$3,NULL,$4,$5,$6,$7,$8,$9,NULL,NULL,NULL,NULL,NULL,NULL,$10, NULL);";
@@ -571,6 +582,14 @@ impl HcTrx for HcDbSqliteTrx<'_> {
         timestamp: i64,
     ) -> Result<(), HcError> {
         let m = self.get_last_move_tx(info.session_id).await?;
+
+        let query = "UPDATE sessions SET updated=$1 WHERE session_id=$2;";
+        let _res = sqlx::query(query)
+            .bind(timestamp)
+            .bind(info.session_id)
+            .execute(&mut *self.tx)
+            .await
+            .map_err(map_sqlx_error)?;
 
         let query = "UPDATE moves SET answer_user_id=$1, answer=$2, correct_answer=$3, is_correct=$4, time=$5, mf_pressed=$6, timed_out=$7, answeredtimestamp=$8 WHERE move_id=$9;";
         let _res = sqlx::query(query)
@@ -708,6 +727,7 @@ impl HcTrx for HcDbSqliteTrx<'_> {
     countdown INT,
     max_time INT,
     timestamp INT NOT NULL DEFAULT 0,
+    updated INT NOT NULL DEFAULT 0,
     status INT NOT NULL DEFAULT 1,
     FOREIGN KEY (challenger_user_id) REFERENCES users(user_id),
     FOREIGN KEY (challenged_user_id) REFERENCES users(user_id)

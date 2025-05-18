@@ -145,7 +145,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         let ip = "";
         let agent = "";
         let uuid = sqlx::types::Uuid::new_v4();
-        let query = format!("INSERT INTO greeksynopsisresults VALUES ($1, $2, DEFAULT, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, '{}')", 
+        let query = format!("INSERT INTO greeksynopsisresults VALUES ($1, $2, DEFAULT, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, '{}')",
             info.r.join("', '"));
         //println!("aaa: {}", query);
         sqlx::query(&query)
@@ -288,7 +288,8 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             countdown,
             max_time,
             timestamp,
-            status) VALUES ($1,$2,$3,NULL,$4,$5,$6,$7,$8,0,0,$9,$10,$11,$12,1);"#;
+            updated,
+            status) VALUES ($1,$2,$3,NULL,$4,$5,$6,$7,$8,0,0,$9,$10,$11,$12,$13,1);"#;
         let _res = sqlx::query(query)
             .bind(uuid)
             .bind(user_id)
@@ -301,6 +302,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             .bind(info.practice_reps_per_verb)
             .bind(info.countdown as i32)
             .bind(info.max_time)
+            .bind(timestamp)
             .bind(timestamp)
             .execute(&mut *self.tx)
             .await
@@ -356,11 +358,11 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         //strftime('%Y-%m-%d %H:%M:%S', DATETIME(timestamp, 'unixepoch')) as timestamp,
         //    ORDER BY updated DESC \
         let query = "SELECT session_id AS session_id, name, challenged_user_id AS challenged, b.user_name AS username, challenger_score as myscore, challenged_score as theirscore, \
-        a.timestamp as timestamp, countdown, max_time, max_changes \
+        a.timestamp as timestamp, a.updated as updated, countdown, max_time, max_changes \
         FROM sessions a LEFT JOIN users b ON a.challenged_user_id = b.user_id \
         where challenger_user_id = $1 \
         UNION SELECT session_id AS session_id, name, challenged_user_id AS challenged, b.user_name AS username, challenged_score as myscore, challenger_score as theirscore, \
-        a.timestamp as timestamp, countdown, max_time, max_changes \
+        a.timestamp as timestamp, a.updated as updated, countdown, max_time, max_changes \
         FROM sessions a LEFT JOIN users b ON a.challenger_user_id = b.user_id \
         where challenged_user_id  = $2 \
         ORDER BY timestamp DESC \
@@ -377,6 +379,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
                     challenged: rec.get("challenged"), /*opponent:rec.get("opponent_user_id"),*/
                     opponent_name: rec.get("username"),
                     timestamp: rec.get("timestamp"),
+                    updated: rec.get("updated"),
                     myturn: false,
                     move_type: MoveType::Practice,
                     my_score: rec.get("myscore"),
@@ -537,6 +540,14 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         info: &AskQuery,
         timestamp: i64,
     ) -> Result<Uuid, HcError> {
+        let query = "UPDATE sessions SET updated=$1 WHERE session_id=$2;";
+        let _res = sqlx::query(query)
+            .bind(timestamp)
+            .bind(info.session_id)
+            .execute(&mut *self.tx)
+            .await
+            .map_err(map_sqlx_error)?;
+
         let uuid = sqlx::types::Uuid::new_v4();
 
         let query = "INSERT INTO moves VALUES ($1,$2,$3,NULL,$4,$5,$6,$7,$8,$9,NULL,NULL,NULL,NULL,NULL,NULL,$10, NULL);";
@@ -569,6 +580,14 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         timestamp: i64,
     ) -> Result<(), HcError> {
         let m = self.get_last_move_tx(info.session_id).await?;
+
+        let query = "UPDATE sessions SET updated=$1 WHERE session_id=$2;";
+        let _res = sqlx::query(query)
+            .bind(timestamp)
+            .bind(info.session_id)
+            .execute(&mut *self.tx)
+            .await
+            .map_err(map_sqlx_error)?;
 
         let query = "UPDATE moves SET answer_user_id=$1, answer=$2, correct_answer=$3, is_correct=$4, time=$5, mf_pressed=$6, timed_out=$7, answeredtimestamp=$8 WHERE move_id=$9;";
         let _res = sqlx::query(query)
@@ -668,12 +687,12 @@ impl HcTrx for HcDbPostgresTrx<'_> {
     }
 
     async fn create_db(&mut self) -> Result<(), HcError> {
-        let query = r#"CREATE TABLE IF NOT EXISTS users ( 
-    user_id UUID PRIMARY KEY NOT NULL, 
+        let query = r#"CREATE TABLE IF NOT EXISTS users (
+    user_id UUID PRIMARY KEY NOT NULL,
     google_oauth_sub TEXT,
     apple_oauth_sub TEXT,
-    user_name TEXT, 
-    password TEXT, 
+    user_name TEXT,
+    password TEXT,
     email TEXT,
     first_name TEXT,
     last_name TEXT,
@@ -690,15 +709,15 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             .await
             .map_err(map_sqlx_error)?;
 
-        let query = r#"CREATE TABLE IF NOT EXISTS sessions ( 
-    session_id UUID PRIMARY KEY NOT NULL, 
-    challenger_user_id UUID NOT NULL, 
-    challenged_user_id UUID DEFAULT NULL, 
+        let query = r#"CREATE TABLE IF NOT EXISTS sessions (
+    session_id UUID PRIMARY KEY NOT NULL,
+    challenger_user_id UUID NOT NULL,
+    challenged_user_id UUID DEFAULT NULL,
     current_move UUID DEFAULT NULL,
     name TEXT DEFAULT NULL,
     highest_unit SMALLINT,
-    custom_verbs TEXT, 
-    custom_params TEXT, 
+    custom_verbs TEXT,
+    custom_params TEXT,
     max_changes SMALLINT,
     challenger_score INT,
     challenged_score INT,
@@ -706,8 +725,9 @@ impl HcTrx for HcDbPostgresTrx<'_> {
     countdown INT,
     max_time INT,
     timestamp BIGINT NOT NULL DEFAULT 0,
+    updated BIGINT NOT NULL DEFAULT 0,
     status INT NOT NULL DEFAULT 1,
-    FOREIGN KEY (challenger_user_id) REFERENCES users(user_id), 
+    FOREIGN KEY (challenger_user_id) REFERENCES users(user_id),
     FOREIGN KEY (challenged_user_id) REFERENCES users(user_id)
     );"#;
         let _res = sqlx::query(query)
@@ -715,28 +735,28 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             .await
             .map_err(map_sqlx_error)?;
 
-        let query = r#"CREATE TABLE IF NOT EXISTS moves ( 
-    move_id UUID PRIMARY KEY NOT NULL, 
+        let query = r#"CREATE TABLE IF NOT EXISTS moves (
+    move_id UUID PRIMARY KEY NOT NULL,
     session_id UUID NOT NULL,
-    ask_user_id UUID, 
-    answer_user_id UUID, 
-    verb_id INT, 
-    person SMALLINT, 
-    number SMALLINT, 
-    tense SMALLINT, 
-    mood SMALLINT, 
-    voice SMALLINT, 
+    ask_user_id UUID,
+    answer_user_id UUID,
+    verb_id INT,
+    person SMALLINT,
+    number SMALLINT,
+    tense SMALLINT,
+    mood SMALLINT,
+    voice SMALLINT,
     answer VARCHAR(1024),
     correct_answer VARCHAR(1024),
     is_correct BOOL,
-    time VARCHAR(255), 
-    timed_out BOOL, 
-    mf_pressed BOOL, 
-    asktimestamp BIGINT NOT NULL DEFAULT 0, 
-    answeredtimestamp BIGINT, 
-    FOREIGN KEY (ask_user_id) REFERENCES users(user_id), 
-    FOREIGN KEY (answer_user_id) REFERENCES users(user_id), 
-    FOREIGN KEY (session_id) REFERENCES sessions(session_id) 
+    time VARCHAR(255),
+    timed_out BOOL,
+    mf_pressed BOOL,
+    asktimestamp BIGINT NOT NULL DEFAULT 0,
+    answeredtimestamp BIGINT,
+    FOREIGN KEY (ask_user_id) REFERENCES users(user_id),
+    FOREIGN KEY (answer_user_id) REFERENCES users(user_id),
+    FOREIGN KEY (session_id) REFERENCES sessions(session_id)
     );"#;
         let _res = sqlx::query(query)
             .execute(&mut *self.tx)
@@ -749,25 +769,25 @@ impl HcTrx for HcDbPostgresTrx<'_> {
             .await
             .map_err(map_sqlx_error)?;
 
-        let query = r#"CREATE TABLE IF NOT EXISTS greeksynopsisresults ( 
-            id UUID PRIMARY KEY NOT NULL, 
-            user_id UUID, 
-            updated timestamp default (now() at time zone 'utc'), 
-            sname TEXT NOT NULL, 
-            advisor TEXT NOT NULL, 
-            sgiday INTEGER NOT NULL, 
-            selectedverb TEXT NOT NULL, 
-            pp TEXT NOT NULL, 
-            pp_correct TEXT NOT NULL, 
+        let query = r#"CREATE TABLE IF NOT EXISTS greeksynopsisresults (
+            id UUID PRIMARY KEY NOT NULL,
+            user_id UUID,
+            updated timestamp default (now() at time zone 'utc'),
+            sname TEXT NOT NULL,
+            advisor TEXT NOT NULL,
+            sgiday INTEGER NOT NULL,
+            selectedverb TEXT NOT NULL,
+            pp TEXT NOT NULL,
+            pp_correct TEXT NOT NULL,
             pp_is_correct TEXT NOT NULL,
-            verbnumber TEXT NOT NULL, 
-            verbperson TEXT NOT NULL, 
-            verbptcgender TEXT, 
-            verbptcnumber TEXT, 
-            verbptccase TEXT, 
-            ip TEXT NOT NULL, 
-            ua TEXT NOT NULL, 
-            status INTEGER NOT NULL, 
+            verbnumber TEXT NOT NULL,
+            verbperson TEXT NOT NULL,
+            verbptcgender TEXT,
+            verbptcnumber TEXT,
+            verbptccase TEXT,
+            ip TEXT NOT NULL,
+            ua TEXT NOT NULL,
+            status INTEGER NOT NULL,
             score TEXT NOT NULL,
             f0 TEXT NOT NULL, a0 TEXT NOT NULL, c0 BOOLEAN NOT NULL,
             f1 TEXT NOT NULL, a1 TEXT NOT NULL, c1 BOOLEAN NOT NULL,
