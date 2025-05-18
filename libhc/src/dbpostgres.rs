@@ -365,7 +365,7 @@ impl HcTrx for HcDbPostgresTrx<'_> {
         a.timestamp as timestamp, a.updated as updated, countdown, max_time, max_changes \
         FROM sessions a LEFT JOIN users b ON a.challenger_user_id = b.user_id \
         where challenged_user_id  = $2 \
-        ORDER BY timestamp DESC \
+        ORDER BY updated DESC \
         LIMIT 20000;";
 
         //println!("query: {} {:?}", query, user_id);
