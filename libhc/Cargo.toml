@@ -1,6 +1,6 @@
 [package]
 name = "libhc"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 
 [lib]
@@ -36,7 +36,7 @@ itertools = "0.13.0"
 #hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.4.9" }
 
 #hoplite_verb_chooser = { path = "../../hoplite_verb_chooser" }
-hoplite_verb_chooser = { git = "https://github.com/jeremymarch/hoplite_verb_chooser", version = "0.1.2" }
+hoplite_verb_chooser = { git = "https://github.com/jeremymarch/hoplite_verb_chooser", version = "0.1.3" }
 
 
 [features]

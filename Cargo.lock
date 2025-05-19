@@ -1428,8 +1428,8 @@ dependencies = [
 
 [[package]]
 name = "hoplite_verb_chooser"
-version = "0.1.2"
-source = "git+https://github.com/jeremymarch/hoplite_verb_chooser#5db6437a8e05097101aa8ed57d2003b2c92625fe"
+version = "0.1.3"
+source = "git+https://github.com/jeremymarch/hoplite_verb_chooser#c68f68f7e446a352dafc33a5dfb65441c8518e01"
 dependencies = [
  "hoplite_verbs_rs",
  "rand",
@@ -1437,8 +1437,8 @@ dependencies = [
 
 [[package]]
 name = "hoplite_verbs_rs"
-version = "0.5.2"
-source = "git+https://github.com/jeremymarch/hoplite_verbs_rs#721a60bf85edef0938cd7e3e8b0ad4cea2d8806a"
+version = "0.5.3"
+source = "git+https://github.com/jeremymarch/hoplite_verbs_rs#8874351f0568673742a4a46e97707b103c4d8cc3"
 dependencies = [
  "polytonic-greek",
 ]
@@ -1769,7 +1769,7 @@ checksum = "97b3888a4aecf77e811145cadf6eef5901f4782c53886191b2f693f24761847c"
 
 [[package]]
 name = "libhc"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "argon2",
  "async-trait",
